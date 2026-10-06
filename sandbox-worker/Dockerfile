@@ -27,7 +27,7 @@ COPY ./MIPS ./MIPS
 COPY ./MIPSEL ./MIPSEL
 COPY ./x86 ./x86
 
-COPY server.py ./poller.py ./.env ./run.sh ./
+COPY server.py ./poller.py ./run.sh ./
 
 RUN mkdir data
 

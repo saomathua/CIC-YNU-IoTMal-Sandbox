@@ -11,7 +11,7 @@ COPY ./config ./config
 COPY ./router ./router
 COPY ./service ./service
 COPY ./util ./util
-COPY ./.env ./main.py ./
+COPY ./main.py ./
 
 RUN mkdir output uploads
 

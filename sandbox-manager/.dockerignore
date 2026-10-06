@@ -1,0 +1,19 @@
+# Keep secrets and runtime data out of the build context.
+# Configuration is supplied at runtime via environment variables (docker-compose.yml).
+.env
+.env.*
+!.env.example
+
+# Runtime data (persisted via bind mounts, never baked into the image)
+data/
+output/
+uploads/
+temp/
+
+# Python / IDE
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/

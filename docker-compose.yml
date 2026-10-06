@@ -1,28 +1,31 @@
-version: '3.5'
-
 # -------------------------------------------------------
 # IoT-CIC-Sandbox — full-stack deployment
 #
-# Starts MongoDB, the sandbox-manager, and one or more
-# sandbox-workers on a shared internal network.
+# Starts MongoDB, the sandbox-manager, and one sandbox-worker
+# on a shared internal network.
 #
 # Prerequisites:
 #   1. Copy .env.example to .env and fill in all values.
-#   2. Update the malware volume mount below (search for
-#      /path/to/your/malware).
-#   3. docker compose up --build
+#      Configuration is passed to containers at runtime; no .env
+#      file is copied into any image.
+#   2. Put samples in ./malware (or set MALWARE_DIR in .env).
+#   3. sudo docker compose up --build
+#
+# See docs/deployment.md for details and what is not yet verified.
 # -------------------------------------------------------
 
 services:
 
   # ── MongoDB ─────────────────────────────────────────
+  # Pinned to MongoDB 8.0 (newest server line supported by PyMongo 4.11,
+  # wire version <= 25). See docs/deployment.md for the rationale.
   mongo-db:
-    image: mongo
+    image: mongo:8.0.32@sha256:d0d926f94df099bff534b7ee5b5986458131a22489dfff8664509af0c1e2ca9c
     restart: always
     container_name: mongo-db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:?set MONGO_USERNAME in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?set MONGO_PASSWORD in .env}
     volumes:
       - ./data/mongo/:/data/db/
     networks:
@@ -34,22 +37,27 @@ services:
     image: sandbox-manager
     restart: on-failure
     ports:
-      - '${MANAGER_PORT:-8011}:8011'
+      # Bound to loopback by default; reach it through an SSH tunnel.
+      - '${MANAGER_BIND_ADDR:-127.0.0.1}:${MANAGER_PORT:-8011}:8011'
     environment:
       PORT: 8011
       APP_BASE_URL: "/api/v1/sandbox-manager"
       MONGO_HOST: mongo-db:27017
-      MONGO_USERNAME: ${MONGO_USERNAME}
-      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_USERNAME: ${MONGO_USERNAME:?set MONGO_USERNAME in .env}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:?set MONGO_PASSWORD in .env}
       MONGO_DB: sandbox
       MALWARE_DIRECTORY: /malware
+      # Relative to WORKDIR /app (sandbox-manager/Dockerfile), i.e.
+      # /app/output and /app/uploads — persisted by the bind mounts below.
       OUTPUT_DIR: ./output/
       UPLOAD_DIR: ./uploads/
     volumes:
-      # Mount the directory containing malware samples (read-only).
-      # Update the host path below before running.
-      # - /path/to/your/malware:/malware:ro
-      - ./malware:/malware:ro
+      # Directory containing malware samples (read-only).
+      - ${MALWARE_DIR:-./malware}:/malware:ro
+      # Result zips received from workers (submit-result).
+      - ./data/manager/output:/app/output
+      # Files uploaded via submit-file; their paths are stored in MongoDB.
+      - ./data/manager/uploads:/app/uploads
     networks:
       dbnet:
       sandboxnet:
@@ -57,13 +65,12 @@ services:
     depends_on:
       - mongo-db
 
-  # ── Sandbox Worker(s) ───────────────────────────────
-  # Each worker auto-detects the architecture of each binary at runtime.
-  # To scale, duplicate a worker block and assign a unique APP_NAME,
-  # host port, and IP address (must be on the 192.168.40.0/24 subnet).
-  # QEMU uses a tap interface bridged to the worker container's network,
-  # so each worker needs a fixed, unique IP.
-
+  # ── Sandbox Worker ──────────────────────────────────
+  # A single worker. The worker auto-detects the architecture of each
+  # binary at runtime. QEMU uses a tap interface bridged to the worker
+  # container's network, so the worker needs a fixed IP; the VM takes
+  # worker IP + 1 (service/analysis.py). Do not add more workers until
+  # that addressing is reviewed (see docs/deployment.md).
   sandbox-worker-1:
     build: ./sandbox-worker
     image: sandbox-worker
@@ -76,28 +83,12 @@ services:
       SANDBOX_MANAGER_URI: http://sandbox-manager:8011/api/v1/sandbox-manager
       ANALYSIS_DURATION: ${ANALYSIS_DURATION:-30}
       POST_ANALYSIS_WAIT: ${POST_ANALYSIS_WAIT:-30}
-      ALLOW_VM_INTERNET: ${ALLOW_VM_INTERNET:-true}
+      # Requested default: no VM internet access. Enforcement (run.sh
+      # iptables rules) has NOT been verified yet.
+      ALLOW_VM_INTERNET: ${ALLOW_VM_INTERNET:-false}
     networks:
       sandboxnet:
         ipv4_address: 192.168.60.2
-
-  # sandbox-worker-2:
-  #   build: ./sandbox-worker
-  #   image: sandbox-worker
-  #   privileged: true
-  #   restart: on-failure
-  #   ports:
-  #     - '8013:8011'
-  #   environment:
-  #     PORT: 8011
-  #     APP_BASE_URL: "/api/v1/sandbox-worker"
-  #     APP_NAME: sandbox-worker-2
-  #     SANDBOX_MANAGER_URI: http://sandbox-manager:8011/api/v1/sandbox-manager
-  #     ANALYSIS_DURATION: ${ANALYSIS_DURATION:-30}
-  #     POST_ANALYSIS_WAIT: ${POST_ANALYSIS_WAIT:-30}
-  #   networks:
-  #     sandboxnet:
-  #       ipv4_address: 192.168.60.3
 
 networks:
   dbnet:
