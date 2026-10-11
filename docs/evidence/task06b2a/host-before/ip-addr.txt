@@ -1,0 +1,6 @@
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+ens33            UP             192.168.177.128/24 metric 100 fe80::20c:29ff:fe42:ad4c/64 
+br-09fed07bbb6b  UP             172.18.0.1/16 fe80::d86c:f1ff:febc:fd1d/64 
+br-1d86fe3e8bbe  DOWN           192.168.60.1/24 
+docker0          DOWN           172.17.0.1/16 
+veth6723c7f@if2  UP             fe80::b4e2:7ff:fe68:5e88/64 

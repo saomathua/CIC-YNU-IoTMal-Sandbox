@@ -1,0 +1,2531 @@
+diff -ruN ct01-06b4hr2/arp_harness.py ct01-06b4i/arp_harness.py
+--- ct01-06b4hr2/arp_harness.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4i/arp_harness.py	2026-10-08 12:03:25.943650648 +0000
+@@ -0,0 +1,441 @@
++#!/usr/bin/env python3
++"""06B-4I — wiring of the reviewed ARP cases (arp_cases.py, 06B-4HR2: T14-A1, T14-A2, T14-A3, T15-S1) into the
++harness. Prepared and tested OFFLINE only (selftest_arp_wiring.py); not run against a guest in 06B-4I.
++
++Used in two places:
++  * inside the worker test container by probe_matrix.py when CT01_SUITE=arp: run_suite (-> arp_cases.run_group)
++    with the worker neighbour collector (NEIGH_CMD, run in the worker netns), the live controls of T14-A1/A2
++    (make_control) and evaluate (-> arp_cases.evaluate_group);
++  * on the host by run-06b4i.sh:  --outcome <result.json> <arp-eval.json> <ARCH>
++                                  --run-check <probe dir> ARM MIPS
++No case, command, address, size, tool or ruleset is added here: the cases and their commands come only from
++arp_cases.build_cases()/commands(). arp_cases.py is used unchanged.
++
++Reused from icmp_harness.py (06B-4F/4FR, reviewed): GuardedRunner (every guest command, including the
++guest_state snapshot/restore commands, is checked before AND after; the first failure stops the group and no
++further command reaches the guest), the service link command/parser (HTTP 200 + fixture hash) and
++malformed_records().
++
++Live controls (plan T14 §3), evaluated by the callback that arp_cases.run_group() calls after the case:
++  T14-A1 (192.168.60.2 = worker eth0): the control container ct01-06b3b-ctl on sandboxnet logs, every cycle,
++         its HTTP check of worker-eth0:8011 and right after it its own ARP entry for the worker
++         (ctl_loop.py --arp-worker: /proc/net/arp, complete flag, MAC). Needed: both OK at or before read A and
++         at or after read B (within CTL_SLACK_S), no failure in that span, every ARP entry with the MAC of the
++         worker's eth0, and the case target equal to the worker's eth0 address.
++  T14-A2 (192.168.60.10 = manager): ctl HTTP check of manager:8011 OK before/after the case window with no
++         failure; then the worker calls the manager (HTTP 200) and its own neighbour table must hold exactly one
++         usable entry 192.168.60.10 dev eth0 with the manager's MAC (from the run script), and the case target
++         must equal the manager address.
++  Anything missing, unreadable or different -> the control is not alive -> the case is at best CHƯA KIỂM CHỨNG
++  (arp_cases rule). A control says nothing about the guest; it only shows that the same IP answers ARP on
++  sandboxnet while the guest's request is dropped at tap0.
++"""
++import collections
++import json
++import os
++import re
++import sys
++
++import arp_cases as A
++import icmp_harness as IH
++
++RECORD_FILE = "arp-group.json"
++EVAL_FILE = "arp-eval.json"
++NEIGH_CMD = ("ip", "-j", "neigh", "show")     # worker netns, whole table (with "-j ... dev X" iproute2 omits "dev")
++LINK_ROLE = ("guest-worker service link: precondition before the group and after every restored case, NOT a "
++             "live control for the ARP targets")
++CTL_SLACK_S = 3.0          # same span as probe_matrix.ctl_log_window (06B-3B)
++CTL_WAIT_MARGIN_S = 0.6    # ctl writes a cycle about every 0.5 s: wait for one beyond the span
++CTL_WAIT_MAX_S = 10.0
++BOUND_STATES = ("REACHABLE", "STALE", "DELAY", "PROBE", "PERMANENT")
++_MAC = re.compile(r"([0-9a-f]{2}:){5}[0-9a-f]{2}")
++ATF_COM = 0x2
++
++
++def norm_mac(m):
++    return A.L._norm_mac(m)
++
++
++# ------------------------------------------------------------------ live controls (T14-A1, T14-A2)
++def ctl_target_http_worker(ip):
++    return f"worker-eth0 {ip}:8011"
++
++
++def ctl_target_arp_worker(ip):
++    return f"arp worker-eth0 {ip}"
++
++
++def ctl_target_http_manager(ip):
++    return f"manager {ip}:8011"
++
++
++def ctl_records(text):
++    """ctl.jsonl -> list of {"ts", "target", "ok", "detail"}. A malformed line raises ValueError (never skipped)."""
++    out = []
++    for i, line in enumerate((text or "").splitlines()):
++        if not line.strip():
++            continue
++        r = json.loads(line)
++        if not isinstance(r, dict) or not isinstance(r.get("target"), str) or not isinstance(r.get("ok"), bool) \
++                or not isinstance(r.get("ts"), (int, float)) or isinstance(r.get("ts"), bool):
++            raise ValueError(f"ctl line {i + 1} malformed: {line[:120]!r}")
++        out.append(r)
++    return out
++
++
++def ctl_window(records, target, t0, t1, slack, check=None):
++    """One exact ctl target around the case window [t0, t1]: an OK record in [t0 - slack, t0] and one in
++    [t1, t1 + slack], no failed record in [t0 - slack, t1 + slack]; check(detail) -> problem or None for every
++    OK record in that span. Same rule as probe_matrix.ctl_log_window (06B-3B) plus the per-record check."""
++    before = after = False
++    fails, problems = 0, []
++    for r in records:
++        if r["target"] != target or not (t0 - slack <= r["ts"] <= t1 + slack):
++            continue
++        if not r["ok"]:
++            fails += 1
++            continue
++        p = check(r.get("detail")) if check else None
++        if p:
++            problems.append(f"t={r['ts']:.3f}: {p}")
++            continue
++        if r["ts"] <= t0:
++            before = True
++        elif r["ts"] >= t1:
++            after = True
++    return {"target": target, "ok_before": before, "ok_after": after, "fails_in_window": fails,
++            "problems": problems[:5], "ok": before and after and fails == 0 and not problems}
++
++
++def _arp_detail_check(mac):
++    def check(d):
++        if not isinstance(d, dict):
++            return f"ARP detail {d!r} is not an object"
++        try:
++            flags = int(d.get("flags"), 16) if isinstance(d.get("flags"), str) else None
++        except ValueError:
++            flags = None
++        if flags is None or not flags & ATF_COM:
++            return f"ARP entry not complete (flags {d.get('flags')!r})"
++        if d.get("hw") != mac:
++            return f"ARP entry MAC {d.get('hw')!r} != worker eth0 MAC {mac!r}"
++        return None
++    return check
++
++
++def control_a1(case, records, t0, t1, slack, worker_ip, eth0_mac):
++    problems = []
++    if case.get("dst") != worker_ip:
++        problems.append(f"case target {case.get('dst')} is not the worker eth0 address {worker_ip!r}")
++    if not isinstance(eth0_mac, str) or not _MAC.fullmatch(eth0_mac):
++        problems.append(f"worker eth0 MAC {eth0_mac!r} unknown or invalid")
++    http = ctl_window(records, ctl_target_http_worker(worker_ip), t0, t1, slack)
++    arp = ctl_window(records, ctl_target_arp_worker(worker_ip), t0, t1, slack, _arp_detail_check(eth0_mac))
++    ok = not problems and http["ok"] and arp["ok"]
++    return ok, {"control": "T14-A1: ctl on sandboxnet resolves the worker eth0 address by ARP (ctl /proc/net/arp) "
++                           "and reaches it (HTTP 200), before and after the case",
++                "worker_ip": worker_ip, "worker_eth0_mac": eth0_mac, "window": [t0, t1], "ctl_http": http,
++                "ctl_arp": arp, "problems": problems}
++
++
++def control_a2(case, records, t0, t1, slack, manager_ip, manager_mac, worker_http, read_neigh):
++    problems = []
++    if case.get("dst") != manager_ip:
++        problems.append(f"case target {case.get('dst')} is not the manager address {manager_ip!r}")
++    mac = manager_mac.lower() if isinstance(manager_mac, str) else None
++    if mac is None or not _MAC.fullmatch(mac):
++        problems.append(f"manager MAC {manager_mac!r} unknown or invalid")
++    ctl = ctl_window(records, ctl_target_http_manager(manager_ip), t0, t1, slack)
++    try:
++        wh = worker_http()
++    except Exception as e:                                       # noqa: BLE001
++        wh = {"ok": False, "detail": f"{type(e).__name__}: {e}"}
++    if not (isinstance(wh, dict) and wh.get("ok") is True):
++        problems.append(f"worker -> manager HTTP not ok: {wh!r}")
++    entry = None
++    try:
++        rows, probs, unknown = A.parse_neigh_full(read_neigh())
++        mine = [r for r in rows if r["dst"] == manager_ip and r["dev"] == "eth0"]
++        if A._maybe(unknown, manager_ip, "eth0"):
++            problems.append(f"worker neighbour table has unreadable row(s) that may be {manager_ip} dev eth0")
++        if len(mine) != 1:
++            problems.append(f"worker neighbour {manager_ip} dev eth0: {len(mine)} valid row(s), expected exactly 1")
++        else:
++            entry = mine[0]
++            if not (entry["binding"] and len(entry["states"]) == 1 and entry["states"][0] in BOUND_STATES
++                    and entry["lladdr"] == mac):
++                problems.append(f"worker neighbour {manager_ip} dev eth0 is not a usable binding to the manager "
++                                f"MAC {mac}: {entry}")
++    except Exception as e:                                       # noqa: BLE001  (NeighReadError, collector error)
++        problems.append(f"worker neighbour table not readable: {type(e).__name__}: {e}")
++    ok = not problems and ctl["ok"]
++    return ok, {"control": "T14-A2: the manager answers on sandboxnet (ctl HTTP before/after the case) and the "
++                           "worker resolves it by ARP on eth0 (ip -j neigh show after a worker HTTP call)",
++                "manager_ip": manager_ip, "manager_mac": mac, "window": [t0, t1], "ctl_http": ctl,
++                "worker_http": wh, "worker_neighbour": entry, "problems": problems}
++
++
++def make_control(windows, read_ctl, cfg, eth0_mac, worker_http, read_neigh, now, sleep, slack=CTL_SLACK_S):
++    """-> control(case) for arp_cases.run_group(). windows: {case id: {"before": (t_start, t_end), "after": ...}}
++    filled by the counter-read wrapper; read_ctl() -> ctl.jsonl text. Never raises: arp_cases records an exception
++    as a failed control anyway, but the detail is kept here."""
++    def control(case):
++        w = windows.get(case.get("id")) or {}
++        if "before" not in w or "after" not in w:
++            return False, {"problems": [f"counter read window of {case.get('id')} unknown: no control window"]}
++        t0, t1 = w["before"][0], w["after"][1]
++        wait = t1 + slack + CTL_WAIT_MARGIN_S - now()
++        if wait > 0:
++            sleep(min(wait, CTL_WAIT_MAX_S))
++        try:
++            records = ctl_records(read_ctl())
++        except Exception as e:                                   # noqa: BLE001
++            return False, {"problems": [f"ctl log not readable: {type(e).__name__}: {e}"], "window": [t0, t1]}
++        if case.get("id") == "T14-A1":
++            return control_a1(case, records, t0, t1, slack, cfg.get("worker_ip"), eth0_mac)
++        if case.get("id") == "T14-A2":
++            return control_a2(case, records, t0, t1, slack, cfg.get("manager_ip"), cfg.get("manager_mac"),
++                              worker_http, read_neigh)
++        return False, {"problems": [f"no live control defined for {case.get('id')}"]}
++    return control
++
++
++# ------------------------------------------------------------------ worker side
++def run_suite(runner, read_counters, service_link, worker_neigh, control, iface, arch, tap_mac, fixture_sha):
++    """Runs the four reviewed cases once (arp_cases.run_group) and annotates the record. Does not raise; the caller
++    re-raises runner.stop. rec["stopped"] keeps the arp_cases meaning (a failed restore stopped the group); a stop
++    of the guard is kept apart in rec["guard_stopped"]."""
++    cases = A.build_cases()
++    rec = A.run_group(runner, read_counters, service_link, worker_neigh, control, cases, iface)
++    rec.update(arch=arch, tap_mac=norm_mac(tap_mac), fixture_sha256=fixture_sha,
++               planned_case_ids=[c["id"] for c in cases], service_link_role=LINK_ROLE, neigh_command=list(NEIGH_CMD))
++    if runner.stop is not None:
++        rec["guard_stopped"] = f"{type(runner.stop).__name__}: {runner.stop}"
++    return rec
++
++
++def restore_name(cid):
++    return f"guest configuration restored after {cid} (re-read state equals the baseline)"
++
++
++def link_after_name(cid):
++    return f"allowed service link after {cid} (guest restored): GET get-task/T/file HTTP 200 + fixture hash"
++
++
++LINK_BEFORE_NAME = "allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash"
++NEIGH_READ_NAME = "worker neighbour table read (ip -j neigh show) before and after every ARP case"
++ALL_CASES_NAME = "all four ARP cases recorded exactly once with captures alive"
++GROUP_RECORD_NAME = ("ARP group record: each reviewed case exactly once, execution contract, service links "
++                     "HTTP 200 + fixture hash")
++
++
++def case_requirements(record):
++    """Per-case confirmations a PASS needs, derived from the group record: a case that took a guest baseline must
++    have its restore confirmed; a restored case must have its service link after it confirmed."""
++    req = []
++    cases = record.get("cases") if isinstance(record, dict) else None
++    for c in cases if isinstance(cases, list) else []:
++        if not isinstance(c, dict) or c.get("id") not in A.CASE_IDS:
++            continue
++        gs = c.get("guest_state") if isinstance(c.get("guest_state"), dict) else {}
++        if gs.get("before") is not None:
++            req.append(restore_name(c["id"]))
++            if isinstance(gs.get("restore"), dict) and gs["restore"].get("restored") is True:
++                req.append(link_after_name(c["id"]))
++    return req
++
++
++# ------------------------------------------------------------------ evaluation
++def check_record(record, arch, tap_mac, fixture_sha, iface):
++    """Wiring-level problems that forbid concluding the group (arp_cases.record_problems() is added by evaluate()):
++    architecture, interface, TAP MAC, fixture hash, planned cases, guard stop, service links HTTP 200 + fixture
++    hash (before the group; after every restored case), neighbour collector command."""
++    if not isinstance(record, dict):
++        return [f"group record is {type(record).__name__}, not an object"]
++    p = []
++    if record.get("arch") != arch:
++        p.append(f"record arch {record.get('arch')!r} != {arch!r}")
++    if record.get("iface") != iface:
++        p.append(f"record interface {record.get('iface')!r} != probe interface {iface!r}")
++    try:
++        want_tap = norm_mac(tap_mac)
++    except ValueError as e:
++        return p + [f"TAP MAC invalid: {e}"]
++    if record.get("tap_mac") != want_tap:
++        p.append("record TAP MAC differs from the evaluated one")
++    if record.get("fixture_sha256") != fixture_sha:
++        p.append("record fixture hash differs from the expected one")
++    if record.get("planned_case_ids") != list(A.CASE_IDS):
++        p.append(f"planned cases {record.get('planned_case_ids')!r} != {list(A.CASE_IDS)}")
++    if record.get("neigh_command") != list(NEIGH_CMD):
++        p.append(f"neighbour collector command {record.get('neigh_command')!r} != {list(NEIGH_CMD)}")
++    if record.get("guard_stopped"):
++        p.append(f"group stopped by the guard: {record['guard_stopped']}")
++    if not IH.link_valid(record.get("service_link_before"), fixture_sha):
++        p.append("service_link_before: not HTTP 200 with the fixture hash")
++    for c in record.get("cases") if isinstance(record.get("cases"), list) else []:
++        if not isinstance(c, dict):
++            continue
++        gs = c.get("guest_state") if isinstance(c.get("guest_state"), dict) else {}
++        restored = isinstance(gs.get("restore"), dict) and gs["restore"].get("restored") is True
++        if restored and not IH.link_valid(c.get("service_link_after"), fixture_sha):
++            p.append(f"{c.get('id')}: service_link_after not HTTP 200 with the fixture hash")
++    return p
++
++
++def evaluate(pcap, counters_file, tap_mac, record, arch, fixture_sha, iface):
++    """arp_cases.evaluate_group() + the wiring checks -> the object written to arp-eval.json. Never raises."""
++    problems = check_record(record, arch, tap_mac, fixture_sha, iface)
++    try:
++        res = A.evaluate_group(pcap, counters_file, tap_mac, record)
++    except Exception as e:                                       # noqa: BLE001  a bug must never pass
++        res = {"error": f"{type(e).__name__}: {e}", "cases": [], "record_problems": []}
++        problems.append(f"evaluate_group refused the record: {res['error']}")
++    case_probs = list(res.get("record_problems") or [])
++    gx = A.group_exit(res) if res.get("cases") else 2
++    problems += [f"arp_cases: {x}" for x in case_probs]
++    ids = collections.Counter(c.get("id") for c in res["cases"])
++    if sorted(ids.elements()) != sorted(A.CASE_IDS):
++        problems.append(f"evaluated cases {sorted(ids.elements())} are not each of {list(A.CASE_IDS)} exactly once")
++    res.update(arch=arch, case_record_problems=case_probs, record_problems=problems, group_complete=not problems,
++               group_exit=gx, service_link_role=LINK_ROLE, case_requirements=case_requirements(record),
++               inputs={"pcap": pcap, "counters": counters_file, "tap_mac": tap_mac, "iface": iface})
++    return res
++
++
++def case_test_name(case_result):
++    """Name of the per-case record in result.json; starts with "probe " so that counter_window.run_outcome()
++    treats a CHƯA KIỂM CHỨNG case as undecided and anything else not passed as hard."""
++    kind = "live control" if case_result.get("evidence_kind") == "live_control" else "rule check"
++    return f"probe {case_result['id']} (arp, {kind}) -> {case_result['verdict']}"
++
++
++# ------------------------------------------------------------------ host side
++# Confirmations that probe_matrix.py records on the real ARP path (main() + run_arp() + evaluate_arp()) and that a
++# PASS needs, each EXACTLY ONCE with ok exactly True (06B-4FR rule). Per-case confirmations (restore, service link
++# after a restored case) come from arp-eval.json "case_requirements" and follow the same rule.
++REQUIRED_RECORDS = (
++    "host leak monitor running and empty before boot",
++    "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
++    "tshark capturing on tap0",
++    "guest booted and network configured",
++    "topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface",
++    "capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP "
++    "destinations)",
++    LINK_BEFORE_NAME,
++    NEIGH_READ_NAME,
++    "tap0 MAC unchanged during the ARP group",
++    ALL_CASES_NAME,
++    "capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP "
++    "destinations)",
++    "QEMU exit confirmed",
++    "tap0 capture stopped cleanly",
++    "tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
++    "fixture, marker and temporary guest disk removed",
++    GROUP_RECORD_NAME,
++)
++
++
++def required_problems(results, names):
++    p = []
++    by_name = collections.defaultdict(list)
++    for r in results:
++        if isinstance(r, dict) and isinstance(r.get("test"), str):
++            by_name[r["test"]].append(r)
++    for name in names:
++        recs = by_name.get(name, [])
++        if not recs:
++            p.append(f"required confirmation missing: {name}")
++        elif len(recs) > 1:
++            p.append(f"required confirmation recorded {len(recs)} times: {name}")
++        elif recs[0].get("ok") is not True:
++            p.append(f"required confirmation not passed (ok={recs[0].get('ok')!r}): {name}")
++    return p
++
++
++def arch_outcome(result, arp_eval, arch):
++    """One architecture -> "PASS" | "UNVERIFIED: ..." | "FAIL: ...". counter_window.run_outcome() on every record
++    plus: well-formed records, every REQUIRED_RECORDS and per-case confirmation exactly once with ok True, status
++    COMPLETED, an evaluation of this architecture with each case exactly once (also in result.json), no record
++    problem, and arp_cases.group_exit() not 1/2. A passed case never hides another failed or missing check."""
++    if not isinstance(result, dict) or not isinstance(result.get("results"), list):
++        return "FAIL: result.json unreadable or without results"
++    bad = IH.malformed_records(result["results"])
++    if bad:
++        return f"FAIL: result record(s) {bad[:5]} not an object with a string 'test' and a boolean 'ok'"
++    hard = required_problems(result["results"], REQUIRED_RECORDS)
++    if result.get("status") != "COMPLETED":
++        hard.append(f"status {result.get('status')!r}")
++    if not isinstance(arp_eval, dict):
++        hard.append("arp-eval.json missing or unreadable")
++    else:
++        if arp_eval.get("arch") != arch:
++            hard.append(f"arp-eval arch {arp_eval.get('arch')!r} != {arch!r}")
++        if arp_eval.get("record_problems") or arp_eval.get("group_complete") is not True:
++            hard.append(f"group record not complete/valid: {arp_eval.get('record_problems')}")
++        if arp_eval.get("group_exit") not in (0, 4):
++            hard.append(f"arp_cases group exit {arp_eval.get('group_exit')!r}")
++        reqs = arp_eval.get("case_requirements")
++        if not isinstance(reqs, list) or not all(isinstance(x, str) for x in reqs):
++            hard.append("arp-eval case_requirements missing or invalid")
++        else:
++            hard += required_problems(result["results"], reqs)
++        ids = collections.Counter(c.get("id") for c in arp_eval.get("cases") or [] if isinstance(c, dict))
++        if sorted(ids.elements()) != sorted(A.CASE_IDS):
++            hard.append(f"arp-eval cases {sorted(ids.elements())} are not each case exactly once")
++        names = collections.Counter(r.get("test") for r in result["results"] if isinstance(r, dict))
++        for c in arp_eval.get("cases") or []:
++            if isinstance(c, dict) and "verdict" in c and names[case_test_name(c)] != 1:
++                hard.append(f"{c.get('id')}: not recorded exactly once in result.json")
++    try:
++        base = A.counter_window.run_outcome(result["results"])
++    except (KeyError, TypeError) as e:
++        return f"FAIL: results malformed ({type(e).__name__}: {e})"
++    if hard:
++        rest = base[len("FAIL: "):] if base.startswith("FAIL: ") else ""
++        return "FAIL: " + "; ".join(hard + ([rest] if rest else []))
++    return base
++
++
++def _load(path):
++    try:
++        with open(path) as f:
++            return json.load(f)
++    except (OSError, ValueError):
++        return None
++
++
++def run_check(probe_dir, archs):
++    """Run level: every architecture evaluated exactly once, each with the four cases once. -> problems."""
++    p = []
++    if not archs:
++        p.append("no architecture given")
++    if len(set(archs)) != len(archs):
++        p.append(f"architecture listed twice: {archs}")
++    for a in archs:
++        ev = _load(os.path.join(probe_dir, a, EVAL_FILE))
++        if not isinstance(ev, dict):
++            p.append(f"{a}: {EVAL_FILE} missing or unreadable")
++            continue
++        if ev.get("arch") != a:
++            p.append(f"{a}: evaluation is for {ev.get('arch')!r}")
++        ids = sorted(str(c.get("id")) for c in ev.get("cases") or [] if isinstance(c, dict))
++        if ids != sorted(A.CASE_IDS):
++            p.append(f"{a}: cases {ids} are not each case exactly once")
++    return p
++
++
++def main(argv):
++    if len(argv) == 4 and argv[0] == "--outcome":
++        print(arch_outcome(_load(argv[1]), _load(argv[2]), argv[3]))
++        return 0
++    if len(argv) >= 3 and argv[0] == "--run-check":
++        p = run_check(argv[1], argv[2:])
++        print("\n".join(p) if p else "ARP groups complete: " + " ".join(argv[2:]))
++        return 1 if p else 0
++    print("usage: arp_harness.py --outcome RESULT ARP_EVAL ARCH | --run-check PROBE_DIR ARCH...", file=sys.stderr)
++    return 2
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+diff -ruN ct01-06b4hr2/ctl_loop.py ct01-06b4i/ctl_loop.py
+--- ct01-06b4hr2/ctl_loop.py	2026-10-06 15:51:11.409290215 +0000
++++ ct01-06b4i/ctl_loop.py	2026-10-08 12:03:37.980555746 +0000
+@@ -6,6 +6,9 @@
+   worker <worker_ip>:8011  GET /healthcheck  (worker eth0 address)
+   manager <manager_ip>:8011 GET /healthcheck
+ One JSON line per check: {"ts", "target", "ok", "detail"}. Stops on SIGTERM.
++06B-4I: with the optional 5th argument --arp-worker, right after the worker check it also logs its own ARP
++entry for the worker (target "arp worker-eth0 <worker_ip>", read-only /proc/net/arp of this container): the live
++control of T14-A1 (ARP for 192.168.60.2 resolved on sandboxnet). Without it nothing changes.
+ """
+ import http.client
+ import json
+@@ -15,6 +18,10 @@
+ import time
+ 
+ worker_ip, mongo_ip, manager_ip, out = sys.argv[1:5]
++ARP_WORKER = sys.argv[5:] == ["--arp-worker"]
++if sys.argv[5:] and not ARP_WORKER:
++    sys.exit(f"unknown argument(s) {sys.argv[5:]}")
++PROC_ARP = "/proc/net/arp"
+ running = True
+ signal.signal(signal.SIGTERM, lambda *a: globals().__setitem__("running", False))
+ 
+@@ -35,9 +42,33 @@
+     return "HTTP 200"
+ 
+ 
++def arp_entry(ip, path=None):
++    """06B-4I: this container's ARP entry for ip -> {"hw", "flags", "device"}; raises unless exactly one row with
++    the complete flag (ATF_COM 0x2) and a non-zero MAC exists."""
++    rows = []
++    with open(path or PROC_ARP) as f:
++        lines = f.read().splitlines()
++    if not lines or not lines[0].startswith("IP address"):
++        raise RuntimeError("unexpected /proc/net/arp header")
++    for line in lines[1:]:
++        c = line.split()
++        if len(c) != 6:
++            raise RuntimeError(f"unexpected /proc/net/arp row {line!r}")
++        if c[0] == ip:
++            rows.append({"hw": c[3].lower(), "flags": c[2].lower(), "device": c[5]})
++    if len(rows) != 1:
++        raise RuntimeError(f"{len(rows)} ARP row(s) for {ip}")
++    r = rows[0]
++    if not int(r["flags"], 16) & 0x2 or r["hw"] == "00:00:00:00:00:00":
++        raise RuntimeError(f"ARP entry for {ip} not complete: {r}")
++    return r
++
++
+ checks = [(f"mongo {mongo_ip}:27017", lambda: tcp(mongo_ip, 27017)),
+           (f"worker-eth0 {worker_ip}:8011", lambda: http_health(worker_ip)),
+           (f"manager {manager_ip}:8011", lambda: http_health(manager_ip))]
++if ARP_WORKER:   # right after the worker HTTP check, so that the entry is the one that connection used
++    checks.insert(2, (f"arp worker-eth0 {worker_ip}", lambda: arp_entry(worker_ip)))
+ with open(out, "a", buffering=1) as f:
+     while running:
+         for name, fn in checks:
+diff -ruN ct01-06b4hr2/mutation_arp_wiring.py ct01-06b4i/mutation_arp_wiring.py
+--- ct01-06b4hr2/mutation_arp_wiring.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4i/mutation_arp_wiring.py	2026-10-08 12:31:10.717657556 +0000
+@@ -0,0 +1,172 @@
++#!/usr/bin/env python3
++"""06B-4I — mutation test of the ARP wiring (arp_harness.py, probe_matrix.py arp branch, ctl_loop.py --arp-worker,
++run-06b4i.sh), offline. Each mutant runs selftest_arp_wiring.py in its own mktemp copy of every harness file; every
++replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID / ERROR as in
++mutation_icmp_wiring.py. Baseline must pass; harness hash checked before/after.
++    python3 mutation_arp_wiring.py
++"""
++import concurrent.futures
++import glob
++import hashlib
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++FILES = sorted(os.path.basename(p) for p in glob.glob(os.path.join(HERE, "*.py")) + glob.glob(os.path.join(HERE, "*.sh")))
++AH, PM, RS, CL = "arp_harness.py", "probe_matrix.py", "run-06b4i.sh", "ctl_loop.py"
++M = [
++    # ---- arp_harness.py
++    ("V1", AH, [('"ok": before and after and fails == 0 and not problems}', '"ok": before and after and not problems}')],
++     "U4 ctl_window: one failure inside the span -> not ok, counted"),
++    ("V2", AH, [('"ok": before and after and fails == 0 and not problems}', '"ok": before and fails == 0 and not problems}')],
++     "U2 ctl_window: nothing after read B (yet) -> not ok"),
++    ("V3", AH, [('        if d.get("hw") != mac:', '        if False:')],
++     "U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok"),
++    ("V4", AH, [('    if case.get("dst") != worker_ip:', '    if False:')],
++     "U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC unknown -> not ok"),
++    ("V5", AH, [('                    and entry["lladdr"] == mac):', '                    ):')],
++     "U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok"),
++    ("V6", AH, [('        if A._maybe(unknown, manager_ip, "eth0"):', '        if False:')],
++     "U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok"),
++    ("V7", AH, [('        if wait > 0:\n', '        if False:\n')],
++     "U14 make_control: waits until the ctl log can hold a record after the span, then judges A1/A2"),
++    ("V8", AH, [('        rec["guard_stopped"] = ', '        rec["stopped"] = ')],
++     "S32 marker-after-A2-ping: QEMU shut down and cleanup done after the stop; group record kept with the guard stop"),
++    ("V9", AH, [('        if restored and not IH.link_valid(', '        if False and not IH.link_valid(')],
++     "U18 check_record: link before/after a restored case not HTTP 200 + fixture hash -> problem"),
++    ("V10", AH, [('    problems += [f"arp_cases: {x}" for x in case_probs]', '    pass')],
++     "U21 evaluate: arp_cases record problems are kept (prefixed) and block the group"),
++    ("V11", AH, [('            hard += required_problems(result["results"], reqs)', '            pass')],
++     "R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL"),
++    ("V12", AH, [('        if arp_eval.get("group_exit") not in (0, 4):', '        if False:')],
++     "R6 group_exit 2 in arp-eval.json -> FAIL; evaluation of another architecture -> FAIL"),
++    ("V13", AH, [('    NEIGH_READ_NAME,\n', '')],
++     "R2 the real ARP path records no other non-info, non-case check outside the required list"),
++    ("V14", AH, [('                req.append(link_after_name(c["id"]))', '                pass')],
++     "R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL"),
++    ("V15", AH, [('    return f"probe {case_result[\'id\']} (arp, {kind})', '    return f"arp {case_result[\'id\']} (arp, {kind})')],
++     "S36 ctl-no-arp: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS"),
++    ("V16", AH, [('NEIGH_CMD = ("ip", "-j", "neigh", "show")', 'NEIGH_CMD = ("ip", "-j", "neigh", "show", "dev", "tap0")')],
++     "S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control"),
++    # ---- probe_matrix.py (arp branch only)
++    ("V17", PM, [('    if stop is not None:\n        raise stop', '    if False:\n        raise stop')],
++     "S30 marker-after-A2-ping: exit 98, the command that tripped the guard is the LAST one sent (no restore, no link)"),
++    ("V18", PM, [('        leak_guard(cmd, "before")\n', '')],
++     "S33 alert written during 'T15-S1 before' (read A): S1 setup NOT sent, exit 99, leak record when=before"),
++    ("V19", PM, [('        captures_alive(tshark, f"before ARP guest command {cmd!r}")', '        pass')],
++     "S35 capture lost during 'T14-A2 before': A2 setup NOT sent, exit 98, the restore reaches no guest (not restored), A3/S1 not run"),
++    ("V20", PM, [('        found = alert_lines()               # raises',
++                  '        try:\n            found = alert_lines()\n        except Exception:\n            found = []  # raises')],
++     "S34 alert file unreadable during 'T14-A2 before': never 'no alert'; A2 setup NOT sent; ERROR exit 1; FAIL"),
++    ("V21", PM, [('            evaluate_arp()\n', '            evaluate_icmp()\n')],
++     "S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS"),
++    ("V22", PM, [('            record(arp_harness.restore_name(c["id"]), rs.get("restored") is True,',
++                  '            record(arp_harness.restore_name(c["id"]), True,')],
++     "S29 restore fails after A2: run outcome FAIL (restore confirmation), no service link after A2, script FAIL"),
++    ("V23", PM, [('    record(arp_harness.NEIGH_READ_NAME, bool(ran) and not any(errs.values())',
++                  '    record(arp_harness.NEIGH_READ_NAME, True or not any(errs.values())')],
++     "S18 collector fails (rc != 0) after A2: A2 LỖI PHÉP ĐO with the error kept, collector record FAIL, never PASS"),
++    ("V24", PM, [('        return run_checked(list(arp_harness.NEIGH_CMD))', '        return run_checked(["ip", "-j", "neigh", "show", "dev", "tap0"])')],
++     "S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control"),
++    ("V25", PM, [('        name = arp_harness.LINK_BEFORE_NAME if links["n"] == 0 else arp_harness.link_after_name(current["case"])',
++                  '        name = arp_harness.LINK_BEFORE_NAME')],
++     "R1 the real ARP path records every required confirmation exactly once (static + per case)"),
++    ("V26", PM, [('        res = arp_harness.evaluate(PCAP, os.path.join(OUT, "counters-raw.jsonl"), ARP["tap_mac"], ARP["record"],',
++                  '        res = arp_harness.evaluate(PCAP, os.path.join(OUT, "counters-raw.jsonl"), "02:00:00:00:00:01", ARP["record"],')],
++     "S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS"),
++    ("V27", PM, [('        windows.setdefault(cid, {})[which] = (r["t_start"], r["t_end"])', '        pass')],
++     "S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS"),
++    ("V28", PM, [('    record(arp_harness.GROUP_RECORD_NAME, res["group_complete"] is True,',
++                  '    record(arp_harness.GROUP_RECORD_NAME, True,')],
++     "S15 missing-case: never PASS; outcome FAIL naming the record problem; script FAIL; group record check FAIL in result.json"),
++    ("V29", PM, [('if SUITE == "arp":\n    import arp_harness', 'if SUITE == "arp":\n    import icmp_harness as arp_harness')],
++     "S13 imports in the fake container came only from the files run-06b4i.sh mounts"),
++    # ---- ctl_loop.py
++    ("V30", CL, [('    if not int(r["flags"], 16) & 0x2 or r["hw"] == "00:00:00:00:00:00":', '    if r["hw"] == "00:00:00:00:00:00":')],
++     "U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises"),
++    ("V31", CL, [('    if len(rows) != 1:', '    if not rows:')],
++     "U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises"),
++    # ---- run-06b4i.sh
++    ("V32", RS, [('-e CT01_SUITE=arp "$ID"', '"$ID"')], "W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)"),
++    ("V33", RS, [('    -v "$H/guest_state.py:/harness/guest_state.py:ro" \\\n', '')],
++     "W5 every module probe_matrix imports in arp mode is mounted read-only"),
++    ("V34", RS, [('    0:PASS) pass', '    0:PASS|1:UNVERIFIED*) pass')],
++     "S36 ctl-no-arp: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS"),
++    ("V35", RS, [('python3 "$H/selftest_arp_wiring.py" > "$OUT/selftest-arp-wiring.txt" 2>&1 || { cat "$OUT/selftest-arp-wiring.txt"; echo "ABORT: ARP wiring self-test failed"; exit 3; }\n', '')],
++     "W4 selftest_arp.py and selftest_arp_wiring.py (and the ICMP/L2 ones) run before any docker command and abort"),
++    ("V36", RS, [('/ctl/ctl.jsonl --arp-worker)', '/ctl/ctl.jsonl)')],
++     "W7 ctl started with --arp-worker; its ARP target is checked alive like the others"),
++    ("V37", RS, [('"$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW"', '"$MANAGER_IP" "" "$SANDBOX_GW"')],
++     "W8 manager MAC passed to the worker in CT01_TARGETS"),
++    # ---- controls
++    ("X1", AH, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
++    ("X2", "selftest_arp_wiring.py", [("import ast\n", "import ast(\n")], None),
++]
++EXPECT = {"X1": "INVALID", "X2": "ERROR"}
++
++
++def sha(d):
++    return {f: hashlib.sha256(open(os.path.join(d, f), "rb").read()).hexdigest() for f in FILES}
++
++
++def suite(d):
++    p = subprocess.run([sys.executable, os.path.join(d, "selftest_arp_wiring.py")], capture_output=True, text=True,
++                       timeout=1200, cwd=d)
++    res = {}
++    for l in p.stdout.splitlines():
++        if l.startswith("[PASS] ") or l.startswith("[FAIL] "):
++            res[l[7:].split("  (")[0]] = l.startswith("[PASS]")
++    if not any(l.startswith("SELFTEST-ARP-WIRING:") for l in p.stdout.splitlines()):
++        return None, (p.stderr or p.stdout).strip().splitlines()[-1:]
++    return res, None
++
++
++def main():
++    h0 = sha(HERE)
++    with tempfile.TemporaryDirectory(prefix="mutation-arp-wiring.") as tmp:
++        def copy():
++            d = tempfile.mkdtemp(dir=tmp)
++            for f in FILES:
++                shutil.copy2(os.path.join(HERE, f), d)
++            return d
++        base, err = suite(copy())
++        if base is None or not all(base.values()):
++            print("BASELINE FAILED", err or [k for k, v in base.items() if not v])
++            return 2
++        print(f"baseline: {len(base)}/{len(base)} tests pass")
++
++        def one(entry):
++            mid, fname, reps, target = entry
++            if target is not None and target not in base:
++                return mid, "BAD-TARGET", target, [], None
++            d = copy()
++            src = open(os.path.join(d, fname)).read()
++            for old, new in reps:
++                if src.count(old) != 1:
++                    return mid, "INVALID", target, [], None
++                src = src.replace(old, new)
++            open(os.path.join(d, fname), "w").write(src)
++            res, err = suite(d)
++            if res is None:
++                return mid, "ERROR", target, [], err
++            failed = sorted(k for k, v in res.items() if not v)
++            return mid, ("DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"), target, failed, None
++        good = bad = 0
++        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
++            for mid, klass, target, failed, err in ex.map(one, M):
++                ok = klass == EXPECT.get(mid, "DETECTED")
++                good += ok
++                bad += not ok
++                print(f"{'OK ' if ok else 'BAD'} {mid:4s} {klass:18s} target={target!r}"
++                      + ("" if klass in ("DETECTED", "INVALID", "MISSED") else f" failed={failed[:5]} {err or ''}"),
++                      flush=True)
++    same = sha(HERE) == h0
++    print(f"MUTATION-ARP-WIRING: {good} OK, {bad} not as expected; harness {'unchanged' if same else 'CHANGED'}")
++    return 0 if bad == 0 and same else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN ct01-06b4hr2/probe_matrix.py ct01-06b4i/probe_matrix.py
+--- ct01-06b4hr2/probe_matrix.py	2026-10-08 08:10:13.861894814 +0000
++++ ct01-06b4i/probe_matrix.py	2026-10-08 12:04:38.806087322 +0000
+@@ -30,6 +30,11 @@
+ topology gate, tap0 capture, host capture/heartbeat/alert checks, counter reads, session measurement,
+ QEMU shutdown and cleanup. Without CT01_SUITE (or "ipv4") nothing changes.
+ 06B-4FR: the leak alerts are also checked before every guest command of the ICMP group.
++06B-4I: CT01_SUITE=arp runs, instead of the 20 IPv4 probes, ONLY the four reviewed ARP cases of arp_cases.py
++(T14-A1, T14-A2, T14-A3, T15-S1) through arp_harness.py: same boot, topology gate, captures, guard (alerts and
++captures/heartbeat before AND after every guest command, guest_state snapshot/restore included), counter reads,
++session measurement, QEMU shutdown and cleanup; plus the worker neighbour collector (ip -j neigh show in this
++netns) and the live controls of T14-A1/A2. Prepared and tested offline only.
+ """
+ import ipaddress
+ import json
+@@ -81,12 +86,15 @@
+            "drop_bcast_mcast", "drop_public", "l2_bad_ethertype", "l2_bad_mac"]
+ 
+ SUITE = os.environ.get("CT01_SUITE", "ipv4")   # 06B-4F
+-if SUITE not in ("ipv4", "icmp"):
++if SUITE not in ("ipv4", "icmp", "arp"):
+     sys.exit(f"unknown CT01_SUITE {SUITE!r}")
+ if SUITE == "icmp":
+     import icmp_harness                         # /harness/icmp_harness.py (+ icmp_cases, l2frames, l2eval)
++if SUITE == "arp":
++    import arp_harness                          # /harness/arp_harness.py (+ arp_cases, guest_state, icmp_harness ...)
+ SYS_NET = "/sys/class/net"                      # 06B-4F: tap0 MAC (read only)
+ ICMP = {}                                       # 06B-4F: group record, TAP MAC and fixture hash for evaluate_icmp()
++ARP = {}                                        # 06B-4I: the same for evaluate_arp()
+ 
+ os.makedirs(OUT, exist_ok=True)
+ results, probes = [], []
+@@ -504,6 +512,11 @@
+ 
+         # ------------------------------------------------ allowed service link: before
+         current_task.set_current(T)
++        if SUITE == "arp":    # 06B-4I: the four reviewed ARP cases instead of the IPv4 matrix
++            run_arp(g, cfg, fixture, tshark)    # raises LeakDetected / CaptureLost like the probe loop
++            current_task.clear()
++            status = "COMPLETED"
++            return 0
+         if SUITE == "icmp":   # 06B-4F: the five reviewed ICMP cases instead of the IPv4 matrix
+             run_icmp(g, cfg, fixture, tshark)   # raises LeakDetected / CaptureLost like the probe loop
+             current_task.clear()
+@@ -647,7 +660,9 @@
+                not os.path.exists(WORK) and not os.path.exists(C.CURRENT_TASK_FILE) and not os.path.exists(DATA + T))
+         if "read_before" in session:
+             evaluate_session()   # 06B-3F: reported separately, whatever the status
+-        if status == "COMPLETED":
++        if status == "COMPLETED" and SUITE == "arp":
++            evaluate_arp()
++        elif status == "COMPLETED":
+             evaluate_icmp() if SUITE == "icmp" else evaluate()
+         json.dump({"status": status, "results": results, "probes": probes},
+                   open(os.path.join(OUT, "result.json"), "w"), indent=1, default=str)
+@@ -662,13 +677,13 @@
+         return icmp_harness.I.L._norm_mac(f.read())
+ 
+ 
+-def capture_liveness(label):
++def capture_liveness(label, suite="ICMP"):
+     """Traffic FROM THE WORKER that the host captures must see (veth/ens33 positive checks, control_qname of
+     sigscan.sh): the same calls as the IPv4 matrix's local controls. It is NOT a control for the ICMP
+     destinations; it only shows that the host captures and the payload scan are not blind."""
+     r = {"lan_dns_udp": run_ctl(lambda: ctl_dns(CFG["lan_dns"], f"ct01-06b3b-ctl-{ARCH.lower()}.example")),
+          "manager_http": run_ctl(lambda: ctl_http(CFG["manager_ip"], 8011))}
+-    record(f"capture liveness traffic from the worker {label} (host captures; not a control for the ICMP "
++    record(f"capture liveness traffic from the worker {label} (host captures; not a control for the {suite} "
+            "destinations)", all(v["ok"] for v in r.values()), **r)
+ 
+ 
+@@ -757,6 +772,136 @@
+                reconciliation=(c.get("reconciliation") or {}).get("verdict"))
+ 
+ 
++# ------------------------------------------------------------------ 06B-4I: ARP suite
++def read_iface_mac(name):
++    """MAC of an interface of the worker netns (read only): tap0 (frame directions) and eth0 (T14-A1 control)."""
++    with open(os.path.join(SYS_NET, name, "address")) as f:
++        return arp_harness.norm_mac(f.read())
++
++
++def run_arp(g, cfg, fixture, tshark):
++    """The four reviewed ARP cases, once, through arp_cases.run_group() (arp_harness.run_suite). Every guest command
++    (service links, guest_state snapshot and restore, setup/trigger/settle) goes through the reviewed GuardedRunner:
++    leak alerts, then captures/heartbeat, before AND after the command; the first failure stops the group (no
++    further command reaches the guest, the restore included: the guest is then shut down and its disk removed) and
++    is re-raised here, so LeakDetected (99) / CaptureLost (98) / other errors (1) are handled as before.
++    Worker side, not guest commands: the neighbour collector (ip -j neigh show in this netns) and the T14-A1/A2
++    live controls (arp_harness.make_control)."""
++    import hashlib
++    tap_mac = read_iface_mac(C.GUEST_IF)
++    sha = hashlib.sha256(fixture).hexdigest()
++    try:
++        eth0_mac = read_iface_mac("eth0")
++    except (OSError, ValueError) as e:      # the T14-A1 control then fails; it never passes without it
++        eth0_mac = None
++        say(f"    worker eth0 MAC not readable: {type(e).__name__}: {e}")
++    ARP.update(tap_mac=tap_mac, sha=sha, iface=cfg.net_iface)
++    record("info: ARP suite (06B-4I): T14-A1/A2 live control, T14-A3/T15-S1 rule check", True, tap_mac=tap_mac,
++           probe_iface=cfg.net_iface, fixture_sha256=sha, worker_eth0_mac=eth0_mac,
++           neigh_command=list(arp_harness.NEIGH_CMD), service_link_role=arp_harness.LINK_ROLE)
++    capture_liveness("before the ARP group", "ARP")
++
++    def leak_guard(cmd, phase):
++        found = alert_lines()               # raises when the alert file is missing/unreadable: never "no alert"
++        if found:
++            record("NO probe packet seen on host interfaces (leak monitor)", False, suite="arp", when=phase,
++                   command=cmd, alerts=found[:5])
++            raise LeakDetected(f"{phase} ARP guest command {cmd!r}: {len(found)} signature packet(s) seen on host "
++                               "interfaces")
++
++    def guard_before(cmd):
++        leak_guard(cmd, "before")
++        captures_alive(tshark, f"before ARP guest command {cmd!r}")
++
++    def guard_after(cmd):
++        leak_guard(cmd, "after")
++        captures_alive(tshark, f"after ARP guest command {cmd!r}")
++
++    runner = arp_harness.IH.GuardedRunner(g, guard_before, guard_after)
++    windows, current, links = {}, {"case": None}, {"n": 0}
++
++    def read_counters(label):               # "<case id> before|after": remembers the case window for its control
++        cid, _, which = label.rpartition(" ")
++        current["case"] = cid
++        r = counters_read(label)
++        windows.setdefault(cid, {})[which] = (r["t_start"], r["t_end"])
++        return r
++
++    def service_link():                     # before the group, then after every restored case (arp_cases)
++        name = arp_harness.LINK_BEFORE_NAME if links["n"] == 0 else arp_harness.link_after_name(current["case"])
++        links["n"] += 1
++        try:
++            rc, out = runner.run(arp_harness.IH.link_command(URL, T))
++        except Exception as e:
++            record(name, False, error=f"{type(e).__name__}: {e}")
++            raise
++        ok, detail = arp_harness.IH.parse_service_link(rc, out, sha)
++        record(name, ok, **detail)
++        return ok, detail
++
++    def worker_neigh():                     # this container = the worker netns; rc != 0 raises (recorded by run_group)
++        return run_checked(list(arp_harness.NEIGH_CMD))
++
++    def ctl_text():
++        with open(CTL) as f:
++            return f.read()
++
++    control = arp_harness.make_control(windows, ctl_text, CFG, eth0_mac,
++                                       lambda: run_ctl(lambda: ctl_http(CFG["manager_ip"], 8011)), worker_neigh,
++                                       time.time, time.sleep, slack=arp_harness.CTL_SLACK_S)
++    say(f"--- ARP group: {', '.join(arp_harness.A.CASE_IDS)} on {cfg.net_iface}")
++    rec = arp_harness.run_suite(runner, read_counters, service_link, worker_neigh, control, cfg.net_iface, ARCH,
++                                tap_mac, sha)
++    ARP["record"] = rec
++    with open(os.path.join(OUT, arp_harness.RECORD_FILE), "w") as f:
++        json.dump(rec, f, indent=1, default=str)
++    say(f"    ARP group record: {len(rec['cases'])} case(s), sent {len(runner.sent)} guest command(s)"
++        + (f", guard stop: {rec['guard_stopped']}" if rec.get("guard_stopped") else "")
++        + (f", stopped: {rec['stopped']}" if rec.get("stopped") else ""))
++    stop = runner.stop
++    if stop is not None:
++        raise stop
++    for c in rec["cases"]:
++        gs = c.get("guest_state") or {}
++        if gs.get("before") is not None:    # the case changed (or may have changed) the guest: restore confirmed?
++            rs = gs.get("restore") if isinstance(gs.get("restore"), dict) else {}
++            record(arp_harness.restore_name(c["id"]), rs.get("restored") is True, diffs=rs.get("diffs"),
++                   error=rs.get("error"), restore_commands=len(rs.get("commands") or []))
++    ran = [c for c in rec["cases"] if not c.get("not_run")]
++    errs = {c["id"]: [c[k] for k in ("neigh_before_error", "neigh_after_error") if c.get(k)] for c in ran}
++    record(arp_harness.NEIGH_READ_NAME, bool(ran) and not any(errs.values())
++           and all(isinstance(c.get("neigh_before"), str) and isinstance(c.get("neigh_after"), str) for c in ran),
++           cases=[c["id"] for c in ran], errors={k: v for k, v in errs.items() if v})
++    tap_after = read_iface_mac(C.GUEST_IF)
++    record("tap0 MAC unchanged during the ARP group", tap_after == tap_mac, before=tap_mac, after=tap_after)
++    record(arp_harness.ALL_CASES_NAME,
++           [c["id"] for c in rec["cases"]] == list(arp_harness.A.CASE_IDS) and not rec.get("skipped"),
++           planned=list(arp_harness.A.CASE_IDS), recorded=[c["id"] for c in rec["cases"]],
++           not_run=[c["id"] for c in rec["cases"] if c.get("not_run")], skipped=rec.get("skipped"))
++    capture_liveness("after the ARP group", "ARP")
++
++
++def evaluate_arp():
++    """06B-4I: arp_harness.evaluate() on the tap0 capture and counters-raw.jsonl -> arp-eval.json, one record per
++    case ("probe <id> (arp, ...) -> <verdict>") and one for the group record."""
++    try:
++        res = arp_harness.evaluate(PCAP, os.path.join(OUT, "counters-raw.jsonl"), ARP["tap_mac"], ARP["record"],
++                                   ARCH, ARP["sha"], ARP["iface"])
++    except Exception as e:   # a bug must never pass, nor crash the cleanup in main()'s finally
++        record("ARP group evaluated", False, error=f"{type(e).__name__}: {e}")
++        return
++    with open(os.path.join(OUT, arp_harness.EVAL_FILE), "w") as f:
++        json.dump(res, f, indent=1, sort_keys=True, ensure_ascii=False, default=str)
++    record(arp_harness.GROUP_RECORD_NAME, res["group_complete"] is True, problems=res["record_problems"],
++           group_exit=res["group_exit"])
++    for c in res["cases"]:
++        record(arp_harness.case_test_name(c), c["ok"], category=c["category"], evidence_kind=c.get("evidence_kind"),
++               probe_frames=c.get("probe_frames"), probe_frames_certain=c.get("probe_frames_certain"),
++               failure_evidence=c.get("failure_evidence"), measurement_errors=c.get("measurement_errors"),
++               execution_problems=c.get("execution_problems"), not_started=c.get("not_started"),
++               not_run=c.get("not_run"), reconciliation=(c.get("reconciliation") or {}).get("verdict"))
++
++
+ def evaluate_session():
+     """06B-3F: session-wide counter/pcap reconciliation for this architecture. Written to session.json
+     and printed on its own line; it is NOT recorded in `results`, so it changes no probe verdict and
+diff -ruN ct01-06b4hr2/run-06b4i.sh ct01-06b4i/run-06b4i.sh
+--- ct01-06b4hr2/run-06b4i.sh	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4i/run-06b4i.sh	2026-10-08 12:05:29.477710199 +0000
+@@ -0,0 +1,510 @@
++#!/bin/bash
++# Nhiệm vụ 06B-4I — ARP group (T14-A1, T14-A2, T14-A3, T15-S1) from real guests, ARM then MIPS.
++# PREPARED AND TESTED OFFLINE ONLY in 06B-4I (selftest_arp_wiring.py); NOT run. Copy of run-06b4f.sh with only
++# these changes (selftest_arp_wiring.py W-tests list them):
++#  * H = ct01-06b4i; the worker runs probe_matrix.py with CT01_SUITE=arp: ONLY the four reviewed ARP cases of
++#    arp_cases.py (06B-4HR2, unchanged) through arp_harness.py; no IPv4 probe, no ICMP case, no case added;
++#  * arp_cases.py, arp_harness.py, guest_state.py mounted read-only in /harness (with the ICMP modules that
++#    arp_harness reuses: icmp_harness.py, icmp_cases.py, l2frames.py, l2eval.py, signatures.py);
++#  * offline self-tests selftest_arp.py and selftest_arp_wiring.py must pass before anything starts (the ICMP
++#    ones are kept: arp_harness reuses icmp_harness);
++#  * the control container also logs its ARP entry for the worker (ctl_loop.py --arp-worker), checked alive like
++#    the other controls; the manager's sandboxnet MAC is passed to the worker (CT01_TARGETS manager_mac): both are
++#    inputs of the T14-A1/A2 live controls;
++#  * per-architecture outcome from arp_harness.py --outcome, run level from arp_harness.py --run-check.
++# Everything else (boot, topology gate, captures, watcher/heartbeat, leak alerts, scanners, counter reads,
++# session measurement, QEMU shutdown, cleanup, host-state checks, exit codes) is run-06b4f.sh unchanged.
++# Guard 20 ms: unmeasured assumption.
++#
++#   sudo bash /home/dathq/projects/ct01-06b4i/run-06b4i.sh   (only when the reviewer allows the run)
++#
++# ---- header of run-06b4f.sh:
++# Nhiệm vụ 06B-4F — ICMP group (T12-B1, T12-B2, T12-B4, T13-I1, T13-I2) from real guests, ARM then MIPS.
++# PREPARED AND TESTED OFFLINE ONLY in 06B-4F (selftest_icmp_wiring.py); NOT run. Copy of run-06b3b.sh
++# (06B-4B/4C harness) with only these changes:
++#  * the worker runs probe_matrix.py with CT01_SUITE=icmp: ONLY the five reviewed ICMP cases of
++#    icmp_cases.py (06B-4ER) through icmp_harness.py; the 20 IPv4 probes are NOT run, no case is added;
++#  * icmp_cases.py, icmp_harness.py, l2frames.py, l2eval.py, signatures.py mounted read-only in /harness;
++#  * offline self-tests selftest_icmp.py and selftest_icmp_wiring.py must pass before anything starts;
++#  * per-architecture outcome from icmp_harness.py --outcome (counter_window.run_outcome on every record +
++#    status COMPLETED + each case exactly once + service link before/after HTTP 200 and fixture hash);
++#  * run level: icmp_harness.py --run-check (ARM and MIPS each evaluated with the five cases once).
++# Boot, topology gate, captures, watcher/heartbeat, leak alerts, scanners, counter reads, session
++# measurement, QEMU shutdown, cleanup and host-state checks are those of run-06b3b.sh, unchanged.
++# Guard 20 ms: unmeasured assumption. A pass is only "ĐẠT (kiểm quy tắc)".
++# 06B-4FR: only H changes in this script; the fixes are in probe_matrix.py (leak alerts also checked
++# before every guest command) and icmp_harness.py (required infrastructure confirmations in --outcome).
++#
++#   sudo bash /home/dathq/projects/ct01-06b4fr/run-06b4f.sh   (06B-4FR: H = ct01-06b4fr)
++#
++# ---- original header of run-06b3b.sh:
++# Nhiệm vụ 06B-3B — IPv4 block matrix from real guests (ARM, then MIPS) with live controls.
++# Harness revised in 06B-3C (same 20 probes, no new probe):
++#  * signature scan of host pcaps by sigscan.sh (probe URL regex fixed; fixture self-test first);
++#  * capture watcher: a capture that dies during the test is FAIL and stops the probes; tcpdump exit
++#    codes, kernel drops and pcap read errors are checked;
++#  * ip link / addr / route / neigh / rule of the worker netns recorded before and after;
++#  * manager restored to its initial state (running stays running and is not restarted).
++# Revised in 06B-3DR: timed nft counter reads with boundary zones (counter_window.py); teardown stops
++# the controls, drains, then stops captures with a deadline and records a timeline and versions;
++# results are PASS (exit 0), FAIL (1), UNVERIFIED (4) or passed-with-open-items (5).
++# 06B-3F: a session-wide counter/pcap reconciliation per architecture (session.json) is reported in its
++# own section; it does not change the per-probe verdicts or the exit code.
++# 06B-4B (harness copy in ct01-06b4b; the 06B-3FR1 copy in ct01-06b3c is unchanged), host side only,
++# same 20 probes: ens33 is captured WITHOUT a filter, bounded (snaplen, packet limit: reaching the limit
++# ends tcpdump, which the watcher reports as a dead capture); the leak alerts are built from
++# signatures.py (alert on `any`: network-layer signatures; alert_eth on the worker veth: + MAC
++# signatures, because `ether host` does not compile on LINUX_SLL2); host pcaps are also scanned by
++# sigscan_l2.py (guest/spoof MAC, ARP, IPv6, spoofed sources, probe ports/ICMP sizes/qname).
++#
++#   sudo bash /home/dathq/projects/ct01-06b4b/run-06b3b.sh
++#
++#  * Worker test container ct01-06b3b-guest: reviewed image (full id pinned), real run.sh (V0),
++#    REAL server.py, sentinel poller. sandboxnet, --privileged like compose, --restart no,
++#    no published ports, no host network, no lab-data / docker.sock mounts.
++#  * The existing sandbox-manager container is used for controls. If it is not running it is started
++#    with `docker compose up -d --no-deps --no-build sandbox-manager` and stopped again at the end;
++#    if it is already running it is left running and never restarted.
++#    The compose worker service is never started.
++#  * Control container ct01-06b3b-ctl (sandboxnet + dbnet) continuously checks MongoDB:27017,
++#    worker eth0:8011 and manager:8011.
++#  * Host side is READ-ONLY: tcpdump on the worker veth, the sandboxnet bridge and ens33, plus a
++#    leak alert (tcpdump -i any 'net 10.200.0.0/30'). If any probe packet appears on the host,
++#    everything stops immediately.
++#  * Only fixed IP/port pairs are probed; guest uses its own curl / busybox nslookup.
++#  * Cleanup removes only containers created by this run and host tcpdumps started by it.
++#    Every criterion is a hard check; exit != 0 on failure. No env printing.
++set -uo pipefail
++
++EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
++H=/home/dathq/projects/ct01-06b4i
++OUT=$H/out
++REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
++IMAGE=sandbox-worker:latest
++NAME=ct01-06b3b-guest
++CTL=ct01-06b3b-ctl
++MANAGER=cic-ynu-iotmal-sandbox-sandbox-manager-1
++GUEST_MAC=52:54:00:c7:00:02
++LAN_DNS=192.168.177.2
++
++[ "$(id -u)" = 0 ] || { echo "run with sudo"; exit 2; }
++[ -e "$OUT" ] && { echo "ABORT: $OUT exists (keep previous evidence; move it first)"; exit 2; }
++mkdir -p "$OUT/hostcap" "$OUT/ctl" "$OUT/harness-copy"
++exec > >(tee "$OUT/run.log") 2>&1
++cp "$0" "$H/probe_matrix.py" "$H/ctl_loop.py" "$H/sentinel/poller.py" "$H/harness_lib.sh" "$H/sigscan.sh" \
++    "$H/make_fixtures.py" "$H/selftest.sh" "$H/independent_check.sh" "$H/pcapng_stats.py" "$H/mutation_test.sh" \
++    "$H/counter_window.py" "$H/signatures.py" "$H/l2frames.py" "$H/guest_state.py" "$H/sigscan_l2.py" \
++    "$H/selftest_l2.py" "$H/mutation_l2.py" \
++    "$H/icmp_cases.py" "$H/icmp_harness.py" "$H/l2eval.py" "$H/selftest_icmp.py" "$H/selftest_l2eval.py" \
++    "$H/selftest_icmp_wiring.py" "$H/run-06b3b.sh" \
++    "$H/arp_cases.py" "$H/arp_harness.py" "$H/selftest_arp.py" "$H/selftest_arp_wiring.py" "$H/run-06b4f.sh" \
++    "$OUT/harness-copy/"
++sha256sum "$OUT"/harness-copy/* | tee "$OUT/harness-sha256.txt"
++# Offline self-test of the scanner, the capture watcher and the manager handling; nothing runs if it fails.
++bash "$H/selftest.sh" "$OUT/selftest" > "$OUT/selftest.txt" 2>&1 || { cat "$OUT/selftest.txt"; echo "ABORT: harness self-test failed"; exit 3; }
++tail -1 "$OUT/selftest.txt"
++# 06B-4B: offline self-test of the new modules (no regression section: that needs the 06B-3G evidence)
++python3 "$H/selftest_l2.py" --offline-only > "$OUT/selftest-l2.txt" 2>&1 || { cat "$OUT/selftest-l2.txt"; echo "ABORT: L2 self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-l2.txt"
++# 06B-4F: offline self-tests of the ICMP cases and of their wiring; nothing runs if either fails.
++python3 "$H/selftest_icmp.py" > "$OUT/selftest-icmp.txt" 2>&1 || { cat "$OUT/selftest-icmp.txt"; echo "ABORT: ICMP self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-icmp.txt"
++python3 "$H/selftest_icmp_wiring.py" > "$OUT/selftest-icmp-wiring.txt" 2>&1 || { cat "$OUT/selftest-icmp-wiring.txt"; echo "ABORT: ICMP wiring self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-icmp-wiring.txt"
++# 06B-4I: offline self-tests of the ARP cases and of their wiring; nothing runs if either fails.
++python3 "$H/selftest_arp.py" > "$OUT/selftest-arp.txt" 2>&1 || { cat "$OUT/selftest-arp.txt"; echo "ABORT: ARP self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-arp.txt"
++python3 "$H/selftest_arp_wiring.py" > "$OUT/selftest-arp-wiring.txt" 2>&1 || { cat "$OUT/selftest-arp-wiring.txt"; echo "ABORT: ARP wiring self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-arp-wiring.txt"
++python3 "$H/signatures.py" --check || { echo "ABORT: signature registry invalid"; exit 3; }
++eval "$(python3 "$H/signatures.py" --shell)" || { echo "ABORT: signature registry not loadable"; exit 3; }
++source "$H/harness_lib.sh"   # alive, start/stop_capture_watch, manager_prepare/restore
++
++CREATED_IDS=(); FAILS=(); UNVERIFIED=(); OPEN_ITEMS=(); SESSION_RESULTS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
++DRAIN_S=3           # 06B-3DR: after the controls stop, captures get this long to process what is left
++CAP_DEADLINE_S=10   # then SIGINT; a capture still running after this many seconds is killed (FAIL)
++log()  { echo; echo "===== $* ($(date -u +%H:%M:%S))"; }
++pass() { echo "[PASS] $*"; }
++fail() { echo "[FAIL] $*"; FAILS+=("$*"); }
++check() { local msg=$1; shift; if "$@"; then pass "$msg"; else fail "$msg"; return 1; fi; }
++# Remove the temporary capture dir only if it is exactly the mktemp path this run created.
++rm_capd() { [[ "${CAPD:-}" == /tmp/ct01-06b3b-cap.?????? ]] && [ -d "$CAPD" ] && rm -r -- "$CAPD"; }
++COMPOSE=(docker compose --project-directory "$REPO" -f "$REPO/docker-compose.yml")
++
++# Stops the host captures with a deadline (harness_lib.sh: stop_captures_deadline). Exit codes go to
++# hostcap/tcpdump-exit.txt ("<name> <rc>" or "<name> KILLED_AT_DEADLINE"), every step to the timeline.
++stop_tcpdumps() {
++    local i e=() rc
++    [ ${#TCPDUMP_PIDS[@]} -gt 0 ] || return 0
++    for i in "${!TCPDUMP_PIDS[@]}"; do e+=("${TCPDUMP_NAMES[$i]}:${TCPDUMP_PIDS[$i]}"); done
++    stop_captures_deadline "$CAP_DEADLINE_S" "$OUT/hostcap/tcpdump-exit.txt" "$OUT/hostcap/teardown-timeline.txt" "${e[@]}"
++    rc=$?
++    TCPDUMP_PIDS=(); TCPDUMP_NAMES=()
++    return $rc
++}
++CAPD=""
++cleanup() {
++    stop_capture_watch
++    stop_tcpdumps
++    rm_capd || true
++    local id
++    for id in "${CREATED_IDS[@]:-}"; do
++        [ -n "$id" ] || continue
++        if docker inspect "$id" >/dev/null 2>&1; then
++            docker logs --timestamps "$id" > "$OUT/final-logs-${id:0:12}.txt" 2>&1 || true
++            docker rm -f "$id" >/dev/null 2>&1 || true
++        fi
++    done
++    manager_restore >> "$OUT/manager-state.txt" 2>&1 || true   # no-op if teardown already restored it
++}
++trap cleanup EXIT
++
++host_state() {
++    local d="$OUT/host-$1"; mkdir -p "$d"
++    ip -br link > "$d/ip-link.txt"; ip -br addr > "$d/ip-addr.txt"
++    ip route > "$d/ip-route.txt"; ip -6 route > "$d/ip6-route.txt"
++    ip link show tap0 > "$d/host-tap0.txt" 2>&1 || true
++    nft -s list ruleset > "$d/nft-ruleset-stateless.txt" 2>&1
++    lsmod | awk 'NR>1{print $1}' | grep -E '^(nf_|nft_|xt_|br_netfilter|bridge|tun|veth|ip_tables|ip6_tables|x_tables|iptable_|ip6table_|nfnetlink)' | sort > "$d/lsmod-net.txt"
++    {
++        for k in net.ipv4.ip_forward net.ipv6.conf.all.forwarding net.ipv6.conf.all.disable_ipv6 net.core.devconf_inherit_init_net; do
++            echo "$k=$(sysctl -n "$k" 2>&1)"; done
++        for dev in all default ens33; do for a in rp_filter arp_ignore arp_announce arp_accept forwarding; do
++            echo "net.ipv4.conf.$dev.$a=$(sysctl -n "net.ipv4.conf.$dev.$a" 2>&1)"; done; done
++    } > "$d/sysctl.txt"
++    ss -ltnH | awk '{print $4}' | sort > "$d/listen-tcp.txt"
++    docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}' | sort > "$d/docker-ps.txt"
++    pgrep -a qemu-system > "$d/qemu.txt" 2>&1 || echo "no qemu-system" > "$d/qemu.txt"
++    pgrep -a 'tshark|dumpcap|tcpdump' > "$d/capture-procs.txt" 2>&1 || echo "no capture processes" > "$d/capture-procs.txt"
++}
++
++# ------------------------------------------------------------------ 1. preparation
++log "1. preparation"
++echo "host=$(hostname) user=${SUDO_USER:-root}"
++git -C "$REPO" -c safe.directory="$REPO" rev-parse --abbrev-ref HEAD
++git -C "$REPO" -c safe.directory="$REPO" rev-parse HEAD
++IMAGE_ID=$(docker image inspect -f '{{.Id}}' "$IMAGE")
++echo "image id=$IMAGE_ID expected=$EXPECTED_IMAGE_ID"
++[ "$IMAGE_ID" = "$EXPECTED_IMAGE_ID" ] || { echo "ABORT: image id is not the reviewed image"; exit 3; }
++pass "image id equals reviewed full id"
++docker ps -a --format '{{.Names}} {{.Status}}'
++docker ps --format '{{.Names}}' | grep -q 'sandbox-worker' && { echo "ABORT: a worker container is running"; exit 3; }
++pgrep -a qemu-system && { echo "ABORT: qemu running"; exit 3; }
++pgrep -a 'tcpdump|tshark|dumpcap' && { echo "ABORT: capture process already running on host"; exit 3; }
++for c in "$NAME" "$CTL"; do docker inspect "$c" >/dev/null 2>&1 && { echo "ABORT: pre-existing container $c (left untouched)"; exit 3; }; done
++SANDBOXNET=$(docker network ls --filter label=com.docker.compose.network=sandboxnet --format '{{.Name}}')
++DBNET=$(docker network ls --filter label=com.docker.compose.network=dbnet --format '{{.Name}}')
++[ -n "$SANDBOXNET" ] && [ -n "$DBNET" ] || { echo "ABORT: networks not found"; exit 3; }
++BR="br-$(docker network inspect -f '{{.Id}}' "$SANDBOXNET" | cut -c1-12)"
++MONGO_IP=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$DBNET\").IPAddress}}" mongo-db)
++SANDBOX_GW=$(docker network inspect -f '{{range .IPAM.Config}}{{.Gateway}}{{end}}' "$SANDBOXNET")
++DB_GW=$(docker network inspect -f '{{range .IPAM.Config}}{{.Gateway}}{{end}}' "$DBNET")
++ENS_IP=$(ip -4 -o addr show dev ens33 | awk '{print $4}' | cut -d/ -f1)
++echo "sandboxnet=$SANDBOXNET bridge=$BR dbnet=$DBNET mongo=$MONGO_IP host-ips=$SANDBOX_GW,$ENS_IP,$DB_GW lan-dns=$LAN_DNS" | tee "$OUT/targets-env.txt"
++host_state before
++
++# ------------------------------------------------------------------ 2. manager (controls only)
++log "2. existing manager for controls (start only if not running: --no-deps --no-build)"
++manager_prepare > "$OUT/manager-state.txt" 2>&1; rc=$?
++cat "$OUT/manager-state.txt"
++[ $rc -eq 0 ] || { echo "ABORT: manager prepare failed (rc=$rc); see manager-state.txt"; exit 3; }
++ok=0; for i in $(seq 1 30); do
++    python3 -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8011/healthcheck", timeout=2).status==200 else 1)' 2>/dev/null && { ok=1; break; }; sleep 1; done
++check "manager healthy (127.0.0.1:8011/healthcheck)" test $ok -eq 1
++docker inspect -f 'manager: {{.State.Status}} ip={{(index .NetworkSettings.Networks "'"$SANDBOXNET"'").IPAddress}}' "$MANAGER" | tee -a "$OUT/manager-state.txt"
++MANAGER_IP=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").IPAddress}}" "$MANAGER")
++# 06B-4B: the manager's real MAC on sandboxnet, so that an ARP claiming 192.168.60.10 with another MAC
++# is a signature (sigscan_l2.py arp_spoof_spa_manager)
++MANAGER_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").MacAddress}}" "$MANAGER")
++
++# ------------------------------------------------------------------ 3. worker test container
++log "3. worker test container"
++D="$OUT/container"; mkdir -p "$D/sentinel" "$D/probe"; chmod 777 "$D/sentinel" "$D/probe" "$OUT/ctl" "$OUT/hostcap"
++ID=$(docker run -d --name "$NAME" --restart no --privileged --network "$SANDBOXNET" \
++    -e PORT=8011 -e APP_BASE_URL=/api/v1/sandbox-worker -e APP_NAME="$NAME" \
++    -e SANDBOX_MANAGER_URI=http://sandbox-manager:8011/api/v1/sandbox-manager \
++    -e ANALYSIS_DURATION=30 -e POST_ANALYSIS_WAIT=30 -e ALLOW_VM_INTERNET=false \
++    -v "$H/sentinel/poller.py:/app/poller.py:ro" -v "$H/probe_matrix.py:/harness/probe_matrix.py:ro" \
++    -v "$H/pcapng_stats.py:/harness/pcapng_stats.py:ro" \
++    -v "$H/counter_window.py:/harness/counter_window.py:ro" \
++    -v "$H/icmp_harness.py:/harness/icmp_harness.py:ro" -v "$H/icmp_cases.py:/harness/icmp_cases.py:ro" \
++    -v "$H/l2frames.py:/harness/l2frames.py:ro" -v "$H/l2eval.py:/harness/l2eval.py:ro" \
++    -v "$H/signatures.py:/harness/signatures.py:ro" \
++    -v "$H/arp_harness.py:/harness/arp_harness.py:ro" -v "$H/arp_cases.py:/harness/arp_cases.py:ro" \
++    -v "$H/guest_state.py:/harness/guest_state.py:ro" \
++    -v "$D/sentinel:/sentinel-out" -v "$D/probe:/harness-out" \
++    -v "$OUT/hostcap:/hostcap:ro" -v "$OUT/ctl:/ctl:ro" \
++    "$IMAGE") || { echo "ABORT: docker run failed"; exit 3; }
++CREATED_IDS+=("$ID"); echo "worker test container: $ID"
++E() { docker exec "$ID" "$@"; }
++# Network state of the worker netns: full record, plus short forms that are compared before/after.
++netns_state() {
++    { for c in "ip -d link show" "ip addr show" "ip route show table all" "ip -6 route show table all" \
++               "ip neigh show" "ip rule show"; do echo "## $c"; E $c; echo; done; } > "$D/netns-$1.txt" 2>&1
++    E ip -o link show | awk -F': ' '{print $2}' | cut -d@ -f1 | sort | tr '\n' ' ' > "$D/netns-$1-ifnames.txt"
++    E ip -br addr show > "$D/netns-$1-addr-br.txt"
++    E ip route show > "$D/netns-$1-route-main.txt"
++}
++ok=0; for i in $(seq 1 30); do
++    E python3 -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8011/healthcheck", timeout=2).status==200 else 1)' 2>/dev/null && { ok=1; break; }; sleep 1; done
++check "worker server ready" test $ok -eq 1
++docker logs --timestamps "$ID" > "$D/docker-logs-startup.txt" 2>&1
++check "V0 passed" grep -q 'ISOLATION OK (V0 startup)' "$D/docker-logs-startup.txt"
++WORKER_IP=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").IPAddress}}" "$ID")
++IFIDX=$(E cat /sys/class/net/eth0/iflink | tr -d '\r')
++VETH=$(ip -o link | awk -F': ' -v i="$IFIDX" '$1==i{print $2}' | cut -d@ -f1)
++echo "worker eth0=$WORKER_IP host veth=$VETH (ifindex $IFIDX)" | tee -a "$OUT/targets-env.txt"
++[ -n "$VETH" ] || { echo "ABORT: worker veth not found"; exit 3; }
++FILES="run.sh server.py service/analysis.py isolation/apifilter.py isolation/verify.py isolation/guest.nft isolation/expected-ruleset.json ARM/image.zip MIPS/image.zip"
++E sh -c "cd /app && sha256sum $FILES" > "$D/sha256-in-container.txt"
++( cd "$REPO/sandbox-worker" && sha256sum $FILES ) > "$D/sha256-repo.txt"
++check "code and guest images in container equal working tree" diff -q "$D/sha256-in-container.txt" "$D/sha256-repo.txt"
++netns_state before
++echo "worker netns interfaces: $(cat "$D/netns-before-ifnames.txt")"; cat "$D/netns-before-addr-br.txt" "$D/netns-before-route-main.txt"
++check "worker netns has exactly lo, eth0, tap0 (eth0 is the only way out besides tap0)" test "$(cat "$D/netns-before-ifnames.txt")" = "eth0 lo tap0 " \
++    || { echo "ABORT: the veth capture would not cover every way out of the worker netns"; exit 3; }
++
++# ------------------------------------------------------------------ 4. control container
++log "4. control container (sandboxnet + dbnet)"
++CID=$(docker run -d --name "$CTL" --restart no --network "$SANDBOXNET" --entrypoint python3 \
++    -v "$H/ctl_loop.py:/ctl_loop.py:ro" -v "$OUT/ctl:/ctl" \
++    "$IMAGE" /ctl_loop.py "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" /ctl/ctl.jsonl --arp-worker) || { echo "ABORT: ctl run failed"; exit 3; }
++CREATED_IDS+=("$CID")
++docker network connect "$DBNET" "$CID"
++sleep 4
++for t in "mongo $MONGO_IP:27017" "worker-eth0 $WORKER_IP:8011" "arp worker-eth0 $WORKER_IP" "manager $MANAGER_IP:8011"; do
++    check "control '$t' alive" bash -c "grep -F '\"target\": \"$t\"' '$OUT/ctl/ctl.jsonl' | tail -3 | grep -q '\"ok\": true'"
++done
++
++# ------------------------------------------------------------------ 5. host captures (read-only)
++log "5. host captures on $VETH, $BR, ens33 + leak alert"
++tcpdump --version > "$OUT/hostcap/versions.txt" 2>&1; cat "$OUT/hostcap/versions.txt"   # tcpdump + libpcap
++# Runs 1-3: tcpdump 4.99.4 / libpcap 1.10.4 segfaults ("segfault at 0 ... in libc.so.6") whenever
++# `-Z root` is combined with `-w` (file or stdout); run 3's diagnosis on lo showed `-w <file>` and
++# `-w -` without -Z, and `-Z root -l` (text), all work. Pcap captures therefore run without -Z;
++# tcpdump writes pcap to stdout and the root shell opens the file in a root-owned mktemp dir
++# under /tmp; files are copied back after stop. The text-mode leak alert keeps `-Z root -l`.
++CAPD=$(mktemp -d /tmp/ct01-06b3b-cap.XXXXXX); chmod 700 "$CAPD"; echo "capture dir: $CAPD"
++tcpdump -U -n -i "$VETH" -w - > "$CAPD/veth.pcap" 2>"$OUT/hostcap/veth.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(veth)
++tcpdump -U -n -i "$BR" -w - > "$CAPD/bridge.pcap" 2>"$OUT/hostcap/bridge.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(bridge)
++# 06B-4B (D7): ens33 without a filter, bounded by snaplen and a packet limit (see signatures.py).
++tcpdump -U -n -i ens33 -s "$SIG_ENS33_SNAPLEN" -c "$SIG_ENS33_MAX_PACKETS" -w - \
++    > "$CAPD/ens33.pcap" 2>"$OUT/hostcap/ens33.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(ens33)
++: > "$OUT/hostcap/alert.txt"; chmod 644 "$OUT/hostcap/alert.txt"
++printf '%s\n' "$SIG_ALERT_ANY" > "$OUT/hostcap/alert-filter-any.txt"
++printf '%s\n' "$SIG_ALERT_ETH" > "$OUT/hostcap/alert-filter-eth.txt"
++tcpdump -Z root -l -n -i any "$SIG_ALERT_ANY" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert)
++tcpdump -Z root -l -n -e -i "$VETH" "$SIG_ALERT_ETH" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert_eth.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert_eth)
++sleep 3
++cap_ok=1
++for p in "${TCPDUMP_PIDS[@]}"; do check "host tcpdump pid $p running" kill -0 "$p" || cap_ok=0; done
++for f in veth bridge ens33 alert alert_eth; do
++    check "host capture $f: tcpdump reports listening" grep -qE '^(tcpdump: )?listening on ' "$OUT/hostcap/$f.err" || cap_ok=0
++done
++# veth/bridge carry the control loop every 0.5 s, so their pcap must already hold data.
++# ens33 (unfiltered since 06B-4B) may still be empty this early; its liveness is checked after the run.
++for f in veth bridge; do check "host capture $f.pcap being written" test -s "$CAPD/$f.pcap" || cap_ok=0; done
++if [ $cap_ok -ne 1 ]; then
++    # Read-only diagnosis on lo (3 s each, no files outside $CAPD), then abort before any guest.
++    D="$OUT/hostcap/tcpdump-diag.txt"
++    { tcpdump --version 2>&1
++      for v in "-w $CAPD/d1.pcap" "-Z root -w $CAPD/d2.pcap" "-w -" "-Z root -w -" "-Z root -l"; do
++          timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2>"$CAPD/diag.err"; r=$?
++          echo "variant [$v] rc=$r stderr: $(tr '\n' ' ' < "$CAPD/diag.err")"
++      done
++      journalctl -k --since "-2min" --no-pager 2>&1 | grep -E 'tcpdump|apparmor' | tail -20
++    } > "$D" 2>&1
++    cat "$D"
++    echo "ABORT: host-side capture not running; no guest is booted without it"; exit 3
++fi
++# Watch the four captures for the whole test (1 s). The marker is visible to probe_matrix.py as
++# /hostcap/capture-dead.txt; it stops the probes when the marker appears.
++DEAD="$OUT/hostcap/capture-dead.txt"
++W=(); for i in "${!TCPDUMP_PIDS[@]}"; do W+=("${TCPDUMP_NAMES[$i]}:${TCPDUMP_PIDS[$i]}"); done
++HB="$OUT/hostcap/capture-watch.heartbeat"   # /hostcap/capture-watch.heartbeat in the container
++start_capture_watch "$DEAD" "$HB" 1 "${W[@]}"
++for i in $(seq 1 30); do [ -s "$HB" ] && break; sleep 0.1; done
++watch_ok() { alive "$WATCH_PID" && heartbeat_fresh "$HB" 5; }
++check "capture watcher running with a fresh heartbeat" watch_ok \
++    || { echo "ABORT: capture watcher not running; no guest is booted without it"; exit 3; }
++echo "capture watcher pid $WATCH_PID on ${W[*]}"
++
++# ------------------------------------------------------------------ 6. guests, one at a time
++TARGETS=$(printf '{"worker_ip":"%s","mongo_ip":"%s","manager_ip":"%s","manager_mac":"%s","ssh_ips":["%s","%s","%s"],"lan_dns":"%s"}' \
++    "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW" "$ENS_IP" "$DB_GW" "$LAN_DNS")
++echo "$TARGETS" > "$OUT/targets.json"
++LEAK=0
++for ARCH in ARM MIPS; do
++    log "6. guest $ARCH"
++    check "$ARCH: no QEMU running before start (sequential)" bash -c "! pgrep qemu-system >/dev/null"
++    check "$ARCH: all host captures alive before start" test ! -s "$DEAD" || break
++    check "$ARCH: capture watcher alive with a fresh heartbeat before start" watch_ok || break
++    timeout 1700 docker exec -e CT01_TARGETS="$TARGETS" -e CT01_SUITE=arp "$ID" sh -c "cd /app && python3 /harness/probe_matrix.py $ARCH /harness-out"
++    rc=$?
++    echo "probe_matrix $ARCH exit=$rc"
++    if [ $rc -eq 99 ] || grep -q . "$OUT/hostcap/alert.txt"; then
++        LEAK=1; fail "$ARCH: PROBE PACKET SEEN ON HOST — all tests stopped"; break
++    fi
++    if [ $rc -eq 98 ] || [ -s "$DEAD" ] || ! watch_ok; then
++        fail "$ARCH: capture or watcher lost during the test (probe_matrix rc=$rc; $(cat "$DEAD" 2>/dev/null)) — probes stopped"; break
++    fi
++    # 06B-3DR: separate real failures from probes that could not be decided (counter-window edges,
++    # missing tool, no live control). Either way the run does not pass.
++    # 06B-4I: arp_harness.py --outcome = run_outcome on every record (infrastructure included) + required and
++    # per-case confirmations + status COMPLETED + each ARP case exactly once + group record valid. Any other
++    # output is a FAIL below.
++    outcome=$(python3 "$H/arp_harness.py" --outcome "$D/probe/$ARCH/result.json" "$D/probe/$ARCH/arp-eval.json" "$ARCH" 2>&1)
++    echo "$ARCH: probe_matrix outcome: $outcome"
++    case "$rc:$outcome" in
++    0:PASS) pass "$ARCH: probe_matrix exit 0 (all checks and probes passed)" ;;
++    1:UNVERIFIED*) UNVERIFIED+=("$ARCH: $outcome"); echo "[UNVERIFIED] $ARCH: $outcome" ;;
++    *) fail "$ARCH: probe_matrix exit $rc, outcome: $outcome" ;;
++    esac
++    # 06B-3F: session-wide reconciliation, reported on its own; it is NOT added to FAILS/UNVERIFIED
++    # and does not change the exit code of the run.
++    sess=$(python3 -c 'import json, sys; s = json.load(open(sys.argv[1]))
++print(s["verdict"] + ("" if not s["reasons"] else " — " + "; ".join(s["reasons"])))' "$D/probe/$ARCH/session.json" 2>&1) \
++        || sess="not available (no session.json)"
++    SESSION_RESULTS+=("$ARCH: $sess"); echo "[SESSION] $ARCH: $sess"
++    E ps -eo pid,args > "$D/ps-after-$ARCH.txt"
++    check "$ARCH: no qemu-system/tshark left in container" bash -c "! grep -qE 'qemu-system|tshark' '$D/ps-after-$ARCH.txt'"
++    E sh -c 'cd /app && python3 -m isolation.verify --phase "06B-3B after '"$ARCH"'"' > "$D/verify-after-$ARCH.txt" 2>&1
++    check "$ARCH: full verify after guest shutdown" test $? -eq 0
++done
++
++# 06B-4I: both architectures evaluated, each with the four reviewed ARP cases exactly once
++python3 "$H/arp_harness.py" --run-check "$D/probe" ARM MIPS > "$OUT/arp-run-check.txt" 2>&1; rc=$?
++cat "$OUT/arp-run-check.txt"
++check "ARP group evaluated for ARM and MIPS, each case exactly once per architecture" test $rc -eq 0
++
++# ------------------------------------------------------------------ 7. stop captures, analyse host side
++netns_state after
++check "worker netns interfaces unchanged after the guests" diff -q "$D/netns-before-ifnames.txt" "$D/netns-after-ifnames.txt"
++check "worker netns addresses unchanged after the guests" diff -u "$D/netns-before-addr-br.txt" "$D/netns-after-addr-br.txt"
++check "worker netns main routes unchanged after the guests" diff -u "$D/netns-before-route-main.txt" "$D/netns-after-route-main.txt"
++diff -u "$D/netns-before.txt" "$D/netns-after.txt" > "$D/netns-diff.txt" && echo "worker netns full record: unchanged" \
++    || echo "worker netns full record: differences in container/netns-diff.txt (reported, e.g. neighbor states)"
++
++log "7. teardown of controls and captures (drain ${DRAIN_S} s, capture deadline ${CAP_DEADLINE_S} s)"
++TL="$OUT/hostcap/teardown-timeline.txt"
++timeline "$TL" "guests finished (last probe_matrix returned)"
++docker stop -t 5 "$CID" > /dev/null 2>&1; rc=$?
++timeline "$TL" "control container stopped (docker stop rc=$rc)"
++check "control container stopped after the guests" test $rc -eq 0
++sleep "$DRAIN_S"
++timeline "$TL" "drain period of ${DRAIN_S} s ended"
++check "capture watcher still alive with a fresh heartbeat at the end" watch_ok
++stop_capture_watch
++timeline "$TL" "capture watcher stopped"
++check "no host capture exited during the test (watcher marker empty)" test ! -s "$DEAD"
++stop_tcpdumps
++check "all host captures exited on SIGINT within ${CAP_DEADLINE_S} s with exit 0" test $? -eq 0
++cat "$TL" "$OUT/hostcap/tcpdump-exit.txt"
++printf 'capture\tcaptured\treceived_by_filter\tdropped_by_kernel\n' > "$OUT/hostcap/capture-stats.tsv"
++for f in veth bridge ens33 alert alert_eth; do
++    check "tcpdump $f: exit 0 on stop" grep -qx "$f 0" "$OUT/hostcap/tcpdump-exit.txt"
++    st=$(capture_stats "$OUT/hostcap/$f.err")
++    check "tcpdump $f: statistics present (captured, received by filter, dropped by kernel)" test -n "$st" || continue
++    read -r cap rcv drp <<< "$st"
++    printf '%s\t%s\t%s\t%s\n' "$f" "$cap" "$rcv" "$drp" >> "$OUT/hostcap/capture-stats.tsv"
++    check "tcpdump $f: 0 packets dropped by kernel" test "$drp" -eq 0
++    if [ "$rcv" -ne "$cap" ]; then
++        # Reported, not judged: what "received by filter" counts depends on the capture backend and
++        # has not been verified for this one; nothing is inferred about which packets these were.
++        OPEN_ITEMS+=("tcpdump $f: received by filter ($rcv) - captured ($cap) = $((rcv - cap)), not explained")
++        echo "[OPEN] tcpdump $f: received by filter $rcv, captured $cap (difference $((rcv - cap)) not explained)"
++    fi
++done
++# tcpdump prints a bare newline on SIGINT: only non-empty lines are packets
++check "leak alerts: no signature packet line (any: network layer; veth: + MAC)" bash -c "! grep -q . '$OUT/hostcap/alert.txt'"
++for a in alert alert_eth; do
++    grep -E 'packets (captured|received by filter)' "$OUT/hostcap/$a.err" | sed "s/^/$a: /" | tee -a "$OUT/hostcap/summary.txt"
++    check "leak alert tcpdump $a: 0 packets captured" grep -q '^0 packets captured' "$OUT/hostcap/$a.err"
++done
++check "ens33 capture did not reach its packet limit ($SIG_ENS33_MAX_PACKETS)" \
++    bash -c "! grep -qE '^$SIG_ENS33_MAX_PACKETS packets captured' '$OUT/hostcap/ens33.err'"
++count() {  # file filter -> echoes count, returns tcpdump exit code
++    local out rc
++    out=$(tcpdump -n -r "$1" "$2" 2>>"$OUT/hostcap/read.err"); rc=$?
++    [ $rc -eq 0 ] || { echo "ERR"; return $rc; }
++    [ -z "$out" ] && echo 0 || echo "$out" | wc -l
++}
++SIG="ether host $GUEST_MAC or net 10.200.0.0/30"
++for f in veth bridge ens33; do cp "$CAPD/$f.pcap" "$OUT/hostcap/$f.pcap"; done
++for f in veth bridge ens33; do
++    n=$(count "$CAPD/$f.pcap" "$SIG"); rc=$?
++    echo "$f: probe-signature packets=$n (tcpdump rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
++    check "$f.pcap readable (tcpdump exit 0)" test $rc -eq 0
++    check "$f.pcap: 0 packets with guest MAC / 10.200.0.0/30" test "$n" = 0
++    bash "$H/sigscan.sh" "$CAPD/$f.pcap" > "$OUT/hostcap/sigscan-$f.txt" 2>&1; rc=$?
++    echo "$f sigscan (rc=$rc): $(tr '\n' ' ' < "$OUT/hostcap/sigscan-$f.txt")" | tee -a "$OUT/hostcap/summary.txt"
++    check "$f.pcap: sigscan read OK (exit 0)" test $rc -eq 0
++    for k in guest_l2l3 probe_sport probe_qname probe_url; do
++        check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-$f.txt"
++    done
++    # 06B-4B: L2/ARP/IPv6/spoof signatures (sigscan_l2.py; a read error is exit 2, never 0)
++    python3 "$H/sigscan_l2.py" "$CAPD/$f.pcap" --manager-mac "$MANAGER_MAC" > "$OUT/hostcap/sigscan-l2-$f.txt" 2>&1; rc=$?
++    echo "$f sigscan_l2 (rc=$rc): $(tr '\n' ' ' < "$OUT/hostcap/sigscan-l2-$f.txt")" | tee -a "$OUT/hostcap/summary.txt"
++    check "$f.pcap: sigscan_l2 read OK (exit 0)" test $rc -eq 0
++    # 06B-4BR: frames whose signature headers were cut (snaplen) or not decodable are a failed check, never 0
++    for k in guest_mac spoof_mac guest_net_ip arp_guest_sha arp_spoof_sha arp_guest_net arp_spoof_spa_manager \
++             ipv6_guest spoof_src_ip probe_port icmp_size probe_qname unscannable_truncated unscannable_undecoded; do
++        check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-l2-$f.txt"
++    done
++done
++# Positive on real data: the worker's control DNS queries (ct01-06b3b-ctl-<arch>) cross ens33, so the
++# payload scan must find them; 0 here means the scan is blind and every 0 above proves nothing.
++check "ens33.pcap: payload scan finds the control DNS queries (control_qname > 0)" \
++    bash -c "grep -qE '^control_qname=[1-9]' '$OUT/hostcap/sigscan-ens33.txt'"
++n=$(count "$CAPD/veth.pcap" "src host $WORKER_IP and (dst host 1.1.1.1 or dst host $LAN_DNS or dst port 22 or dst host $MANAGER_IP)"); rc=$?
++echo "veth: control packets from worker=$n (rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
++check "veth capture live: worker control packets seen" bash -c "[ $rc -eq 0 ] && [ '$n' != ERR ] && [ '$n' -gt 0 ]"
++n=$(count "$CAPD/ens33.pcap" "host 1.1.1.1 or host $LAN_DNS"); rc=$?
++echo "ens33: NATed control packets=$n (rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
++check "ens33 capture live: NATed control packets seen" bash -c "[ $rc -eq 0 ] && [ '$n' != ERR ] && [ '$n' -gt 0 ]"
++n=$(count "$CAPD/bridge.pcap" "src host $WORKER_IP"); rc=$?
++echo "bridge: packets from worker=$n (rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
++check "bridge capture live: worker packets seen" bash -c "[ $rc -eq 0 ] && [ '$n' != ERR ] && [ '$n' -gt 0 ]"
++
++# ------------------------------------------------------------------ 8. teardown
++rm_capd
++check "temporary capture dir removed" test ! -e "$CAPD"
++
++log "8. teardown"
++E sh -c 'test ! -e /run/sandbox/current_task && test -z "$(ls -A /app/data)" && ! ls -d /tmp/g-* >/dev/null 2>&1'
++check "no marker, fixture or guest disk left in worker container" test $? -eq 0
++E sh -c 'cd /app && python3 -m isolation.verify --dump-normalized' > "$D/normalized-runtime.json"
++check "normalized runtime ruleset identical to expected" bash -c "diff <(python3 -m json.tool '$D/normalized-runtime.json') <(python3 -m json.tool '$REPO/sandbox-worker/isolation/expected-ruleset.json') >/dev/null"
++docker logs --timestamps "$ID" > "$D/docker-logs-final.txt" 2>&1
++for id in "${CREATED_IDS[@]}"; do docker stop -t 10 "$id" >/dev/null; docker rm "$id" >/dev/null; done
++left=0; for id in "${CREATED_IDS[@]}"; do docker inspect "$id" >/dev/null 2>&1 && left=1; done
++check "all containers created by this run removed" test $left -eq 0
++manager_restore > "$OUT/manager-restore.txt" 2>&1; rc=$?
++cat "$OUT/manager-restore.txt"; cat "$OUT/manager-restore.txt" >> "$OUT/manager-state.txt"
++check "manager back to its initial state ($MANAGER_STATE_BEFORE; same container; not restarted if it was running)" test $rc -eq 0
++check "no qemu-system on host" bash -c "! pgrep qemu-system >/dev/null"
++check "no capture process left on host" bash -c "! pgrep 'tcpdump|tshark|dumpcap' >/dev/null"
++sleep 2; host_state after
++echo "-- host differences (all reported; evaluated in the summary):"
++for f in $(ls "$OUT/host-before"); do
++    if diff -u "$OUT/host-before/$f" "$OUT/host-after/$f" > "$OUT/host-diff-$f.diff"; then rm "$OUT/host-diff-$f.diff"; echo "unchanged: $f"
++    else echo "CHANGED: $f"; cat "$OUT/host-diff-$f.diff"; fi
++done
++for f in sysctl.txt nft-ruleset-stateless.txt ip-route.txt listen-tcp.txt qemu.txt capture-procs.txt host-tap0.txt; do
++    check "host $f unchanged" test ! -e "$OUT/host-diff-$f.diff"
++done
++echo "created ids: ${CREATED_IDS[*]}" | tee "$OUT/created-ids.txt"
++chown -R "${SUDO_UID:-0}:${SUDO_GID:-0}" "$OUT" 2>/dev/null || true
++
++log "result"
++[ $LEAK -eq 1 ] && echo "!!! LEAK DETECTED — tests were stopped; report to reviewer immediately"
++[ ${#OPEN_ITEMS[@]} -gt 0 ] && { echo "OPEN ITEMS (reported, not explained):"; printf ' - %s\n' "${OPEN_ITEMS[@]}"; }
++[ ${#UNVERIFIED[@]} -gt 0 ] && { echo "UNVERIFIED (could not be decided):"; printf ' - %s\n' "${UNVERIFIED[@]}"; }
++[ ${#SESSION_RESULTS[@]} -gt 0 ] && { echo "SESSION-WIDE reconciliation (reported separately; does not change the exit code):"
++    printf ' - %s\n' "${SESSION_RESULTS[@]}"; }
++if [ ${#FAILS[@]} -gt 0 ]; then
++    echo "${#FAILS[@]} CHECK(S) FAILED:"; printf ' - %s\n' "${FAILS[@]}"; exit 1
++fi
++[ ${#UNVERIFIED[@]} -gt 0 ] && { echo "NOT PASSED: no check failed, but some results are UNVERIFIED"; exit 4; }
++[ ${#OPEN_ITEMS[@]} -gt 0 ] && { echo "CHECKS PASSED, INCONCLUSIVE: open items above are not explained"; exit 5; }
++echo "ALL CHECKS PASSED"; exit 0
+diff -ruN ct01-06b4hr2/selftest_arp_wiring.py ct01-06b4i/selftest_arp_wiring.py
+--- ct01-06b4hr2/selftest_arp_wiring.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4i/selftest_arp_wiring.py	2026-10-08 12:30:16.154947375 +0000
+@@ -0,0 +1,1126 @@
++#!/usr/bin/env python3
++"""06B-4I — offline test of the ARP wiring (arp_harness.py, probe_matrix.py CT01_SUITE=arp, ctl_loop.py --arp-worker,
++run-06b4i.sh). No root, no Docker, no QEMU, no packet, no network: the worker modules are stubs; the guest console,
++nft, `ip -j neigh show`, tshark, the control-container log and the host capture files are fakes. Every scenario runs
++the REAL probe_matrix.main() in its own python process, importing ONLY the files that run-06b4i.sh mounts into
++/harness (plus the stubs): a missing mount fails.
++
++The guest is selftest_arp.SimGuest (06B-4H..4HR2): guest_state snapshot/restore commands, ping/sleep, frames and
++counters SIMULATED with l2frames.classify. Real kernel/netifd/busybox behaviour, the real `ip -j neigh` JSON,
++real operstate values, the live controls on a real sandboxnet and the 20 ms guard are NOT verified here.
++
++    python3 selftest_arp_wiring.py [--json FILE]
++    (internal) python3 -I selftest_arp_wiring.py --scenario NAME --dir DIR
++
++Sections:
++  U  arp_harness units: ctl log, live controls A1/A2, check_record, case requirements, arch_outcome, run_check,
++     CLI; ctl_loop.py arp_entry (extracted with ast) and its --arp-worker switch
++  S  scenarios through probe_matrix.main(): clean group, wiring defects, service links, neighbour collector,
++     live controls, guard stops (capture, heartbeat, tshark, leak, unreadable alert), execution errors, not
++     started, restore failure, FAIL + measurement error, infrastructure, errors outside the group; each also through
++     arp_harness --outcome and the run script's own outcome mapping (case block extracted from run-06b4i.sh)
++  R  required confirmations in sync with the real ARP path; R1 (PERMANENT flag in neigh_dynamic, key in both groups)
++     through arp_harness.evaluate / --outcome on the record of the clean run
++  W  run-06b4i.sh: syntax, mounts, CT01_SUITE=arp on the only probe_matrix call, self-tests before any container,
++     ctl --arp-worker, manager MAC, outcome/run-check through arp_harness, everything else as run-06b4f.sh
++"""
++import ast
++import contextlib
++import copy
++import difflib
++import hashlib
++import io
++import json
++import os
++import re
++import shutil
++import struct
++import subprocess
++import sys
++import tempfile
++import threading
++import time
++import traceback
++import zipfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++RESULTS = {}
++TAP = "7a:93:2a:f1:47:47"          # selftest_l2.TAP
++ETH0_MAC = "02:42:c0:a8:3c:02"
++OTHER_MAC = "02:42:c0:a8:3c:99"
++MANAGER_MAC = "8a:d3:09:b5:72:af"  # selftest_arp.MANAGER_MAC (manager row of selftest_arp.NEIGH)
++CASE_IDS = ("T14-A1", "T14-A2", "T14-A3", "T15-S1")
++RS, RS_OLD = "run-06b4i.sh", "run-06b4f.sh"
++CFG = {"worker_ip": "192.168.60.2", "mongo_ip": "172.18.0.2", "manager_ip": "192.168.60.10",
++       "manager_mac": MANAGER_MAC, "ssh_ips": [], "lan_dns": "192.168.177.2"}
++
++
++def t(name, fn):
++    if name in RESULTS:
++        raise SystemExit(f"duplicate test name {name}")
++    try:
++        ok, why = bool(fn()), ""
++    except Exception:
++        ok, why = False, traceback.format_exc(limit=3).strip().splitlines()[-1]
++    if not ok and not why:
++        why = "returned False"
++    RESULTS[name] = ok
++    print(f"[{'PASS' if ok else 'FAIL'}] {name}" + (f"  ({why})" if why else ""))
++
++
++# ====================================================================== fake container (scenario process)
++# neigh: {(counter label current at the call or None, index of the call under that label): kind}
++# events: [(substring of a guest command, event after it)]; nft_event: (label, event during that counter read)
++SCENARIOS = {
++    "clean": {},
++    "missing-case": {"cases": "missing"},
++    "duplicate-case": {"cases": "duplicate"},
++    "link-before-http000": {"link": {1: "http000"}},
++    "link-after-A1-badhash": {"link": {2: "badhash"}},
++    "neigh-error-A2-after": {"neigh": {("T14-A2 after", 0): "error"}},
++    "neigh-notjson-A1-before": {"neigh": {("session before boot", 0): "notjson"}},
++    "neigh-exception-A3-after": {"neigh": {("T14-A3 after", 0): "keyerror"}},
++    "fail-and-measure-A3": {"neigh": {("T14-A3 after", 0): "guest_mac_eth0"}, "nft_fail": "T14-A3 after"},
++    "notstarted-A3": {"snap_fail": ("T14-A2 after", 2)},
++    "notstarted-A3-neigh-fail": {"snap_fail": ("T14-A2 after", 2), "neigh": {("T14-A2 after", 3): "guest_mac_eth0"}},
++    "exec-error-A1": {"guest": {"fail_cmds": ["ip route add 192.168.60.2/32 dev eth1"]}},
++    "timeout-A3": {"guest": {"raise_on": "ping -c 1 -W 2 -s 1403"}},
++    "no-frame": {"guest": {"emit": False}},
++    "counter-read-error-A3": {"nft_fail": "T14-A3 after"},
++    "restore-fail-A2": {"guest": {"fail_cmds": ["ip route del 192.168.60.10/32 dev eth1"]}},
++    "marker-after-A2-ping": {"events": [("-s 1402 192.168.60.10", "marker")]},
++    "heartbeat-stale-after-A1-setup": {"events": [("ip route add 192.168.60.2/32", "stale")]},
++    "tshark-exit-after-S1-down": {"events": [("ip link set dev eth1 down", "tshark_dead")]},
++    "leak-after-A3-ping": {"events": [("-s 1403 10.200.0.6", "leak")]},
++    "leak-before-S1": {"nft_event": ("T15-S1 before", "leak")},
++    "alert-unreadable-before-A2": {"nft_event": ("T14-A2 before", "alert_dir")},
++    "marker-before-A2": {"nft_event": ("T14-A2 before", "marker")},
++    "ctl-arp-wrong-mac": {"ctl": "arp_wrong_mac"},
++    "ctl-no-arp": {"ctl": "no_arp"},
++    "ctl-worker-fail-in-A1": {"ctl": "worker_fail_A1"},
++    "ctl-missing": {"ctl": "missing"},
++    "ctl-malformed": {"ctl": "malformed"},
++    "a2-manager-neigh-missing": {"neigh": {("T14-A2 after", 1): "manager_missing"}},
++    "a2-manager-other-mac": {"neigh": {("T14-A2 after", 1): "manager_other_mac"}},
++    "a2-worker-http-fail": {"worker_http_fail": True},
++    "cfg-no-manager-mac": {"cfg": {"manager_mac": None}},
++    "cfg-worker-ip-other": {"cfg": {"worker_ip": "192.168.60.3"}},
++    "eth0-mac-missing": {"no_eth0": True},
++    "tap0-drops": {"isb_drop": 2},
++    "pcap-unreadable": {"pcap": "truncated"},
++    "qemu-not-exiting": {"qemu_stuck": True},
++    "cleanup-marker-left": {"marker_left": True},
++    "liveness-fails": {"liveness_fail": True},
++    "error-after-group": {"events": [("ip link set dev eth1 up", "tap0_gone")]},
++    "callback-errors": {"ctl": "dir", "worker_http_fail": True, "neigh": {("T14-A3 after", 0): "keyerror"}},
++}
++
++
++class World:
++    pass
++
++
++W = World()
++
++
++def mounted_files(script):
++    """Files run-06b4i.sh mounts into /harness: -v "$H/x:/harness/x:ro"."""
++    return sorted(set(re.findall(r'-v "\$H/([\w.]+):/harness/\1:ro"', open(script).read())))
++
++
++def write_stubs(sb, marker_file, marker_left):
++    os.makedirs(os.path.join(sb, "isolation"))
++    os.makedirs(os.path.join(sb, "service"))
++    for p in ("isolation", "service"):
++        open(os.path.join(sb, p, "__init__.py"), "w").close()
++    open(os.path.join(sb, "isolation", "constants.py"), "w").write(
++        'GUEST_MAC = "52:54:00:c7:00:02"; GUEST_IP = "10.200.0.2"; WORKER_GUEST_IP = "10.200.0.1"; SVC_PORT = 8011\n'
++        f'GUEST_IF = "tap0"; GUEST_PREFIX = 30; CURRENT_TASK_FILE = {marker_file!r}\n')
++    open(os.path.join(sb, "isolation", "current_task.py"), "w").write(
++        "from isolation.constants import CURRENT_TASK_FILE as F\nimport os\n"
++        "def set_current(t):\n    open(F, 'w').write(t)\n"
++        + ("def clear():\n    pass\n" if marker_left else
++           "def clear():\n    if os.path.exists(F):\n        os.remove(F)\n"))
++    open(os.path.join(sb, "isolation", "verify.py"), "w").write("def verify_isolation(*a, **k):\n    pass\n")
++    open(os.path.join(sb, "service", "analysis.py"), "w").write('''
++ARCH_CONFIGS = {}
++STUCK = [False]
++class FakeProc:
++    pid = 4242
++    def __init__(self):
++        self.alive, self.exitstatus = True, None
++    def isalive(self):
++        return self.alive
++def shutdown_qemu(proc, phase):
++    if not STUCK[0]:
++        proc.alive, proc.exitstatus = False, 0
++class Analysis:
++    def __init__(self, task, work, gip, wip, kernel, rootfs, extra):
++        self.kernel_path, self.rootfs_path = kernel, rootfs
++    def _start_qemu(self, cfg):
++        return FakeProc()
++    def _configure_network(self, proc, cfg):
++        pass
++''')
++
++
++def pcapng_bytes(frames, drops):
++    B = W.B
++    data = B.shb() + B.idb(tsresol=9)
++    for ts, fr in frames:
++        data += B.epb(round(ts * 1e9), fr)
++    opts = struct.pack("<HHQ", 4, 8, len(frames)) + struct.pack("<HHQ", 5, 8, drops) + struct.pack("<HH", 0, 0)
++    t_ns = round(time.time() * 1e9)
++    data += B._blk(5, struct.pack("<III", 0, t_ns >> 32, t_ns & 0xFFFFFFFF) + opts)
++    return data
++
++
++class FakeTshark:
++    """tshark -i tap0 -w PCAP: the file exists while it runs; on SIGINT it writes every frame the simulated guest
++    emitted, then an interface statistics block, and exits 0."""
++
++    def __init__(self, args, stdout=None, stderr=None):
++        assert args[:2] == ["tshark", "-i"], args
++        self.path, self.returncode = args[args.index("-w") + 1], None
++        open(self.path, "wb").write(W.B.shb() + W.B.idb(tsresol=9))
++        W.tshark = self
++
++    def poll(self):
++        if W.tshark_dead and self.returncode is None:
++            self.returncode = 1
++        return self.returncode
++
++    def send_signal(self, sig):
++        data = pcapng_bytes(W.frames, W.spec.get("isb_drop", 0))
++        if W.spec.get("pcap") == "truncated":
++            data = data[:-37]
++        open(self.path, "wb").write(data)
++        if self.returncode is None:
++            self.returncode = 0
++
++    def wait(self, timeout=None):
++        return self.returncode
++
++    def kill(self):
++        self.returncode = -9
++
++
++def neigh_text(kind):
++    SA = W.SA
++    if kind == "notjson":
++        return "Object \"neigh\" is unknown"
++    if kind == "guest_mac_eth0":
++        return SA.NEIGH.replace(MANAGER_MAC, SA.GUEST)
++    if kind == "manager_missing":
++        return json.dumps([r for r in json.loads(SA.NEIGH) if r["dst"] != "192.168.60.10"])
++    if kind == "manager_other_mac":
++        return SA.NEIGH.replace(MANAGER_MAC, OTHER_MAC)
++    return SA.NEIGH
++
++
++def fake_run_checked(cmd):
++    if cmd[:3] == ["nft", "-j", "list"] and W.spec.get("nft_event", (None,))[0] == W.label:
++        kind = W.spec["nft_event"][1]
++        if kind == "marker":
++            open(W.pm.CAPTURE_DEAD, "a").write("12:00:00 capture bridge pid 78 exited during the test\n")
++        elif kind == "leak":
++            open(W.pm.ALERT, "a").write("12:00:02 ARP, Request who-has 10.200.0.1 tell 10.200.0.1, length 28\n")
++        elif kind == "alert_dir":       # unreadable even as root (the run script runs this test as root)
++            os.remove(W.pm.ALERT)
++            os.mkdir(W.pm.ALERT)
++    if cmd[:3] == ["nft", "-j", "list"]:
++        if W.spec.get("nft_fail") and W.label == W.spec["nft_fail"]:
++            raise RuntimeError("command failed rc=1: nft -j list counters: simulated")
++        return W.V.raw(W.counters)
++    if cmd[:2] == ["tshark", "--version"]:
++        return "TShark (Wireshark) 3.6.2 (fake)\n"
++    if cmd[:3] == ["ip", "-j", "neigh"]:
++        W.worker_cmds.append(list(cmd))
++        key = (W.label, W.neigh_n.get(W.label, 0))
++        W.neigh_n[W.label] = key[1] + 1
++        if W.spec.get("snap_fail") == key:
++            W.snap_fail = True
++        kind = W.spec.get("neigh", {}).get(key)
++        if kind == "error":
++            raise RuntimeError("command failed rc=1: ip -j neigh show: simulated")
++        if kind == "keyerror":
++            raise KeyError("simulated collector bug")
++        return neigh_text(kind)
++    raise RuntimeError(f"unexpected command in the fake container: {cmd}")
++
++
++def guest_class(SA, GS):
++    class FakeGuest(SA.SimGuest):
++        """SimGuest (guest_state commands, ping/sleep, frames, counters) + the topology/service-link commands that
++        probe_matrix sends + guard events."""
++
++        def __init__(self, proc):
++            kw = dict(W.spec.get("guest", {}))
++            kw["fail_cmds"] = tuple(kw.get("fail_cmds", ()))
++            super().__init__(W.counters, W.frames, **kw)
++
++        def monitor(self, command, timeout=20):
++            W.commands.append(("monitor", command))
++            return ("info network\nnet0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02\n"
++                    " \\ hostnet0: index=0,type=tap,ifname=tap0,script=no,downscript=no\n")
++
++        def run(self, cmd, timeout=60):
++            W.commands.append(("run", cmd))
++            if cmd == "ip addr":
++                return 0, "2: eth1: <UP>\n    inet 10.200.0.2/30 brd 10.200.0.3 scope global eth1\n"
++            if cmd == "ip route":
++                return 0, "default via 10.200.0.1 dev eth1\n10.200.0.0/30 dev eth1\n"
++            if cmd.startswith("for i in /sys/class/net/"):
++                return 0, "eth1 52:54:00:c7:00:02\nlo 00:00:00:00:00:00\n"
++            if cmd.startswith("for c in nslookup"):
++                return 0, "/bin/nslookup\n/bin/nc\n/bin/wget\n/bin/ping\nmissing:arping\n"
++            if cmd.startswith("curl --version"):
++                return 0, "curl 7.88.1 (fake)\n"
++            if "/get-task/" in cmd:
++                W.links += 1
++                how = W.spec.get("link", {}).get(W.links, "ok")
++                sha = hashlib.sha256(open(os.path.join(W.pm.DATA, W.pm.T, W.pm.T), "rb").read()).hexdigest()
++                if how == "http000":
++                    return 0, "HTTP=000\nsha256sum: /tmp/r.out: No such file or directory\n"
++                if how == "badhash":
++                    return 0, "HTTP=200\n" + "0" * 64 + "  /tmp/r.out\n"
++                return 0, f"HTTP=200\n{sha}  /tmp/r.out\n"
++            if W.snap_fail and cmd == GS.snapshot_cmd("eth1"):
++                W.snap_fail = False
++                return 0, "@@S mac\n52:54:00:c7:00:02\n@@RC 0\n"           # sections missing: unreadable state
++            rc, out = super().run(cmd, timeout)
++            for sub, ev in W.spec.get("events", []):
++                if sub in cmd and (sub, ev) not in W.fired:
++                    W.fired.add((sub, ev))
++                    fire(ev)
++            return rc, out
++    return FakeGuest
++
++
++def fire(ev):
++    if ev == "marker":
++        open(W.pm.CAPTURE_DEAD, "a").write("12:00:00 capture ens33 pid 77 exited during the test\n")
++    elif ev == "stale":
++        W.hb_stop.set()
++        W.hb_thread.join()
++        open(W.pm.HEARTBEAT, "w").write(str(time.time() - 30))
++    elif ev == "tshark_dead":
++        W.tshark_dead = True
++    elif ev == "leak":
++        open(W.pm.ALERT, "a").write("12:00:01 ARP, Request who-has 10.200.0.6 tell 10.200.0.2, length 28\n")
++    elif ev == "tap0_gone":
++        os.remove(os.path.join(W.pm.SYS_NET, "tap0", "address"))
++
++
++def ctl_loop_thread(path, mode, stop):
++    """Stands in for the ctl container (ctl_loop.py --arp-worker): one cycle every 0.15 s."""
++    if mode == "missing":
++        return
++    if mode == "dir":
++        os.mkdir(path)
++        return
++    wip, mip = W.cfg["worker_ip"], CFG["manager_ip"]
++    with open(path, "a", buffering=1) as f:
++        if mode == "malformed":
++            f.write("{not json\n")
++        while not stop.is_set():
++            ts = time.time()
++            recs = [{"ts": ts, "target": "mongo 172.18.0.2:27017", "ok": True, "detail": "connected"},
++                    {"ts": ts, "target": f"worker-eth0 {CFG['worker_ip']}:8011", "ok": True, "detail": "HTTP 200"}]
++            if mode == "worker_fail_A1" and W.label in ("T14-A1 before", "T14-A1 after"):
++                recs[1] = {**recs[1], "ok": False, "detail": "TimeoutError('timed out')"}
++            if mode != "no_arp":
++                hw = OTHER_MAC if mode == "arp_wrong_mac" else ETH0_MAC
++                recs.append({"ts": ts, "target": f"arp worker-eth0 {CFG['worker_ip']}", "ok": True,
++                             "detail": {"hw": hw, "flags": "0x2", "device": "eth0"}})
++            recs.append({"ts": ts, "target": f"manager {mip}:8011", "ok": True, "detail": "HTTP 200"})
++            for r in recs:
++                f.write(json.dumps(r) + "\n")
++            stop.wait(0.15)
++    del wip
++
++
++def guest_rows():
++    """probe_matrix.guest_frames() (tshark -T fields) from the same frames, for the session measurement."""
++    rows = []
++    for ts, fr in W.frames:
++        f = W.L.decode(ts, fr)
++        ip = f.get("ip") or {}
++        rows.append({"t": ts, "src_mac": f.get("src", ""), "etype": "0x%04x" % f.get("etype", 0),
++                     "ip_src": ip.get("src", ""), "ip_dst": ip.get("dst", "") or "0.0.0.0",
++                     "proto": str(ip.get("proto", "")), "sport": "", "dport": "", "qname": ""})
++    return rows
++
++
++def scenario_main(name, d):
++    spec = SCENARIOS[name]
++    hdir, sb, out = os.path.join(d, "harness"), os.path.join(d, "stubs"), os.path.join(d, "out")
++    for p in (hdir, out, os.path.join(d, "data"), os.path.join(d, "sys", "tap0"), os.path.join(d, "sys", "eth0"),
++              os.path.join(d, "proc")):
++        os.makedirs(p)
++    for f in mounted_files(os.path.join(HERE, RS)) + ["probe_matrix.py"]:
++        shutil.copy2(os.path.join(HERE, f), hdir)
++    write_stubs(sb, os.path.join(d, "current_task"), spec.get("marker_left", False))
++    with zipfile.ZipFile(os.path.join(d, "image.zip"), "w") as z:
++        z.writestr("kernel", b"k")
++    open(os.path.join(d, "sys", "tap0", "address"), "w").write(TAP + "\n")
++    if not spec.get("no_eth0"):
++        open(os.path.join(d, "sys", "eth0", "address"), "w").write(ETH0_MAC + "\n")
++    cfg = dict(CFG)
++    for k, v in spec.get("cfg", {}).items():
++        if v is None:
++            cfg.pop(k)
++        else:
++            cfg[k] = v
++    os.environ["CT01_TARGETS"] = json.dumps(cfg)
++    os.environ["CT01_SUITE"] = "arp"
++    sys.path[:0] = [hdir, sb]
++    sys.argv = ["probe_matrix.py", "ARM", out]
++    import importlib.util
++    spec_pm = importlib.util.spec_from_file_location("probe_matrix", os.path.join(hdir, "probe_matrix.py"))
++    pm = importlib.util.module_from_spec(spec_pm)
++    spec_pm.loader.exec_module(pm)          # imports arp_harness & co. from the mounted files only
++    modules = {m: getattr(sys.modules.get(m), "__file__", None)
++               for m in ("arp_harness", "arp_cases", "guest_state", "icmp_harness", "icmp_cases", "l2frames",
++                         "l2eval", "signatures", "counter_window", "pcapng_stats")}
++    import arp_cases
++    import guest_state
++    sys.path.append(HERE)                   # test helpers only (simulated guest, frame/counter builders)
++    import selftest_l2 as B
++    import selftest_l2eval as V
++    import selftest_arp as SA
++    from service import analysis as A
++    W.pm, W.B, W.V, W.SA, W.L = pm, B, V, SA, pm.arp_harness.A.L
++    W.spec, W.frames, W.commands, W.links, W.label, W.cfg = spec, [], [], 0, None, cfg
++    W.counters, W.tshark_dead, W.worker_cmds, W.neigh_n, W.snap_fail, W.fired = dict(V.BASE), False, [], {}, False, set()
++    A.STUCK[0] = spec.get("qemu_stuck", False)
++    A.ARCH_CONFIGS["ARM"] = type("Cfg", (), {"image_zip_path": os.path.join(d, "image.zip"), "image_kernel_path": "/kernel",
++                                             "image_rootfs_path": "/rootfs", "net_iface": "eth1",
++                                             "qemu_cmd_template": "qemu-system-arm -k {kernel} -r {rootfs} -m {mac}"})
++    if spec.get("cases") in ("missing", "duplicate"):     # a defective wiring/case list
++        real = arp_cases.build_cases
++
++        def build():
++            cs = real()
++            return cs[:-1] if spec["cases"] == "missing" else cs + [cs[0]]
++        arp_cases.build_cases = build
++    hc = os.path.join(d, "hostcap")
++    os.makedirs(hc)
++    pm.ALERT, pm.CAPTURE_DEAD, pm.HEARTBEAT = (os.path.join(hc, f) for f in ("alert.txt", "capture-dead.txt", "hb"))
++    open(pm.ALERT, "w").close()
++    pm.CTL, pm.DATA, pm.WORK = os.path.join(d, "ctl.jsonl"), os.path.join(d, "data") + "/", os.path.join(d, "work")
++    pm.SYS_NET, pm.PROC_ROOT = os.path.join(d, "sys"), os.path.join(d, "proc")
++    pm.Guest, pm.run_checked, pm.guest_frames = guest_class(SA, guest_state), fake_run_checked, guest_rows
++    pm.subprocess = type("SP", (), {"Popen": FakeTshark, "DEVNULL": subprocess.DEVNULL,
++                                    "TimeoutExpired": subprocess.TimeoutExpired, "run": subprocess.run})
++
++    def ctl_dns(server, qname):
++        if spec.get("liveness_fail"):
++            raise OSError("timed out (fake)")
++        return "DNS response rcode=0 (fake)"
++
++    def ctl_http(ip, port, path="/healthcheck"):
++        W.http_calls.append((ip, port, W.label))
++        if spec.get("worker_http_fail") and W.label == "T14-A2 after":
++            raise OSError("connection refused (fake)")
++        return "HTTP 200 (fake)"
++    W.http_calls = []
++    pm.ctl_dns, pm.ctl_http = ctl_dns, ctl_http
++    real_read = pm.counters_read
++
++    def counters_read(label):
++        W.label = label
++        return real_read(label)
++    pm.counters_read = counters_read
++    W.hb_stop, ctl_stop = threading.Event(), threading.Event()
++
++    def hb():
++        while not W.hb_stop.is_set():
++            open(pm.HEARTBEAT + ".tmp", "w").write(str(time.time()))
++            os.replace(pm.HEARTBEAT + ".tmp", pm.HEARTBEAT)
++            W.hb_stop.wait(0.3)
++    open(pm.HEARTBEAT, "w").write(str(time.time()))   # first beat before main(): no start-up race
++    W.hb_thread = threading.Thread(target=hb, daemon=True)
++    W.hb_thread.start()
++    ctl_t = threading.Thread(target=ctl_loop_thread, args=(pm.CTL, spec.get("ctl"), ctl_stop), daemon=True)
++    ctl_t.start()
++    time.sleep(0.2)
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = pm.main()
++    W.hb_stop.set()
++    ctl_stop.set()
++    final = rc if rc else (1 if [r for r in pm.results if not r["ok"]] else 0)
++    json.dump({"rc": final, "commands": W.commands, "worker_cmds": W.worker_cmds, "http_calls": W.http_calls,
++               "mounted": mounted_files(os.path.join(HERE, RS)), "modules": modules,
++               "fixture_sha": hashlib.sha256(f"06B-3B ARM harmless text fixture - not an ELF\n".encode()).hexdigest(),
++               "out": os.path.join(out, "ARM")},
++              open(os.path.join(d, "scenario.json"), "w"), indent=1)
++    return 0
++
++
++# ====================================================================== driver side
++sys.path.insert(0, HERE)
++
++
++def run_scenario(name, tmp):
++    d = os.path.join(tmp, name)
++    os.makedirs(d)
++    p = subprocess.run([sys.executable, "-I", os.path.abspath(__file__), "--scenario", name, "--dir", d],
++                       capture_output=True, text=True, timeout=600)
++    if p.returncode != 0:
++        raise RuntimeError(f"scenario {name} crashed: {(p.stderr or p.stdout).strip()[-800:]}")
++    sc = json.load(open(os.path.join(d, "scenario.json")))
++    od = sc["out"]
++    load = lambda f: json.load(open(os.path.join(od, f))) if os.path.exists(os.path.join(od, f)) else None  # noqa: E731
++    sc.update(dir=d, result=load("result.json"), eval=load("arp-eval.json"), group=load("arp-group.json"),
++              session=load("session.json"))
++    import arp_harness as H
++    sc["outcome"] = H.arch_outcome(sc["result"], sc["eval"], "ARM")
++    sc["cli"] = cli_outcome(os.path.join(od, "result.json"), os.path.join(od, "arp-eval.json"))
++    sc["script"] = script_mapping(sc["rc"], sc["cli"])
++    return sc
++
++
++def cli_outcome(result, ev, arch="ARM"):
++    """arp_harness.py --outcome exactly as run-06b4i.sh calls it (`python3 "$H/arp_harness.py"`: the script's own
++    directory provides arp_cases/icmp_harness)."""
++    p = subprocess.run(["python3", os.path.join(HERE, "arp_harness.py"), "--outcome", result, ev, arch],
++                       capture_output=True, text=True, timeout=60, cwd=os.path.dirname(result) or "/")
++    return p.stdout.strip() if p.returncode == 0 else f"CLI-ERROR rc={p.returncode} {p.stderr.strip()[-200:]}"
++
++
++def script_mapping(rc, outcome):
++    """The per-architecture `case "$rc:$outcome" in ... esac` block of run-06b4i.sh, run by bash as is."""
++    s = open(os.path.join(HERE, RS)).read()
++    i = s.index('    case "$rc:$outcome" in')
++    block = s[i:s.index("    esac\n", i) + len("    esac\n")]
++    prog = ('pass() { echo "@@PASS"; }; fail() { echo "@@FAIL"; }; UNVERIFIED=(); ARCH=ARM\n'
++            f'rc={rc}; outcome={sh(outcome)}\n' + block + 'echo "@@UNVERIFIED_COUNT=${#UNVERIFIED[@]}"\n')
++    out = subprocess.run(["bash", "-c", prog], capture_output=True, text=True).stdout
++    marks = [l for l in out.splitlines() if l.startswith("@@")]
++    if marks == ["@@PASS", "@@UNVERIFIED_COUNT=0"]:
++        return "PASS"
++    if marks == ["@@FAIL", "@@UNVERIFIED_COUNT=0"]:
++        return "FAIL"
++    if marks == ["@@UNVERIFIED_COUNT=1"] and "[UNVERIFIED] ARM: " in out:
++        return "UNVERIFIED"
++    return f"UNEXPECTED {marks}"
++
++
++def sh(s):
++    return "'" + s.replace("'", "'\\''") + "'"
++
++
++def cats(sc):
++    return {c["id"]: c["category"] for c in (sc["eval"] or {}).get("cases", [])}
++
++
++def runs(sc):
++    return [c for k, c in sc["commands"] if k == "run"]
++
++
++def failed_tests(sc):
++    return [r["test"] for r in sc["result"]["results"] if not r["ok"]]
++
++
++def rec_of(sc, name):
++    return [r for r in sc["result"]["results"] if r["test"] == name]
++
++
++def gcase(sc, cid):
++    return next(c for c in sc["group"]["cases"] if c["id"] == cid)
++
++
++def ecase(sc, cid):
++    return next(c for c in sc["eval"]["cases"] if c["id"] == cid)
++
++
++def infra_ok(sc):
++    return all(any(r["test"].startswith(p) and r["ok"] for r in sc["result"]["results"])
++               for p in ("QEMU exit confirmed", "fixture, marker and temporary guest disk removed"))
++
++
++def contract_cmds(cid):
++    import arp_cases as A
++    return [c for _, c in A.contract_steps(next(x for x in A.build_cases() if x["id"] == cid), "eth1")]
++
++
++def own_cmds(cid):
++    """The case's setup/trigger commands (the settle `sleep 3` is common to every case)."""
++    return [c for c in contract_cmds(cid) if not c.startswith("sleep ")]
++
++
++def sec_S(tmp):
++    import concurrent.futures
++    import arp_cases as A
++    import arp_harness as H
++
++    def one(name):
++        try:
++            return name, run_scenario(name, tmp)
++        except Exception as e:                                   # noqa: BLE001
++            print(f"SELFTEST-ERROR: {e}")
++            return name, None
++    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
++        S = dict(ex.map(one, SCENARIOS))
++    g = lambda n: S[n] or {}   # a scenario that did not run fails every test that reads it  # noqa: E731
++
++    # ---------------------------------------------------------------- clean
++    c = g("clean")
++    t("S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS",
++      lambda: (c["rc"], c["result"]["status"], c["outcome"], c["cli"], c["script"])
++      == (0, "COMPLETED", "PASS", "PASS", "PASS"))
++    t("S2 clean: A1/A2 ĐẠT (live control), A3/S1 ĐẠT (kiểm quy tắc); labels and evidence kinds unchanged",
++      lambda: [(x["id"], x["category"], x["verdict"], x["evidence_kind"]) for x in c["eval"]["cases"]]
++      == [("T14-A1", "DAT", "ĐẠT", "live_control"), ("T14-A2", "DAT", "ĐẠT", "live_control"),
++          ("T14-A3", "DAT_KIEM_QUY_TAC", "ĐẠT (kiểm quy tắc)", "rule_check"),
++          ("T15-S1", "DAT_KIEM_QUY_TAC", "ĐẠT (kiểm quy tắc)", "rule_check")])
++    t("S3 clean: every contract step of every case sent in order (arp_cases.contract_steps for eth1)",
++      lambda: [x for x in runs(c) if x in sum((contract_cmds(i) for i in CASE_IDS), [])]
++      == sum((contract_cmds(i) for i in CASE_IDS), []))
++    t("S4 clean: no IPv4 probe, no ICMP case, no listener, no arping/raw tool sent to the guest",
++      lambda: not any("--local-port" in x or "nslookup ct01" in x or x.startswith("ping6") or "-w 5" in x
++                      or "arping" in x.split()[:1] for x in runs(c))
++      and not any("listener" in r["test"] or "ICMP" in r["test"] for r in c["result"]["results"]))
++    t("S5 clean: guest commands = link, then per case snapshot .. contract .. restore re-reads .. link (5 links)",
++      lambda: sum("/get-task/" in x for x in runs(c)) == 5 and "/get-task/" in runs(c)[5]
++      and runs(c)[-1].startswith("rm -f /tmp/r.out; curl"))
++    t("S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control",
++      lambda: c["worker_cmds"] == [["ip", "-j", "neigh", "show"]] * 9
++      and all(isinstance(x["neigh_before"], str) and isinstance(x["neigh_after"], str) for x in c["group"]["cases"]))
++    t("S7 clean: worker -> manager HTTP for the A2 control after read B of A2 (plus the two liveness calls)",
++      lambda: [x for x in c["http_calls"] if x[2] == "T14-A2 after"] == [["192.168.60.10", 8011, "T14-A2 after"]])
++    t("S8 clean: live controls recorded with their evidence (A1: ctl ARP entry = worker eth0 MAC; A2: manager MAC "
++      "on eth0); none for A3/S1",
++      lambda: gcase(c, "T14-A1")["control"]["ok"] is True
++      and gcase(c, "T14-A1")["control"]["detail"]["ctl_arp"]["ok"] is True
++      and gcase(c, "T14-A1")["control"]["detail"]["worker_eth0_mac"] == ETH0_MAC
++      and gcase(c, "T14-A2")["control"]["detail"]["worker_neighbour"]["lladdr"] == MANAGER_MAC
++      and gcase(c, "T14-A3")["control"] is None and gcase(c, "T15-S1")["control"] is None)
++    t("S9 clean: paths and parameters passed to the evaluator (tap0.pcapng, counters-raw.jsonl, TAP MAC, eth1)",
++      lambda: c["eval"]["inputs"] == {"pcap": os.path.join(c["out"], "tap0.pcapng"),
++                                      "counters": os.path.join(c["out"], "counters-raw.jsonl"),
++                                      "tap_mac": TAP, "iface": "eth1"})
++    t("S10 clean: group record JSON: arch, interface, TAP MAC, fixture hash, planned cases, collector command",
++      lambda: (c["group"]["arch"], c["group"]["iface"], c["group"]["tap_mac"], c["group"]["fixture_sha256"],
++               c["group"]["planned_case_ids"], c["group"]["neigh_command"])
++      == ("ARM", "eth1", TAP, c["fixture_sha"], list(CASE_IDS), ["ip", "-j", "neigh", "show"])
++      and c["group"]["stopped"] is None and "guard_stopped" not in c["group"])
++    t("S11 clean: arp-eval.json: group_exit 0, group complete, no record problem, case requirements = 4 restores + "
++      "4 links after",
++      lambda: c["eval"]["group_exit"] == 0 and c["eval"]["group_complete"] is True and c["eval"]["record_problems"] == []
++      and sorted(c["eval"]["case_requirements"]) == sorted([H.restore_name(i) for i in CASE_IDS]
++                                                            + [H.link_after_name(i) for i in CASE_IDS]))
++    t("S12 clean: one result record per case, named 'probe <id> (arp, ...) -> <verdict>'",
++      lambda: sorted(r["test"] for r in c["result"]["results"] if r["test"].startswith("probe "))
++      == sorted(H.case_test_name(x) for x in c["eval"]["cases"]))
++    t("S13 imports in the fake container came only from the files run-06b4i.sh mounts",
++      lambda: all(p and os.path.dirname(p) == os.path.join(c["dir"], "harness") for p in c["modules"].values())
++      and {"arp_harness.py", "arp_cases.py", "guest_state.py", "icmp_harness.py", "icmp_cases.py", "l2frames.py",
++           "l2eval.py", "signatures.py", "counter_window.py", "pcapng_stats.py"} <= set(c["mounted"]))
++    t("S14 clean: session-wide measurement still written separately, QEMU exit/capture/cleanup records ok",
++      lambda: c["session"] is not None and infra_ok(c) and rec_of(c, "tap0 capture stopped cleanly")[0]["ok"])
++
++    # ---------------------------------------------------------------- wiring defects / service links
++    for n, why in (("missing-case", "case missing: T15-S1"), ("duplicate-case", "more than once")):
++        x = g(n)
++        t(f"S15 {n}: never PASS; outcome FAIL naming the record problem; script FAIL; group record check FAIL in "
++          "result.json",
++          lambda x=x, why=why: x["outcome"].startswith("FAIL") and why in x["outcome"] and x["script"] == "FAIL"
++          and H.GROUP_RECORD_NAME in failed_tests(x))
++    x = g("link-before-http000")
++    t("S16 service link before fails: no case command sent, every case CHƯA KIỂM CHỨNG, outcome FAIL",
++      lambda: not any(y in runs(x) for y in sum((own_cmds(i) for i in CASE_IDS), []))
++      and set(cats(x).values()) == {"CHUA_KIEM_CHUNG"} and x["outcome"].startswith("FAIL") and x["script"] == "FAIL"
++      and H.LINK_BEFORE_NAME in failed_tests(x))
++    x = g("link-after-A1-badhash")
++    t("S17 service link after A1 with another hash: A1 CHƯA KIỂM CHỨNG, outcome FAIL (link record), later cases run",
++      lambda: cats(x)["T14-A1"] == "CHUA_KIEM_CHUNG" and cats(x)["T15-S1"] == "DAT_KIEM_QUY_TAC"
++      and H.link_after_name("T14-A1") in failed_tests(x) and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
++
++    # ---------------------------------------------------------------- neighbour collector
++    x = g("neigh-error-A2-after")
++    t("S18 collector fails (rc != 0) after A2: A2 LỖI PHÉP ĐO with the error kept, collector record FAIL, never PASS",
++      lambda: cats(x)["T14-A2"] == "LOI_PHEP_DO" and "neigh_after_error" in gcase(x, "T14-A2")
++      and H.NEIGH_READ_NAME in failed_tests(x) and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
++    x = g("neigh-notjson-A1-before")
++    t("S19 collector output not JSON before A1: A1 LỖI PHÉP ĐO, outcome FAIL",
++      lambda: cats(x)["T14-A1"] == "LOI_PHEP_DO" and x["outcome"].startswith("FAIL"))
++    x = g("neigh-exception-A3-after")
++    t("S20 collector raises an unexpected exception: recorded, A3 LỖI PHÉP ĐO, QEMU/cleanup done, outcome FAIL",
++      lambda: "KeyError" in gcase(x, "T14-A3")["neigh_after_error"] and cats(x)["T14-A3"] == "LOI_PHEP_DO"
++      and infra_ok(x) and x["outcome"].startswith("FAIL"))
++
++    # ---------------------------------------------------------------- FAIL + measurement error, not started
++    x = g("fail-and-measure-A3")
++    t("S21 guest MAC on eth0 after A3 AND counter read error: A3 FAIL, measurement error kept beside the evidence",
++      lambda: cats(x)["T14-A3"] == "FAIL" and ecase(x, "T14-A3")["failure_evidence"]
++      and any("T14-A3 after" in m for m in ecase(x, "T14-A3")["measurement_errors"])
++      and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
++    x = g("notstarted-A3")
++    t("S22 guest state unreadable before A3: nothing sent for A3, not_started kept, LỖI THỰC THI, S1 still runs; "
++      "outcome UNVERIFIED (no restore/link requirement for a case that changed nothing)",
++      lambda: not any(y in runs(x) for y in own_cmds("T14-A3")) and ecase(x, "T14-A3")["not_started"] is True
++      and cats(x)["T14-A3"] == "LOI_THUC_THI" and cats(x)["T15-S1"] == "DAT_KIEM_QUY_TAC"
++      and H.restore_name("T14-A3") not in x["eval"]["case_requirements"]
++      and x["outcome"].startswith("UNVERIFIED") and x["script"] == "UNVERIFIED")
++    x = g("notstarted-A3-neigh-fail")
++    t("S23 not started + guest MAC on a worker neighbour after it: FAIL wins, not_started and the evidence kept",
++      lambda: cats(x)["T14-A3"] == "FAIL" and ecase(x, "T14-A3")["not_started"] is True
++      and ecase(x, "T14-A3")["failure_evidence"] and x["outcome"].startswith("FAIL"))
++
++    # ---------------------------------------------------------------- execution errors, restore
++    x = g("exec-error-A1")
++    t("S24 setup fails in A1: trigger not sent, restore still done, A1 LỖI THỰC THI, later cases ĐẠT; UNVERIFIED",
++      lambda: "ping -c 1 -W 2 -s 1401 192.168.60.2" not in runs(x) and gcase(x, "T14-A1")["guest_state"]["restore"]["restored"]
++      and cats(x)["T14-A1"] == "LOI_THUC_THI" and cats(x)["T14-A2"] == "DAT"
++      and x["outcome"].startswith("UNVERIFIED") and x["script"] == "UNVERIFIED")
++    x = g("timeout-A3")
++    t("S25 console timeout on the A3 trigger: LỖI THỰC THI, restore done, S1 still runs; UNVERIFIED",
++      lambda: cats(x)["T14-A3"] == "LOI_THUC_THI" and gcase(x, "T14-A3")["guest_state"]["restore"]["restored"]
++      and cats(x)["T15-S1"] == "DAT_KIEM_QUY_TAC" and x["outcome"].startswith("UNVERIFIED"))
++    x = g("no-frame")
++    t("S26 the simulated kernel sends nothing: every case KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT; UNVERIFIED",
++      lambda: set(cats(x).values()) == {"KHONG_TAO_DUOC_GOI"} and x["outcome"].startswith("UNVERIFIED")
++      and x["script"] == "UNVERIFIED")
++    x = g("counter-read-error-A3")
++    t("S27 counter read error on 'T14-A3 after': A3 LỖI PHÉP ĐO, outcome FAIL",
++      lambda: cats(x)["T14-A3"] == "LOI_PHEP_DO" and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
++    x = g("restore-fail-A2")
++    t("S28 restore fails after A2: A3/S1 not run and none of their commands sent (contract), A2 CHƯA KIỂM CHỨNG "
++      "(khôi phục)",
++      lambda: gcase(x, "T14-A3")["not_run"] and gcase(x, "T15-S1")["not_run"]
++      and not any(y in runs(x) for y in own_cmds("T14-A3") + own_cmds("T15-S1"))
++      and cats(x) == {"T14-A1": "DAT", "T14-A2": "CHUA_KIEM_CHUNG", "T14-A3": "CHUA_KIEM_CHUNG",
++                      "T15-S1": "CHUA_KIEM_CHUNG"} and "khôi phục" in ecase(x, "T14-A2")["verdict"])
++    t("S29 restore fails after A2: run outcome FAIL (restore confirmation), no service link after A2, script FAIL",
++      lambda: H.restore_name("T14-A2") in failed_tests(x) and not rec_of(x, H.link_after_name("T14-A2"))
++      and x["outcome"].startswith("FAIL") and x["script"] == "FAIL" and infra_ok(x))
++
++    # ---------------------------------------------------------------- guard stops
++    for n, rc, why, last in (("marker-after-A2-ping", 98, "host capture lost", "ping -c 1 -W 2 -s 1402 192.168.60.10"),
++                             ("heartbeat-stale-after-A1-setup", 98, "heartbeat", "ip route add 192.168.60.2/32 dev eth1"),
++                             ("tshark-exit-after-S1-down", 98, "tap0 tshark exited", "ip link set dev eth1 down"),
++                             ("leak-after-A3-ping", 99, "LEAK", "ping -c 1 -W 2 -s 1403 10.200.0.6")):
++        x = g(n)
++        t(f"S30 {n}: exit {rc}, the command that tripped the guard is the LAST one sent (no restore, no link)",
++          lambda x=x, rc=rc, last=last: x["rc"] == rc and runs(x)[-1] == last)
++        t(f"S31 {n}: status names the cause, outcome FAIL, script FAIL, no evaluation",
++          lambda x=x, why=why: why in x["result"]["status"] and x["outcome"].startswith("FAIL")
++          and x["script"] == "FAIL" and x["eval"] is None)
++        t(f"S32 {n}: QEMU shut down and cleanup done after the stop; group record kept with the guard stop",
++          lambda x=x: infra_ok(x) and x["group"] is not None and x["group"].get("guard_stopped"))
++    x = g("leak-before-S1")
++    t("S33 alert written during 'T15-S1 before' (read A): S1 setup NOT sent, exit 99, leak record when=before",
++      lambda: x["rc"] == 99 and not any(y in runs(x) for y in own_cmds("T15-S1"))
++      and any(r["test"] == "NO probe packet seen on host interfaces (leak monitor)" and r.get("when") == "before"
++              for r in x["result"]["results"]))
++    x = g("alert-unreadable-before-A2")
++    t("S34 alert file unreadable during 'T14-A2 before': never 'no alert'; A2 setup NOT sent; ERROR exit 1; FAIL",
++      lambda: x["rc"] == 1 and x["result"]["status"].startswith("ERROR") and "IsADirectoryError" in x["result"]["status"]
++      and not any(y in runs(x) for y in own_cmds("T14-A2")) and x["outcome"].startswith("FAIL") and infra_ok(x))
++    x = g("marker-before-A2")
++    t("S35 capture lost during 'T14-A2 before': A2 setup NOT sent, exit 98, the restore reaches no guest (not "
++      "restored), A3/S1 not run",
++      lambda: x["rc"] == 98 and not any(y in runs(x) for y in own_cmds("T14-A2"))
++      and runs(x)[-1] == __import__("guest_state").snapshot_cmd("eth1")
++      and gcase(x, "T14-A2")["guest_state"]["restore"]["restored"] is False
++      and gcase(x, "T14-A3")["not_run"] and gcase(x, "T15-S1")["not_run"])
++
++    # ---------------------------------------------------------------- live controls
++    for n, cid, why in (("ctl-arp-wrong-mac", "T14-A1", "!= worker eth0 MAC"), ("ctl-no-arp", "T14-A1", "ok_before"),
++                        ("ctl-worker-fail-in-A1", "T14-A1", "fails_in_window"),
++                        ("cfg-worker-ip-other", "T14-A1", "not the worker eth0 address"),
++                        ("eth0-mac-missing", "T14-A1", "worker eth0 MAC None"),
++                        ("a2-manager-neigh-missing", "T14-A2", "0 valid row(s)"),
++                        ("a2-manager-other-mac", "T14-A2", "not a usable binding"),
++                        ("a2-worker-http-fail", "T14-A2", "worker -> manager HTTP not ok"),
++                        ("cfg-no-manager-mac", "T14-A2", "manager MAC None")):
++        x = g(n)
++        other = "T14-A2" if cid == "T14-A1" else "T14-A1"
++        t(f"S36 {n}: {cid} control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), {other} still ĐẠT; "
++          "UNVERIFIED, never PASS",
++          lambda x=x, cid=cid, other=other, why=why: cats(x)[cid] == "CHUA_KIEM_CHUNG"
++          and ecase(x, cid)["verdict"] == "CHƯA KIỂM CHỨNG (không có đối chứng sống)" and cats(x)[other] == "DAT"
++          and why in json.dumps(gcase(x, cid)["control"], ensure_ascii=False)
++          and x["outcome"].startswith("UNVERIFIED") and x["script"] == "UNVERIFIED")
++    for n in ("ctl-missing", "ctl-malformed"):
++        x = g(n)
++        t(f"S37 {n}: ctl log not usable -> A1 and A2 CHƯA KIỂM CHỨNG, A3/S1 ĐẠT (kiểm quy tắc); UNVERIFIED",
++          lambda x=x: cats(x) == {"T14-A1": "CHUA_KIEM_CHUNG", "T14-A2": "CHUA_KIEM_CHUNG",
++                                  "T14-A3": "DAT_KIEM_QUY_TAC", "T15-S1": "DAT_KIEM_QUY_TAC"}
++          and "ctl log not readable" in json.dumps(gcase(x, "T14-A1")["control"]) and x["outcome"].startswith("UNVERIFIED"))
++
++    # ---------------------------------------------------------------- infrastructure, errors outside the group
++    for n, why in (("tap0-drops", "drop statistics"), ("qemu-not-exiting", "QEMU exit confirmed"),
++                   ("cleanup-marker-left", "fixture, marker"), ("liveness-fails", "capture liveness")):
++        x = g(n)
++        t(f"S38 {n}: four cases ĐẠT, outcome still FAIL ({why}); script FAIL",
++          lambda x=x, why=why: set(cats(x).values()) <= {"DAT", "DAT_KIEM_QUY_TAC"} and len(cats(x)) == 4
++          and x["outcome"].startswith("FAIL") and why in x["outcome"] and x["script"] == "FAIL")
++    x = g("pcap-unreadable")
++    t("S39 tap0 capture unreadable: every case LỖI PHÉP ĐO, outcome FAIL",
++      lambda: set(cats(x).values()) == {"LOI_PHEP_DO"} and x["outcome"].startswith("FAIL"))
++    x = g("error-after-group")
++    t("S40 an error after the group (tap0 address unreadable): ERROR exit 1, record kept, no evaluation, QEMU and "
++      "cleanup done, FAIL",
++      lambda: x["rc"] == 1 and x["result"]["status"].startswith("ERROR") and x["group"] is not None
++      and x["eval"] is None and infra_ok(x) and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
++    x = g("callback-errors")
++    t("S41 control/collector callbacks fail (ctl log is a directory, worker HTTP refused, collector KeyError): every "
++      "error recorded, no case ĐẠT through them, QEMU/cleanup done, FAIL",
++      lambda: cats(x)["T14-A1"] == "CHUA_KIEM_CHUNG" and cats(x)["T14-A2"] == "CHUA_KIEM_CHUNG"
++      and cats(x)["T14-A3"] == "LOI_PHEP_DO" and infra_ok(x) and x["outcome"].startswith("FAIL"))
++    t("S42 no scenario other than clean passes", lambda: [n for n in SCENARIOS if n != "clean" and S[n]
++                                                         and (S[n]["outcome"] == "PASS" or S[n]["script"] == "PASS")] == [])
++    t("S43 function and CLI outcome agree in every scenario",
++      lambda: all(S[n]["outcome"] == S[n]["cli"] for n in SCENARIOS if S[n]))
++    return S
++
++
++# ====================================================================== R: required confirmations, R1 through the wiring
++def sec_R(S, tmp):
++    import arp_harness as H
++    c = S.get("clean")
++    if not c or not c.get("eval") or not c.get("group"):
++        t("R0 clean scenario available with its evaluation and group record", lambda: False)
++        return
++    names = [r["test"] for r in c["result"]["results"]]
++    reqs = list(H.REQUIRED_RECORDS) + c["eval"]["case_requirements"]
++    t("R1 the real ARP path records every required confirmation exactly once (static + per case)",
++      lambda: all(names.count(n) == 1 for n in reqs))
++    t("R2 the real ARP path records no other non-info, non-case check outside the required list",
++      lambda: [n for n in names if not n.startswith("info:") and not n.startswith("probe ") and n not in reqs] == [])
++    t("R3 a required confirmation missing / twice / ok 'true' -> FAIL",
++      lambda: all(H.arch_outcome(v, c["eval"], "ARM").startswith("FAIL") for v in (
++          {**c["result"], "results": [r for r in c["result"]["results"] if r["test"] != "QEMU exit confirmed"]},
++          {**c["result"], "results": c["result"]["results"] + [rec_of(c, H.NEIGH_READ_NAME)[0]]},
++          {**c["result"], "results": [dict(r, ok="true") if r["test"] == H.LINK_BEFORE_NAME else r
++                                      for r in c["result"]["results"]]})))
++    t("R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL",
++      lambda: all(H.arch_outcome({**c["result"], "results": [r for r in c["result"]["results"] if r["test"] != n]},
++                                 c["eval"], "ARM").startswith("FAIL")
++                  for n in (H.restore_name("T15-S1"), H.link_after_name("T14-A2"))))
++    t("R5 case_requirements missing in arp-eval.json -> FAIL",
++      lambda: H.arch_outcome(c["result"], {k: v for k, v in c["eval"].items() if k != "case_requirements"},
++                             "ARM").startswith("FAIL"))
++    t("R6 group_exit 2 in arp-eval.json -> FAIL; evaluation of another architecture -> FAIL",
++      lambda: H.arch_outcome(c["result"], {**c["eval"], "group_exit": 2}, "ARM").startswith("FAIL")
++      and H.arch_outcome(c["result"], c["eval"], "MIPS").startswith("FAIL"))
++
++    # R1 (06B-4HR2) through the wiring: the record of the clean run, made contradictory, re-evaluated by
++    # arp_harness.evaluate() on the same capture/counters, then --outcome and the script mapping
++    od = c["out"]
++    pcap, cnt = os.path.join(od, "tap0.pcapng"), os.path.join(od, "counters-raw.jsonl")
++
++    def variant(name, change):
++        rec = copy.deepcopy(c["group"])
++        change(rec)
++        rec0 = copy.deepcopy(rec)
++        ev = H.evaluate(pcap, cnt, TAP, rec, "ARM", c["fixture_sha"], "eth1")
++        d = os.path.join(tmp, "r1-" + name)
++        os.makedirs(d)
++        rp, ep = os.path.join(d, "result.json"), os.path.join(d, "arp-eval.json")
++        res = copy.deepcopy(c["result"])
++        res["results"] = [r for r in res["results"] if not r["test"].startswith("probe ")
++                          and r["test"] != H.GROUP_RECORD_NAME]
++        res["results"].append({"arch": "ARM", "test": H.GROUP_RECORD_NAME, "ok": ev["group_complete"] is True})
++        res["results"] += [{"arch": "ARM", "test": H.case_test_name(x), "ok": x["ok"]} for x in ev["cases"]]
++        json.dump(res, open(rp, "w"))
++        json.dump(ev, open(ep, "w"), ensure_ascii=False, default=str)
++        cli = cli_outcome(rp, ep)
++        return ev, cli, script_mapping(0, cli), rec == rec0
++
++    def a1(rec):
++        return next(x for x in rec["cases"] if x["id"] == "T14-A1")
++
++    def perm_dynamic(rec):      # baseline: flags 6 (ATF_PERM) in neigh_dynamic, entry lost in the re-read state
++        a1(rec)["guest_state"]["before"]["neigh_dynamic"]["10.200.0.9 eth1"] = ["02:00:00:00:00:09", 6]
++
++    def overlap(rec):           # the same key in both groups, baseline and re-read state
++        for st in (a1(rec)["guest_state"]["before"], a1(rec)["guest_state"]["restore"]["after"]):
++            k = next(iter(st["neigh_dynamic"]))
++            st["neigh_static"][k] = st["neigh_dynamic"][k][0]
++
++    def after_perm(rec):        # re-read state contradictory, baseline clean
++        a1(rec)["guest_state"]["restore"]["after"]["neigh_dynamic"]["10.200.0.9 eth1"] = ["02:00:00:00:00:09", 4]
++
++    def dyn_change(rec):        # control: a valid dynamic change is not forced (exit stays 0)
++        a1(rec)["guest_state"]["restore"]["after"]["neigh_dynamic"] = {}
++    for name, ch, word in (("perm-dynamic", perm_dynamic, "PERMANENT flag"), ("overlap", overlap, "in both"),
++                           ("after-perm", after_perm, "PERMANENT flag")):
++        ev, cli, scr, same = variant(name, ch)
++        t(f"R7 R1 through the wiring ({name}): record problem, group exit 2, arp_harness --outcome FAIL, script FAIL, "
++          "record not modified",
++          lambda ev=ev, cli=cli, scr=scr, same=same, word=word: any(word in p for p in ev["record_problems"])
++          and ev["group_exit"] == 2 and ev["group_complete"] is False and cli.startswith("FAIL") and scr == "FAIL"
++          and same and ecase({"eval": ev}, "T14-A1")["category"] == "CHUA_KIEM_CHUNG")
++    ev, cli, scr, same = variant("dyn-change", dyn_change)
++    t("R8 control: a valid dynamic neighbour change in the re-read state is not forced: still PASS through the wiring",
++      lambda: ev["record_problems"] == [] and ev["group_exit"] == 0 and cli == "PASS" and scr == "PASS")
++
++
++# ====================================================================== U: units
++def sec_U(tmp):
++    import arp_cases as A
++    import arp_harness as H
++    T0, T1 = 1000.0, 1010.0
++
++    def recs(target, times, ok=True, detail=None):
++        return [{"ts": x, "target": target, "ok": ok, "detail": detail} for x in times]
++    arp_ok = {"hw": ETH0_MAC, "flags": "0x2", "device": "eth0"}
++    wt, at, mt = H.ctl_target_http_worker("192.168.60.2"), H.ctl_target_arp_worker("192.168.60.2"), \
++        H.ctl_target_http_manager("192.168.60.10")
++    good = recs(wt, [T0 - 1, T0 + 5, T1 + 1]) + recs(at, [T0 - 1, T0 + 5, T1 + 1], detail=arp_ok) \
++        + recs(mt, [T0 - 1, T1 + 1])
++    t("U1 ctl_window: OK before and after, no failure -> ok",
++      lambda: H.ctl_window(good, wt, T0, T1, 3.0)["ok"] is True)
++    t("U2 ctl_window: nothing after read B (yet) -> not ok", lambda: not H.ctl_window(recs(wt, [T0 - 1]), wt, T0, T1, 3.0)["ok"])
++    t("U3 ctl_window: OK records only outside the slack -> not ok",
++      lambda: not H.ctl_window(recs(wt, [T0 - 5, T1 + 5]), wt, T0, T1, 3.0)["ok"])
++    t("U4 ctl_window: one failure inside the span -> not ok, counted",
++      lambda: H.ctl_window(good + recs(wt, [T0 + 2], ok=False), wt, T0, T1, 3.0)["fails_in_window"] == 1
++      and not H.ctl_window(good + recs(wt, [T0 + 2], ok=False), wt, T0, T1, 3.0)["ok"])
++    t("U5 ctl_window: another target (prefix of it) never counts",
++      lambda: not H.ctl_window(recs(wt + "0", [T0 - 1, T1 + 1]), wt, T0, T1, 3.0)["ok"])
++    t("U6 ctl_records: a malformed line raises (never skipped); ok must be a boolean",
++      lambda: all(raises(ValueError, lambda s=s: H.ctl_records(s)) for s in
++                  ("{x\n", json.dumps({"ts": 1, "target": "a", "ok": "true"}) + "\n", "[1]\n",
++                   json.dumps({"ts": True, "target": "a", "ok": True}) + "\n")))
++    case = {c["id"]: c for c in A.build_cases()}
++    t("U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok",
++      lambda: H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", ETH0_MAC)[0] is True
++      and all(not H.control_a1(case["T14-A1"], [r if r["target"] != at else dict(r, detail=d) for r in good], T0, T1,
++                               3.0, "192.168.60.2", ETH0_MAC)[0]
++              for d in ({**arp_ok, "hw": OTHER_MAC}, {**arp_ok, "flags": "0x0"}, {**arp_ok, "flags": "zz"}, "x", None)))
++    good3 = [dict(r, target=r["target"].replace("192.168.60.2", "192.168.60.3")) for r in good]
++    t("U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC "
++      "unknown -> not ok",
++      lambda: H.control_a1(dict(case["T14-A1"], dst="192.168.60.3"), good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC)[0]
++      and not H.control_a1(case["T14-A1"], good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC)[0]
++      and not H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", None)[0])
++    t("U9 control_a1: HTTP of ctl missing after the case -> not ok",
++      lambda: not H.control_a1(case["T14-A1"], [r for r in good if not (r["target"] == wt and r["ts"] > T1)],
++                               T0, T1, 3.0, "192.168.60.2", ETH0_MAC)[0])
++    neigh_ok = json.dumps([{"dst": "192.168.60.10", "dev": "eth0", "lladdr": MANAGER_MAC, "state": ["REACHABLE"]}])
++    http_ok = lambda: {"ok": True, "detail": "HTTP 200"}  # noqa: E731
++
++    def a2(neigh=neigh_ok, http=http_ok, mac=MANAGER_MAC, ip="192.168.60.10", records=good):
++        return H.control_a2(case["T14-A2"], records, T0, T1, 3.0, ip, mac, http, lambda: neigh)[0]
++    t("U10 control_a2: clean -> ok; STALE/DELAY/PROBE bindings are usable", lambda: a2() and all(
++        a2(neigh_ok.replace("REACHABLE", s)) for s in ("STALE", "DELAY", "PROBE")))
++    t("U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok",
++      lambda: not any(a2(n) for n in (
++          neigh_ok.replace("REACHABLE", "FAILED"), neigh_ok.replace("REACHABLE", "NOARP"),
++          json.dumps([{"dst": "192.168.60.10", "dev": "eth0", "state": ["INCOMPLETE"]}]),
++          neigh_ok.replace(MANAGER_MAC, OTHER_MAC),
++          json.dumps(json.loads(neigh_ok) * 2),
++          json.dumps([{"dst": "192.168.60.10", "dev": "eth0", "lladdr": "zz", "state": ["REACHABLE"]}]),
++          json.dumps(json.loads(neigh_ok) + [{"dst": "192.168.60.10", "dev": "eth0", "lladdr": "zz",
++                                              "state": ["REACHABLE"]}]),
++          "not json", "[]")))
++    t("U12 control_a2: worker HTTP fails or raises / manager MAC missing / address differs / ctl HTTP missing -> not ok",
++      lambda: not any((a2(http=lambda: {"ok": False, "detail": "x"}), a2(http=lambda: 1 / 0), a2(mac=None),
++                       a2(mac="zz"), a2(ip="192.168.60.11"),
++                       a2(records=[r for r in good if r["target"] != mt]))))
++    t("U13 control_a2: the neighbour collector raising -> not ok, error kept",
++      lambda: (lambda r: not r[0] and "not readable" in " ".join(r[1]["problems"]))(
++          H.control_a2(case["T14-A2"], good, T0, T1, 3.0, "192.168.60.10", MANAGER_MAC, http_ok,
++                       lambda: (_ for _ in ()).throw(RuntimeError("rc=1")))))
++    slept = []
++    ctl = make_ctl = lambda w, text, now=T1 + 0.1: H.make_control(  # noqa: E731
++        w, lambda: text, CFG, ETH0_MAC, http_ok, lambda: neigh_ok, lambda: now, slept.append)
++    win = {"T14-A1": {"before": (T0, T0 + 0.01), "after": (T1 - 0.01, T1)},
++           "T14-A2": {"before": (T0, T0 + 0.01), "after": (T1 - 0.01, T1)}}
++    text = "\n".join(json.dumps(r) for r in good)
++    t("U14 make_control: waits until the ctl log can hold a record after the span, then judges A1/A2",
++      lambda: ctl(win, text)(case["T14-A1"])[0] and ctl(win, text)(case["T14-A2"])[0]
++      and abs(slept[0] - (H.CTL_SLACK_S + H.CTL_WAIT_MARGIN_S - 0.1)) < 1e-6)
++    t("U15 make_control: window unknown (a counter read failed) / ctl unreadable / a rule-check case -> not ok",
++      lambda: not ctl({}, text)(case["T14-A1"])[0] and not ctl(win, "{bad")(case["T14-A1"])[0]
++      and not ctl(win, text)(case["T14-A3"])[0])
++
++    # check_record / evaluate / outcome units on a minimal record built by run_group with the simulated guest
++    import selftest_arp as SA
++    g, rec, pc, cf = SA.run_sim(tmp, "u-rec", control=lambda c: (True, "fixture control"))
++    sha = "ab" * 32
++    link = {"ok": True, "detail": {"rc": 0, "http_code": "200", "sha256": sha, "expected_sha256": sha}}
++    rec["service_link_before"] = copy.deepcopy(link)
++    for x in rec["cases"]:
++        x["service_link_after"] = copy.deepcopy(link)
++    rec.update(arch="ARM", tap_mac=TAP, fixture_sha256=sha, planned_case_ids=list(CASE_IDS),
++               neigh_command=list(H.NEIGH_CMD))
++    cr = lambda r, **kw: H.check_record(r, kw.get("arch", "ARM"), kw.get("tap", TAP), kw.get("sha", sha),  # noqa: E731
++                                        kw.get("iface", "eth1"))
++    t("U16 check_record: complete record -> no problem", lambda: cr(rec) == [])
++    t("U17 check_record: arch, interface, TAP MAC, fixture hash, planned cases, collector command, guard stop",
++      lambda: all(cr(dict(rec, **{k: v})) for k, v in (("arch", "MIPS"), ("iface", "br-lan"), ("tap_mac", OTHER_MAC),
++                                                       ("fixture_sha256", "cd" * 32), ("planned_case_ids", ["T14-A1"]),
++                                                       ("neigh_command", ["ip", "neigh"]),
++                                                       ("guard_stopped", "CaptureLost: x"))))
++    t("U18 check_record: link before/after a restored case not HTTP 200 + fixture hash -> problem",
++      lambda: cr(dict(rec, service_link_before={"ok": True, "detail": {**link["detail"], "http_code": "000"}}))
++      and cr({**rec, "cases": [dict(rec["cases"][0], service_link_after={"ok": True, "detail": {
++          **link["detail"], "sha256": "0" * 64}})] + rec["cases"][1:]}))
++    t("U19 check_record: not an object / invalid TAP MAC -> problem, no exception",
++      lambda: cr([]) and cr(rec, tap="zz") and cr(None))
++    ev = H.evaluate(pc, cf, TAP, rec, "ARM", sha, "eth1")
++    t("U20 evaluate: clean simulated record -> group complete, exit 0, requirements 4 + 4",
++      lambda: ev["group_complete"] and ev["group_exit"] == 0 and len(ev["case_requirements"]) == 8)
++    t("U21 evaluate: arp_cases record problems are kept (prefixed) and block the group",
++      lambda: (lambda e: e["group_complete"] is False and any(p.startswith("arp_cases: case missing")
++                                                             for p in e["record_problems"]))(
++          H.evaluate(pc, cf, TAP, {**rec, "cases": rec["cases"][:3]}, "ARM", sha, "eth1")))
++    t("U22 evaluate: a record that crashes evaluate_group never passes",
++      lambda: (lambda e: e["group_complete"] is False and e["group_exit"] == 2)(
++          H.evaluate(pc, cf, TAP, {**rec, "cases": [{"id": "T14-A1", "guest_state": 5, "steps": 7}]}, "ARM", sha,
++                     "eth1")))
++    t("U23 case_requirements: no baseline -> nothing; baseline, not restored -> restore only; restored -> both",
++      lambda: H.case_requirements({"cases": [{"id": "T14-A1", "guest_state": {"before": None}},
++                                             {"id": "T14-A2", "guest_state": {"before": {}, "restore": {"restored": False}}},
++                                             {"id": "T14-A3", "guest_state": {"before": {}, "restore": {"restored": True}}}]})
++      == [H.restore_name("T14-A2"), H.restore_name("T14-A3"), H.link_after_name("T14-A3")]
++      and H.case_requirements(None) == [] and H.case_requirements({"cases": 3}) == [])
++    t("U24 case_test_name: starts with 'probe '; CHƯA KIỂM CHỨNG stays undecided for run_outcome",
++      lambda: H.case_test_name({"id": "T14-A1", "evidence_kind": "live_control", "verdict": "ĐẠT"})
++      == "probe T14-A1 (arp, live control) -> ĐẠT"
++      and A.counter_window.run_outcome([{"test": H.case_test_name({"id": "T14-A3", "verdict": "CHƯA KIỂM CHỨNG (x)"}),
++                                         "ok": False}]).startswith("UNVERIFIED"))
++    t("U25 arch_outcome: unreadable inputs / malformed record -> FAIL",
++      lambda: all(H.arch_outcome(r, ev, "ARM").startswith("FAIL") for r in (None, {}, {"results": [1]},
++                                                                           {"results": [{"test": "x", "ok": 1}]})))
++    t("U26 run_check: missing/duplicate architecture, wrong arch, wrong cases -> problems; complete -> none", lambda: (
++        _rc_fixture(tmp, H)))
++    t("U27 CLI: usage error exit 2; --outcome prints FAIL for missing files and exits 0; --run-check exit 1",
++      lambda: subprocess.run(["python3", os.path.join(HERE, "arp_harness.py")], capture_output=True, cwd=tmp).returncode == 2
++      and cli_outcome(os.path.join(tmp, "none-r.json"), os.path.join(tmp, "none-e.json")).startswith("FAIL")
++      and subprocess.run(["python3", os.path.join(HERE, "arp_harness.py"), "--run-check", tmp, "ARM"],
++                         capture_output=True, cwd=tmp).returncode == 1)
++
++    # ctl_loop.py: arp_entry (extracted with ast; the loop itself contacts the network and is not run here)
++    src = open(os.path.join(HERE, "ctl_loop.py")).read()
++    tree = ast.parse(src)
++    fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "arp_entry")
++    ns = {"PROC_ARP": "/nonexistent"}
++    exec(compile(ast.Module(body=[fn], type_ignores=[]), "ctl_loop.py", "exec"), ns)
++    hdr = "IP address       HW type     Flags       HW address            Mask     Device\n"
++
++    def entry(body, ip="192.168.60.2"):
++        p = os.path.join(tmp, "arp-%d" % abs(hash(body)))
++        open(p, "w").write(body)
++        return ns["arp_entry"](ip, p)
++    t("U28 ctl_loop arp_entry: complete entry -> MAC, flags, device",
++      lambda: entry(hdr + "192.168.60.2     0x1         0x2         02:42:C0:A8:3C:02     *        eth0\n")
++      == {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"})
++    t("U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises",
++      lambda: all(raises(Exception, lambda b=b: entry(b)) for b in (
++          hdr + "192.168.60.2     0x1         0x0         00:00:00:00:00:00     *        eth0\n",
++          hdr + "192.168.60.2     0x1         0x0         02:42:c0:a8:3c:02     *        eth0\n",
++          hdr + "192.168.60.2     0x1         0x2         00:00:00:00:00:00     *        eth0\n",
++          hdr + "192.168.60.3     0x1         0x2         02:42:c0:a8:3c:02     *        eth0\n",
++          hdr + ("192.168.60.2     0x1         0x2         02:42:c0:a8:3c:02     *        eth0\n" * 2),
++          "garbage\n", hdr + "192.168.60.2 0x1 0x2\n")))
++    t("U30 ctl_loop: the ARP check is added only with --arp-worker, right after the worker HTTP check; any other "
++      "extra argument stops the loop",
++      lambda: 'ARP_WORKER = sys.argv[5:] == ["--arp-worker"]' in src
++      and "if ARP_WORKER:" in src and 'checks.insert(2, (f"arp worker-eth0 {worker_ip}"' in src
++      and 'sys.exit(f"unknown argument(s)' in src)
++
++
++def _rc_fixture(tmp, H):
++    d = os.path.join(tmp, "runcheck")
++    for a in ("ARM", "MIPS"):
++        os.makedirs(os.path.join(d, a))
++    full = [{"id": i} for i in CASE_IDS]
++    json.dump({"arch": "ARM", "cases": full}, open(os.path.join(d, "ARM", H.EVAL_FILE), "w"))
++    json.dump({"arch": "ARM", "cases": full[:3]}, open(os.path.join(d, "MIPS", H.EVAL_FILE), "w"))
++    p = H.run_check(d, ["ARM", "MIPS"])
++    return (H.run_check(d, ["ARM"]) == [] and any("evaluation is for" in x for x in p) and any("cases" in x for x in p)
++            and H.run_check(d, ["ARM", "ARM"]) and H.run_check(d, ["ARM", "X"]) and H.run_check(d, []))
++
++
++def raises(exc, fn):
++    try:
++        fn()
++    except exc:
++        return True
++    return False
++
++
++# ====================================================================== W: run script
++def sec_W(S):
++    s = open(os.path.join(HERE, RS)).read()
++    old = open(os.path.join(HERE, RS_OLD)).read()
++    t("W1 run-06b4i.sh: bash -n", lambda: subprocess.run(["bash", "-n", os.path.join(HERE, RS)]).returncode == 0)
++    t("W2 H is the 06B-4I working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4i\n" in s)
++    calls = [l for l in s.splitlines() if "probe_matrix.py $ARCH" in l]
++    code = "\n".join(l for l in s.splitlines() if not l.lstrip().startswith("#"))
++    t("W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)",
++      lambda: len(calls) == 1 and "-e CT01_SUITE=arp " in calls[0] and "CT01_SUITE=icmp" not in code)
++    first_docker = min(i for i, l in enumerate(s.splitlines()) if re.match(r"\s*(ID=\$\(|CID=\$\()?docker ", l)
++                       or "$(docker " in l)
++    lines = s.splitlines()
++    t("W4 selftest_arp.py and selftest_arp_wiring.py (and the ICMP/L2 ones) run before any docker command and abort",
++      lambda: all(any(f'python3 "$H/{f}"' in l and "exit 3" in l for l in lines[:first_docker])
++                  for f in ("selftest_arp.py", "selftest_arp_wiring.py", "selftest_icmp.py", "selftest_icmp_wiring.py",
++                            "selftest_l2.py")))
++    c = S.get("clean")
++    t("W5 every module probe_matrix imports in arp mode is mounted read-only",
++      lambda: c is not None and {os.path.basename(p) for p in c["modules"].values()} <= set(mounted_files(os.path.join(HERE, RS))))
++    t("W6 outcome per architecture and run-level check through arp_harness.py on arp-eval.json",
++      lambda: 'outcome=$(python3 "$H/arp_harness.py" --outcome "$D/probe/$ARCH/result.json" "$D/probe/$ARCH/arp-eval.json" "$ARCH" 2>&1)' in s
++      and 'python3 "$H/arp_harness.py" --run-check "$D/probe" ARM MIPS' in s and "icmp_harness.py --" not in code)
++    t("W7 ctl started with --arp-worker; its ARP target is checked alive like the others",
++      lambda: '/ctl/ctl.jsonl --arp-worker)' in s and '"arp worker-eth0 $WORKER_IP"' in s)
++    t("W8 manager MAC passed to the worker in CT01_TARGETS",
++      lambda: '"manager_mac":"%s"' in s and '"$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW"' in s)
++    removed = [l for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, old.splitlines(), lines, autojunk=False).get_opcodes()
++               if tag in ("replace", "delete") for l in old.splitlines()[i1:i2]]
++    allowed = (r"^#!/bin/bash$", r"^# Nhiệm vụ 06B-4F — ICMP group", r"^H=/home/dathq/projects/ct01-06b4fr$",
++               r'^    "\$H/selftest_icmp_wiring.py" "\$H/run-06b3b.sh" "\$OUT/harness-copy/"$',
++               r'^    "\$IMAGE" /ctl_loop.py "\$WORKER_IP" "\$MONGO_IP" "\$MANAGER_IP" /ctl/ctl.jsonl\)',
++               r'^for t in "mongo \$MONGO_IP:27017" "worker-eth0',
++               r"^TARGETS=\$\(printf", r'^    "\$WORKER_IP" "\$MONGO_IP" "\$MANAGER_IP" "\$SANDBOX_GW"',
++               r"CT01_SUITE=icmp", r"^    # 06B-4F: icmp_harness.py --outcome", r"^    # COMPLETED \+ each ICMP case",
++               r'^    outcome=\$\(python3 "\$H/icmp_harness.py"', r"^# 06B-4F: both architectures evaluated",
++               r'^python3 "\$H/icmp_harness.py" --run-check', r'^cat "\$OUT/icmp-run-check.txt"',
++               r'^check "ICMP group evaluated')
++    t("W9 everything else is run-06b4f.sh unchanged: only the listed lines were replaced, the rest only added",
++      lambda: removed and all(any(re.search(a, l) for a in allowed) for l in removed))
++    t("W10 run-06b4f.sh and run-06b3b.sh unchanged (hashes of the 06B-4HR2 manifest)",
++      lambda: _sha("run-06b4f.sh") == MANIFEST_4HR2["run-06b4f.sh"]
++      and _sha("run-06b3b.sh") == MANIFEST_4HR2["run-06b3b.sh"])
++    t("W11 the run script copies the ARP files (cases, harness, both self-tests) into harness-copy",
++      lambda: all(f'"$H/{f}"' in s.split("harness-copy/")[0] for f in
++                  ("arp_cases.py", "arp_harness.py", "guest_state.py", "selftest_arp.py", "selftest_arp_wiring.py",
++                   "ctl_loop.py")))
++
++
++MANIFEST_4HR2 = {   # docs/evidence/task06b4hr2/harness-sha256.txt
++    "run-06b4f.sh": "5bc5ce4ed82ae0bba7c710d8554f5c73cab8c7bac91d1c81b576d9451d60db92",
++    "run-06b3b.sh": "c83273d646a9f3e14ad8976b31dbe71ecf8075c1e40ad97810921eb6181a34a6",
++}
++
++
++def _sha(f):
++    return hashlib.sha256(open(os.path.join(HERE, f), "rb").read()).hexdigest()
++
++
++def main(argv):
++    if argv[:1] == ["--scenario"]:
++        return scenario_main(argv[1], argv[3])
++    jf = argv[argv.index("--json") + 1] if "--json" in argv else None
++    with tempfile.TemporaryDirectory(prefix="selftest-arp-wiring.") as tmp:
++        sec_U(tmp)
++        S = sec_S(tmp)
++        sec_R(S, tmp)
++        sec_W(S)
++    n = sum(RESULTS.values())
++    if jf:
++        json.dump(RESULTS, open(jf, "w"), indent=1, ensure_ascii=False)
++    print(f"SELFTEST-ARP-WIRING: {n}/{len(RESULTS)} passed")
++    return 0 if n == len(RESULTS) else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))

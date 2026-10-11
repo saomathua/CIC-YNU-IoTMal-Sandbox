@@ -1,0 +1,10 @@
+clean: exit 0, PASS, {'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+restore-fail-A2: exit 1, FAIL, {'T14-A1': 'DAT', 'T14-A2': 'CHUA_KIEM_CHUNG', 'T14-A3': 'CHUA_KIEM_CHUNG', 'T15-S1': 'CHUA_KIEM_CHUNG'}
+marker-after-A2-ping: exit 98, FAIL, {}
+leak-before-S1: exit 99, FAIL, {}
+fail-and-measure-A3: exit 1, FAIL, {'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'FAIL', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+notstarted-A3-neigh-fail: exit 1, FAIL, {'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'FAIL', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+ctl-no-arp: exit 1, UNVERIFIED, {'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+a2-manager-other-mac: exit 1, UNVERIFIED, {'T14-A1': 'DAT', 'T14-A2': 'CHUA_KIEM_CHUNG', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+neigh-error-A2-after: exit 1, FAIL, {'T14-A1': 'DAT', 'T14-A2': 'LOI_PHEP_DO', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'}
+error-after-group: exit 1, FAIL, {}

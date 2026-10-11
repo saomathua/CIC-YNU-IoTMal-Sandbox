@@ -1,0 +1,6 @@
+baseline: 233/233 tests pass
+OK  D5   DETECTED           target='PC3.2 baseline without admin_up -> S1 never ĐẠT, record problem, group exit 2 (a record without a confirmed admin state is not a confirmed restore)'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP: 3 OK, 0 not as expected; harness unchanged
+exit=0

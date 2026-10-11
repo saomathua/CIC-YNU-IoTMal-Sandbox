@@ -1,0 +1,996 @@
+{"ts": 1791389563.6952572, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389563.6975677, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389563.6999493, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389564.2024214, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389564.203268, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389564.2088337, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389564.7122853, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389564.7129474, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389564.7160835, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389565.2190173, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389565.2216473, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389565.2252932, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389565.7278912, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389565.728409, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389565.7300966, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389566.2325945, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389566.2337265, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389566.238235, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389566.742271, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389566.7433374, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389566.747887, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389567.2517092, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389567.2523634, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389567.2559276, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389567.758617, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389567.759133, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389567.7616084, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389568.264305, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389568.2653005, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389568.2695017, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389568.7732985, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389568.7742507, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389568.7785072, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389569.2816908, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389569.2825902, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389569.2862031, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389569.789431, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389569.790678, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389569.7943027, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389570.2980795, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389570.2986531, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389570.3020313, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389570.8045099, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389570.8047864, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389570.80626, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389571.3080437, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389571.3083572, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389571.3099997, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389571.8115184, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389571.811771, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389571.813537, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389572.3154404, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389572.3157785, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389572.3173506, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389572.8226595, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389572.8229797, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389572.8244977, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389573.3265133, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389573.3268378, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389573.3283389, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389573.8301594, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389573.8304193, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389573.8325083, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389574.3342526, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389574.3345683, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389574.336653, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389574.83831, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389574.838627, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389574.8402455, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389575.342251, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389575.34312, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389575.3473172, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389575.8509598, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389575.8523061, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389575.8561277, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389576.3592155, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389576.3609693, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389576.364716, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389576.8678803, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389576.8689172, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389576.8733208, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389577.3766825, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389577.3778214, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389577.3830278, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389577.8863158, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389577.8873868, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389577.891958, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389578.395332, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389578.3958492, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389578.3973808, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389578.8992069, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389578.9009407, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389578.9051266, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389579.4080913, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389579.4084036, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389579.410123, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389579.9120626, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389579.9136813, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389579.9184017, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389580.4224577, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389580.4241836, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389580.4291859, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389580.9326148, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389580.9329689, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389580.9347045, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389581.4369643, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389581.4372942, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389581.439636, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389581.9415028, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389581.9418166, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389581.9433768, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389582.4464512, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389582.4468539, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389582.4484434, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389582.950527, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389582.950873, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389582.9532459, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389583.4557645, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389583.4560778, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389583.4582238, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389583.9609158, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389583.9612584, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389583.963514, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389584.4655328, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389584.4658785, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389584.4676018, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389584.969411, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389584.9697173, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389584.9724557, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389585.4745874, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389585.4748724, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389585.4764988, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389585.979276, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389585.9796457, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389585.9816449, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389586.4836283, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389586.4839466, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389586.4858103, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389586.987661, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389586.9879637, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389586.9896247, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389587.4915369, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389587.4918532, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389587.4934282, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389587.9953907, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389587.995875, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389587.9974785, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389588.499561, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389588.4998488, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389588.501576, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389589.0033839, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389589.0036862, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389589.0053895, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389589.5072336, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389589.5075445, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389589.5093405, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389590.0125039, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389590.012829, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389590.0144098, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389590.516212, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389590.5165474, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389590.518635, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389591.0202887, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389591.0206466, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389591.0221717, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389591.523903, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389591.5241933, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389591.5261576, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389592.0284035, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389592.0287619, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389592.0305815, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389592.5323997, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389592.5334268, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389592.53823, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389593.0415626, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389593.0426311, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389593.0471468, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389593.5504792, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389593.5511682, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389593.5543659, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389594.0569339, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389594.0572462, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389594.0587342, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389594.5608242, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389594.561735, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389594.5656443, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389595.0695076, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389595.0702138, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389595.0721765, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389595.5740821, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389595.5747657, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389595.5763597, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389596.0783503, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389596.0788674, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389596.082548, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389596.5869997, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389596.5874395, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389596.5900254, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389597.0927474, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389597.0932834, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389597.0956423, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389597.5981102, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389597.5992594, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389597.6046643, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389598.1081915, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389598.1098464, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389598.1141174, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389598.6172426, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389598.6180096, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389598.62236, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389599.1258256, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389599.1268313, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389599.1313984, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389599.6346142, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389599.6354303, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389599.6402192, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389600.1436062, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389600.1442294, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389600.1475966, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389600.650592, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389600.6517315, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389600.6560214, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389601.1592283, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389601.1608782, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389601.1655726, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389601.6691499, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389601.669767, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389601.6729941, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389602.1759408, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389602.1763642, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389602.1798, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389602.6831796, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389602.6843462, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389602.6890304, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389603.2091522, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389603.2096732, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389603.211288, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389603.7134118, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389603.714748, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389603.7182243, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389604.2211297, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389604.2215607, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389604.2242742, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389604.7264001, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389604.7275505, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389604.7318416, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389605.2357523, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389605.2360466, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389605.2377474, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389605.7400696, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389605.7416582, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389605.745615, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389606.249003, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389606.2499995, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389606.2538352, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389606.7573507, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389606.7579885, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389606.7612958, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389607.2643843, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389607.26538, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389607.2699852, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389607.7736173, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389607.7747312, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389607.7787035, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389608.283055, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389608.2840507, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389608.2885125, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389608.7920318, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389608.793329, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389608.7977693, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389609.3024907, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389609.3037455, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389609.3079731, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389609.8116188, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389609.8127053, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389609.816892, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389610.3203838, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389610.3217077, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389610.3259933, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389610.8293598, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389610.8299103, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389610.832437, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389611.3345404, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389611.3350298, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389611.337607, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389611.840327, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389611.8408575, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389611.8427956, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389612.3447978, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389612.346295, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389612.3511145, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389612.854405, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389612.8557467, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389612.8597276, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389613.3637042, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389613.3647873, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389613.3694522, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389613.8726947, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389613.8736613, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389613.877353, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389614.38059, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389614.3824258, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389614.3871067, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389614.8905213, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389614.8917212, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389614.8961492, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389615.3992455, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389615.400813, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389615.4055512, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389615.9088173, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389615.910439, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389615.9151087, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389616.4184766, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389616.419689, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389616.4251778, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389616.9287086, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389616.929847, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389616.9352498, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389617.4386423, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389617.4399173, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389617.445431, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389617.9487565, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389617.9501235, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389617.957433, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389618.461027, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389618.4621453, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389618.4669383, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389618.9704924, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389618.9717982, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389618.9758427, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389619.479124, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389619.4804454, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389619.4869153, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389619.9899766, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389619.9916215, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389619.9961305, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389620.499308, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389620.5018334, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389620.507869, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389621.010891, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389621.01141, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389621.014549, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389621.5177867, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389621.5189333, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389621.5248005, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389622.0279295, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389622.0290592, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389622.0346348, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389622.5378213, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389622.538419, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389622.541923, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389623.0454473, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389623.0463076, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389623.0499885, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389623.5527337, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389623.5536504, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389623.55773, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389624.0617423, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389624.062077, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389624.0638325, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389624.5658872, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389624.5669253, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389624.5712726, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389625.0745006, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389625.0747783, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389625.076977, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389625.5788662, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389625.5799716, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389625.5861793, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389626.089374, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389626.089965, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389626.0936549, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389626.5962448, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389626.5969203, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389626.6003113, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389627.1033003, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389627.1042964, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389627.107906, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389627.611544, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389627.612635, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389627.616981, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389628.1202137, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389628.1219182, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389628.126909, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389628.630132, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389628.6317656, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389628.6361153, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389629.1394277, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389629.1401818, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389629.1442573, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389629.6477652, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389629.6484547, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389629.652639, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389630.1561909, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389630.157196, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389630.1617765, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389630.6654518, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389630.6663804, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389630.6702044, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389631.1736524, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389631.1746604, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389631.179131, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389631.6843066, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389631.684959, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389631.6884413, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389632.191796, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389632.192576, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389632.1965716, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389632.6998549, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389632.700909, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389632.7062032, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389633.2095923, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389633.2111511, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389633.2160087, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389633.719574, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389633.7202234, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389633.7249157, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389634.2281134, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389634.2292318, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389634.2356083, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389634.7390552, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389634.740189, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389634.7457945, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389635.2492166, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389635.249902, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389635.2533753, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389635.7573383, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389635.7593265, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389635.764559, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389636.2676466, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389636.2686994, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389636.272782, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389636.7757547, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389636.776174, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389636.778194, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389637.2800016, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389637.280716, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389637.282623, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389637.7854397, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389637.7870007, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389637.7900167, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389638.2928245, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389638.2938507, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389638.2987566, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389638.8029997, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389638.8033566, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389638.8049667, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389639.30694, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389639.3080924, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389639.3133824, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389639.8173087, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389639.8180416, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389639.8215106, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389640.32473, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389640.3258176, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389640.331276, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389640.834726, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389640.8353682, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389640.838592, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389641.3413205, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389641.3415895, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389641.3427808, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389641.8445752, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389641.844955, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389641.8470953, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389642.349396, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389642.3518333, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389642.3559918, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389642.8590865, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389642.8593736, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389642.8611305, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389643.363488, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389643.3646836, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389643.369782, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389643.8734064, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389643.8739026, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389643.8774333, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389644.380152, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389644.3821168, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389644.3866682, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389644.8893783, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389644.8903708, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389644.894198, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389645.3977942, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389645.3989012, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389645.4043174, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389645.9080374, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389645.9091945, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389645.9144564, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389646.418297, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389646.4193726, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389646.4249566, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389646.927902, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389646.9289901, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389646.9338453, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389647.436553, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389647.4368145, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389647.4386835, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389647.9405541, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389647.94085, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389647.942529, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389648.4442406, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389648.4445493, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389648.4458966, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389648.9475732, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389648.9478722, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389648.950067, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389649.4523795, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389649.452704, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389649.4543397, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389649.9562163, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389649.956588, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389649.9580834, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389650.4597993, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389650.4600773, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389650.4618368, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389650.9634964, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389650.9637902, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389650.965514, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389651.4672031, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389651.4675364, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389651.469006, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389651.970894, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389651.9711986, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389651.9733348, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389652.4756553, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389652.4759707, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389652.4774778, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389652.9804153, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389652.9810557, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389652.9826047, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389653.484372, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389653.4846828, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389653.4868894, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389653.9888065, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389653.9891372, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389653.990878, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389654.4929497, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389654.4939842, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389654.4990425, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389655.0088289, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389655.009348, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389655.0123274, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389655.5148141, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389655.5157044, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389655.5189157, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389656.022424, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389656.023398, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389656.0273457, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389656.5305073, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389656.5325847, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389656.5375302, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389657.0410643, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389657.042741, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389657.047036, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389657.550357, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389657.5521195, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389657.5567598, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389658.0603175, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389658.0620544, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389658.0663495, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389658.5695696, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389658.5698926, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389658.5719836, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389659.0739846, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389659.075178, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389659.0801387, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389659.585001, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389659.585357, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389659.586932, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389660.088748, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389660.0890374, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389660.091925, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389660.5940464, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389660.5943806, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389660.5959451, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389661.0977824, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389661.0981038, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389661.1002579, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389661.6022167, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389661.6025283, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389661.6045005, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389662.106552, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389662.106858, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389662.108572, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389662.610391, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389662.610698, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389662.6134279, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389663.1153839, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389663.1157317, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389663.1173904, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389663.6192448, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389663.619576, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389663.6211698, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389664.1231096, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389664.1234121, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389664.1250634, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389664.6278188, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389664.6281095, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389664.630422, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389665.1325035, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389665.1328306, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389665.1344113, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389665.6363087, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389665.6369255, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389665.6385288, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389666.1406286, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389666.1411364, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389666.1429822, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389666.64481, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389666.645151, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389666.6466947, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389667.1485403, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389667.148866, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389667.151394, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389667.6537485, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389667.6540403, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389667.65627, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389668.158493, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389668.1588273, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389668.1603825, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389668.6622798, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389668.6626434, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389668.6641774, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389669.1662333, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389669.1666, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389669.1686547, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389669.670388, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389669.6707206, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389669.672742, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389670.1745658, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389670.1748922, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389670.177371, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389670.6794045, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389670.679731, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389670.681622, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389671.1834347, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389671.1837595, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389671.1860068, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389671.687701, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389671.688012, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389671.6906586, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389672.1924927, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389672.1928182, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389672.1943326, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389672.6961944, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389672.6965883, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389672.705076, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389673.2086422, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389673.208964, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389673.2105389, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389673.712452, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389673.7132473, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389673.7167695, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389674.2199025, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389674.2223198, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389674.2266142, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389674.730284, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389674.7316432, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389674.7347243, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389675.2387743, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389675.2398274, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389675.2450614, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389675.7481701, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389675.7491612, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389675.753806, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389676.256675, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389676.257835, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389676.2630033, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389676.766692, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389676.7671206, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389676.769345, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389677.2722695, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389677.2728825, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389677.2754936, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389677.7783012, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389677.7798836, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389677.783788, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389678.2866085, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389678.2870975, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389678.2898302, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389678.793184, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389678.79373, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389678.8011487, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389679.3035505, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389679.3038194, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389679.3054187, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389679.8076382, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389679.8090158, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389679.814985, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389680.319488, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389680.3206615, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389680.3252754, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389680.8286119, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389680.8299446, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389680.8349447, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389681.3386655, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389681.3393383, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389681.3433254, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389681.8466702, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389681.8477476, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389681.8526783, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389682.3555346, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389682.356403, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389682.360956, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389682.8646328, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389682.8653996, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389682.8692143, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389683.37217, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389683.3732226, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389683.3777933, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389683.881422, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389683.883216, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389683.88802, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389684.3924208, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389684.3933406, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389684.3975954, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389684.9006412, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389684.9022655, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389684.9069314, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389685.4106896, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389685.4118278, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389685.415728, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389685.918896, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389685.9199579, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389685.924875, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389686.4286513, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389686.4298055, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389686.434719, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389686.9383795, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389686.9399884, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389686.9442027, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389687.4473743, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389687.448365, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389687.4525752, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389687.9559414, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389687.9571137, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389687.9628158, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389688.4659157, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389688.4667933, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389688.470683, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389688.9737408, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389688.9752288, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389688.977484, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389689.4796638, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389689.4808855, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389689.4872687, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389689.9906542, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389689.9921424, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389689.9965363, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389690.5000062, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389690.5011475, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389690.5067797, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389691.0096536, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389691.0102654, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389691.0135355, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389691.516636, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389691.5177495, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389691.5229387, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389692.0267394, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389692.0277796, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389692.0318305, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389692.5353327, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389692.5360467, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389692.539376, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389693.0425992, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389693.043367, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389693.0462334, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389693.5487697, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389693.549624, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389693.5533938, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389694.056575, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389694.058124, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389694.0627565, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389694.5658252, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389694.56615, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389694.5676405, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389695.0693808, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389695.0697649, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389695.0718684, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389695.573888, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389695.575014, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389695.5797324, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389696.0832028, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389696.083541, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389696.0851104, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389696.5870569, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389696.5884788, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389696.5935476, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389697.0965602, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389697.0971408, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389697.1010644, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389697.6036701, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389697.6043801, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389697.6080377, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389698.111079, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389698.1119885, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389698.1149397, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389698.6170475, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389698.6178055, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389698.62209, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389699.1255956, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389699.125964, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389699.128029, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389699.629502, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389699.6299021, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389699.6322584, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389700.134406, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389700.1358042, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389700.1412716, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389700.6448708, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389700.6457512, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389700.6499193, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389701.1536272, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389701.1543725, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389701.1582997, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389701.661808, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389701.6621478, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389701.6638052, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389702.1655726, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389702.1667387, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389702.1703684, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389702.6738663, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389702.6749084, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389702.6800635, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389703.1839077, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389703.185072, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389703.1899142, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389703.693378, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389703.694272, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389703.698648, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389704.2015154, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389704.2028458, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389704.2070808, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389704.7102456, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389704.711304, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389704.7164252, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389705.2198515, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389705.2209692, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389705.2259746, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389705.7294905, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389705.7301483, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389705.7336347, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389706.2366462, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389706.2370512, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389706.2395914, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389706.7416975, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389706.7426987, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389706.7458453, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389707.248746, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389707.249449, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389707.2539625, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389707.756671, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389707.7577517, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389707.763269, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389708.2667294, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389708.2678428, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389708.2726812, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389708.7755697, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389708.776707, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389708.7817953, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389709.2851708, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389709.2861853, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389709.2906985, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389709.7943583, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389709.7950544, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389709.7984517, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389710.3020675, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389710.3037133, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389710.3080633, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389710.8112977, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389710.8132684, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389710.818304, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389711.3219886, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389711.323151, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389711.326656, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389711.8297708, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389711.8311715, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389711.8353128, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389712.3383741, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389712.3400915, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389712.3450592, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389712.8484452, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389712.8488433, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389712.8511462, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389713.3536587, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389713.3547037, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389713.3591707, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389713.862065, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389713.8623846, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389713.8641856, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389714.3668826, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389714.367743, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389714.3727674, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389714.8760288, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389714.8773463, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389714.8840017, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389715.3871956, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389715.3881814, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389715.393167, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389715.8964102, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389715.8976266, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389715.9025145, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389716.4055548, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389716.4060135, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389716.408509, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389716.911016, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389716.9115398, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389716.9134986, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389717.415581, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389717.4162924, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389717.420092, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389717.9235594, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389717.9244242, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389717.9282625, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389718.431337, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389718.4328506, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389718.437917, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389718.9413383, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389718.942961, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389718.9467208, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389719.4502497, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389719.4513707, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389719.4579742, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389719.9608257, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389719.96144, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389719.963806, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389720.465644, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389720.4667983, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389720.4728334, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389720.9755926, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389720.9766872, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389720.9813101, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389721.4851584, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389721.4865985, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389721.4904191, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389721.994287, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389721.9953644, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389722.0003295, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389722.5041902, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389722.5047886, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389722.5082269, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389723.010717, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389723.011162, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389723.014403, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389723.5170453, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389723.5180776, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389723.5220141, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389724.0253444, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389724.0261853, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389724.03073, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389724.534399, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389724.5357256, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389724.5406566, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389725.0444064, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389725.045417, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389725.049511, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389725.5526621, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389725.553451, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389725.5568545, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389726.060093, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389726.0606318, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389726.0635715, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389726.5658667, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389726.5662577, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389726.5689971, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389727.0713723, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389727.071771, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389727.0736136, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389727.5761049, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389727.576728, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389727.5785606, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389728.0805256, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389728.0810153, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389728.0830238, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389728.5850084, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389728.5858793, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389728.5903218, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389729.0933888, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389729.0948217, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389729.0992265, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389729.6035252, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389729.603881, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389729.6062741, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389730.1083288, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389730.1093767, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389730.1136987, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389730.616995, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389730.6172814, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389730.6186962, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389731.1204698, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389731.121753, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389731.1268804, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389731.6301157, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791389731.630388, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791389731.6316707, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}

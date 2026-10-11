@@ -1,0 +1,8 @@
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+@@SEND_ARCH ARM
+probe_matrix ARM exit=98
+[FAIL] ARM: capture or watcher lost during the test (probe_matrix rc=98; ) — probes stopped
+@@FAIL_COUNT=1
+grep: /home/dathq/projects/ct01-06b4ir3-work/before/bash-arm-capture/hostcap/alert.txt: No such file or directory

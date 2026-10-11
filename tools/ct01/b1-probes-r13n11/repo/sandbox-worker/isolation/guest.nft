@@ -1,0 +1,88 @@
+#!/usr/sbin/nft -f
+# CT-01 guest network isolation (docs/network-isolation-design.md §4.3).
+# Loaded atomically by run.sh inside the worker container's network namespace.
+# Addresses/MAC/port must match isolation/constants.py. Any change here requires
+# regenerating and re-reviewing isolation/expected-ruleset.json.
+
+# --- L2: earliest drop point, as frames enter tap0 ---
+table netdev sandbox_guest_l2 {
+  counter l2_bad_mac {}
+  counter l2_bad_ethertype {}
+
+  chain ingress {
+    type filter hook ingress device "tap0" priority -500; policy accept;
+    ether saddr != 52:54:00:c7:00:02 counter name "l2_bad_mac" drop
+    ether type != { ip, arp } counter name "l2_bad_ethertype" drop
+  }
+}
+
+# --- ARP: only request/reply between the guest and the worker's tap0 address ---
+table arp sandbox_guest_arp {
+  counter arp_in_ok {}
+  counter arp_in_drop {}
+  counter arp_out_ok {}
+  counter arp_out_drop {}
+
+  chain input {
+    type filter hook input priority 0; policy accept;
+    iifname != "tap0" accept
+    arp htype 1 arp ptype ip arp hlen 6 arp plen 4 arp saddr ether 52:54:00:c7:00:02 arp saddr ip 10.200.0.2 arp daddr ip 10.200.0.1 arp operation { request, reply } counter name "arp_in_ok" accept
+    counter name "arp_in_drop" drop
+  }
+
+  chain output {
+    type filter hook output priority 0; policy accept;
+    oifname != "tap0" accept
+    arp saddr ip 10.200.0.1 arp daddr ip 10.200.0.2 arp operation { request, reply } counter name "arp_out_ok" accept
+    counter name "arp_out_drop" drop
+  }
+}
+
+# --- IPv4/IPv6 ---
+table inet sandbox_guest {
+  counter allow_svc {}
+  counter drop_spoof {}
+  counter drop_non_ipv4 {}
+  counter drop_worker_other {}
+  counter drop_private {}
+  counter drop_bcast_mcast {}
+  counter drop_public {}
+  counter drop_input_backstop {}
+  counter drop_forward {}
+  counter allow_out_svc {}
+  counter drop_out {}
+
+  # Before the routing decision: sees every packet the guest sends.
+  chain prerouting {
+    type filter hook prerouting priority -150; policy accept;
+    iifname != "tap0" accept
+    meta nfproto != ipv4 counter name "drop_non_ipv4" drop
+    ip saddr != 10.200.0.2 counter name "drop_spoof" drop
+    ip daddr 10.200.0.1 tcp dport 8011 counter name "allow_svc" accept
+    ip daddr 10.200.0.1 counter name "drop_worker_other" drop
+    ip daddr { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16 } counter name "drop_private" drop
+    ip daddr { 224.0.0.0/4, 255.255.255.255 } counter name "drop_bcast_mcast" drop
+    counter name "drop_public" drop
+  }
+
+  # Backstop; expected to stay at 0.
+  chain input {
+    type filter hook input priority -10; policy accept;
+    iifname != "tap0" accept
+    ip saddr 10.200.0.2 ip daddr 10.200.0.1 tcp dport 8011 accept
+    counter name "drop_input_backstop" drop
+  }
+
+  # Backstop; with ip_forward=0 packets normally never reach this hook.
+  chain forward {
+    type filter hook forward priority -10; policy drop;
+    counter name "drop_forward" drop
+  }
+
+  chain output {
+    type filter hook output priority -10; policy accept;
+    oifname != "tap0" accept
+    ip saddr 10.200.0.1 ip daddr 10.200.0.2 tcp sport 8011 ct state established counter name "allow_out_svc" accept
+    counter name "drop_out" drop
+  }
+}

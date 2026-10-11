@@ -1,0 +1,36 @@
+{"ts": 1791465589.2838972, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465589.2838972, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.2838972, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465589.2838972, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.4345567, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465589.4345567, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.4345567, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465589.4345567, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.5851936, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465589.5851936, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.5851936, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465589.5851936, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.736403, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465589.736403, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.736403, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465589.736403, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.8881829, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465589.8881829, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465589.8881829, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465589.8881829, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.039111, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465590.039111, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.039111, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465590.039111, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.1907086, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465590.1907086, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.1907086, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465590.1907086, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.3417277, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465590.3417277, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.3417277, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465590.3417277, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.4922712, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791465590.4922712, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791465590.4922712, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"}}
+{"ts": 1791465590.4922712, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}

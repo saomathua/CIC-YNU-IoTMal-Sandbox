@@ -1,0 +1,1 @@
+05:33:15 capture p2 pid 155585 exited during the test

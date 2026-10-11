@@ -1,0 +1,1 @@
+manager after: state=running id=cid1 startedAt=T0 (before: running cid1 T0; started by this run: 0)

@@ -1,0 +1,436 @@
+wall_utc	step	heartbeat	age_s	dead_marker_bytes	procs
+05:29:01	-	-	FileNotFoundError	-	-
+05:29:02	-	-	FileNotFoundError	-	-
+05:29:03	-	-	FileNotFoundError	-	-
+05:29:04	-	-	FileNotFoundError	-	-
+05:29:05	-	-	FileNotFoundError	-	-
+05:29:06	-	-	FileNotFoundError	-	-
+05:29:07	-	-	FileNotFoundError	-	-
+05:29:08	-	-	FileNotFoundError	-	-
+05:29:09	-	-	FileNotFoundError	-	-
+05:29:10	-	-	FileNotFoundError	-	-
+05:29:11	-	-	FileNotFoundError	-	-
+05:29:12	-	-	FileNotFoundError	-	-
+05:29:13	-	-	FileNotFoundError	-	-
+05:29:14	-	-	FileNotFoundError	-	-
+05:29:15	-	-	FileNotFoundError	-	-
+05:29:16	-	-	FileNotFoundError	-	-
+05:29:17	-	-	FileNotFoundError	-	-
+05:29:18	-	-	FileNotFoundError	-	-
+05:29:19	-	-	FileNotFoundError	-	-
+05:29:20	-	-	FileNotFoundError	-	-
+05:29:21	-	-	FileNotFoundError	-	-
+05:29:22	-	-	FileNotFoundError	-	-
+05:29:23	-	-	FileNotFoundError	-	-
+05:29:24	-	-	FileNotFoundError	-	-
+05:29:25	-	-	FileNotFoundError	-	-
+05:29:26	-	-	FileNotFoundError	-	-
+05:29:27	-	-	FileNotFoundError	-	-
+05:29:28	-	-	FileNotFoundError	-	-
+05:29:29	-	-	FileNotFoundError	-	-
+05:29:30	-	-	FileNotFoundError	-	-
+05:29:31	-	-	FileNotFoundError	-	-
+05:29:32	-	-	FileNotFoundError	-	-
+05:29:33	-	-	FileNotFoundError	-	-
+05:29:34	-	-	FileNotFoundError	-	-
+05:29:35	-	-	FileNotFoundError	-	-
+05:29:36	-	-	FileNotFoundError	-	-
+05:29:37	-	-	FileNotFoundError	-	-
+05:29:38	-	-	FileNotFoundError	-	-
+05:29:39	-	-	FileNotFoundError	-	-
+05:29:40	-	-	FileNotFoundError	-	-
+05:29:41	-	-	FileNotFoundError	-	-
+05:29:42	-	-	FileNotFoundError	-	-
+05:29:43	-	-	FileNotFoundError	-	-
+05:29:45	-	-	FileNotFoundError	-	-
+05:29:46	-	-	FileNotFoundError	-	-
+05:29:47	-	-	FileNotFoundError	-	-
+05:29:48	-	-	FileNotFoundError	-	-
+05:29:49	-	-	FileNotFoundError	-	-
+05:29:50	-	-	FileNotFoundError	-	-
+05:29:51	-	-	FileNotFoundError	-	-
+05:29:52	-	-	FileNotFoundError	-	-
+05:29:53	-	-	FileNotFoundError	-	-
+05:29:54	-	-	FileNotFoundError	-	-
+05:29:55	-	-	FileNotFoundError	-	-
+05:29:56	-	-	FileNotFoundError	-	-
+05:29:57	-	-	FileNotFoundError	-	-
+05:29:58	-	-	FileNotFoundError	-	-
+05:29:59	-	-	FileNotFoundError	-	-
+05:30:00	-	-	FileNotFoundError	-	-
+05:30:01	-	-	FileNotFoundError	-	-
+05:30:02	-	-	FileNotFoundError	-	-
+05:30:03	-	-	FileNotFoundError	-	-
+05:30:04	-	-	FileNotFoundError	-	-
+05:30:05	-	-	FileNotFoundError	-	-
+05:30:06	-	-	FileNotFoundError	-	-
+05:30:07	-	-	FileNotFoundError	-	-
+05:30:08	-	-	FileNotFoundError	-	-
+05:30:09	-	-	FileNotFoundError	-	-
+05:30:10	-	-	FileNotFoundError	-	-
+05:30:11	-	-	FileNotFoundError	-	-
+05:30:12	-	-	FileNotFoundError	-	-
+05:30:13	-	-	FileNotFoundError	-	-
+05:30:14	-	-	FileNotFoundError	-	-
+05:30:15	-	-	FileNotFoundError	-	-
+05:30:16	-	-	FileNotFoundError	-	-
+05:30:17	-	-	FileNotFoundError	-	-
+05:30:18	-	-	FileNotFoundError	-	-
+05:30:19	-	-	FileNotFoundError	-	-
+05:30:20	-	-	FileNotFoundError	-	-
+05:30:21	-	-	FileNotFoundError	-	-
+05:30:22	-	-	FileNotFoundError	-	-
+05:30:23	-	-	FileNotFoundError	-	-
+05:30:24	-	-	FileNotFoundError	-	-
+05:30:25	-	-	FileNotFoundError	-	-
+05:30:26	-	-	FileNotFoundError	-	-
+05:30:27	-	-	FileNotFoundError	-	-
+05:30:28	-	-	FileNotFoundError	-	-
+05:30:29	-	-	FileNotFoundError	-	-
+05:30:30	-	-	FileNotFoundError	-	-
+05:30:31	-	-	FileNotFoundError	-	-
+05:30:32	-	-	FileNotFoundError	-	-
+05:30:33	-	-	FileNotFoundError	-	-
+05:30:34	-	-	FileNotFoundError	-	-
+05:30:35	-	-	FileNotFoundError	-	-
+05:30:36	-	-	FileNotFoundError	-	-
+05:30:37	-	-	FileNotFoundError	-	-
+05:30:38	-	-	FileNotFoundError	-	-
+05:30:39	-	-	FileNotFoundError	-	-
+05:30:40	-	-	FileNotFoundError	-	-
+05:30:41	-	-	FileNotFoundError	-	-
+05:30:42	-	-	FileNotFoundError	-	-
+05:30:43	-	-	FileNotFoundError	-	-
+05:30:44	-	-	FileNotFoundError	-	-
+05:30:45	-	-	FileNotFoundError	-	-
+05:30:46	-	-	FileNotFoundError	-	-
+05:30:47	-	-	FileNotFoundError	-	-
+05:30:49	-	-	FileNotFoundError	-	-
+05:30:50	-	-	FileNotFoundError	-	-
+05:30:51	-	-	FileNotFoundError	-	-
+05:30:52	-	-	FileNotFoundError	-	-
+05:30:53	-	-	FileNotFoundError	-	-
+05:30:54	-	-	FileNotFoundError	-	-
+05:30:55	-	-	FileNotFoundError	-	-
+05:30:56	-	-	FileNotFoundError	-	-
+05:30:57	-	-	FileNotFoundError	-	-
+05:30:58	-	-	FileNotFoundError	-	-
+05:30:59	-	-	FileNotFoundError	-	-
+05:31:00	-	-	FileNotFoundError	-	-
+05:31:01	-	-	FileNotFoundError	-	-
+05:31:02	-	-	FileNotFoundError	-	-
+05:31:03	-	-	FileNotFoundError	-	-
+05:31:04	-	-	FileNotFoundError	-	-
+05:31:05	-	-	FileNotFoundError	-	-
+05:31:06	-	-	FileNotFoundError	-	-
+05:31:07	-	-	FileNotFoundError	-	-
+05:31:08	-	-	FileNotFoundError	-	-
+05:31:09	-	-	FileNotFoundError	-	-
+05:31:10	-	-	FileNotFoundError	-	-
+05:31:11	-	-	FileNotFoundError	-	-
+05:31:12	-	-	FileNotFoundError	-	-
+05:31:13	-	-	FileNotFoundError	-	-
+05:31:14	-	-	FileNotFoundError	-	-
+05:31:15	-	-	FileNotFoundError	-	-
+05:31:16	-	-	FileNotFoundError	-	-
+05:31:17	-	-	FileNotFoundError	-	-
+05:31:18	-	-	FileNotFoundError	-	-
+05:31:19	-	-	FileNotFoundError	-	-
+05:31:20	-	-	FileNotFoundError	-	-
+05:31:21	-	-	FileNotFoundError	-	-
+05:31:22	-	-	FileNotFoundError	-	-
+05:31:23	-	-	FileNotFoundError	-	-
+05:31:24	-	-	FileNotFoundError	-	-
+05:31:25	-	-	FileNotFoundError	-	-
+05:31:26	-	-	FileNotFoundError	-	-
+05:31:27	-	-	FileNotFoundError	-	-
+05:31:28	-	-	FileNotFoundError	-	-
+05:31:29	-	-	FileNotFoundError	-	-
+05:31:30	-	-	FileNotFoundError	-	-
+05:31:31	-	-	FileNotFoundError	-	-
+05:31:32	-	-	FileNotFoundError	-	-
+05:31:33	-	-	FileNotFoundError	-	-
+05:31:34	-	-	FileNotFoundError	-	-
+05:31:35	-	-	FileNotFoundError	-	-
+05:31:36	-	-	FileNotFoundError	-	-
+05:31:37	-	-	FileNotFoundError	-	-
+05:31:38	-	-	FileNotFoundError	-	-
+05:31:39	-	-	FileNotFoundError	-	-
+05:31:40	-	-	FileNotFoundError	-	-
+05:31:41	-	-	FileNotFoundError	-	-
+05:31:42	-	-	FileNotFoundError	-	-
+05:31:44	-	-	FileNotFoundError	-	-
+05:31:45	-	-	FileNotFoundError	-	-
+05:31:46	-	-	FileNotFoundError	-	-
+05:31:47	-	-	FileNotFoundError	-	-
+05:31:48	-	-	FileNotFoundError	-	-
+05:31:49	-	-	FileNotFoundError	-	-
+05:31:50	-	-	FileNotFoundError	-	-
+05:31:51	-	-	FileNotFoundError	-	-
+05:31:52	-	-	FileNotFoundError	-	-
+05:31:53	-	-	FileNotFoundError	-	-
+05:31:54	-	-	FileNotFoundError	-	-
+05:31:55	-	-	FileNotFoundError	-	-
+05:31:56	-	-	FileNotFoundError	-	-
+05:31:57	-	-	FileNotFoundError	-	-
+05:31:58	-	-	FileNotFoundError	-	-
+05:31:59	-	-	FileNotFoundError	-	-
+05:32:00	-	-	FileNotFoundError	-	-
+05:32:01	-	-	FileNotFoundError	-	-
+05:32:02	-	-	FileNotFoundError	-	-
+05:32:03	-	-	FileNotFoundError	-	-
+05:32:04	-	-	FileNotFoundError	-	-
+05:32:05	-	-	FileNotFoundError	-	-
+05:32:06	-	-	FileNotFoundError	-	-
+05:32:07	-	-	FileNotFoundError	-	-
+05:32:08	-	-	FileNotFoundError	-	-
+05:32:09	-	-	FileNotFoundError	-	-
+05:32:10	-	-	FileNotFoundError	-	-
+05:32:11	-	-	FileNotFoundError	-	-
+05:32:12	-	-	FileNotFoundError	-	-
+05:32:13	-	-	FileNotFoundError	-	-
+05:32:14	-	-	FileNotFoundError	-	-
+05:32:15	-	-	FileNotFoundError	-	-
+05:32:16	-	-	FileNotFoundError	-	-
+05:32:17	-	-	FileNotFoundError	-	-
+05:32:18	-	-	FileNotFoundError	-	-
+05:32:19	-	-	FileNotFoundError	-	-
+05:32:20	-	-	FileNotFoundError	-	-
+05:32:21	-	-	FileNotFoundError	-	-
+05:32:22	-	-	FileNotFoundError	-	-
+05:32:23	-	-	FileNotFoundError	-	-
+05:32:24	-	-	FileNotFoundError	-	-
+05:32:25	-	-	FileNotFoundError	-	-
+05:32:26	-	-	FileNotFoundError	-	-
+05:32:27	-	-	FileNotFoundError	-	-
+05:32:28	-	-	FileNotFoundError	-	-
+05:32:29	-	-	FileNotFoundError	-	-
+05:32:30	-	-	FileNotFoundError	-	-
+05:32:31	-	-	FileNotFoundError	-	-
+05:32:32	-	-	FileNotFoundError	-	-
+05:32:33	-	-	FileNotFoundError	-	-
+05:32:34	-	-	FileNotFoundError	-	-
+05:32:35	-	-	FileNotFoundError	-	-
+05:32:36	-	-	FileNotFoundError	-	-
+05:32:37	-	-	FileNotFoundError	-	-
+05:32:38	-	-	FileNotFoundError	-	-
+05:32:39	-	-	FileNotFoundError	-	-
+05:32:40	-	-	FileNotFoundError	-	-
+05:32:41	-	-	FileNotFoundError	-	-
+05:32:42	-	-	FileNotFoundError	-	-
+05:32:43	-	-	FileNotFoundError	-	-
+05:32:44	-	-	FileNotFoundError	-	-
+05:32:45	-	-	FileNotFoundError	-	-
+05:32:46	-	-	FileNotFoundError	-	-
+05:32:48	-	-	FileNotFoundError	-	-
+05:32:49	-	-	FileNotFoundError	-	-
+05:32:50	-	-	FileNotFoundError	-	-
+05:32:51	-	-	FileNotFoundError	-	-
+05:32:52	-	-	FileNotFoundError	-	-
+05:32:53	-	-	FileNotFoundError	-	-
+05:32:54	-	-	FileNotFoundError	-	-
+05:32:55	-	-	FileNotFoundError	-	-
+05:32:56	-	-	FileNotFoundError	-	-
+05:32:57	-	-	FileNotFoundError	-	-
+05:32:58	-	-	FileNotFoundError	-	-
+05:32:59	-	-	FileNotFoundError	-	-
+05:33:00	-	-	FileNotFoundError	-	-
+05:33:01	-	-	FileNotFoundError	-	-
+05:33:02	-	-	FileNotFoundError	-	-
+05:33:03	-	-	FileNotFoundError	-	-
+05:33:04	-	-	FileNotFoundError	-	-
+05:33:05	-	-	FileNotFoundError	-	-
+05:33:06	-	-	FileNotFoundError	-	-
+05:33:07	-	-	FileNotFoundError	-	-
+05:33:08	-	-	FileNotFoundError	-	-
+05:33:09	-	-	FileNotFoundError	-	-
+05:33:10	-	-	FileNotFoundError	-	-
+05:33:11	-	-	FileNotFoundError	-	-
+05:33:12	-	-	FileNotFoundError	-	-
+05:33:13	-	-	FileNotFoundError	-	-
+05:33:14	-	-	FileNotFoundError	-	-
+05:33:15	-	-	FileNotFoundError	-	-
+05:33:16	-	-	FileNotFoundError	-	-
+05:33:17	-	-	FileNotFoundError	-	-
+05:33:18	-	-	FileNotFoundError	-	-
+05:33:19	-	-	FileNotFoundError	-	-
+05:33:20	-	-	FileNotFoundError	-	-
+05:33:21	-	-	FileNotFoundError	-	-
+05:33:22	===== 1. preparation (05:33:22)	-	FileNotFoundError	-	-
+05:33:23	===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (05:33:23)	-	FileNotFoundError	-	-
+05:33:24	===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (05:33:23)	-	FileNotFoundError	-	-
+05:33:25	===== 3. worker test container (05:33:24)	-	FileNotFoundError	-	-
+05:33:26	===== 3. worker test container (05:33:24)	-	FileNotFoundError	-	-
+05:33:27	===== 4. control container (sandboxnet + dbnet) (05:33:27)	-	FileNotFoundError	-	-
+05:33:28	===== 4. control container (sandboxnet + dbnet) (05:33:27)	-	FileNotFoundError	-	-
+05:33:29	===== 4. control container (sandboxnet + dbnet) (05:33:27)	-	FileNotFoundError	-	-
+05:33:30	===== 4. control container (sandboxnet + dbnet) (05:33:27)	-	FileNotFoundError	-	-
+05:33:31	===== 5. host captures on veth554e592, br-1d86fe3e8bbe, ens33 + leak alert (05:33:31)	-	FileNotFoundError	-	tcpdump=4
+05:33:32	===== 5. host captures on veth554e592, br-1d86fe3e8bbe, ens33 + leak alert (05:33:31)	-	FileNotFoundError	-	tcpdump=4
+05:33:33	===== 5. host captures on veth554e592, br-1d86fe3e8bbe, ens33 + leak alert (05:33:31)	-	FileNotFoundError	-	tcpdump=4
+05:33:34	===== 6. guest ARM (05:33:34)	1791351214.567508201	0.23	-	tcpdump=4
+05:33:35	===== 6. guest ARM (05:33:34)	1791351215.605109878	0.20	-	tcpdump=4,tshark=1
+05:33:36	===== 6. guest ARM (05:33:34)	1791351216.641916237	0.18	-	tcpdump=4,tshark=1
+05:33:37	===== 6. guest ARM (05:33:34)	1791351217.682116037	0.15	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:38	===== 6. guest ARM (05:33:34)	1791351218.721469385	0.12	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:39	===== 6. guest ARM (05:33:34)	1791351219.769856105	0.09	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:40	===== 6. guest ARM (05:33:34)	1791351220.814751127	0.06	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:41	===== 6. guest ARM (05:33:34)	1791351221.861894734	0.04	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:42	===== 6. guest ARM (05:33:34)	1791351222.903614828	0.00	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:43	===== 6. guest ARM (05:33:34)	1791351222.903614828	1.01	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:44	===== 6. guest ARM (05:33:34)	1791351223.948559598	0.98	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:45	===== 6. guest ARM (05:33:34)	1791351224.985877005	0.95	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:46	===== 6. guest ARM (05:33:34)	1791351226.029047505	0.92	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:47	===== 6. guest ARM (05:33:34)	1791351227.067058404	0.89	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:48	===== 6. guest ARM (05:33:34)	1791351228.106052440	0.86	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:49	===== 6. guest ARM (05:33:34)	1791351229.146673334	0.83	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:50	===== 6. guest ARM (05:33:34)	1791351230.185160832	0.81	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:52	===== 6. guest ARM (05:33:34)	1791351231.229702806	0.77	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:53	===== 6. guest ARM (05:33:34)	1791351232.275523057	0.74	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:54	===== 6. guest ARM (05:33:34)	1791351233.312748891	0.71	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:55	===== 6. guest ARM (05:33:34)	1791351234.354606375	0.68	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:56	===== 6. guest ARM (05:33:34)	1791351235.395191212	0.65	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:57	===== 6. guest ARM (05:33:34)	1791351236.434609940	0.63	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:58	===== 6. guest ARM (05:33:34)	1791351237.479779778	0.60	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:33:59	===== 6. guest ARM (05:33:34)	1791351238.525094340	0.57	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:00	===== 6. guest ARM (05:33:34)	1791351239.565264839	0.55	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:01	===== 6. guest ARM (05:33:34)	1791351240.615725173	0.52	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:02	===== 6. guest ARM (05:33:34)	1791351241.659138615	0.49	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:03	===== 6. guest ARM (05:33:34)	1791351242.701951700	0.46	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:04	===== 6. guest ARM (05:33:34)	1791351243.749276194	0.43	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:05	===== 6. guest ARM (05:33:34)	1791351244.796637022	0.40	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:06	===== 6. guest ARM (05:33:34)	1791351245.852465175	0.36	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:07	===== 6. guest ARM (05:33:34)	1791351246.902409080	0.34	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:08	===== 6. guest ARM (05:33:34)	1791351247.954140243	0.30	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:09	===== 6. guest ARM (05:33:34)	1791351248.995694580	0.28	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:10	===== 6. guest ARM (05:33:34)	1791351250.043780595	0.25	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:11	===== 6. guest ARM (05:33:34)	1791351251.089345687	0.22	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:12	===== 6. guest ARM (05:33:34)	1791351252.138378701	0.20	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:13	===== 6. guest ARM (05:33:34)	1791351253.185961961	0.17	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:14	===== 6. guest ARM (05:33:34)	1791351254.235486912	0.13	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:15	===== 6. guest ARM (05:33:34)	1791351255.277702310	0.11	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:16	===== 6. guest ARM (05:33:34)	1791351256.318989837	0.08	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:17	===== 6. guest ARM (05:33:34)	1791351257.369766212	0.05	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:18	===== 6. guest ARM (05:33:34)	1791351258.417512080	0.03	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:19	===== 6. guest ARM (05:33:34)	1791351258.417512080	1.05	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:20	===== 6. guest ARM (05:33:34)	1791351259.466213823	1.01	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:21	===== 6. guest ARM (05:33:34)	1791351260.514353924	0.98	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:22	===== 6. guest ARM (05:33:34)	1791351261.557516589	0.95	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:23	===== 6. guest ARM (05:33:34)	1791351262.609212497	0.92	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:24	===== 6. guest ARM (05:33:34)	1791351263.657339621	0.89	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:25	===== 6. guest ARM (05:33:34)	1791351264.697112100	0.87	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:26	===== 6. guest ARM (05:33:34)	1791351265.743891349	0.85	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:27	===== 6. guest ARM (05:33:34)	1791351266.796500891	0.81	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:28	===== 6. guest ARM (05:33:34)	1791351267.838153998	0.78	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:29	===== 6. guest ARM (05:33:34)	1791351268.884872851	0.76	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:30	===== 6. guest ARM (05:33:34)	1791351269.935932794	0.73	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:31	===== 6. guest ARM (05:33:34)	1791351270.980422306	0.70	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:32	===== 6. guest ARM (05:33:34)	1791351272.031234202	0.67	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:33	===== 6. guest ARM (05:33:34)	1791351273.090047191	0.63	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:34	===== 6. guest ARM (05:33:34)	1791351274.137543921	0.61	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:35	===== 6. guest ARM (05:33:34)	1791351275.193016953	0.57	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:36	===== 6. guest ARM (05:33:34)	1791351276.238107003	0.55	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:37	===== 6. guest ARM (05:33:34)	1791351277.293522292	0.51	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:38	===== 6. guest ARM (05:33:34)	1791351278.348403159	0.47	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:39	===== 6. guest ARM (05:33:34)	1791351279.399050564	0.44	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:40	===== 6. guest ARM (05:33:34)	1791351280.446076381	0.41	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:41	===== 6. guest ARM (05:33:34)	1791351281.498972821	0.38	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:42	===== 6. guest ARM (05:33:34)	1791351282.548118241	0.35	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:43	===== 6. guest ARM (05:33:34)	1791351283.602608213	0.32	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:44	===== 6. guest ARM (05:33:34)	1791351284.654706662	0.29	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+05:34:45	===== 6. guest ARM (05:33:34)	1791351285.697463946	0.26	-	tcpdump=4
+05:34:46	===== 6. guest ARM (05:33:34)	1791351286.757875191	0.22	-	tcpdump=4
+05:34:47	===== 6. guest ARM (05:33:34)	1791351287.810230391	0.19	-	tcpdump=4
+05:34:49	===== 6. guest ARM (05:33:34)	1791351288.867417288	0.15	-	tcpdump=4
+05:34:50	===== 6. guest ARM (05:33:34)	1791351289.919366963	0.12	-	tcpdump=4
+05:34:51	===== 6. guest MIPS (05:34:50)	1791351290.967386113	0.09	-	tcpdump=4,tshark=1
+05:34:52	===== 6. guest MIPS (05:34:50)	1791351292.008846410	0.07	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:53	===== 6. guest MIPS (05:34:50)	1791351293.046633365	0.04	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:54	===== 6. guest MIPS (05:34:50)	1791351293.046633365	1.05	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:55	===== 6. guest MIPS (05:34:50)	1791351294.099248901	1.01	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:56	===== 6. guest MIPS (05:34:50)	1791351295.138476206	0.98	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:57	===== 6. guest MIPS (05:34:50)	1791351296.176156817	0.95	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:58	===== 6. guest MIPS (05:34:50)	1791351297.216151018	0.92	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:34:59	===== 6. guest MIPS (05:34:50)	1791351298.262180393	0.89	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:00	===== 6. guest MIPS (05:34:50)	1791351299.313219516	0.86	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:01	===== 6. guest MIPS (05:34:50)	1791351300.375742504	0.82	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:02	===== 6. guest MIPS (05:34:50)	1791351301.425178097	0.80	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:03	===== 6. guest MIPS (05:34:50)	1791351302.482607226	0.75	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:04	===== 6. guest MIPS (05:34:50)	1791351303.519090762	0.73	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:05	===== 6. guest MIPS (05:34:50)	1791351304.555933148	0.70	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:06	===== 6. guest MIPS (05:34:50)	1791351305.594396670	0.67	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:07	===== 6. guest MIPS (05:34:50)	1791351306.633137659	0.64	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:08	===== 6. guest MIPS (05:34:50)	1791351307.671656507	0.61	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:09	===== 6. guest MIPS (05:34:50)	1791351308.709769231	0.59	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:10	===== 6. guest MIPS (05:34:50)	1791351309.747644276	0.56	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:11	===== 6. guest MIPS (05:34:50)	1791351310.787166065	0.53	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:12	===== 6. guest MIPS (05:34:50)	1791351311.825696122	0.50	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:13	===== 6. guest MIPS (05:34:50)	1791351312.863242048	0.47	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:14	===== 6. guest MIPS (05:34:50)	1791351313.902567723	0.44	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:15	===== 6. guest MIPS (05:34:50)	1791351314.940314209	0.41	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:16	===== 6. guest MIPS (05:34:50)	1791351315.978189574	0.39	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:17	===== 6. guest MIPS (05:34:50)	1791351317.015492539	0.36	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:18	===== 6. guest MIPS (05:34:50)	1791351318.065882399	0.32	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:19	===== 6. guest MIPS (05:34:50)	1791351319.119641577	0.28	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:20	===== 6. guest MIPS (05:34:50)	1791351320.171414004	0.25	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:21	===== 6. guest MIPS (05:34:50)	1791351321.217382340	0.23	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:22	===== 6. guest MIPS (05:34:50)	1791351322.263875140	0.20	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:23	===== 6. guest MIPS (05:34:50)	1791351323.314026589	0.17	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:24	===== 6. guest MIPS (05:34:50)	1791351324.354870687	0.15	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:25	===== 6. guest MIPS (05:34:50)	1791351325.407156943	0.11	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:26	===== 6. guest MIPS (05:34:50)	1791351326.460575930	0.08	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:27	===== 6. guest MIPS (05:34:50)	1791351327.511529167	0.06	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:28	===== 6. guest MIPS (05:34:50)	1791351328.558321602	0.02	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:29	===== 6. guest MIPS (05:34:50)	1791351328.558321602	1.04	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:30	===== 6. guest MIPS (05:34:50)	1791351329.602378587	1.00	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:31	===== 6. guest MIPS (05:34:50)	1791351330.645366420	0.97	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:32	===== 6. guest MIPS (05:34:50)	1791351331.694544765	0.94	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:33	===== 6. guest MIPS (05:34:50)	1791351332.740878430	0.92	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:34	===== 6. guest MIPS (05:34:50)	1791351333.788530742	0.89	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:35	===== 6. guest MIPS (05:34:50)	1791351334.842934351	0.85	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:36	===== 6. guest MIPS (05:34:50)	1791351335.896956628	0.81	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:37	===== 6. guest MIPS (05:34:50)	1791351336.949264572	0.77	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:38	===== 6. guest MIPS (05:34:50)	1791351337.993042666	0.75	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:39	===== 6. guest MIPS (05:34:50)	1791351339.040736143	0.72	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:40	===== 6. guest MIPS (05:34:50)	1791351340.097964428	0.67	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:41	===== 6. guest MIPS (05:34:50)	1791351341.148580445	0.64	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:42	===== 6. guest MIPS (05:34:50)	1791351342.195837267	0.61	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:43	===== 6. guest MIPS (05:34:50)	1791351343.242424050	0.58	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:44	===== 6. guest MIPS (05:34:50)	1791351344.291363805	0.54	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:45	===== 6. guest MIPS (05:34:50)	1791351345.346541465	0.51	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:46	===== 6. guest MIPS (05:34:50)	1791351346.398031395	0.47	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:47	===== 6. guest MIPS (05:34:50)	1791351347.446111061	0.44	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:48	===== 6. guest MIPS (05:34:50)	1791351348.493638898	0.41	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:49	===== 6. guest MIPS (05:34:50)	1791351349.556989608	0.36	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:50	===== 6. guest MIPS (05:34:50)	1791351350.609602317	0.32	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:51	===== 6. guest MIPS (05:34:50)	1791351351.660854006	0.29	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:52	===== 6. guest MIPS (05:34:50)	1791351352.718019824	0.25	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:53	===== 6. guest MIPS (05:34:50)	1791351353.768422724	0.22	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:55	===== 6. guest MIPS (05:34:50)	1791351354.820727285	0.18	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:56	===== 6. guest MIPS (05:34:50)	1791351355.872319619	0.15	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:57	===== 6. guest MIPS (05:34:50)	1791351356.929514168	0.11	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:58	===== 6. guest MIPS (05:34:50)	1791351357.975548289	0.08	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:35:59	===== 6. guest MIPS (05:34:50)	1791351359.028481196	0.04	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:00	===== 6. guest MIPS (05:34:50)	1791351359.028481196	1.06	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:01	===== 6. guest MIPS (05:34:50)	1791351360.091010605	1.00	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:02	===== 6. guest MIPS (05:34:50)	1791351361.133189486	0.98	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:03	===== 6. guest MIPS (05:34:50)	1791351362.169009577	0.97	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:04	===== 6. guest MIPS (05:34:50)	1791351363.215542601	0.94	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:05	===== 6. guest MIPS (05:34:50)	1791351364.262093957	0.91	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:06	===== 6. guest MIPS (05:34:50)	1791351365.316923843	0.87	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:07	===== 6. guest MIPS (05:34:50)	1791351366.365590331	0.85	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:08	===== 6. guest MIPS (05:34:50)	1791351367.407934413	0.82	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:09	===== 6. guest MIPS (05:34:50)	1791351368.457372657	0.79	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+05:36:10	===== 6. guest MIPS (05:34:50)	1791351369.510742397	0.76	-	tcpdump=4
+05:36:11	===== 6. guest MIPS (05:34:50)	1791351370.559820815	0.73	-	tcpdump=4
+05:36:12	===== 6. guest MIPS (05:34:50)	1791351371.607491013	0.70	-	tcpdump=4
+05:36:13	===== 6. guest MIPS (05:34:50)	1791351372.661471575	0.66	-	tcpdump=4
+05:36:14	===== 6. guest MIPS (05:34:50)	1791351373.710116844	0.63	-	tcpdump=4
+05:36:15	===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (05:36:14)	1791351374.748710181	0.60	-	tcpdump=4
+05:36:16	===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (05:36:14)	1791351375.795941846	0.57	-	tcpdump=4
+05:36:17	===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (05:36:14)	1791351376.843201368	0.55	-	tcpdump=4
+05:36:18	===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (05:36:14)	1791351377.894818878	0.51	-	-
+05:36:19	===== 8. teardown (05:36:18)	1791351377.894818878	1.52	-	-
+05:36:20	===== 8. teardown (05:36:18)	1791351377.894818878	2.54	-	-
+05:36:21	===== 8. teardown (05:36:18)	1791351377.894818878	3.56	-	-
+05:36:22	===== result (05:36:22)	1791351377.894818878	4.58	-	-

@@ -1,0 +1,1 @@
+READ ERROR rc=1 file=/home/dathq/projects/ct01-06b4fr/out/selftest/fx/truncated.pcap: reading from file /home/dathq/projects/ct01-06b4fr/out/selftest/fx/truncated.pcap, link-type EN10MB (Ethernet), snapshot length 65535 tcpdump: pcap_loop: truncated dump file; tried to read 42 captured bytes, only got 32 

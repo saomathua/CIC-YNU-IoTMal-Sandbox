@@ -1,0 +1,1 @@
+ISOLATION OK (06B-3A after MIPS): ruleset,sysctl,link,neighbor,route

@@ -1,0 +1,13 @@
+same-as-4G-baseline: ip-link.txt
+same-as-4G-baseline: ip-addr.txt
+same-as-4G-baseline: ip-route.txt
+same-as-4G-baseline: ip6-route.txt
+same-as-4G-baseline: listen-tcp.txt
+same-as-4G-baseline: lsmod-net.txt
+DIFF vs 4G baseline: sysctl.txt
+3a4
+> net.core.devconf_inherit_init_net=0
+same-as-4G-host-after: sysctl.txt
+same-as-4G-host-after: ip-route.txt
+same-as-4G-host-after: listen-tcp.txt
+same-as-4G-host-after: lsmod-net.txt

@@ -1,0 +1,1 @@
+ISOLATION OK (06B-2BR 4-ordinary-on-lo): ruleset,sysctl,link,neighbor,route

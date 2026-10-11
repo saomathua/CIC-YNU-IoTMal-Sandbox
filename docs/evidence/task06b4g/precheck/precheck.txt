@@ -1,0 +1,36 @@
+== time
+Thu Oct  8 08:39:22 AM UTC 2026
+== image (full id; expected sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153)
+sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+== containers
+cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 4 hours ago
+mongo-db mongo:8.0.32 Up 7 hours
+== manager
+/cic-ynu-iotmal-sandbox-sandbox-manager-1 exited id=494ae3d2e2eb1b7da1d4473b862de75269c21a345b4e05090e8de0da8a27f14b restarts=0
+== test containers of the harness (must not exist)
+absent: ct01-06b3b-guest
+absent: ct01-06b3b-ctl
+== networks
+bridge bridge 
+cic-ynu-iotmal-sandbox_dbnet bridge com.docker.compose.config-hash=b5c560e0796e7fb26b5095ff548c931f8d0146729ae2058780d0cfb561f1c49e,com.docker.compose.network=dbnet,com.docker.compose.project=cic-ynu-iotmal-sandbox,com.docker.compose.version=5.6.0
+cic-ynu-iotmal-sandbox_sandboxnet bridge com.docker.compose.config-hash=16ee891bfc49189f3d0e5a4b985107c6bafb5c4ed14560fa0c5191bcd563ea32,com.docker.compose.network=sandboxnet,com.docker.compose.project=cic-ynu-iotmal-sandbox,com.docker.compose.version=5.6.0
+host host 
+none null 
+== processes (qemu / capture / harness)
+no qemu-system
+no capture processes
+no harness processes
+== output dir (must not exist)
+ls: cannot access '/home/dathq/projects/ct01-06b4fr/out': No such file or directory
+== /tmp capture dirs of earlier runs
+ls: cannot access '/tmp/ct01-06b3b-cap.*': No such file or directory
+== AppArmor (tool setup, recorded separately from CT-01)
+apparmor module is loaded.
+142 profiles are loaded.
+47 profiles are in enforce mode.
+   /usr/bin/man
+   /usr/lib/snapd/snap-confine
+   bwrap
+   tcpdump
+   unpriv_bwrap
+   unprivileged_userns

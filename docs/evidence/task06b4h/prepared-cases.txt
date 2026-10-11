@@ -1,0 +1,47 @@
+== interface eth1 (ARM eth1, MIPS br-lan)
+T14-A1: expected arp_in_drop; control live; target 192.168.60.2 size 1401
+    setup   ip route add 192.168.60.2/32 dev eth1
+    trigger ping -c 1 -W 2 -s 1401 192.168.60.2
+    settle  sleep 3
+T14-A2: expected arp_in_drop; control live; target 192.168.60.10 size 1402
+    setup   ip route add 192.168.60.10/32 dev eth1
+    trigger ping -c 1 -W 2 -s 1402 192.168.60.10
+    settle  sleep 3
+T14-A3: expected arp_in_drop; control rule_check; target 10.200.0.6 size 1403
+    setup   ip route add 10.200.0.6/32 dev eth1
+    trigger ping -c 1 -W 2 -s 1403 10.200.0.6
+    settle  sleep 3
+T15-S1: expected arp_in_drop; control rule_check; spoofed /32 10.200.0.1, 192.168.60.10, 192.168.60.1
+    setup   echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify
+    setup   ip addr add 10.200.0.1/32 dev eth1
+    setup   ip addr add 192.168.60.10/32 dev eth1
+    setup   ip addr add 192.168.60.1/32 dev eth1
+    trigger ip link set dev eth1 down
+    trigger ip link set dev eth1 up
+    settle  sleep 3
+
+== interface br-lan (ARM eth1, MIPS br-lan)
+T14-A1: expected arp_in_drop; control live; target 192.168.60.2 size 1401
+    setup   ip route add 192.168.60.2/32 dev br-lan
+    trigger ping -c 1 -W 2 -s 1401 192.168.60.2
+    settle  sleep 3
+T14-A2: expected arp_in_drop; control live; target 192.168.60.10 size 1402
+    setup   ip route add 192.168.60.10/32 dev br-lan
+    trigger ping -c 1 -W 2 -s 1402 192.168.60.10
+    settle  sleep 3
+T14-A3: expected arp_in_drop; control rule_check; target 10.200.0.6 size 1403
+    setup   ip route add 10.200.0.6/32 dev br-lan
+    trigger ping -c 1 -W 2 -s 1403 10.200.0.6
+    settle  sleep 3
+T15-S1: expected arp_in_drop; control rule_check; spoofed /32 10.200.0.1, 192.168.60.10, 192.168.60.1
+    setup   echo 1 > /proc/sys/net/ipv4/conf/br-lan/arp_notify
+    setup   ip addr add 10.200.0.1/32 dev br-lan
+    setup   ip addr add 192.168.60.10/32 dev br-lan
+    setup   ip addr add 192.168.60.1/32 dev br-lan
+    trigger ip link set dev br-lan down
+    trigger ip link set dev br-lan up
+    settle  sleep 3
+
+Around every case: guest_state.GuestChange (state saved before, restored after, also after an error);
+worker neighbours (ip -j neigh show) before/after; service link after the case (only if restored).
+NOT prepared (D1): forged ARP replies, gratuitous replies, wrong htype/hlen/plen; no arping, no raw tool.

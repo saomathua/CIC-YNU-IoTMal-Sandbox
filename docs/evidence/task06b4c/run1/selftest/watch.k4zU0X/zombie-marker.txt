@@ -1,0 +1,1 @@
+04:31:06 capture z pid 141215 exited during the test

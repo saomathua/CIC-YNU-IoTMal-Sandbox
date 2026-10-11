@@ -1,0 +1,2 @@
+-rwxr-xr-x    1 root     root         90151 Nov 24  2020 [1;32m/usr/bin/curl[m
+curl 7.60.0 (arm-openwrt-linux-gnu) libcurl/7.60.0 mbedTLS/2.16.8

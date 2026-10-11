@@ -1,0 +1,1 @@
+ISOLATION OK (06B-2B during simulation (informational)): ruleset,sysctl,link,neighbor,route

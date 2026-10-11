@@ -1,0 +1,1213 @@
+diff -ruN ct01-06b4h/arp_cases.py ct01-06b4hr/arp_cases.py
+--- ct01-06b4h/arp_cases.py	2026-10-08 09:17:46.132792007 +0000
++++ ct01-06b4hr/arp_cases.py	2026-10-08 09:50:09.974538926 +0000
+@@ -1,15 +1,17 @@
+ #!/usr/bin/env python3
+-"""06B-4H — T14/T15 ARP cases (prepared OFFLINE; not executed, not wired into a run script).
++"""06B-4H/06B-4HR — T14/T15 ARP cases (prepared OFFLINE; not executed, not wired into a run script).
+ 
+ Scope (plan docs/ct01-remaining-tests-plan.md T14, T15 level 1; reviewer decisions D1, D2, D6):
+     T14-A1  ARP request for 192.168.60.2 (worker eth0)   expected arp_in_drop   live control (ARP on sandboxnet)
+     T14-A2  ARP request for 192.168.60.10 (manager)      expected arp_in_drop   live control (ARP on sandboxnet)
+     T14-A3  ARP request for 10.200.0.6 (no host)         expected arp_in_drop   rule check
+-            made by the GUEST KERNEL: an on-link /32 route + one ping (sizes from signatures.py); the guest
+-            has no arping, and no ICMP is ever sent because the ARP never resolves.
+-    T15-S1  gratuitous ARP from the GUEST KERNEL (arp_notify=1, secondary /32 addresses 10.200.0.1,
+-            192.168.60.10, 192.168.60.1, link down/up)   expected arp_in_drop   rule check + worker neighbour check
++            meant to be made by the GUEST KERNEL: an on-link /32 route + one ping (sizes from signatures.py);
++            the guest has no arping, and no ICMP is sent while the ARP does not resolve.
++    T15-S1  gratuitous ARP REQUEST meant to be made by the GUEST KERNEL (arp_notify=1, secondary /32 addresses
++            10.200.0.1, 192.168.60.10, 192.168.60.1, link down/up)   expected arp_in_drop   rule check + worker
++            neighbour check
+ NOT covered (D1): forged ARP replies, gratuitous replies, wrong htype/hlen/plen; no tool is added, no raw packet.
++Every guest/kernel behaviour above is an ASSUMPTION; the offline tests only SIMULATE it.
+ 
+ Layers (all injectable for offline tests):
+   build_cases()                         case definitions (commands built from the case, sizes from signatures.py)
+@@ -17,14 +19,18 @@
+         service link before the group -> per case: worker neighbours (before) -> guest_state.GuestChange
+         [state saved] -> read A -> setup -> trigger -> settle -> read B -> [state restored, ALSO after an
+         error] -> worker neighbours (after) -> live control (A1/A2) -> service link after the case.
+-        A failed restore stops the group: the remaining cases are not run.
++        Execution contract (06B-4HR): setup/settle/`ip link` rc 0; ping rc 0 or 1 only; anything else, rc 127,
++        "not found" or a console exception is an execution error that stops the case's remaining steps (read B
++        and the restore still happen). A failed restore stops the group: the remaining cases are not run.
+   evaluate_group(pcap, counters_file, tap_mac, record)
+         reviewed l2frames.classified_frames / reconcile_l2 / probe_verdict_l2 and l2eval.load_reads.
+ 
+-ĐẠT only with: the right probe frames (ARP fields), the expected counter (all compared classes reconciled),
+-service link before AND after the case, a successful restore, unchanged worker neighbours, and (A1/A2) a live
+-control. No probe frame -> CHƯA KIỂM CHỨNG (never evidence of blocking). Precedence FAIL > LỖI PHÉP ĐO >
+-CHƯA KIỂM CHỨNG > ĐẠT; guard 20 ms (unmeasured assumption).
++ĐẠT only with: the right probe frames (ARP request fields), the expected counter (all compared classes
++reconciled), a complete execution record (every step, rc within the contract, valid guest baseline, restore
++evidence), service link before AND after the case, a successful restore, worker neighbours valid and unchanged,
++and (A1/A2) a live control. No probe frame -> CHƯA KIỂM CHỨNG (never evidence of blocking).
++Precedence FAIL > LỖI PHÉP ĐO > CHƯA KIỂM CHỨNG > ĐẠT (06B-4HR: failure evidence is collected BEFORE any
++measurement error can end the evaluation, and both are kept in the result). Guard 20 ms (unmeasured).
+ """
+ import argparse
+ import collections
+@@ -42,11 +48,13 @@
+ GUARD_S = counter_window.GUARD_S
+ SETTLE_S = 3            # after the trigger: kernel ARP retries (mcast_solicit 3 x 1 s [GĐ G7]) end before read B
+ PING_WAIT_S = 2         # busybox ping -W
++PING_RC_OK = (0, 1)     # 06B-4HR: the only ping outcomes accepted by the contract (1 = no reply, expected)
+ CASE_IDS = ("T14-A1", "T14-A2", "T14-A3", "T15-S1")
+ T15_SPOOF_IPS = ("10.200.0.1", "192.168.60.10", "192.168.60.1")
+ CATEGORIES = ("DAT", "DAT_KIEM_QUY_TAC", "FAIL", "LOI_PHEP_DO", "LOI_THUC_THI", "KHONG_TAO_DUOC_GOI",
+               "CHUA_KIEM_CHUNG")
+ NOT_RUN = "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
++PHASES = ("setup", "trigger", "settle")
+ 
+ 
+ def _iface_ok(iface):
+@@ -85,53 +93,131 @@
+     raise ValueError(f"unknown case kind {case.get('kind')!r}")
+ 
+ 
++def contract_steps(case, iface):
++    """[(phase, cmd)] in execution order."""
++    c = commands(case, iface)
++    return [(ph, cmd) for ph in PHASES for cmd in c[ph]]
++
++
++def rc_ok(phase, cmd, rc):
++    """06B-4HR execution contract for one step."""
++    if not isinstance(rc, int) or isinstance(rc, bool):
++        return False
++    if phase == "trigger" and cmd.startswith("ping "):
++        return rc in PING_RC_OK
++    return rc == 0
++
++
+ # ------------------------------------------------------------------ worker neighbours (read in the worker)
++NUD_STATES = {"INCOMPLETE", "REACHABLE", "STALE", "DELAY", "PROBE", "FAILED", "NOARP", "PERMANENT", "NONE"}
++NUD_NO_BINDING = {"INCOMPLETE", "FAILED", "NONE"}     # no usable MAC binding: valid kernel states, but say nothing
++
++
+ class NeighReadError(Exception):
+     """The worker neighbour table could not be read/parsed: never treated as 'unchanged'."""
+ 
+ 
+ def parse_neigh(text):
+-    """`ip -j neigh show` (worker netns) -> {(dst, dev): {"lladdr": mac or None, "permanent": bool}}."""
++    """`ip -j neigh show` (worker netns) -> (rows, problems). Every row is kept (duplicates are NOT merged);
++    rows: [{"dst", "dev", "lladdr" (MAC or None), "states", "binding" (bool)}] for the VALID rows; problems: what
++    makes the table unusable as a whole (invalid rows, duplicate (dst, dev)). Raises NeighReadError only if the
++    text is not a JSON list (nothing at all can be used)."""
+     try:
+-        rows = json.loads(text)
++        data = json.loads(text)
+     except (TypeError, ValueError) as e:
+         raise NeighReadError(f"not JSON: {e}") from e
+-    if not isinstance(rows, list):
++    if not isinstance(data, list):
+         raise NeighReadError("not a JSON list")
+-    out = {}
+-    for r in rows:
+-        if not isinstance(r, dict) or not isinstance(r.get("dst"), str) or not isinstance(r.get("dev"), str):
+-            raise NeighReadError(f"bad entry {r!r}")
+-        state = r.get("state", [])
+-        if not isinstance(state, list):
+-            raise NeighReadError(f"bad state in {r!r}")
+-        mac = r.get("lladdr")
+-        out[(r["dst"], r["dev"])] = {"lladdr": mac.lower() if isinstance(mac, str) else None,
+-                                     "permanent": "PERMANENT" in state}
+-    return out
++    rows, problems = [], []
++    for i, r in enumerate(data):
++        why = _row_problem(r)
++        if why:
++            problems.append(f"row {i}: {why}: {r!r}")
++            continue
++        states = list(r["state"])
++        mac = r["lladdr"].lower() if "lladdr" in r else None
++        rows.append({"dst": r["dst"], "dev": r["dev"], "lladdr": mac, "states": states,
++                     "binding": mac is not None and not (set(states) & NUD_NO_BINDING)})
++    seen = collections.Counter((r["dst"], r["dev"]) for r in rows)
++    problems += [f"duplicate entry {k[0]} dev {k[1]} ({n} rows)" for k, n in sorted(seen.items()) if n > 1]
++    return rows, problems
+ 
+ 
+-def neigh_problems(before, after, watch_ips):
+-    """Worker neighbour changes that the probe must not cause. Dynamic state changes are not compared.
+-    - tap0: exactly the same entries (dst, lladdr, permanent) before and after; 10.200.0.2 PERMANENT, guest MAC;
+-    - no entry on any device other than tap0 carries the guest MAC;
+-    - an entry for a watched IP (probe target / spoofed IP) that existed before keeps its lladdr."""
++def _row_problem(r):
++    if not isinstance(r, dict):
++        return "not an object"
++    dst, dev = r.get("dst"), r.get("dev")
++    if not isinstance(dst, str):
++        return "dst missing or not a string"
++    try:
++        ipaddress.ip_address(dst)
++    except ValueError:
++        return "dst is not an IP address"
++    if not isinstance(dev, str) or not re.fullmatch(r"[A-Za-z0-9_.@-]{1,32}", dev):
++        return "dev missing or invalid"
++    st = r.get("state")
++    if not isinstance(st, list) or not st or not all(isinstance(x, str) and x in NUD_STATES for x in st):
++        return "state missing, empty or not a list of known NUD states"
++    if "lladdr" in r:
++        if not isinstance(r["lladdr"], str) or not re.fullmatch(r"([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}", r["lladdr"]):
++            return "lladdr present but not a MAC address"
++    elif not set(st) & NUD_NO_BINDING:
++        return "lladdr missing for a state that needs a MAC binding"
++    return None
++
++
++def neigh_check(before_text, after_text, watch):
++    """-> {"fail": [...], "invalid": [...], "inconclusive": [...]}. Evidence is collected from every VALID row
++    even when the table also has problems (a valid abnormal row is never hidden by a duplicate or a bad row).
++    fail:          guest MAC on a device other than tap0 (after); tap0 entries differ before/after; 10.200.0.2 not
++                   PERMANENT with the guest MAC on tap0 (after); a watched IP that had a binding before has, after,
++                   a binding on another device or with another MAC.
++    invalid:       before/after not readable, invalid rows, duplicate entries (-> LỖI PHÉP ĐO unless fail).
++    inconclusive:  a watched IP that had a binding before is missing after, or is left without a binding
++                   (INCOMPLETE/FAILED/NONE): not enough to conclude (-> CHƯA KIỂM CHỨNG).
++    Dynamic state changes of a binding that keeps device and MAC (REACHABLE <-> STALE <-> DELAY <-> PROBE) are
++    normal and not reported."""
+     guest = L._norm_mac(S.GUEST_MAC)
+-    p = []
+-    tb = {k: v for k, v in before.items() if k[1] == "tap0"}
+-    ta = {k: v for k, v in after.items() if k[1] == "tap0"}
+-    if tb != ta:
+-        p.append(f"tap0 neighbours changed: {sorted(tb.items())} -> {sorted(ta.items())}")
+-    if ta.get((S.GUEST_IP, "tap0")) != {"lladdr": guest, "permanent": True}:
+-        p.append(f"tap0 neighbour {S.GUEST_IP} is not PERMANENT {guest}: {ta.get((S.GUEST_IP, 'tap0'))}")
+-    for (dst, dev), v in sorted(after.items()):
+-        if dev != "tap0" and v["lladdr"] == guest:
+-            p.append(f"neighbour {dst} dev {dev} has the guest MAC")
+-    for (dst, dev), v in sorted(after.items()):
+-        if dst in watch_ips and (dst, dev) in before and before[(dst, dev)]["lladdr"] and v["lladdr"] \
+-                and before[(dst, dev)]["lladdr"] != v["lladdr"]:
+-            p.append(f"neighbour {dst} dev {dev}: lladdr {before[(dst, dev)]['lladdr']} -> {v['lladdr']}")
+-    return p
++    out = {"fail": [], "invalid": [], "inconclusive": []}
++    parsed = {}
++    for name, text in (("before", before_text), ("after", after_text)):
++        try:
++            rows, probs = parse_neigh(text)
++            parsed[name] = rows
++            out["invalid"] += [f"{name}: {p}" for p in probs]
++        except NeighReadError as e:
++            parsed[name] = None
++            out["invalid"].append(f"{name}: not readable: {e}")
++    b, a = parsed["before"], parsed["after"]
++    if a is not None:
++        for r in a:
++            if r["dev"] != "tap0" and r["lladdr"] == guest:
++                out["fail"].append(f"neighbour {r['dst']} dev {r['dev']} has the guest MAC")
++        tap_after = [r for r in a if r["dev"] == "tap0" and r["dst"] == S.GUEST_IP]
++        if not any(r["lladdr"] == guest and "PERMANENT" in r["states"] for r in tap_after):
++            out["fail"].append(f"tap0 neighbour {S.GUEST_IP} is not PERMANENT {guest} after the case: {tap_after}")
++    if a is not None and b is not None:
++        key = lambda rows: sorted((r["dst"], r["lladdr"] or "", "PERMANENT" in r["states"])   # noqa: E731
++                                  for r in rows if r["dev"] == "tap0")
++        if key(b) != key(a):
++            out["fail"].append(f"tap0 neighbours changed: {key(b)} -> {key(a)}")
++        for ip in watch:
++            bb = {(r["dev"], r["lladdr"]) for r in b if r["dst"] == ip and r["binding"]}
++            if not bb:
++                continue                      # nothing known before: nothing to compare
++            aa = [r for r in a if r["dst"] == ip]
++            ab = {(r["dev"], r["lladdr"]) for r in aa if r["binding"]}
++            if not aa:
++                out["inconclusive"].append(f"watched {ip}: entry {sorted(bb)} missing after the case")
++                continue
++            for dev, mac in sorted(ab - bb):      # another MAC, or the same/another MAC on another device
++                out["fail"].append(f"watched {ip}: binding {mac} dev {dev} after the case, before {sorted(bb)}")
++            if not ab:
++                out["inconclusive"].append(f"watched {ip}: no usable binding after the case "
++                                           f"({[r['states'] for r in aa]}; before {sorted(bb)})")
++            elif bb - ab:
++                out["inconclusive"].append(f"watched {ip}: binding(s) {sorted(bb - ab)} missing after the case")
++    return out
+ 
+ 
+ def watch_ips(case):
+@@ -154,28 +240,24 @@
+     return {"ok": ok is True, "detail": detail}
+ 
+ 
+-def _run_steps(runner, cmds, r, timeout):
+-    """setup -> trigger -> settle; a failed setup/settle step or a missing tool stops the case (error)."""
+-    for phase in ("setup", "trigger", "settle"):
+-        for cmd in cmds[phase]:
+-            try:
+-                rc, out = runner.run(cmd, timeout=timeout)
+-            except Exception as e:                               # noqa: BLE001
+-                r["steps"].append({"phase": phase, "cmd": cmd, "rc": None, "out": ""})
+-                r["exec_error"] = f"{phase} {cmd!r}: {type(e).__name__}: {e}"
+-                return
+-            out = out or ""
+-            r["steps"].append({"phase": phase, "cmd": cmd, "rc": rc, "out": out[-300:]})
+-            if rc == 127 or "not found" in out:
+-                r["exec_error"] = f"{phase} {cmd!r}: tool missing in the guest"
+-                return
+-            # a ping without reply is the EXPECTED outcome (rc 1); every other step must succeed
+-            if phase != "trigger" and rc != 0:
+-                r["exec_error"] = f"{phase} {cmd!r}: rc {rc}"
+-                return
+-            if phase == "trigger" and cmd.startswith("ip link") and rc != 0:
+-                r["exec_error"] = f"trigger {cmd!r}: rc {rc}"
+-                return
++def _run_steps(runner, steps, r, timeout):
++    """Runs the contract steps in order; the first step outside the contract (exception, rc 127 / "not found",
++    rc not allowed for that step) is recorded as an execution error and ends the case's steps."""
++    for phase, cmd in steps:
++        try:
++            rc, out = runner.run(cmd, timeout=timeout)
++        except Exception as e:                                   # noqa: BLE001
++            r["steps"].append({"phase": phase, "cmd": cmd, "rc": None, "out": ""})
++            r["exec_error"] = f"{phase} {cmd!r}: {type(e).__name__}: {e}"
++            return
++        out = out or ""
++        r["steps"].append({"phase": phase, "cmd": cmd, "rc": rc, "out": out[-300:]})
++        if rc == 127 or "not found" in out:
++            r["exec_error"] = f"{phase} {cmd!r}: tool missing in the guest"
++            return
++        if not rc_ok(phase, cmd, rc):
++            r["exec_error"] = f"{phase} {cmd!r}: rc {rc} outside the contract"
++            return
+ 
+ 
+ def run_group(runner, read_counters, service_link, worker_neigh, control, cases, iface, timeout=60):
+@@ -188,7 +270,7 @@
+         rec["skipped"] = "service link before the group failed: no case was run"
+         return rec
+     for c in cases:
+-        r = {"id": c["id"], "before": f"{c['id']} before", "after": f"{c['id']} after", "steps": [],
++        r = {"id": c["id"], "iface": iface, "before": f"{c['id']} before", "after": f"{c['id']} after", "steps": [],
+              "exec_error": None, "read_error": None, "guest_state": None, "neigh_before": None, "neigh_after": None,
+              "control": None, "service_link_after": None, "not_run": None}
+         if rec["stopped"]:
+@@ -196,7 +278,7 @@
+             rec["cases"].append(r)
+             continue
+         try:
+-            cmds = commands(c, iface)
++            steps = contract_steps(c, iface)
+         except ValueError as e:
+             r["exec_error"] = f"commands not built: {e}"
+             rec["cases"].append(r)
+@@ -205,19 +287,26 @@
+         if err:
+             r["neigh_before_error"] = err
+         gc = GS.GuestChange(runner, iface)
++        restore_exc = None
+         try:
+             with gc:
+                 _, e1 = _call(read_counters, r["before"])
+-                _run_steps(runner, cmds, r, timeout)
++                _run_steps(runner, steps, r, timeout)
+                 _, e2 = _call(read_counters, r["after"])
+                 errs = [f"read {lbl!r}: {e}" for lbl, e in ((r["before"], e1), (r["after"], e2)) if e]
+                 r["read_error"] = "; ".join(errs) or None
+         except GS.StateReadError as e:      # before-state unreadable: nothing changed, nothing to restore
+             r["exec_error"] = r["exec_error"] or f"guest state not readable before the case: {e}"
+         except Exception as e:                                   # noqa: BLE001
++            if gc.rec["before"] is not None:                     # the body catches everything: this is the restore
++                restore_exc = f"{type(e).__name__}: {e}"
+             r["exec_error"] = r["exec_error"] or f"{type(e).__name__}: {e}"
+-        r["guest_state"] = {"before": _jsonable(gc.rec["before"]), "restore": _jsonable(gc.rec["restore"])}
+-        restored = bool(gc.rec["restore"] and gc.rec["restore"].get("restored") is True)
++        restore = gc.rec["restore"]
++        if gc.rec["before"] is not None and restore is None:
++            restore = {"restored": False, "commands": [], "diffs": [], "dynamic_changes": [],
++                       "error": f"restore raised: {restore_exc or 'unknown'}"}
++        r["guest_state"] = {"before": _jsonable(gc.rec["before"]), "restore": _jsonable(restore)}
++        restored = bool(restore and restore.get("restored") is True)
+         if gc.rec["before"] is not None and not restored:
+             rec["stopped"] = NOT_RUN
+         r["neigh_after"], err = _call(worker_neigh)
+@@ -242,6 +331,84 @@
+     return x
+ 
+ 
++# ------------------------------------------------------------------ execution record contract (06B-4HR)
++BASELINE_KEYS = {"mac": str, "operstate": str, "addrs": list, "routes": list, "neigh_static": dict,
++                 "neigh_dynamic": dict, "arp_notify": int}
++
++
++def baseline_problem(before):
++    if not isinstance(before, dict):
++        return "guest baseline missing"
++    for k, t in BASELINE_KEYS.items():
++        if not isinstance(before.get(k), t) or (t is int and isinstance(before.get(k), bool)):
++            return f"guest baseline field {k!r} missing or not {t.__name__}"
++    if not re.fullmatch(r"([0-9a-f]{2}:){5}[0-9a-f]{2}", before["mac"]):
++        return "guest baseline MAC invalid"
++    return None
++
++
++def restore_problem(restore):
++    if not isinstance(restore, dict):
++        return "restore evidence missing"
++    if not isinstance(restore.get("restored"), bool):
++        return "restore evidence without a boolean 'restored'"
++    for k in ("commands", "diffs"):
++        if not isinstance(restore.get(k), list):
++            return f"restore evidence without a list {k!r}"
++    if restore["restored"] and restore["diffs"]:
++        return "restore says restored although differences remain"
++    return None
++
++
++def execution_problems(case, crec, iface):
++    """Is the case's execution record complete and inside the contract?
++    COMPLETED case (no exec_error): steps == every contract step, in order, phase and command exact, rc within the
++    contract; valid guest baseline; restore evidence.
++    STOPPED case (exec_error): steps are a prefix of the contract; every step but the last within the contract and
++    the last one outside it (or rc None = exception), unless the case stopped before any step (baseline unreadable:
++    no step, no baseline, no restore) or after them; baseline + restore evidence whenever a baseline was taken."""
++    if crec.get("not_run"):
++        return [] if not crec.get("steps") else ["case marked not run but has steps"]
++    try:
++        want = contract_steps(case, iface)
++    except ValueError as e:
++        return [f"commands not built: {e}"]
++    steps = crec.get("steps")
++    if not isinstance(steps, list) or not all(isinstance(s, dict) for s in steps):
++        return ["steps missing or not a list of objects"]
++    got = [(s.get("phase"), s.get("cmd")) for s in steps]
++    gs = crec.get("guest_state") if isinstance(crec.get("guest_state"), dict) else {}
++    before, restore = gs.get("before"), gs.get("restore")
++    p = []
++    err = crec.get("exec_error")
++    if err is not None and not isinstance(err, str):
++        return ["exec_error is not a string"]
++    if not err:
++        if got != want:
++            p.append(f"completed case without the full contract: steps {got} != {want}")
++        bad = [s for s in steps if not rc_ok(s.get("phase"), s.get("cmd") or "", s.get("rc"))]
++        if bad:
++            p.append(f"completed case with rc outside the contract: {[(s.get('cmd'), s.get('rc')) for s in bad]}")
++        for x in (baseline_problem(before), restore_problem(restore)):
++            if x:
++                p.append(x)
++        return p
++    # stopped case
++    if got != want[:len(got)]:
++        p.append(f"stopped case: steps {got} are not a prefix of the contract {want}")
++    for s in steps[:-1]:
++        if not rc_ok(s.get("phase"), s.get("cmd") or "", s.get("rc")):
++            p.append(f"stopped case: step {s.get('cmd')!r} rc {s.get('rc')!r} outside the contract but not last")
++    if before is None:
++        if steps or restore is not None:
++            p.append("stopped case without a guest baseline but with steps or a restore")
++        return p
++    for x in (baseline_problem(before), restore_problem(restore)):
++        if x:
++            p.append(x)
++    return p
++
++
+ # ------------------------------------------------------------------ evaluation
+ def _arp(f):
+     a = f.get("arp") or {}
+@@ -249,15 +416,21 @@
+ 
+ 
+ def is_probe_frame(f, case):
+-    """Guest ARP frames of this case, identified by their ARP fields (never by the counter class)."""
++    """Guest ARP REQUEST frames of this case, identified by their ARP fields (never by the counter class):
++    Ethernet/IPv4 ARP (htype 1, ptype 0x0800, hlen 6, plen 4), opcode 1, sender MAC = guest.
++    T14: spa 10.200.0.2, tpa = target. T15 (06B-4HR): gratuitous REQUEST, spa = tpa, broadcast destination; an
++    opcode 2/99 frame is never a probe (forged/gratuitous replies are out of scope, D1)."""
+     if f.get("direction") != "guest" or f.get("etype") != L.ETH_ARP:
+         return False
+     a = _arp(f)
+     if a is None or a.get("sha") != L._norm_mac(S.GUEST_MAC):
+         return False
++    if (a.get("htype"), a.get("ptype"), a.get("hlen"), a.get("plen"), a.get("op")) != (1, L.ETH_IPV4, 6, 4, 1):
++        return False
+     if case["kind"] == "t14":
+-        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]
+-    return a["spa"] == a["tpa"] and a["spa"] in (S.GUEST_IP,) + tuple(case["spoof"])   # gratuitous
++        return a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]
++    return (a["spa"] == a["tpa"] and a["spa"] in (S.GUEST_IP,) + tuple(case["spoof"])
++            and f.get("dst") == L.BROADCAST)
+ 
+ 
+ def determined_problems(window, case):
+@@ -290,58 +463,95 @@
+     return isinstance(state, dict) and state.get("ok") is True
+ 
+ 
+-def evaluate_case(frames, reads, case, crec, link_before_ok, guard=GUARD_S):
++def _window_ok(ra, rb):
++    vals = [ra.get("t_start"), ra.get("t_end"), rb.get("t_start"), rb.get("t_end")]
++    if not all(counter_window._finite(v) for v in vals):
++        return False
++    return vals[0] <= vals[1] < vals[2] <= vals[3]
++
++
++def evaluate_case(frames, reads, case, crec, link_before_ok, guard=GUARD_S, iface=None, input_error=None):
++    """frames: l2frames.classified_frames() or None (capture unreadable); reads: l2eval.load_reads() or None.
++    06B-4HR order: (1) collect failure evidence that does not depend on the failed measurement (worker
++    neighbours from valid rows; frames only inside a VALID window; counter reconciliation only with valid
++    counters); (2) FAIL if any, keeping the measurement errors; (3) LỖI PHÉP ĐO; (4) the rest."""
+     cid = case["id"]
+     kind = case["control_kind"]
++    iface = iface if iface is not None else crec.get("iface")
+     ek = {"evidence_kind": "rule_check" if kind == "rule_check" else "live_control"}
+     if crec.get("not_run"):
+         return _result(cid, "CHUA_KIEM_CHUNG", crec["not_run"], **ek)
+-    if crec.get("exec_error") and not (crec.get("guest_state") or {}).get("before"):
++    gs = crec.get("guest_state") if isinstance(crec.get("guest_state"), dict) else {}
++    if crec.get("exec_error") and gs.get("before") is None and not crec.get("steps"):
+         # the case never started (state unreadable / commands not built): nothing was sent, nothing measured
+         return _result(cid, "LOI_THUC_THI", f"CHƯA KIỂM CHỨNG (lỗi thực thi: {crec['exec_error']})", **ek)
++    failure, measure, other = [], [], []
++    if input_error:
++        measure.append(input_error)
++    # (1a) worker neighbours: valid rows are evidence even when other rows/reads are bad
++    nc = neigh_check(crec.get("neigh_before"), crec.get("neigh_after"), watch_ips(case))
++    failure += nc["fail"]
++    measure += [f"worker neighbours: {x}" for x in nc["invalid"]]
++    # (1b) window and frames
+     if crec.get("read_error"):
+-        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({crec['read_error']})", **ek)
+-    missing = [lbl for lbl in (crec.get("before"), crec.get("after")) if lbl not in reads]
+-    if missing:
+-        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO (counter read(s) {missing} not found)", **ek)
+-    ra, rb = reads[crec["before"]], reads[crec["after"]]
+-    recon = L.reconcile_l2(frames, ra, rb, l2eval.check_classes(None), guard)
+-    if recon["verdict"] == "ERROR":
+-        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({recon.get('error')})", reconciliation=recon, **ek)
+-    out_drop, err = L.strict_delta(ra, rb, ["arp_out_drop"])
+-    if err:
+-        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})", **ek)
+-    window = [f for f in frames if counter_window.zone(f["t"], ra, rb, guard) != "outside"]
+-    probe = [f for f in window if is_probe_frame(f, case)]
+-    certain = [f for f in probe if counter_window.zone(f["t"], ra, rb, guard) == "certain"]
+-    counted = [f for f in certain if f["cls"] in L.COUNTER_CLASSES]
+-    problems = determined_problems(window, case)
+-    # worker neighbours: unreadable -> measurement error; changed -> determined failure
+-    try:
+-        nb, na = parse_neigh(crec.get("neigh_before")), parse_neigh(crec.get("neigh_after"))
+-        nprob = neigh_problems(nb, na, watch_ips(case))
+-        nerr = None
+-    except NeighReadError as e:
+-        nprob, nerr = [], f"worker neighbours not readable: {e}"
+-    checks = {"probe_packets_hit_expected_counter": all(f["cls"] == case["expected"] for f in counted),
+-              "no_frame_proving_failure": not problems,
+-              "worker_neighbours_unchanged": not nprob}
++        measure.append(crec["read_error"])
++    ra = rb = None
++    if reads is not None:
++        missing = [lbl for lbl in (crec.get("before"), crec.get("after")) if lbl not in reads]
++        if missing:
++            measure.append(f"counter read(s) {missing} not found")
++        else:
++            ra, rb = reads[crec["before"]], reads[crec["after"]]
++            if not _window_ok(ra, rb):
++                measure.append("counter read times invalid or out of order: window not usable")
++                ra = rb = None
++    window = probe = certain = []
++    recon = None
++    if frames is not None and ra is not None:
++        window = [f for f in frames if counter_window.zone(f["t"], ra, rb, guard) != "outside"]
++        probe = [f for f in window if is_probe_frame(f, case)]
++        certain = [f for f in probe if counter_window.zone(f["t"], ra, rb, guard) == "certain"]
++        failure += determined_problems(window, case)
++    # (1c) counters: only with valid counters (no read error) and a valid window
++    out_drop = None
++    if frames is not None and ra is not None and not crec.get("read_error"):
++        recon = L.reconcile_l2(frames, ra, rb, l2eval.check_classes(None), guard)
++        if recon["verdict"] == "ERROR":
++            measure.append(f"reconciliation: {recon.get('error')}")
++        else:
++            if recon["verdict"] == "FAIL":
++                failure.append("counter reconciliation FAIL")
++            counted = [f for f in certain if f["cls"] in L.COUNTER_CLASSES]
++            wrong = sorted({f["cls"] for f in counted if f["cls"] != case["expected"]})
++            if wrong:
++                failure.append(f"probe frames hit counter class(es) {wrong} instead of {case['expected']}")
++        d, err = L.strict_delta(ra, rb, ["arp_out_drop"])
++        if err:
++            measure.append(err)
++        else:
++            out_drop = d["arp_out_drop"]
++    exec_probs = execution_problems(case, crec, iface) if iface is not None else ["record interface unknown"]
+     detail = {"probe_frames": len(probe), "probe_frames_certain": len(certain),
+-              "probe_frame_classes": sorted({f["cls"] for f in probe}), "checks": checks,
+-              "failure_evidence": problems + nprob, "arp_out_drop_delta": out_drop["arp_out_drop"],
+-              "reconciliation": {k: recon.get(k) for k in ("verdict", "per_class", "no_counter_frames", "guard_s")},
+-              "steps": crec.get("steps"), "restore": ((crec.get("guest_state") or {}).get("restore") or {}).get("restored"),
+-              **ek}
+-    # 1. determined failures win
+-    if recon["verdict"] == "FAIL" or not all(checks.values()):
+-        why = [k for k, v in checks.items() if not v] + (["counter_reconciliation"] if recon["verdict"] == "FAIL" else [])
+-        return _result(cid, "FAIL", "FAIL", failed=why, **detail)
+-    if nerr:
+-        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({nerr})", **detail)
+-    # 2. the guest could not run the probe
++              "probe_frame_classes": sorted({f["cls"] for f in probe}),
++              "failure_evidence": failure, "measurement_errors": measure, "execution_problems": exec_probs,
++              "neighbour_inconclusive": nc["inconclusive"], "arp_out_drop_delta": out_drop,
++              "reconciliation": None if recon is None else
++              {k: recon.get(k) for k in ("verdict", "per_class", "no_counter_frames", "guard_s")},
++              "steps": crec.get("steps"), "restore": (gs.get("restore") or {}).get("restored")
++              if isinstance(gs.get("restore"), dict) else None, **ek}
++    # (2) determined failures win, measurement errors are kept alongside
++    if failure:
++        return _result(cid, "FAIL", "FAIL", **detail)
++    # (3) measurement errors
++    if measure:
++        return _result(cid, "LOI_PHEP_DO", "LỖI PHÉP ĐO (" + "; ".join(measure) + ")", **detail)
++    # (4) the guest could not run the probe / the execution record is not complete
+     if crec.get("exec_error"):
+         return _result(cid, "LOI_THUC_THI", f"CHƯA KIỂM CHỨNG (lỗi thực thi: {crec['exec_error']})", **detail)
+-    # 3. no probe frame (or, T15, no gratuitous frame for some spoofed IP): never evidence of blocking
++    if exec_probs:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (hồ sơ thực thi không đầy đủ/không hợp lệ: "
++                       + "; ".join(exec_probs) + ")", **detail)
++    # (5) no probe frame (or, T15, no gratuitous request for some spoofed IP): never evidence of blocking
+     if not probe:
+         return _result(cid, "KHONG_TAO_DUOC_GOI", "CHƯA KIỂM CHỨNG (không tạo được khung ARP probe; không phải "
+                        "bằng chứng chặn)", **detail)
+@@ -349,22 +559,26 @@
+         seen = {(f.get("arp") or {}).get("spa") for f in probe}
+         lack = [a for a in case["spoof"] if a not in seen]
+         if lack:
+-            return _result(cid, "KHONG_TAO_DUOC_GOI", f"CHƯA KIỂM CHỨNG (không có gratuitous ARP cho {lack})", **detail)
+-    # 4. the reviewed verdict function
+-    pv = {"probe_packets_in_tap0_pcap": True, **checks}
++            return _result(cid, "KHONG_TAO_DUOC_GOI", f"CHƯA KIỂM CHỨNG (không có gratuitous ARP request cho {lack})",
++                           **detail)
++    # (6) the reviewed verdict function (determined failures were handled above)
++    pv = {"probe_packets_in_tap0_pcap": True, "probe_packets_hit_expected_counter": True,
++          "no_frame_proving_failure": True, "worker_neighbours_unchanged": True}
+     if kind == "live":
+-        ctl = crec.get("control")
+-        text, ok = L.probe_verdict_l2(pv, recon, case["expected"], "live", control_alive=link_ok(ctl))
++        text, ok = L.probe_verdict_l2(pv, recon, case["expected"], "live", control_alive=link_ok(crec.get("control")))
+     else:
+         text, ok = L.probe_verdict_l2(pv, recon, case["expected"], "rule_check")
+     if text == "FAIL":
+-        return _result(cid, "FAIL", "FAIL", failed=["probe_verdict"], **detail)
++        return _result(cid, "FAIL", "FAIL", **detail)
+     if not ok:
+         return _result(cid, "CHUA_KIEM_CHUNG", text, **detail)
+-    # 5. conditions that only prevent judging
+-    if out_drop["arp_out_drop"] != 0:
+-        return _result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG (arp_out_drop tăng {out_drop['arp_out_drop']}: "
+-                       "worker đã định gửi ARP tới guest; khung không quan sát được trên tap0)", **detail)
++    # (7) conditions that only prevent judging
++    if nc["inconclusive"]:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (neighbor worker không đủ để kết luận: "
++                       + "; ".join(nc["inconclusive"]) + ")", **detail)
++    if out_drop != 0:
++        return _result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG (arp_out_drop tăng {out_drop}: worker đã định gửi "
++                       "ARP tới guest; khung không quan sát được trên tap0)", **detail)
+     if detail["restore"] is not True:
+         return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được)", **detail)
+     if not link_before_ok:
+@@ -376,7 +590,8 @@
+ 
+ 
+ def record_problems(record):
+-    """Structure/completeness of a group record: every case exactly once, labels and commands as built."""
++    """Structure/completeness of a group record: every case exactly once, labels as built, and (06B-4HR) every
++    case's execution record inside the contract (execution_problems)."""
+     if not isinstance(record, dict) or not isinstance(record.get("cases"), list) \
+             or not all(isinstance(c, dict) for c in record["cases"]):
+         return ["group record must be an object whose 'cases' is a list of objects"]
+@@ -391,23 +606,18 @@
+     defs = {c["id"]: c for c in build_cases()}
+     for c in record["cases"]:
+         d = defs.get(c.get("id"))
+-        if d is None or c.get("not_run"):
++        if d is None:
+             continue
+-        if c.get("before") != f"{d['id']} before" or c.get("after") != f"{d['id']} after":
++        if not c.get("not_run") and (c.get("before") != f"{d['id']} before" or c.get("after") != f"{d['id']} after"):
+             p.append(f"{d['id']}: counter read labels differ from the reviewed ones")
+-        try:
+-            want = [x for ph in ("setup", "trigger", "settle") for x in commands(d, record.get("iface"))[ph]]
+-        except ValueError as e:
+-            p.append(f"{d['id']}: {e}")
+-            continue
+-        got = [s.get("cmd") for s in c.get("steps") or [] if isinstance(s, dict)]
+-        if got != want[:len(got)]:
+-            p.append(f"{d['id']}: guest commands {got} are not the reviewed ones")
++        p += [f"{d['id']}: {x}" for x in execution_problems(d, c, record.get("iface"))]
+     return p
+ 
+ 
+ def evaluate_group(pcap, counters_file, tap_mac, record, guard=GUARD_S):
+-    """-> {"cases": [...], "record_problems": [...], ...}. Never concludes for an invalid/incomplete record."""
++    """-> {"cases": [...], "record_problems": [...], ...}. Never concludes for an invalid/incomplete record.
++    06B-4HR: a capture or counter-file error no longer ends the evaluation early: every case is still evaluated
++    with what is valid (worker neighbours, the other input), so a determined failure is not hidden."""
+     probs = record_problems(record)
+     out = {"guard_s": guard, "assumption": l2eval.ASSUMPTION, "record_problems": probs, "cases": []}
+     if probs and "group record must be" in probs[0]:
+@@ -417,30 +627,33 @@
+     if record.get("skipped"):
+         out["cases"] = [_result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG ({record['skipped']})") for cid in CASE_IDS]
+         return out
++    frames = reads = None
++    errs = []
+     try:
+         frames = L.classified_frames(pcap, tap_mac)
+-        reads = l2eval.load_reads(counters_file)
+-        err = None
+     except L.FrameReadError as e:
+-        err = f"capture read error: {e}"
+-    except l2eval.InputError as e:
+-        err = f"invalid measurement data: {e}"
++        errs.append(f"capture read error: {e}")
+     except ValueError as e:
+-        err = f"invalid argument: {e}"
+-    if err:
+-        out["cases"] = [_result(str(c.get("id")), "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})") for c in record["cases"]]
+-        return out
++        errs.append(f"invalid argument: {e}")
++    try:
++        reads = l2eval.load_reads(counters_file)
++    except l2eval.InputError as e:
++        errs.append(f"invalid measurement data: {e}")
++    input_error = "; ".join(errs) or None
+     lb = link_ok(record.get("service_link_before"))
+     for crec in record["cases"]:
+         if crec.get("id") not in cases:
+             out["cases"].append(_result(str(crec.get("id")), "LOI_PHEP_DO", "LỖI PHÉP ĐO (unknown case id)"))
+             continue
+-        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, lb, guard))
++        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, lb, guard,
++                                          iface=record.get("iface"), input_error=input_error))
+     return out
+ 
+ 
+ def group_exit(result):
+-    """LỖI PHÉP ĐO 2 > FAIL 1 > not judged 4 > ĐẠT 0; an incomplete/invalid record is never 0."""
++    """Exit code of the group, by precedence: any FAIL -> 1 (FAIL wins over everything); else any LỖI PHÉP ĐO, no
++    case at all, or a record problem -> 2; else anything not judged ĐẠT -> 4; else 0. An incomplete/invalid record is
++    never 0."""
+     cats = {c["category"] for c in result["cases"]}
+     if "FAIL" in cats:
+         return 1
+diff -ruN ct01-06b4h/mutation_arp.py ct01-06b4hr/mutation_arp.py
+--- ct01-06b4h/mutation_arp.py	2026-10-08 09:23:01.021807625 +0000
++++ ct01-06b4hr/mutation_arp.py	2026-10-08 09:57:58.743878014 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4H — mutation test of arp_cases.py (offline). Each mutant runs selftest_arp.py in its own mktemp copy;
++"""06B-4H/06B-4HR — mutation test of arp_cases.py (offline). Each mutant runs selftest_arp.py in its own mktemp copy;
+ every replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID /
+ ERROR as in mutation_icmp.py. Baseline must pass; harness hash checked before/after.
+     python3 mutation_arp.py
+@@ -17,18 +17,21 @@
+ FILES = sorted(os.path.basename(p) for p in glob.glob(os.path.join(HERE, "*.py")) + glob.glob(os.path.join(HERE, "*.sh")))
+ AC = "arp_cases.py"
+ M = [
+-    # probe identification
++    # ---- probe identification (F1 included)
+     ("A1", AC, [('    if a is None or a.get("sha") != L._norm_mac(S.GUEST_MAC):', '    if a is None:')],
+      "P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT"),
+-    ("A2", AC, [('        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]',
+-                 '        return a["op"] == 1 and a["spa"] == S.GUEST_IP')],
++    ("A2", AC, [('        return a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]', '        return a["spa"] == S.GUEST_IP')],
+      "P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT"),
+-    ("A3", AC, [('        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]',
+-                 '        return a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]')],
+-     "P3 T14-A1 wrong ARP field (opcode 2 (reply) instead of a request) -> no probe frame, never ĐẠT"),
+-    ("A4", AC, [('    return a["spa"] == a["tpa"] and a["spa"] in', '    return a["spa"] in')],
++    ("A3", AC, [('!= (1, L.ETH_IPV4, 6, 4, 1):', '!= (1, L.ETH_IPV4, 6, 4, a.get("op")):')],
++     "F1.2 S1 with gratuitous frames of opcode 2 only -> not a probe, KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT"),
++    ("A4", AC, [('    return (a["spa"] == a["tpa"] and a["spa"] in', '    return (a["spa"] in')],
+      "P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame"),
+-    # verdict conditions
++    ("A4b", AC, [('            and f.get("dst") == L.BROADCAST)', '            )')],
++     "F1.3 S1 gratuitous request sent unicast (not broadcast) -> not a probe"),
++    ("A4c", AC, [('(a.get("htype"), a.get("ptype"), a.get("hlen"), a.get("plen"), a.get("op")) != (1, L.ETH_IPV4, 6, 4, 1)',
++                  'a.get("op") != 1')],
++     "F1.4 S1 gratuitous request with htype 6 / ptype 0x86dd -> not a probe"),
++    # ---- verdict conditions
+     ("A5", AC, [('        if lack:\n            return _result', '        if False:\n            return _result')],
+      "P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it"),
+     ("A6", AC, [('    if not probe:\n        return _result', '    if False:\n        return _result')],
+@@ -43,48 +46,90 @@
+     ("A10", AC, [('    return isinstance(state, dict) and state.get("ok") is True',
+                   '    return isinstance(state, dict) and bool(state.get("ok"))')],
+      "P37 service link after with ok \"true\" (not the boolean) -> CHƯA KIỂM CHỨNG"),
+-    ("A11", AC, [('    if out_drop["arp_out_drop"] != 0:', '    if False:')],
++    ("A11", AC, [('    if out_drop != 0:', '    if False:')],
+      "P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)"),
+-    ("A12", AC, [('    if nerr:\n        return _result', '    if False:\n        return _result')],
++    ("A12", AC, [('    measure += [f"worker neighbours: {x}" for x in nc["invalid"]]', '    pass')],
+      "P13 neighbour table not readable -> LỖI PHÉP ĐO"),
+-    ("A13", AC, [('    if crec.get("exec_error") and not (crec.get("guest_state") or {}).get("before"):', '    if False:')],
++    ("A13", AC, [('    if crec.get("exec_error") and gs.get("before") is None and not crec.get("steps"):', '    if False:')],
+      "P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)"),
+-    ("A14", AC, [('control_alive=link_ok(ctl))', 'control_alive=True)')],
++    ("A14", AC, [('control_alive=link_ok(crec.get("control")))', 'control_alive=True)')],
+      "P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)"),
+-    # determined failures
++    # ---- determined failures from frames
+     ("A15", AC, [('            if case["kind"] == "t14" and a.get("spa") == case["dst"]:', '            if False:')],
+      "P28 worker ARP reply for the probed IP towards the guest -> FAIL"),
+     ("A16", AC, [('                    and ip.get("tot_len") == case["size"] + 28:', '                    and False:')],
+      "P29 probe ICMP packet seen (ARP was resolved) -> FAIL"),
+     ("A17", AC, [('            if case["kind"] == "t15" and ips & set(case["spoof"]):', '            if False:')],
+      "P35 worker ARP about a spoofed IP during T15 -> FAIL"),
+-    # worker neighbours
+-    ("A18", AC, [('    if tb != ta:', '    if False:')], "N4 new entry on tap0 -> problem"),
+-    ("A19", AC, [('        if dev != "tap0" and v["lladdr"] == guest:', '        if False:')],
+-     "N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem"),
+-    ("A20", AC, [('                and before[(dst, dev)]["lladdr"] != v["lladdr"]:', '                and False:')],
+-     "N7 watched IP changes its MAC on eth0 -> problem"),
+-    ("A21", AC, [('        raise NeighReadError("not a JSON list")', '        rows = []')],
+-     "N8 unreadable neighbour output -> NeighReadError (never 'unchanged')"),
+-    # execution
++    # ---- worker neighbours (F2)
++    ("A18", AC, [('        if key(b) != key(a):', '        if False:')], "N4 new entry (unwatched IP) on tap0 -> fail"),
++    ("A19", AC, [('            if r["dev"] != "tap0" and r["lladdr"] == guest:', '            if False:')],
++     "N9 a NEW, unwatched eth0 entry carrying the guest MAC -> fail"),
++    ("A20", AC, [('            for dev, mac in sorted(ab - bb):', '            for dev, mac in []:')],
++     "F2 S1 worker neighbour after: manager moved to eth9 with the same MAC -> FAIL"),
++    ("A20b", AC, [('    if nc["inconclusive"]:', '    if False:')],
++     "F2 S1 worker neighbour after: manager entry removed after -> CHUA_KIEM_CHUNG"),
++    ("A20c", AC, [('"binding": mac is not None and not (set(states) & NUD_NO_BINDING)}', '"binding": mac is not None}')],
++     "F2 S1 worker neighbour after: manager entry FAILED (MAC kept) -> CHUA_KIEM_CHUNG"),
++    ("A21", AC, [('        raise NeighReadError("not a JSON list")', '        data = []')],
++     "N8 unreadable neighbour output -> invalid (never 'unchanged')"),
++    ("A21b", AC, [('            return "lladdr present but not a MAC address"', '            return None')],
++     "F2 S1 worker neighbour after: manager lladdr 1 -> LOI_PHEP_DO"),
++    ("A21c", AC, [('    if not isinstance(st, list) or not st or not all(isinstance(x, str) and x in NUD_STATES for x in st):',
++                   '    if not isinstance(st, list):')],
++     "F2 S1 worker neighbour after: manager state items [1, True, {}] -> LOI_PHEP_DO"),
++    ("A21d", AC, [('    problems += [f"duplicate entry {k[0]} dev {k[1]} ({n} rows)" for k, n in sorted(seen.items()) if n > 1]',
++                   '    pass')],
++     "F2 S1 worker neighbour after: duplicate identical normal rows -> LOI_PHEP_DO"),
++    ("A21e", AC, [('    if a is not None:\n        for r in a:', '    if a is not None and not out["invalid"]:\n        for r in a:')],
++     "F2 S1 worker neighbour after: duplicate row hides a guest MAC (guest MAC row first) -> FAIL"),
++    # ---- execution (F4)
+     ("A22", AC, [('            rec["stopped"] = NOT_RUN', '            pass')],
+      "X6 restore failure: the next case is not run (not_run), no service link after the failed case"),
+-    ("A23", AC, [('            if phase != "trigger" and rc != 0:', '            if False:')],
++    ("A23", AC, [('PING_RC_OK = (0, 1)', 'PING_RC_OK = (0, 1, 2)')],
++     "F4 run_group: ping rc 2 -> execution error recorded, read B taken, restored, settle not run"),
++    ("A23b", AC, [('        if not rc_ok(phase, cmd, rc):\n            r["exec_error"]', '        if False:\n            r["exec_error"]')],
+      "X8 setup failed: trigger not sent, exec error, still restored"),
+-    ("A24", AC, [('            if phase == "trigger" and cmd.startswith("ip link") and rc != 0:', '            if False:')],
++    ("A24", AC, [('    return rc == 0\n', '    return rc == 0 or phase == "trigger"\n')],
+      "X18 link down failed (trigger): exec error, 'link up' not sent, still restored"),
+     ("A25", AC, [('    return {"ok": ok is True, "detail": detail}', '    return {"ok": bool(ok), "detail": detail}')],
+      "X19 service link returning a truthy non-True value is not ok: group skipped"),
+-    # record completeness
++    # ---- record completeness (F3)
+     ("A26", AC, [('        p += [f"case missing: {cid}" for cid in CASE_IDS if n[cid] == 0]', '        pass')],
+      "X15 record_problems: missing case"),
+     ("A27", AC, [('    if result.get("record_problems"):\n        return 2', '    if False:\n        return 2')],
+      "C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass"),
+-    ("A28", AC, [('        if got != want[:len(got)]:', '        if False:')],
+-     "X16 record_problems: a guest command that is not the reviewed one"),
++    ("A28", AC, [('        if got != want:\n', '        if False:\n')],
++     "F3 group with empty steps -> never exit 0, no case ĐẠT, record problem"),
++    ("A28b", AC, [('        bad = [s for s in steps if not rc_ok(s.get("phase"), s.get("cmd") or "", s.get("rc"))]', '        bad = []')],
++     "F3 group with every rc 2 -> never exit 0, no case ĐẠT, record problem"),
++    ("A28c", AC, [('    for k, t in BASELINE_KEYS.items():', '    for k, t in []:')],
++     "F3 group with guest baseline incomplete -> never exit 0, no case ĐẠT, record problem"),
++    ("A28d", AC, [('    if restore["restored"] and restore["diffs"]:', '    if False:')],
++     "F3 group with restore says restored with diffs -> never exit 0, no case ĐẠT, record problem"),
++    ("A28e", AC, [('    for s in steps[:-1]:', '    for s in []:')],
++     "F3.t a STOPPED case whose earlier step is outside the contract -> record problem"),
+     ("A29", AC, [('"trigger": [f"ping -c 1 -W {PING_WAIT_S} -s {int(case[\'size\'])} {dst}"]',
+                   '"trigger": [f"ping -c 1 -W {PING_WAIT_S} -s 1401 {dst}"]')],
+      "D8 a registry change changes the command (single source)"),
++    # ---- failure evidence vs measurement errors (F5)
++    ("B1", AC, [('    if failure:\n        return _result(cid, "FAIL", "FAIL", **detail)\n    # (3) measurement errors\n    if measure:',
++                 '    if measure:\n        return _result(cid, "LOI_PHEP_DO", "x", **detail)\n    if failure:\n'
++                 '        return _result(cid, "FAIL", "FAIL", **detail)\n    # (3) measurement errors\n    if measure:')],
++     "F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error"),
++    ("B2", AC, [('            if not _window_ok(ra, rb):', '            if False:')],
++     "F5.4 frame violation but read times overlap (A ends after B starts: window not valid) -> no FAIL inferred from "
++     "frame positions; LỖI PHÉP ĐO"),
++    ("B3", AC, [('        failure += determined_problems(window, case)',
++                 '        failure += determined_problems(window, case) if not crec.get("read_error") else []')],
++     "F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error"),
++    ("B4", AC, [('    input_error = "; ".join(errs) or None\n', '    input_error = "; ".join(errs) or None\n    if input_error:\n        return out\n')],
++     "F5.5 neighbour violation with the capture unreadable -> FAIL (neighbour evidence kept), capture error kept"),
++    ("B5", AC, [('    if "FAIL" in cats:\n        return 1\n    if not result["cases"] or "LOI_PHEP_DO" in cats:\n        return 2\n',
++                 '    if not result["cases"] or "LOI_PHEP_DO" in cats:\n        return 2\n    if "FAIL" in cats:\n        return 1\n')],
++     "F5.7 group_exit: FAIL wins over LỖI PHÉP ĐO in the same group"),
++    ("B6", AC, [('    failure += nc["fail"]', '    failure += nc["fail"] if not crec.get("read_error") else []')],
++     "F5.3 neighbour violation (valid rows) + read_error -> FAIL, both kept"),
+     ("X1", AC, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_arp.py", [("import contextlib\n", "import contextlib(\n")], None),
+ ]
+diff -ruN ct01-06b4h/selftest_arp.py ct01-06b4hr/selftest_arp.py
+--- ct01-06b4h/selftest_arp.py	2026-10-08 09:23:01.020807628 +0000
++++ ct01-06b4hr/selftest_arp.py	2026-10-08 09:57:58.743878014 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4H — offline tests of arp_cases.py (T14 A1/A2/A3, T15 S1) on SYNTHETIC captures/counter files and a
++"""06B-4H/06B-4HR — offline tests of arp_cases.py (T14 A1/A2/A3, T15 S1) on SYNTHETIC captures/counter files and a
+ SIMULATED guest (selftest_l2.FakeGuest, extended with ping/sleep and frame emission). Sends nothing.
+ 
+     python3 selftest_arp.py [--json FILE]
+@@ -12,6 +12,8 @@
+   X  run_group with the simulated guest: order, restore also after an error, a failed restore stops the group,
+      state read error, service link before/after, control, record completeness
+   E  end to end: run_group on the simulated guest that emits frames + counters, then evaluate_group
++  F  06B-4HR: the five review findings (F1 opcode, F2 neighbours, F3 execution record, F4 ping rc through
++     run_group, F5 failure evidence vs measurement errors) and the 40-case restore matrix
+   C  CLI
+ """
+ import contextlib
+@@ -111,12 +113,22 @@
+ 
+ 
+ # ------------------------------------------------------------------ scenario builder
++def _baseline():
++    """A real guest_state baseline (read from the simulated guest), JSON form as run_group records it."""
++    g = B.FakeGuest()
++    return A._jsonable(GS.read_state(g, IF))
++
++
++BASELINE = _baseline()
++RESTORED = {"restored": True, "commands": [], "diffs": [], "dynamic_changes": [], "error": None}
++
++
+ def crec_for(cid, **over):
+     c = CASES[cid]
+     steps = [{"phase": ph, "cmd": cmd, "rc": (1 if ph == "trigger" and cmd.startswith("ping") else 0), "out": ""}
+              for ph in ("setup", "trigger", "settle") for cmd in A.commands(c, IF)[ph]]
+-    r = {"id": cid, "before": f"{cid} before", "after": f"{cid} after", "steps": steps, "exec_error": None,
+-         "read_error": None, "guest_state": {"before": {"mac": GUEST}, "restore": {"restored": True}},
++    r = {"id": cid, "iface": IF, "before": f"{cid} before", "after": f"{cid} after", "steps": steps, "exec_error": None,
++         "read_error": None, "guest_state": {"before": copy.deepcopy(BASELINE), "restore": dict(RESTORED)},
+          "neigh_before": NEIGH, "neigh_after": NEIGH,
+          "control": {"ok": True, "detail": "ARP resolved on sandboxnet"} if c["control_kind"] == "live" else None,
+          "service_link_after": {"ok": True, "detail": "HTTP 200 + hash"}, "not_run": None}
+@@ -202,26 +214,24 @@
+ 
+ # ------------------------------------------------------------------ N
+ def sec_N():
+-    b = A.parse_neigh(NEIGH)
+-    t("N1 parse ip -j neigh", lambda: b[(S.GUEST_IP, "tap0")] == {"lladdr": GUEST, "permanent": True})
+-    t("N2 unchanged -> no problem", lambda: A.neigh_problems(b, A.parse_neigh(NEIGH), ["192.168.60.10"]) == [])
+-    t("N3 dynamic state change on eth0 is not a problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace("REACHABLE", "STALE")), ["192.168.60.10"]) == [])
+-    t("N4 new entry on tap0 -> problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json([{"dst": "192.168.60.10", "dev": "tap0", "lladdr": GUEST,
+-                                                              "state": ["STALE"]}])), []) != [])
+-    t("N5 tap0 permanent entry lost -> problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json(tap_entry=False)), []) != [])
+-    t("N6 manager entry on eth0 now carries the guest MAC -> problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace(MANAGER_MAC, GUEST)), ["192.168.60.10"]) != [])
+-    t("N7 watched IP changes its MAC on eth0 -> problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace(MANAGER_MAC, "02:00:00:00:00:99")), ["192.168.60.10"]) != [])
+-    t("N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem",
+-      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json([{"dst": "192.168.60.99", "dev": "eth0", "lladdr": GUEST,
+-                                                              "state": ["STALE"]}])), ["192.168.60.10"]) != [])
+-    t("N8 unreadable neighbour output -> NeighReadError (never 'unchanged')",
+-      lambda: all(raises(A.NeighReadError, lambda x=x: A.parse_neigh(x)) for x in (None, "", "{}", "[1]", "not json",
+-                                                                                 '[{"dst": "x"}]')))
++    W = ["192.168.60.10"]
++    NC = lambda after, before=NEIGH, w=W: A.neigh_check(before, after, w)            # noqa: E731
++    rows, probs = A.parse_neigh(NEIGH)
++    t("N1 parse ip -j neigh: rows kept with device, MAC, states, binding",
++      lambda: probs == [] and {"dst": S.GUEST_IP, "dev": "tap0", "lladdr": GUEST, "states": ["PERMANENT"],
++                               "binding": True} in rows)
++    t("N2 unchanged -> nothing", lambda: NC(NEIGH) == {"fail": [], "invalid": [], "inconclusive": []})
++    t("N3 dynamic state change of a kept binding (REACHABLE -> STALE) is normal, not reported",
++      lambda: NC(NEIGH.replace("REACHABLE", "STALE")) == {"fail": [], "invalid": [], "inconclusive": []})
++    t("N4 new entry (unwatched IP) on tap0 -> fail",
++      lambda: NC(neigh_json([{"dst": "192.168.60.77", "dev": "tap0", "lladdr": "02:00:00:00:00:77", "state": ["STALE"]}]))["fail"])
++    t("N5 tap0 permanent entry lost -> fail", lambda: NC(neigh_json(tap_entry=False))["fail"])
++    t("N6 manager entry on eth0 now carries the guest MAC -> fail", lambda: NC(NEIGH.replace(MANAGER_MAC, GUEST))["fail"])
++    t("N7 watched IP changes its MAC on eth0 -> fail", lambda: NC(NEIGH.replace(MANAGER_MAC, "02:00:00:00:00:99"))["fail"])
++    t("N8 unreadable neighbour output -> invalid (never 'unchanged')",
++      lambda: all(NC(x)["invalid"] for x in (None, "", "{}", "not json")) and NC(NEIGH, before=None)["invalid"])
++    t("N9 a NEW, unwatched eth0 entry carrying the guest MAC -> fail",
++      lambda: NC(neigh_json([{"dst": "192.168.60.99", "dev": "eth0", "lladdr": GUEST, "state": ["STALE"]}]))["fail"])
+ 
+ 
+ # ------------------------------------------------------------------ P
+@@ -297,10 +307,10 @@
+     t("P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT",
+       lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "khôi phục" in r["verdict"])(
+           one(tmp, "p19", "T15-S1", spaced(probe_frames("T15-S1")),
+-              over={"guest_state": {"before": {"mac": GUEST}, "restore": {"restored": False}}})))
++              over={"guest_state": {"before": copy.deepcopy(BASELINE), "restore": {"restored": False, "commands": [], "diffs": ["addrs: extra '192.168.60.10/32'"], "dynamic_changes": [], "error": None}}})))
+     t("P20 restore record missing -> CHƯA KIỂM CHỨNG",
+       lambda: one(tmp, "p20", "T14-A1", spaced(probe_frames("T14-A1")),
+-                  over={"guest_state": {"before": {"mac": GUEST}, "restore": None}})["category"] == "CHUA_KIEM_CHUNG")
++                  over={"guest_state": {"before": copy.deepcopy(BASELINE), "restore": None}})["category"] == "CHUA_KIEM_CHUNG")
+     t("P21 case not run after an earlier restore failure -> CHƯA KIỂM CHỨNG (not run)",
+       lambda: "không chạy" in one(tmp, "p21", "T14-A2", [], over={"not_run": A.NOT_RUN})["verdict"])
+     # service link and control
+@@ -335,7 +345,7 @@
+       lambda: one(tmp, "p32", "T14-A3", spaced(probe_frames("T14-A3")), extra={"arp_in_drop": -1})["category"] == "FAIL")
+     t("P33 a determined failure is reported even when the restore also failed",
+       lambda: one(tmp, "p33", "T14-A2", spaced(probe_frames("T14-A2") + [worker_arp("192.168.60.10")]),
+-                  over={"guest_state": {"before": {"mac": GUEST}, "restore": {"restored": False}}})["category"] == "FAIL")
++                  over={"guest_state": {"before": copy.deepcopy(BASELINE), "restore": {"restored": False, "commands": [], "diffs": ["addrs: extra '192.168.60.10/32'"], "dynamic_changes": [], "error": None}}})["category"] == "FAIL")
+     t("P34 a determined failure is reported even with an execution error",
+       lambda: one(tmp, "p34", "T14-A1", spaced(probe_frames("T14-A1") + [icmp_to("192.168.60.2", 1401)]),
+                   over={"exec_error": "settle: rc 1"})["category"] == "FAIL")
+@@ -414,9 +424,10 @@
+ 
+ 
+ def run_sim(tmp, name, guest_kw=None, link=lambda: (True, "HTTP=200 + hash"), neigh=lambda: NEIGH,
+-            control=lambda c: (True, "ARP resolved on sandboxnet"), cases=None, reader=None):
++            control=lambda c: (True, "ARP resolved on sandboxnet"), cases=None, reader=None, guest_cls=None,
++            guest_extra=None):
+     counters, frames = dict(V.BASE), []
+-    g = SimGuest(counters, frames, **(guest_kw or {}))
++    g = (guest_cls or SimGuest)(counters, frames, **(guest_kw or {}), **(guest_extra or {}))
+     cf = os.path.join(tmp, name + ".jsonl")
+     open(cf, "w").close()
+     rec = A.run_group(g, reader or fake_counters_reader(counters, cf), link, neigh, control,
+@@ -489,7 +500,8 @@
+     t("X15 record_problems: missing case", lambda: any("case missing: T14-A1" in p for p in A.record_problems(r2)))
+     r3 = copy.deepcopy(run_sim(tmp, "x16")[1])
+     r3["cases"][0]["steps"][0]["cmd"] = "ip route add 192.168.60.3/32 dev eth1"
+-    t("X16 record_problems: a guest command that is not the reviewed one", lambda: any("not the reviewed" in p for p in A.record_problems(r3)))
++    t("X16 record_problems: a guest command that is not the reviewed one",
++      lambda: any(p.startswith("T14-A1:") and "contract" in p for p in A.record_problems(r3)))
+     t("X17 record_problems: invalid structure", lambda: A.record_problems({"cases": "x"}) and A.record_problems([]))
+ 
+ 
+@@ -518,6 +530,225 @@
+       lambda: res["cases"][1]["category"] == "FAIL" and A.group_exit(res) == 1)
+ 
+ 
++# ------------------------------------------------------------------ F (06B-4HR: the five review findings)
++class PingRc(SimGuest):
++    """ping returns `rc` AFTER the simulated kernel emitted its ARP requests (residual frames)."""
++    def __init__(self, *a, ping_rc=2, **kw):
++        super().__init__(*a, **kw)
++        self.ping_rc = ping_rc
++
++    def run(self, cmd, timeout=60):
++        rc, out = super().run(cmd, timeout)
++        if cmd.startswith("ping "):
++            return self.ping_rc, "ping: simulated rc"
++        return rc, out
++
++
++class RichGuest(SimGuest):
++    """Baseline with pre-existing configuration: arp_notify=1, an extra /32 address, an extra route, static
++    neighbours on IF and on another interface. Injects one console exception before/after a command; after the
++    command it may also change the MAC (restore must undo it)."""
++    def __init__(self, *a, fail_before=None, fail_after=None, mutate_mac=False, **kw):
++        super().__init__(*a, **kw)
++        self.notify = 1
++        self.addrs.add("192.0.2.99/32")
++        self.routes.add(f"198.51.100.0/24 via 10.200.0.1 dev {self.iface}")
++        self.neigh[("10.200.0.9", self.iface)] = ("00:11:22:33:44:99", 0x6)
++        self.neigh[("192.168.1.9", "br-lan")] = ("00:11:22:33:44:88", 0x6)
++        self.fail_before, self.fail_after, self.mutate_mac = fail_before, fail_after, mutate_mac
++
++    def run(self, cmd, timeout=60):
++        if cmd == self.fail_before:
++            self.fail_before = None
++            self.log.append(cmd)
++            raise TimeoutError("console timeout before the command (simulated)")
++        r = super().run(cmd, timeout)
++        if cmd == self.fail_after:
++            self.fail_after = None
++            if self.mutate_mac:
++                self.mac = "52:54:00:de:ad:01"
++            raise TimeoutError("console timeout after the command (simulated)")
++        return r
++
++
++def rows_with(change):
++    rows = json.loads(NEIGH)
++    change(rows)
++    return json.dumps(rows)
++
++
++def mgr(rows):
++    return [r for r in rows if r["dst"] == "192.168.60.10"][0]
++
++
++def sec_F(tmp):
++    # ---- F1: S1 accepts only the approved gratuitous ARP REQUEST
++    t("F1.1 S1 clean gratuitous requests -> ĐẠT (kiểm quy tắc)",
++      lambda: one(tmp, "f11", "T15-S1", spaced(probe_frames("T15-S1")))["category"] == "DAT_KIEM_QUY_TAC")
++    for op in (2, 99):
++        t(f"F1.2 S1 with gratuitous frames of opcode {op} only -> not a probe, KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT",
++          lambda op=op: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and r["probe_frames"] == 0)(
++              one(tmp, f"f12-{op}", "T15-S1", spaced([grat(ip, op) for ip in (S.GUEST_IP,) + A.T15_SPOOF_IPS]))))
++    t("F1.3 S1 gratuitous request sent unicast (not broadcast) -> not a probe",
++      lambda: one(tmp, "f13", "T15-S1", spaced([B.eth(TAP, GUEST, 0x0806, B.arp(1, GUEST, ip, ZERO, ip))
++                                                for ip in A.T15_SPOOF_IPS]))["probe_frames"] == 0)
++    t("F1.4 S1 gratuitous request with htype 6 / ptype 0x86dd -> not a probe",
++      lambda: one(tmp, "f14", "T15-S1", spaced([B.eth(BC, GUEST, 0x0806, B.arp(1, GUEST, ip, ZERO, ip, htype=6))
++                                                for ip in A.T15_SPOOF_IPS] +
++                                               [B.eth(BC, GUEST, 0x0806, B.arp(1, GUEST, ip, ZERO, ip, ptype=0x86DD))
++                                                for ip in A.T15_SPOOF_IPS]))["probe_frames"] == 0)
++    t("F1.5 S1 mix: requests for two IPs + an opcode-2 frame for the third -> KHÔNG TẠO ĐƯỢC GÓI naming the third",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and "192.168.60.1" in r["verdict"])(
++          one(tmp, "f15", "T15-S1", spaced([grat(S.GUEST_IP), grat("10.200.0.1"), grat("192.168.60.10"),
++                                            grat("192.168.60.1", 2)]))))
++    # ---- F2: worker neighbours
++    F2 = [("manager entry removed after", lambda rows: rows.remove(mgr(rows)), "CHUA_KIEM_CHUNG"),
++          ("manager moved to eth9 with another MAC", lambda rows: mgr(rows).update(dev="eth9", lladdr="00:11:22:33:44:66"), "FAIL"),
++          ("manager moved to eth9 with the same MAC", lambda rows: mgr(rows).update(dev="eth9"), "FAIL"),
++          ("manager entry FAILED (MAC kept)", lambda rows: mgr(rows).update(state=["FAILED"]), "CHUA_KIEM_CHUNG"),
++          ("manager entry INCOMPLETE without MAC", lambda rows: (mgr(rows).pop("lladdr"), mgr(rows).update(state=["INCOMPLETE"])), "CHUA_KIEM_CHUNG"),
++          ("manager REACHABLE -> STALE (normal)", lambda rows: mgr(rows).update(state=["STALE"]), "DAT_KIEM_QUY_TAC"),
++          ("manager REACHABLE -> DELAY (normal)", lambda rows: mgr(rows).update(state=["DELAY"]), "DAT_KIEM_QUY_TAC")]
++    for v in (None, 1, True, [], {}):
++        F2.append((f"manager lladdr {v!r}", lambda rows, v=v: mgr(rows).update(lladdr=v), "LOI_PHEP_DO"))
++    F2 += [("manager state missing", lambda rows: mgr(rows).pop("state"), "LOI_PHEP_DO"),
++           ("manager state items [1, True, {}]", lambda rows: mgr(rows).update(state=[1, True, {}]), "LOI_PHEP_DO"),
++           ("manager state empty", lambda rows: mgr(rows).update(state=[]), "LOI_PHEP_DO"),
++           ("manager state unknown string", lambda rows: mgr(rows).update(state=["WEIRD"]), "LOI_PHEP_DO"),
++           ("row with a bad dst", lambda rows: rows.append({"dst": "x", "dev": "eth0", "lladdr": MANAGER_MAC, "state": ["STALE"]}), "LOI_PHEP_DO"),
++           ("duplicate row hides a guest MAC (guest MAC row first)",
++            lambda rows: rows.extend([{"dst": "192.168.60.99", "dev": "eth0", "lladdr": GUEST, "state": ["REACHABLE"]},
++                                      {"dst": "192.168.60.99", "dev": "eth0", "lladdr": MANAGER_MAC, "state": ["REACHABLE"]}]), "FAIL"),
++           ("duplicate identical normal rows", lambda rows: rows.append(dict(mgr(rows))), "LOI_PHEP_DO"),
++           ("guest MAC row + an invalid row: the valid abnormal row is kept",
++            lambda rows: rows.extend([{"dst": "192.168.60.99", "dev": "eth0", "lladdr": GUEST, "state": ["STALE"]},
++                                      {"dst": "192.168.60.98", "dev": "eth0", "lladdr": None, "state": ["STALE"]}]), "FAIL")]
++    for n, ch, want in F2:
++        t(f"F2 S1 worker neighbour after: {n} -> {want}",
++          lambda ch=ch, want=want, n=n: one(tmp, "f2-" + re.sub(r"\W", "", n), "T15-S1", spaced(probe_frames("T15-S1")),
++                                           over={"neigh_after": rows_with(ch)})["category"] == want)
++    t("F2.b before-table invalid (lladdr null) -> LỖI PHÉP ĐO",
++      lambda: one(tmp, "f2b", "T15-S1", spaced(probe_frames("T15-S1")),
++                  over={"neigh_before": rows_with(lambda rows: mgr(rows).update(lladdr=None))})["category"] == "LOI_PHEP_DO")
++    t("F2.c A2 target entry lost -> CHƯA KIỂM CHỨNG (not ĐẠT)",
++      lambda: one(tmp, "f2c", "T14-A2", spaced(probe_frames("T14-A2")),
++                  over={"neigh_after": rows_with(lambda rows: rows.remove(mgr(rows)))})["category"] == "CHUA_KIEM_CHUNG")
++    # ---- F3: execution record contract
++    specs = [(cid, spaced(probe_frames(cid)), None, None) for cid in A.CASE_IDS]
++    pc, cf, rec = scenario(tmp, "f3", specs)
++    rec["iface"] = IF
++
++    def grp(change):
++        r = copy.deepcopy(rec)
++        for c in r["cases"]:
++            change(c)
++        res = A.evaluate_group(pc, cf, TAP, r)
++        return res, A.group_exit(res)
++    t("F3.0 complete clean group -> exit 0, labels DAT/DAT/DAT_KIEM_QUY_TAC/DAT_KIEM_QUY_TAC",
++      lambda: (lambda res, e: e == 0 and [c["category"] for c in res["cases"]] == ["DAT", "DAT", "DAT_KIEM_QUY_TAC", "DAT_KIEM_QUY_TAC"]
++               and res["record_problems"] == [])(*grp(lambda c: None)))
++    F3 = [("empty steps", lambda c: c.update(steps=[])),
++          ("setup only", lambda c: c.update(steps=c["steps"][:1])),
++          ("settle missing", lambda c: c.update(steps=c["steps"][:-1])),
++          ("phase renamed 'unknown'", lambda c: [x.update(phase="unknown") for x in c["steps"]]),
++          ("every rc 2", lambda c: [x.update(rc=2) for x in c["steps"]]),
++          ("rc not an integer", lambda c: [x.update(rc="0") for x in c["steps"]]),
++          ("steps reordered", lambda c: c.update(steps=c["steps"][::-1])),
++          ("guest baseline missing (restore says restored)", lambda c: c["guest_state"].update(before=None)),
++          ("guest baseline incomplete", lambda c: c["guest_state"].update(before={"mac": GUEST})),
++          ("restore evidence missing", lambda c: c["guest_state"].update(restore=None)),
++          ("restore 'restored' not boolean", lambda c: c["guest_state"]["restore"].update(restored="true")),
++          ("restore says restored with diffs", lambda c: c["guest_state"]["restore"].update(diffs=["mac"]))]
++    for n, ch in F3:
++        t(f"F3 group with {n} -> never exit 0, no case ĐẠT, record problem",
++          lambda ch=ch: (lambda res, e: e != 0 and not any(c["ok"] for c in res["cases"]) and res["record_problems"])(*grp(ch)))
++    t("F3.s a STOPPED case with a valid record (steps up to the failing one, exec_error, restore) -> LỖI THỰC THI, "
++      "no record problem",
++      lambda: (lambda res, e: res["cases"][0]["category"] == "LOI_THUC_THI" and res["record_problems"] == [] and e == 4)(
++          *grp_one(rec, pc, cf, lambda c: c.update(steps=[dict(c["steps"][0], rc=2)], exec_error="setup 'ip route add': rc 2"))))
++    t("F3.t a STOPPED case whose earlier step is outside the contract -> record problem",
++      lambda: grp_one(rec, pc, cf, lambda c: c.update(steps=[dict(c["steps"][0], rc=2), c["steps"][1]],
++                                                     exec_error="trigger: rc 9"))[0]["record_problems"])
++    # ---- F4: ping rc outside {0, 1}, through run_group then evaluate_group
++    for rc, want_err in ((2, True), (3, True), (0, False), (1, False)):
++        t(f"F4 run_group: ping rc {rc} -> " + ("execution error recorded, read B taken, restored, settle not run"
++                                               if want_err else "inside the contract"),
++          lambda rc=rc, want_err=want_err: (lambda rec: all(
++              (("rc %d outside the contract" % rc) in (c["exec_error"] or "")) == want_err
++              and c["read_error"] is None and c["guest_state"]["restore"]["restored"] is True
++              and (("sleep %d" % A.SETTLE_S) in [x["cmd"] for x in c["steps"]]) != want_err
++              for c in rec["cases"] if c["id"].startswith("T14")))(
++              run_sim(tmp, f"f4-{rc}", guest_kw=None, cases=None, guest_cls=PingRc, guest_extra={"ping_rc": rc})[1]))
++    g, rec4, pc4, cf4 = run_sim(tmp, "f4e", guest_cls=PingRc, guest_extra={"ping_rc": 2})
++    res4 = A.evaluate_group(pc4, cf4, TAP, rec4)
++    t("F4.e evaluate_group after ping rc 2 (frames present): T14 LỖI THỰC THI, no record problem, exit 4 (never 0)",
++      lambda: [c["category"] for c in res4["cases"]][:3] == ["LOI_THUC_THI"] * 3 and res4["record_problems"] == []
++      and A.group_exit(res4) == 4)
++    # ---- F5: measurement errors never hide a determined failure
++    bad = spaced(probe_frames("T14-A2") + [worker_arp("192.168.60.10")])
++    t("F5.1 known frame violation, clean reads -> FAIL with the frame evidence",
++      lambda: (lambda r: r["category"] == "FAIL" and r["failure_evidence"] and not r["measurement_errors"])(
++          one(tmp, "f51", "T14-A2", bad)))
++    t("F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error",
++      lambda: (lambda r: r["category"] == "FAIL" and any("192.168.60.10" in x for x in r["failure_evidence"])
++               and any("second read failed" in x for x in r["measurement_errors"]))(
++          one(tmp, "f52", "T14-A2", bad, over={"read_error": "OSError: second read failed after raw row was saved"})))
++    t("F5.3 neighbour violation (valid rows) + read_error -> FAIL, both kept",
++      lambda: (lambda r: r["category"] == "FAIL" and r["failure_evidence"] and r["measurement_errors"])(
++          one(tmp, "f53", "T15-S1", spaced(probe_frames("T15-S1")),
++              over={"neigh_after": NEIGH.replace(MANAGER_MAC, "02:00:00:00:00:66"), "read_error": "OSError: nft read failed"})))
++    t("F5.4 frame violation but read times overlap (A ends after B starts: window not valid) -> no FAIL inferred from "
++      "frame positions; LỖI PHÉP ĐO",
++      lambda: (lambda pc, cf, rec: (lambda r: r["category"] == "LOI_PHEP_DO" and not r["failure_evidence"])(
++          A.evaluate_group(pc, cf, TAP, rec)["cases"][0]))(
++          *scenario(tmp, "f54", [("T14-A2", bad, None, None)],
++                    counters_override=[V.rec("T14-A2 before", 100, 112, V.BASE),
++                                       V.rec("T14-A2 after", 110, 120, V.after(arp_in_drop=3))])))
++    t("F5.5 neighbour violation with the capture unreadable -> FAIL (neighbour evidence kept), capture error kept",
++      lambda: (lambda pc, cf, rec: (lambda r: r["category"] == "FAIL" and any("capture" in x for x in r["measurement_errors"]))(
++          A.evaluate_group(pc + ".missing", cf, TAP, rec)["cases"][0]))(
++          *scenario(tmp, "f55", [("T15-S1", spaced(probe_frames("T15-S1")),
++                                  {"neigh_after": NEIGH.replace(MANAGER_MAC, GUEST)}, None)])))
++    t("F5.6 neighbour violation with the counter file invalid -> FAIL, counter error kept",
++      lambda: (lambda pc, cf, rec: (lambda r: r["category"] == "FAIL" and any("invalid measurement" in x for x in r["measurement_errors"]))(
++          A.evaluate_group(pc, cf, TAP, rec)["cases"][0]))(
++          *scenario(tmp, "f56", [("T15-S1", spaced(probe_frames("T15-S1")),
++                                  {"neigh_after": NEIGH.replace(MANAGER_MAC, GUEST)}, None)], counters_override=["not json"])))
++    t("F5.7 group_exit: FAIL wins over LỖI PHÉP ĐO in the same group",
++      lambda: A.group_exit({"cases": [{"category": "LOI_PHEP_DO"}, {"category": "FAIL"}], "record_problems": []}) == 1)
++    # ---- restore matrix with a pre-configured baseline (40 cases)
++    probs = []
++    n = 0
++    for iface in ("eth1", "br-lan"):
++        for cid in ("T14-A2", "T15-S1"):
++            cmds = [x for _, x in A.contract_steps(CASES[cid], iface)]
++            for where in ("before", "after"):
++                for cmd in cmds:
++                    n += 1
++                    counters, frames = dict(V.BASE), []
++                    g = RichGuest(counters, frames, iface=iface, **{"fail_" + where: cmd}, mutate_mac=(where == "after"))
++                    before = GS.read_state(g, iface)
++                    cfx = os.path.join(tmp, f"m-{n}.jsonl")
++                    open(cfx, "w").close()
++                    rr = A.run_group(g, fake_counters_reader(counters, cfx), lambda: (True, "link"), lambda: NEIGH,
++                                     lambda c: (True, "ctl"), [CASES[cid]], iface)
++                    d = GS.diff(before, GS.read_state(g, iface))
++                    c = rr["cases"][0]
++                    if d or not c["exec_error"] or c["guest_state"]["restore"]["restored"] is not True \
++                            or A.execution_problems(CASES[cid], c, iface):
++                        probs.append((iface, cid, where, cmd, d, c["exec_error"], A.execution_problems(CASES[cid], c, iface)))
++    t(f"F6 restore matrix with a pre-configured baseline: {n} console failures (before/after every step, both "
++      "interfaces) -> state restored exactly, execution error recorded, record inside the contract",
++      lambda: n == 40 and probs == [])
++
++
++def grp_one(rec, pc, cf, change):
++    r = copy.deepcopy(rec)
++    change(r["cases"][0])
++    res = A.evaluate_group(pc, cf, TAP, r)
++    return res, A.group_exit(res)
++
++
+ # ------------------------------------------------------------------ C (CLI)
+ def sec_C(tmp):
+     g, rec, pc, cf = run_sim(tmp, "c1")
+@@ -550,7 +781,7 @@
+     jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
+     with tempfile.TemporaryDirectory(prefix="selftest-arp.") as tmp:
+         for name, fn in (("D", sec_D), ("N", sec_N), ("P", lambda: sec_P(tmp)), ("X", lambda: sec_X(tmp)),
+-                         ("E", lambda: sec_E(tmp)), ("C", lambda: sec_C(tmp))):
++                         ("E", lambda: sec_E(tmp)), ("F", lambda: sec_F(tmp)), ("C", lambda: sec_C(tmp))):
+             print(f"== section {name}")
+             try:
+                 fn()

@@ -1,0 +1,204 @@
+===== ARM  1775e3285b3975dd6fe12ab17047fb2270b65a0876037028e3975917d66d7095  image.zip
+-- /etc/openwrt_release
+DISTRIB_RELEASE='18.06.1'
+DISTRIB_REVISION='r7258-5eb055306f'
+DISTRIB_TARGET='armvirt/32'
+DISTRIB_ARCH='arm_cortex-a15_neon-vfpv4'
+-- ls /bin
+ash board_detect busybox cat chgrp chmod chown config_generate cp date dd df dmesg echo egrep false fgrep fsync grep gunzip gzip ipcalc.sh kill ln lock login ls mkdir mknod mktemp mount mv netmsg netstat nice opkg passwd pidof ping ping6 ps pwd rm rmdir sed sh sleep sync tar touch traceroute traceroute6 true ubus uclient-fetch umount uname vi wget zcat 
+-- ls /sbin
+askfirst devstatus firstboot fw3 halt hotplug-call hwclock ifconfig ifdown ifstatus ifup init insmod ip jffs2mark jffs2reset kmodloader led.sh logd logread lsmod luci-reload mkswap modinfo modprobe mount_root mtd netifd pivot_root poweroff procd reboot reload_config rmmod route rpcd start-stop-daemon switch_root sysctl sysupgrade ubusd uci udevtrigger udhcpc upgraded urandom_seed validate_data wifi 
+-- ls /usr/bin
+[ [[ awk basename bunzip2 bzcat clear cmp crontab cut dbclient dirname dropbearkey du env expr find flock free fwtool getrandom head hexdump id jshn jsonfilter killall ldd less logger lua luci-bwc md5sum mkfifo nc nslookup pgrep printf readlink reset scp seq sha256sum signify sort ssh strings tail tee test time top tr uniq uptime usign wc which xargs yes curl strace iostat mpstat pidstat sadf sar 
+-- ls /usr/sbin
+brctl chroot crond dnsmasq dropbear ip6tables ip6tables-restore ip6tables-save iptables iptables-restore iptables-save ntpd ntpd-hotplug odhcp6c odhcpd odhcpd-update opkg-key pppd uhttpd xtables-multi 
+-- link targets
+/sbin/ip: Type: symlink Fast link dest: "/bin/busybox" 
+/bin/ping: Type: symlink Fast link dest: "busybox" 
+/bin/ping6: Type: symlink Fast link dest: "busybox" 
+/usr/bin/nc: Type: symlink Fast link dest: "../../bin/busybox" 
+/sbin/ifconfig: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/route: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/sysctl: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/udhcpc: Type: symlink Fast link dest: "../bin/busybox" 
+/usr/bin/curl: Type: regular 
+/usr/sbin/dropbear: Type: regular 
+-- busybox applet names (heuristic: NUL-delimited strings in /bin/busybox; confirm with 'busybox --list' at runtime)
+version: BusyBox v1.28.3 ()
+  arping: not found
+  arp: present
+  ether-wake: not found
+  ping: present
+  ping6: present
+  nc: present
+  ip: present
+  ifconfig: present
+  route: present
+  udhcpc: present
+  brctl: present
+  nslookup: present
+  traceroute6: present
+  vconfig: not found
+-- /etc/rc.d
+K10gpio_switch K50dropbear K85odhcpd K89log K90network K90sysfixtime K98boot K99umount S00sysfixtime S10boot S10system S11sysctl S12log S12rpcd S19dnsmasq S19firewall S20network S35odhcpd S50cron S50dropbear S50uhttpd S80ucitrack S94gpio_switch S95done S96led S98sysntpd S99urandom_seed S90sysstat K10sysstat 
+-- /etc/config/network
+config interface 'loopback'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+config globals 'globals'
+	option ula_prefix 'fd1c:848b:7b0f::/48'
+config interface 'lan'
+	option type 'bridge'
+	option ifname 'eth0'
+	option proto 'static'
+	option ipaddr '192.168.1.1'
+	option netmask '255.255.255.0'
+	option ip6assign '60'
+config interface 'wan'
+	option ifname 'eth1'
+	option proto 'dhcp'
+config interface 'wan6'
+	option ifname 'eth1'
+	option proto 'dhcpv6'
+-- /etc/config/dropbear
+config dropbear
+	option PasswordAuth 'on'
+	option RootPasswordAuth 'on'
+	option Port         '22'
+-- /etc/config/uhttpd
+config uhttpd main
+	list listen_http	0.0.0.0:80
+	list listen_http	[::]:80
+	list listen_https	0.0.0.0:443
+	list listen_https	[::]:443
+	option redirect_https	1
+	option home		/www
+	option rfc1918_filter 1
+	option max_requests 3
+	option max_connections 100
+	option cert		/etc/uhttpd.crt
+	option key		/etc/uhttpd.key
+	option cgi_prefix	/cgi-bin
+	option lua_prefix	/luci
+	option lua_handler	/usr/lib/lua/luci/sgi/uhttpd.lua
+	option script_timeout	60
+	option network_timeout	30
+	option http_keepalive	20
+	option tcp_keepalive	1
+config cert defaults
+	option days		730
+	option bits		2048
+	option country		ZZ
+	option state		Somewhere
+	option location		Unknown
+	option commonname	'OpenWrt'
+-- /etc/config/firewall (defaults and zones)
+config defaults
+	option syn_flood	1
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		REJECT
+config zone
+	option name		lan
+	list   network		'lan'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		ACCEPT
+config zone
+	option name		wan
+	list   network		'wan'
+	list   network		'wan6'
+	option input		REJECT
+	option output		ACCEPT
+	option forward		REJECT
+	option masq		1
+	option mtu_fix		1
+===== MIPS  0aa4928e2c35dcf986443cfe58bd48525f0a68fde8d2366ebdf7d6eaaa6733a6  image.zip
+-- /etc/openwrt_release
+DISTRIB_RELEASE='SNAPSHOT'
+DISTRIB_REVISION='r30207-2b0b353104'
+DISTRIB_TARGET='malta/be'
+DISTRIB_ARCH='mips_24kc'
+-- ls /bin
+ash board_detect busybox cat chgrp chmod chown config_generate cp date dd df dmesg echo egrep false fgrep fsync grep gunzip gzip ipcalc.sh kill ln lock login ls mkdir mknod mktemp mount mv netmsg netstat nice passwd pidof ping ping6 ps pwd rm rmdir sed sh sleep sync tar touch traceroute traceroute6 true ubus uclient-fetch umount uname vi zcat 
+-- ls /sbin
+askfirst devstatus factoryreset firstboot fw3 fw4 halt hotplug-call hwclock ifconfig ifdown ifstatus ifup init insmod ip jffs2mark jffs2reset kmodloader led.sh logd logread lsmod mkswap modinfo modprobe mount_root mtd netifd pivot_root poweroff procd reboot reload_config rmmod route seccomp-trace service start-stop-daemon swapoff swapon switch_root sysctl sysupgrade ubusd uci udevtrigger udhcpc ujail upgraded urandom_seed urngd utrace validate_data wifi 
+-- ls /usr/bin
+[ [[ apk awk basename clear cmp crontab cut dbclient dirname dropbearkey du env expr find flock free fwtool getrandom head hexdump id iwinfo jshn jsonfilter killall ldd less logger md5sum mkfifo nc nslookup pgrep printf readlink reset resize scp seq setsid sha256sum signify sort ssh ssh-keygen strings tail taskset tee test time top tr ucc ucode uniq uptime usign utpl wc wget which xargs yes xz lzcat lzma unlzma curl strace unxz xzcat mpstat pidstat sadf sar iostat 
+-- ls /usr/sbin
+brctl chroot crond dnsmasq dropbear e2fsck fsck.ext2 fsck.ext3 fsck.ext4 hostapd iw mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mkfs.f2fs nft ntpd ntpd-hotplug odhcp6c odhcpd odhcpd-update pppd wpa_supplicant wpad 
+-- link targets
+/sbin/ip: Type: symlink Fast link dest: "../bin/busybox" 
+/bin/ping: Type: symlink Fast link dest: "busybox" 
+/bin/ping6: Type: symlink Fast link dest: "busybox" 
+/usr/bin/nc: Type: symlink Fast link dest: "../../bin/busybox" 
+/sbin/ifconfig: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/route: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/sysctl: Type: symlink Fast link dest: "../bin/busybox" 
+/sbin/udhcpc: Type: symlink Fast link dest: "../bin/busybox" 
+/usr/bin/curl: Type: regular 
+/usr/sbin/dropbear: Type: regular 
+-- busybox applet names (heuristic: NUL-delimited strings in /bin/busybox; confirm with 'busybox --list' at runtime)
+version: BusyBox v1.37.0 (2025-06-23 09:49:12 UTC)
+  arping: not found
+  arp: present
+  ether-wake: not found
+  ping: present
+  ping6: present
+  nc: present
+  ip: present
+  ifconfig: present
+  route: present
+  udhcpc: present
+  brctl: present
+  nslookup: present
+  traceroute6: present
+  vconfig: not found
+-- /etc/rc.d
+K10gpio_switch K21wpad K50dropbear K85odhcpd K89log K90boot K90network K90sysfixtime K90umount S00sysfixtime S00urngd S10boot S10system S11sysctl S12log S19dnsmasq S19dropbear S19firewall S19wpad S20network S25packet_steering S35odhcpd S50cron S94gpio_switch S95done S96led S98sysntpd S99urandom_seed S90sysstat K10sysstat 
+-- /etc/config/network
+config interface 'loopback'
+	option device 'lo'
+	option proto 'static'
+	list ipaddr '127.0.0.1/8'
+config globals 'globals'
+	option ula_prefix 'fdc2:a02200a0:537f0053::/48'
+config device
+	option name 'br-lan'
+	option type 'bridge'
+	list ports 'eth0'
+config interface 'lan'
+	option device 'br-lan'
+	option proto 'dhcp'
+	option ip6assign '60'
+-- /etc/config/dropbear
+config dropbear main
+	option enable '1'
+	option PasswordAuth 'on'
+	option RootPasswordAuth 'on'
+	option Port         '22'
+-- /etc/config/uhttpd
+(absent)
+-- /etc/config/firewall (defaults and zones)
+config defaults
+	option syn_flood	1
+	option input		REJECT
+	option output		ACCEPT
+	option forward		REJECT
+config zone
+	option name		lan
+	list   network		'lan'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		ACCEPT
+config zone
+	option name		wan
+	list   network		'wan'
+	list   network		'wan6'
+	option input		REJECT
+	option output		ACCEPT
+	option forward		DROP
+	option masq		1
+	option mtu_fix		1

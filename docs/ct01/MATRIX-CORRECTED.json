@@ -1,0 +1,433 @@
+{
+ "derived_from": {
+  "MATRIX-CONFIRMED.json": "0dad299ca0f762bbb28ff11a70b5da11ca28d7c4789a103f9ce547c6f6d7d693",
+  "REPORT.md": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3"
+ },
+ "rows": [
+  {
+   "id": "T05a",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT về mạng ở 3G; FAIL 3D còn nguyên",
+   "limit": "3G ARM/MIPS internet-tcp ĐẠT. Không dùng lượt sau giải thích FAIL 3D; xem lịch sử riêng.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B lần 5: ARM và MIPS ĐẠT 7/7 tiêu chí; 06B-3G (harness cuối): internet-tcp ĐẠT cả hai. 06B-3D MIPS FAIL = giả thuyết gói biên chưa chứng minh, đã có lần 3G không FAIL (giữ làm lịch sử). Reviewer chấp nhận 06B-3B trong phạm vi 20 probe"
+  },
+  {
+   "id": "T05b",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM đúng probe",
+   "limit": "UDP DNS 8.8.8.8:53 có tên đánh dấu + đối chứng cùng IP/protocol/port. Nền DNS không thay phép thử.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chỉ có lưu lượng nền DNS tới 8.8.8.8 bị `drop_public` (quan sát trong mọi lượt, vd R10 ARM 4 / MIPS 22 khung `public`); không phải probe, không có đối chứng. 06B-3B §5: \"mới chỉ là lưu lượng nền\""
+  },
+  {
+   "id": "T05c",
+   "scope_source": "Chỉ kế hoạch §4.1",
+   "scope_class": "plan",
+   "gap_class": "coverage",
+   "gap_label": "coverage kế hoạch (không tự là cổng)",
+   "status": "CHƯA KIỂM; bổ sung, không tự thành gate mới",
+   "limit": "ICMP công cộng không được liệt kê trong ma trận thiết kế. Muốn bắt buộc phải chốt phạm vi riêng.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa có probe ICMP nào tới IP công cộng"
+  },
+  {
+   "id": "T06a",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT phần TCP53; UDP53 là phủ bổ sung",
+   "limit": "Đối chứng thực là TCP connect/DNS từ W, không suy H ping chứng minh TCP53 sống. Các bằng chứng mạng đã được chấp nhận đúng phạm vi.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B/3G: `lan-dns-tcp`, `lan-dns-udp` ĐẠT cả hai kiến trúc, đối chứng cùng IP/giao thức/cổng sống"
+  },
+  {
+   "id": "T06b",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "ICMP tới LAN DNS, đối chứng ICMP cùng IP. Không thay bằng đối chứng TCP/UDP.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa có probe ICMP; 06B-3B §6: \"ICMP: chưa probe\""
+  },
+  {
+   "id": "T06c",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "Một IP LAN khác đã chọn; nếu không có dịch vụ sống thì kiểm quy tắc D6.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa có"
+  },
+  {
+   "id": "T07",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "Mạng: 5 ca ĐẠT trực tiếp + 1 đối chiếu dẫn xuất H0; nhãn gốc 3G giữ UNVERIFIED",
+   "limit": "Closure MIPS đúng. Báo cáo dẫn xuất riêng đủ ghi nhận đối chiếu dưới H0; không cần nối evaluator. Chưa thấy log ssh đúng cửa sổ; giữ thiếu mục bổ sung hoặc chốt rõ chấp nhận thay thế bằng bằng chứng mạng.",
+   "source_status_original": "UNVERIFIED",
+   "source_evidence": "06B-3B: 6/6 ĐẠT. 06B-3G: ARM 3/3 ĐẠT; MIPS 2/3 ĐẠT, `ssh-host-192.168.60.1` UNVERIFIED (một khung nền `drop_public` ở biên đầu, delta 4, lo 3, hi 4). Phân tích offline lại bằng closure R4-edge hiện có (analysis, không phải verdict): lời giải duy nhất, closure PASS. Chưa đối chiếu `journalctl -u ssh`"
+  },
+  {
+   "id": "T08",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "source/log",
+   "gap_label": "ĐẠT về mạng; thiếu nguồn/log (xem §3)",
+   "status": "ĐẠT về mạng; log manager chưa được đối chiếu",
+   "limit": "Không biến nhận định mạng thành đã đủ log bổ sung. Log lượt sau không chứng minh nội dung của lượt trước.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B/3G ĐẠT (đối chứng từ W và ctl). Chưa đối chiếu log manager"
+  },
+  {
+   "id": "T09",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "source/log",
+   "gap_label": "ĐẠT về mạng; thiếu nguồn/log (xem §3)",
+   "status": "ĐẠT về mạng với đối chứng TCP; lệch dạng đối chứng thiết kế",
+   "limit": "TCP connect từ dbnet cùng đích/cổng đã được chấp nhận về mạng. Không ghi thành mongosh ping/M status. Cần lưu căn cứ chấp nhận dạng thay thế hoặc bổ sung đúng dạng khi có môi trường.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B/3G ĐẠT; đối chứng là TCP connect từ `dbnet`, không phải `mongosh ping`"
+  },
+  {
+   "id": "T10",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "source/log",
+   "gap_label": "ĐẠT về mạng; thiếu nguồn/log (xem §3)",
+   "status": "ĐẠT về mạng; nguồn manager chưa kiểm",
+   "limit": "ctl không phải M. Đóng phần nguồn đúng cùng phép thử T19; không cần lặp probe guest nếu tổng hợp evidence được chấp nhận.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B/3G ĐẠT; đối chứng từ ctl (không phải container manager)"
+  },
+  {
+   "id": "T11a",
+   "scope_source": "Probe bổ sung đã chạy, cùng điểm chặn T11",
+   "scope_class": "extra probe",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT riêng listener18080",
+   "limit": "Không thay hai cổng22/80 hoặc ICMP của thiết kế.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-3B/3G: `tap0-other-port-listener` (`10.200.0.1:18080`, listener tạm đối chứng) ĐẠT cả hai kiến trúc"
+  },
+  {
+   "id": "T11b",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "TCP22 và TCP80, hai cửa sổ riêng, D6 khi không có listener.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa có probe cổng 22/80"
+  },
+  {
+   "id": "T11c",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "ICMP tới10.200.0.1, đếm khung thực. Không ghi mặc định delta+3 như tiêu chí cố định.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa có"
+  },
+  {
+   "id": "T12",
+   "scope_source": "Thiết kế B1/B2; B4 là kế hoạch bổ sung",
+   "scope_class": "design B1/B2; B4 plan",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "Giữ ca 4G ĐẠT kiểm quy tắc trong phạm vi đã duyệt; capture OPEN vẫn mở",
+   "limit": "B1/B2 phủ đích thiết kế. Ba received−captured=8 chưa giải thích, nên không ghi toàn bằng chứng host hoàn chỉnh.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-4G: B1, B2, B4 ĐẠT (kiểm quy tắc) ARM và MIPS; delta = số khung pcap; không có đối chứng sống (theo thiết kế §7.1 là \"kiểm thử quy tắc\")"
+  },
+  {
+   "id": "T12-B3",
+   "scope_source": "Chỉ ca bổ sung của kế hoạch §2",
+   "scope_class": "plan",
+   "gap_class": "coverage",
+   "gap_label": "coverage kế hoạch (không tự là cổng)",
+   "status": "CHƯA KIỂM; coverage kế hoạch",
+   "limit": "UDP53 tới224.0.0.251 không nằm ở hàng T12 thiết kế. Thiếu B3 không xóa coverage B1/B2. Không tự mở thành bắt buộc.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa viết (kế hoạch §2 T12; giả định G3 \"nslookup gửi được tới server multicast\" chưa kiểm)"
+  },
+  {
+   "id": "T13",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "Giữ nhãn gốc 4G; ARM I1 đối chiếu dẫn xuất PASS dưới H0",
+   "limit": "I1 ARM phân bổ duy nhất đúng. Không sửa evaluator/evidence cũ. Counter closure không giải quyết OPEN host capture×8.",
+   "source_status_original": "UNVERIFIED",
+   "source_evidence": "06B-4G: I2 ĐẠT cả hai; I1 MIPS ĐẠT; **I1 ARM UNVERIFIED**: delta 3, lo 2, hi 3, một khung IPv6 ở biên cuối (983.5748) cách lần đọc after ~16 ms. Replay offline closure hiện có: lời giải duy nhất [start 0, end 1], PASS dưới H0 (reads_used T12-B4 after → T13-I2 before). Chưa dùng được làm kết luận: evaluator ICMP không gọi `close_edges`; chưa có quyết định reviewer"
+  },
+  {
+   "id": "T13-I3",
+   "scope_source": "Chỉ ca bổ sung của kế hoạch §2",
+   "scope_class": "plan",
+   "gap_class": "coverage",
+   "gap_label": "coverage kế hoạch (không tự là cổng)",
+   "status": "CHƯA KIỂM; coverage kế hoạch",
+   "limit": "I2 đã là phép gửi tới fe80 theo thiết kế; curl6/NS của I3 là coverage thêm, không tự thành gate mới.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa viết (kế hoạch §2 T13)"
+  },
+  {
+   "id": "T14",
+   "scope_source": "Thiết kế, thay công cụ/đích theo L1/L2 đã duyệt",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT: sáu ca A1/A2/A3 ARM/MIPS giữ nguyên",
+   "limit": "A1/A2 có đối chứng binding sống theo giao kèo; A3 kiểm quy tắc. Không yêu cầu chạy lại do thiếu anchor hoặc cần ARP exchange mới.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "R10 yhwff6_v (Codex review): A1, A2, A3 ĐẠT cả ARM và MIPS (A1/A2 có đối chứng sống; A3 kiểm quy tắc IP không tồn tại); delta `arp_in_drop` = số request thực; không ICMP/arp_out do probe. Replay CLI khớp. Thay thế `arping` bằng ARP kernel guest (kế hoạch L1/L2)"
+  },
+  {
+   "id": "T15-1",
+   "scope_source": "Thiết kế; mức1 theo D1/D6",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT: hai S1 ARM/MIPS giữ nguyên",
+   "limit": "Giữ đúng gratuitous request do kernel, neighbor/restore. Closure ARM A2 thuộc T14, không phải closure S1.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "R10 yhwff6_v: S1 ĐẠT (kiểm quy tắc) ARM/MIPS, 4 gratuitous request, neighbor trước/sau; ARM A2 đóng biên bằng closure (unique, H0)"
+  },
+  {
+   "id": "T15-2",
+   "scope_source": "Hoãn/chưa phủ được duyệt D1",
+   "scope_class": "deferred D1",
+   "gap_class": "deferred",
+   "gap_label": "HOÃN (tách khỏi bắt buộc)",
+   "status": "HOÃN ĐÃ DUYỆT — không tính thiếu bắt buộc hiện tại",
+   "limit": "Reply giả, gratuitous dạng reply, htype/hlen/plen tùy ý không thuộc phạm vi đã thực hiện; chỉ mở khi có quyết định mới.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Hoãn theo D1 (chưa nạp công cụ); không phủ"
+  },
+  {
+   "id": "T16",
+   "scope_source": "Thiết kế §7.2; D5 giới hạn",
+   "scope_class": "design (D5 limits)",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "MAC52:54:00:de:ad:01, T01 trước/thất bại khi đổi/sau restore. Không gồm giả TAP_MAC; thiếu phép đo không chứng minh chức năng đúng.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa viết probe. Offline có sẵn: `classify` `l2_bad_mac` (H1), `guest_state.py` khôi phục MAC/link/route/neighbor, chữ ký. Chưa phủ MAC giả = `TAP_MAC` (D5 hoãn)"
+  },
+  {
+   "id": "T17",
+   "scope_source": "Thiết kế nguồn10.200.0.3; P2/P4/P5 là chi tiết mở rộng kế hoạch",
+   "scope_class": "design P1; P2/P4/P5 plan",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "Ưu tiên P1 đúng thiết kế; P2 giả manager có giá trị vì bypass phân loại nguồn API nếu nft lọt. P4/P5 giữ coverage kế hoạch; P3 hoãn D1. Không nói đã thử rp_filter với guest.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa viết probe (P1, P2, P4, P5). P3 hoãn (cách cũ sai: địa chỉ thành cục bộ). Chưa kiểm hành vi `rp_filter` strict với guest"
+  },
+  {
+   "id": "T18",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM nguồn poller thật",
+   "limit": "Poller sentinel không chứng minh get-file/DNS trong luồng thật. Poller thật và manager logs; 404 No tasks đủ connectivity, chưa chứng minh xử lý tác vụ.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa: poller là sentinel trong mọi lượt (06B-3A..R10); không có poller thật"
+  },
+  {
+   "id": "T19",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM từ M; ctl là evidence thay thế hữu ích",
+   "limit": "Đúng M→worker healthcheck200, ghi nguồn/cửa sổ. Không thể đóng chỉ bằng hai closure.",
+   "source_status_original": "UNVERIFIED",
+   "source_evidence": "Evidence thay thế: container ctl (harness) `GET 192.168.60.2:8011/healthcheck` 200 mỗi 0,5 s trong mọi lượt (cùng bridge/đích/cổng); nguồn không phải container manager. Reviewer: HTTP ctl có ích nhưng không thay kết luận riêng đúng nguồn"
+  },
+  {
+   "id": "T20",
+   "scope_source": "Thiết kế + D3; N1–N3 là phần thêm kế hoạch",
+   "scope_class": "design core (D3); N1-N3 plan",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "Cốt lõi: route M/H không qua worker theo D3, không gửi M/H. N1–N3 W→guest/drop_out/đối chứng guest là coverage bổ sung đã thiết kế, chưa được chạy; N6 chưa duyệt chạy D4.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa viết probe phía W (H5). Chưa có tra route N4/N5 trong hồ sơ. Review R10 chỉ phân biệt lưu lượng W→guest hợp lệ với phản hồi probe ARP (không phải probe T20). D3: chỉ tra route; N6 hoãn (D4)"
+  },
+  {
+   "id": "T21a",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT invariant bắt buộc trong lượt R10 đã review; chưa phải toàn host bất biến",
+   "limit": "Không có điều khoản bắt buộc Compose riêng cho phần host. Harness khởi động worker thật trong container riêng, mount poller sentinel. lsmod đổi không vi phạm gate đã duyệt. Phần luồng sản phẩm vẫn tách T18/V1/V2.",
+   "source_status_original": "UNVERIFIED",
+   "source_evidence": "Mọi lượt harness so host trước/sau (hard check: sysctl, nft stateless, route, listener, qemu/capture, tap0): không đổi (R10 yhwff6_v; lsmod đổi, không phải gate). Nhưng \"khởi động worker bằng Compose\" chưa từng chạy: harness dùng container privileged riêng, manager chỉ bật làm đối chứng"
+  },
+  {
+   "id": "T21b",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM liên tục SSH/phiên Claude",
+   "limit": "Giữ đúng phiên trong cửa sổ startup/restart có log heartbeat; date chỉ chứng minh tiến trình chạy, cần gắn với phiên SSH thực. Không mặc nhiên dùng ICMP/ping làm bằng chứng phiên SSH.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Không có bằng chứng liên tục SSH nào được ghi (các lượt chạy từ terminal người dùng; không có kiểm liên tục có chủ đích)"
+  },
+  {
+   "id": "F1a",
+   "scope_source": "Thiết kế F1, nhánh syntax",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT nhánh syntax ở V0",
+   "limit": "Raw log lỗi guest.nft và exit1; không mở thành chứng minh mọi nhánh V0.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-2A: lỗi cú pháp ⇒ exit 1 [KC]"
+  },
+  {
+   "id": "F1b",
+   "scope_source": "Nhánh thiếu nft ở thiết kế/coverage kế hoạch",
+   "scope_class": "design/plan",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM",
+   "limit": "Container thử/image thử, không sửa image ghim. Xác nhận dừng trước server/poller/QEMU và lý do thiếu binary.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa kiểm (06B-2A chỉ kiểm nhánh cú pháp)"
+  },
+  {
+   "id": "F2",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT ở V0",
+   "limit": "ALLOW_VM_INTERNET=true, raw FATAL và exit1.",
+   "source_status_original": "ĐẠT",
+   "source_evidence": "06B-2A: exit 1 [KC]"
+  },
+  {
+   "id": "F3",
+   "scope_source": "Thiết kế V1",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM luồng thật",
+   "limit": "Fault khi worker rảnh → task FAILED/lý do đúng, không QEMU. Không lấy V0/harness preboot thay V1. Các biến thể rule/sysctl/neighbor ghi riêng.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa. V1 là mã có sẵn (`analysis.py:356`, `verify_isolation`), chưa chạy trong luồng thật"
+  },
+  {
+   "id": "F4",
+   "scope_source": "Thiết kế V2",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM luồng thật",
+   "limit": "Bản thử hook giữa phase1/2, sau shutdown phase1, không spawn phase2; giữ failure_reason. Không sửa môi trường đang chạy.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chưa. V2 là mã có sẵn (`analysis.py:368`) nhưng cần hook thử ⇒ bản build thử"
+  },
+  {
+   "id": "F5",
+   "scope_source": "Thiết kế restart/V0",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM restart",
+   "limit": "Stop/rm/netns hủy không thay restart. Nhãn restart service Compose đúng thiết kế; thực hiện cần quyết định riêng.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chỉ [KC 06B-2A] netns bị hủy sau stop/rm; restart thật chưa"
+  },
+  {
+   "id": "F6",
+   "scope_source": "Thiết kế V0 hoặc V1",
+   "scope_class": "design",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM runtime; selftest cấu trúc chỉ offline",
+   "limit": "Một container thử nạp cấu trúc khác expected, V0 hoặc V1 từ chối và log diff. Không cần cả V0 lẫn V1 nếu phạm vi chỉ chọn một theo thiết kế.",
+   "source_status_original": "CHƯA KIỂM",
+   "source_evidence": "Chỉ selftest offline (06B-1: đột biến cấu trúc bị phát hiện); chưa trong worker thật"
+  },
+  {
+   "id": "T01/T02-harness",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "none",
+   "gap_label": "—",
+   "status": "ĐẠT riêng download/upload qua guest ARM/MIPS 3A",
+   "limit": "37/37 không đồng nghĩa đã đi qua poller/phase1/phase2 thật.",
+   "source_status_original": null,
+   "source_evidence": null
+  },
+  {
+   "id": "T03/T04",
+   "scope_source": "Thiết kế §7.2",
+   "scope_class": "design",
+   "gap_class": "scoped",
+   "gap_label": "ĐẠT theo scope tổng hợp; xem ghi chú",
+   "status": "Giữ scope đã chấp nhận: peer TCP mô phỏng nguồn 2B + một số route từ guest3A",
+   "limit": "3A thử healthcheck/stop/other-file/other-strace; submit-task/docs có ở 2B, không phải đã thử từng route từ cả hai guest. T04 là ba route allowlist khi không current_task. Không tự đòi lặp route đã có nếu chấp nhận tổng hợp hai cấp evidence.",
+   "source_status_original": null,
+   "source_evidence": null
+  },
+  {
+   "id": "T01/T02-runtime; A7/A11/A15",
+   "scope_source": "Thiết kế V1/V2/phase2 + kế hoạch §4.1/§4.2",
+   "scope_class": "design+plan",
+   "gap_class": "gap",
+   "gap_label": "THIẾU BẮT BUỘC (thiết kế)",
+   "status": "CHƯA KIỂM luồng tác vụ thật",
+   "limit": "Đưa thành hàng riêng: download phase1, upload phase2, verify trước mỗi boot, tap/neighbor giữ qua nhiều phase/tác vụ; có thể gộp trial luồng thật cùng F3/F4.",
+   "source_status_original": null,
+   "source_evidence": null
+  },
+  {
+   "id": "D1/D3/D4/D5 + ngoài06B",
+   "scope_source": "Quyết định/giới hạn đã duyệt",
+   "scope_class": "deferred",
+   "gap_class": "deferred",
+   "gap_label": "HOÃN (tách khỏi bắt buộc)",
+   "status": "HOÃN/GIỚI HẠN — không tự mở scope",
+   "limit": "ARP reply/P3 raw; không probe M/H; N6 chỉ thiết kế; TAP_MAC giả hoãn; mất luật khi guest đang chạy, extra base chain ngoài bảng, fragmentation/IP options/TTL1 không thành bắt buộc.",
+   "source_status_original": null,
+   "source_evidence": null
+  }
+ ],
+ "counts": {
+  "mandatory_gap": 17,
+  "source_log": 3,
+  "plan_coverage": 3,
+  "deferred": 2,
+  "done_in_scope": 13
+ }
+}

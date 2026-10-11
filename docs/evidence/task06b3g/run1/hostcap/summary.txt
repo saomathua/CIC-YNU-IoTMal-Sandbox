@@ -1,0 +1,11 @@
+0 packets captured
+0 packets received by filter
+veth: probe-signature packets=0 (tcpdump rc=0)
+veth sigscan (rc=0): frames=3943 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+bridge: probe-signature packets=0 (tcpdump rc=0)
+bridge sigscan (rc=0): frames=7665 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+ens33: probe-signature packets=0 (tcpdump rc=0)
+ens33 sigscan (rc=0): frames=101 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+veth: control packets from worker=123 (rc=0)
+ens33: NATed control packets=101 (rc=0)
+bridge: packets from worker=1665 (rc=0)

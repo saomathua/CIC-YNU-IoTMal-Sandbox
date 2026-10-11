@@ -1,0 +1,780 @@
+{
+ "read_before": {
+  "t_start": 100.0,
+  "t_end": 100.02
+ },
+ "read_after": {
+  "t_start": 105.0,
+  "t_end": 105.02
+ },
+ "classes": [
+  "drop_public",
+  "l2_bad_ethertype",
+  "drop_spoof"
+ ],
+ "cases": [
+  {
+   "name": "clean",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "PASS",
+   "old_method": "PASS"
+  },
+  {
+   "name": "edge-start-counted",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 100.01,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 3
+   },
+   "expected": "UNVERIFIED",
+   "old_method": "FAIL"
+  },
+  {
+   "name": "edge-start-not-counted",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 99.99,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "UNVERIFIED",
+   "old_method": "PASS"
+  },
+  {
+   "name": "edge-end",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 105.01,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "UNVERIFIED",
+   "old_method": "PASS"
+  },
+  {
+   "name": "guard-zone-before-read-b",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.99,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 3
+   },
+   "expected": "UNVERIFIED",
+   "old_method": "PASS"
+  },
+  {
+   "name": "real-mismatch",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 2,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "FAIL",
+   "old_method": "FAIL"
+  },
+  {
+   "name": "real-mismatch-despite-edges",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 100.01,
+     "cls": "drop_public"
+    }
+   ],
+   "delta": {
+    "drop_public": 5,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "FAIL",
+   "old_method": "FAIL"
+  },
+  {
+   "name": "two-errors-cancel",
+   "frames": [
+    {
+     "t": 100.005,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 102.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.99,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    }
+   ],
+   "delta": {
+    "l2_bad_ethertype": 2,
+    "drop_public": 1
+   },
+   "expected": "UNVERIFIED",
+   "old_method": "PASS"
+  },
+  {
+   "name": "outside-frames-ignored",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 99.9,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 105.1,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "PASS",
+   "old_method": "PASS"
+  },
+  {
+   "name": "class-not-compared-at-edge",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 100.01,
+     "cls": "arp"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2,
+    "arp_in_ok": 1
+   },
+   "expected": "PASS",
+   "old_method": "PASS"
+  },
+  {
+   "name": "counter-without-frames",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2,
+    "drop_spoof": 1
+   },
+   "expected": "FAIL",
+   "old_method": "FAIL"
+  },
+  {
+   "name": "read-a-reversed",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_before": {
+    "t_start": 100.02,
+    "t_end": 100.0
+   }
+  },
+  {
+   "name": "reads-reversed",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_before": {
+    "t_start": 105.0,
+    "t_end": 105.02
+   },
+   "read_after": {
+    "t_start": 100.0,
+    "t_end": 100.02
+   }
+  },
+  {
+   "name": "reads-overlap",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_after": {
+    "t_start": 100.01,
+    "t_end": 105.02
+   }
+  },
+  {
+   "name": "read-time-nan",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_before": {
+    "t_start": NaN,
+    "t_end": 100.02
+   }
+  },
+  {
+   "name": "read-time-infinity",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_after": {
+    "t_start": 105.0,
+    "t_end": Infinity
+   }
+  },
+  {
+   "name": "read-time-missing",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "read_after": {
+    "t_start": 105.0
+   }
+  },
+  {
+   "name": "frame-time-nan",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": NaN,
+     "cls": "drop_public"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null
+  },
+  {
+   "name": "guard-negative",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "guard": -0.001
+  },
+  {
+   "name": "guard-nan",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "guard": NaN
+  },
+  {
+   "name": "guard-infinity",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2
+   },
+   "expected": "ERROR",
+   "old_method": null,
+   "guard": Infinity
+  },
+  {
+   "name": "delta-negative",
+   "frames": [
+    {
+     "t": 101.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 102.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 103.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 101.5,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 104.0,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "delta": {
+    "drop_public": 3,
+    "l2_bad_ethertype": 2,
+    "drop_spoof": -1
+   },
+   "expected": "ERROR",
+   "old_method": null
+  },
+  {
+   "name": "reads-touching-guard-zero",
+   "frames": [],
+   "delta": {},
+   "expected": "PASS",
+   "old_method": null,
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.02
+   },
+   "read_after": {
+    "t_start": 100.02,
+    "t_end": 100.04
+   },
+   "guard": 0.0
+  }
+ ]
+}

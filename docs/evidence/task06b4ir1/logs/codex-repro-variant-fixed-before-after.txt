@@ -1,0 +1,17 @@
+== before (4I)
+a1-wrong-interface: rc=0 status='COMPLETED' cli='PASS' bash=PASS cats={'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=True
+a1-missing-interface: rc=0 status='COMPLETED' cli='PASS' bash=PASS cats={'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=True
+duplicate-control: rc=0 status='COMPLETED' cli='PASS' bash=PASS cats={'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=True
+http-missing-detail: rc=0 status='COMPLETED' cli='PASS' bash=PASS cats={'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=True
+codex-thread-unmodified: rc=0 status='COMPLETED' cli='PASS' bash=PASS cats={'T14-A1': 'DAT', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=True
+== after (4IR1)
+a1-wrong-interface: rc=1 status='COMPLETED' cli='UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không' bash=UNVERIFIED cats={'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=False
+a1-missing-interface: rc=1 status='COMPLETED' cli='UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không' bash=UNVERIFIED cats={'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=False
+duplicate-control: rc=1 status='COMPLETED' cli='UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không' bash=UNVERIFIED cats={'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'CHUA_KIEM_CHUNG', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=False
+http-missing-detail: rc=1 status='COMPLETED' cli='UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không' bash=UNVERIFIED cats={'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'CHUA_KIEM_CHUNG', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=False
+codex-thread-unmodified: rc=1 status='COMPLETED' cli='UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không' bash=UNVERIFIED cats={'T14-A1': 'CHUA_KIEM_CHUNG', 'T14-A2': 'DAT', 'T14-A3': 'DAT_KIEM_QUY_TAC', 'T15-S1': 'DAT_KIEM_QUY_TAC'} guest_cmds=62 A1.control.ok=False
+== ctl.jsonl of the variant-fixed 4I runs (variant applied?)
+a1-wrong-interface lines 177 dup-identities 0 no-detail 0 arp devices {'eth9': 59}
+a1-missing-interface lines 174 dup-identities 0 no-detail 0 arp devices {'<none>': 58}
+duplicate-control lines 348 dup-identities 174 no-detail 0 arp devices {'eth0': 116}
+http-missing-detail lines 177 dup-identities 0 no-detail 118 arp devices {'eth0': 59}

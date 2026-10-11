@@ -1,0 +1,177 @@
+{"ts": 1791466329.8213503, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466329.8213503, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466329.8213503, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466329.9716656, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466329.9716656, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466329.9716656, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.1226366, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.1226366, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.1226366, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.2733538, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.2733538, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.2733538, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.423643, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.423643, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.423643, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.5740137, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.5740137, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.5740137, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.724423, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.724423, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.724423, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.8748047, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466330.8748047, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466330.8748047, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.0250506, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.0250506, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.0250506, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.175281, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.175281, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.175281, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.3255703, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.3255703, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.3255703, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.4757895, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.4757895, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.4757895, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.6261678, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.6261678, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.6261678, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.776607, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.776607, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.776607, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.9269922, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466331.9269922, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466331.9269922, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.0772996, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.0772996, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.0772996, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.2275908, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.2275908, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.2275908, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.3778834, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.3778834, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.3778834, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.5281785, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.5281785, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.5281785, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.6784363, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.6784363, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.6784363, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.8292098, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.8292098, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.8292098, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.9797149, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466332.9797149, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466332.9797149, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.1301277, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.1301277, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.1301277, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.280792, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.280792, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.280792, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.4325495, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.4325495, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.4325495, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.5829294, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.5829294, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.5829294, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.7331946, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.7331946, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.7331946, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.8834684, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466333.8834684, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466333.8834684, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.0338666, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.0338666, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.0338666, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.184471, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.184471, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.184471, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.3352263, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.3352263, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.3352263, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.485749, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.485749, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.485749, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.636326, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.636326, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.636326, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.7866688, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.7866688, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.7866688, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.9369438, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466334.9369438, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466334.9369438, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.0872896, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.0872896, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.0872896, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.2375028, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.2375028, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.2375028, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.387782, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.387782, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.387782, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.538098, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.538098, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.538098, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.6884427, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.6884427, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.6884427, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.8390481, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.8390481, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.8390481, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.9893594, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466335.9893594, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466335.9893594, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.139743, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.139743, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.139743, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.2900698, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.2900698, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.2900698, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.4403236, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.4403236, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.4403236, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.590601, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.590601, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.590601, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.7408657, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.7408657, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.7408657, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.8911216, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466336.8911216, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466336.8911216, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.0414774, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.0414774, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.0414774, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.191713, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.191713, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.191713, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.3419735, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.3419735, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.3419735, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.4923348, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.4923348, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.4923348, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.6426013, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.6426013, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.6426013, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.793426, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.793426, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.793426, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.943968, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466337.943968, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466337.943968, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.0948222, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.0948222, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466338.0948222, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.245667, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.245667, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466338.245667, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.396072, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.396072, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466338.396072, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.5464025, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791466338.5464025, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth9"}}
+{"ts": 1791466338.5464025, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}

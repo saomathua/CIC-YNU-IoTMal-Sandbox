@@ -1,0 +1,18 @@
+06B-3D MIPS probe internet-tcp: counter/pcap mismatch l2_bad_ethertype 3 vs 2 — window-boundary analysis
+source: result.json (t0/t1, counter_delta) and tap0.pcapng read with host tcpdump 4.99.4
+t0 = 1791305038.13732  t1 = 1791305043.2586765  counter_delta = {'l2_bad_ethertype': 3, 'drop_spoof': 2, 'drop_public': 8}
+probe_matrix.py: 'c0, t0 = counters(), time.time()' and 't1, c1 = time.time(), counters()' -> a frame between the counter read and t0 (or between t1 and the counter read) is in the delta but outside the pcap window.
+
+non-IPv4/non-ARP guest frames near the window (dt relative to t0 / t1):
+outside    1791305036.943009 dt_t0=-1.1943 dt_t1=-6.3157 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+outside    1791305037.084347 dt_t0=-1.0530 dt_t1=-6.1743 52:54:00:c7:00:02 > 33:33:ff:c7:00:02, ethertype IPv6
+outside    1791305037.626336 dt_t0=-0.5110 dt_t1=-5.6323 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+outside    1791305038.108195 dt_t0=-0.0291 dt_t1=-5.1505 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+outside    1791305038.136532 dt_t0=-0.0008 dt_t1=-5.1221 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+IN-WINDOW  1791305038.396301 dt_t0=+0.2590 dt_t1=-4.8624 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+IN-WINDOW  1791305039.227089 dt_t0=+1.0898 dt_t1=-4.0316 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6
+
+in-window IPv6 frames = 2; counter delta = 3. The extra counted frame is one that arrived between the
+counter read and t0: most likely 1791305038.136532 (0.8 ms before t0); 1791305038.108195 (29 ms before
+t0) cannot be excluded because the duration of the 'nft -j list counters' call is not recorded.
+The probe's own frames are unaffected: 4 SYN from port 41000, drop_public 8 = 8 in the window.

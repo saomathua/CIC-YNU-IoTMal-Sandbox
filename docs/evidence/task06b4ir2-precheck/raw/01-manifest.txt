@@ -1,0 +1,41 @@
+== time (UTC)
+2026-10-08T16:25:54Z
+== host/user
+hq
+dathq
+dathq adm cdrom sudo dip plugdev lxd
+== harness manifest 06B-4IR2 (35 files)
+0
+35
+0
+== evidence SHA256SUMS
+OK task06b3dr1/SHA256SUMS
+OK task06b3dr/SHA256SUMS
+OK task06b3fr1/SHA256SUMS
+OK task06b3fr/SHA256SUMS
+OK task06b3f/SHA256SUMS
+OK task06b3g/SHA256SUMS
+OK task06b4a/SHA256SUMS
+OK task06b4br/SHA256SUMS
+OK task06b4b/SHA256SUMS
+OK task06b4c/SHA256SUMS
+OK task06b4d1r/SHA256SUMS
+OK task06b4d1/SHA256SUMS
+OK task06b4er/SHA256SUMS
+OK task06b4e/SHA256SUMS
+OK task06b4fr/SHA256SUMS
+OK task06b4f/SHA256SUMS
+OK task06b4g/SHA256SUMS
+OK task06b4hr1/SHA256SUMS
+OK task06b4hr2/SHA256SUMS
+OK task06b4hr/SHA256SUMS
+OK task06b4h/SHA256SUMS
+OK task06b4ir1/SHA256SUMS
+OK task06b4ir2/SHA256SUMS
+OK task06b4i/SHA256SUMS
+== review inputs
+133a0149afd8b9d11bf94131059bc1b113941c563080a22bc0646fa17338cb4f  /home/dathq/Documents/Codex/2026-10-08/l-m-vi-c-tr-n/outputs/06b4ir2-independent-review.md
+430e6b124050fb049cdd47ad82aa09a1dff61419ea4936389d0a284470a847b8  /home/dathq/Documents/Codex/2026-10-08/l-m-vi-c-tr-n/outputs/06b4ir2-independent-evidence.json
+== repo
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43

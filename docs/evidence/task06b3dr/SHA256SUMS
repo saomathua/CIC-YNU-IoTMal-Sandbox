@@ -1,0 +1,4 @@
+55f71e5dcac420eebde892b8a33b25eb4f0033a5125fb2e807fa539692412f5e  ct01-06b3dr-harness-vs-06b3cr.diff
+5dfafa960a850fc7130af748e40be664e13019ea39870f2274bc4f0d85f92211  harness-sha256.txt
+5c3e152c8e5a7ce96cd52202a1f001291cb605d6db3fab8a48f350493edf897b  logs/mutation-test.txt
+bae3f9ed289bebdcca56f1bcdeb2e48ef91c3c6b4e7f00957b5d0ae004886a5e  logs/selftest.log

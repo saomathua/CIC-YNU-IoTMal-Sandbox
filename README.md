@@ -64,6 +64,8 @@ Each worker bridges its tap interface directly to the container's network. The m
 
 ## Quick start
 
+> **Team fork:** the deployment configuration in this fork differs from the steps below (no `.env` baked into images, manager bound to `127.0.0.1`, `ALLOW_VM_INTERNET=false` by default, persistent manager data). Follow [docs/deployment.md](docs/deployment.md).
+
 ### 1. Configure
 
 ```bash

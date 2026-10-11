@@ -1,0 +1,75 @@
+baseline: 212/212 tests pass
+OK  A1   DETECTED           target='P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT'
+OK  A2   DETECTED           target='P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT'
+OK  A3   DETECTED           target='F1.2 S1 with gratuitous frames of opcode 2 only -> not a probe, KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT'
+OK  A4   DETECTED           target='P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame'
+OK  A4b  DETECTED           target='F1.3 S1 gratuitous request sent unicast (not broadcast) -> not a probe'
+OK  A4c  DETECTED           target='F1.4 S1 gratuitous request with htype 6 / ptype 0x86dd -> not a probe'
+OK  A5   DETECTED           target='P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it'
+OK  A6   DETECTED           target='P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking'
+OK  A7   DETECTED           target='P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames'
+OK  A8   DETECTED           target='P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT'
+OK  A9   DETECTED           target='P22 service link after the case failed -> CHƯA KIỂM CHỨNG'
+OK  A10  DETECTED           target='P37 service link after with ok "true" (not the boolean) -> CHƯA KIỂM CHỨNG'
+OK  A11  DETECTED           target='P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)'
+OK  A12  DETECTED           target='P13 neighbour table not readable -> LỖI PHÉP ĐO'
+OK  A13  DETECTED           target='P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)'
+OK  A14  DETECTED           target='P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)'
+OK  A15  DETECTED           target='P28 worker ARP reply for the probed IP towards the guest -> FAIL'
+OK  A16  DETECTED           target='P29 probe ICMP packet seen (ARP was resolved) -> FAIL'
+OK  A17  DETECTED           target='P35 worker ARP about a spoofed IP during T15 -> FAIL'
+OK  A18  DETECTED           target='N4 new entry (unwatched IP) on tap0 -> fail'
+OK  A19  DETECTED           target='N9 a NEW, unwatched eth0 entry carrying the guest MAC -> fail'
+OK  A20  DETECTED           target='F2 S1 worker neighbour after: manager moved to eth9 with the same MAC -> FAIL'
+OK  A20b DETECTED           target='F2 S1 worker neighbour after: manager entry removed after -> CHUA_KIEM_CHUNG'
+OK  A20c DETECTED           target='F2 S1 worker neighbour after: manager entry FAILED (MAC kept) -> CHUA_KIEM_CHUNG'
+OK  A21  DETECTED           target="N8 unreadable neighbour output -> invalid (never 'unchanged')"
+OK  A21b DETECTED           target='F2 S1 worker neighbour after: manager lladdr 1 -> LOI_PHEP_DO'
+OK  A21c DETECTED           target='F2 S1 worker neighbour after: manager state unknown string -> LOI_PHEP_DO'
+OK  A21d DETECTED           target='F2 S1 worker neighbour after: duplicate identical normal rows -> LOI_PHEP_DO'
+OK  A21e DETECTED           target='F2 S1 worker neighbour after: duplicate row hides a guest MAC (guest MAC row first) -> FAIL'
+OK  A22  DETECTED           target='X6 restore failure: the next case is not run (not_run), no service link after the failed case'
+OK  A23  DETECTED           target='F4 run_group: ping rc 2 -> execution error recorded, read B taken, restored, settle not run'
+OK  A23b DETECTED           target='X8 setup failed: trigger not sent, exec error, still restored'
+OK  A24  DETECTED           target="X18 link down failed (trigger): exec error, 'link up' not sent, still restored"
+OK  A25  DETECTED           target='X19 service link returning a truthy non-True value is not ok: group skipped'
+OK  A26  DETECTED           target='X15 record_problems: missing case'
+OK  A27  DETECTED           target='C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass'
+OK  A28  DETECTED           target='F3 group with empty steps -> never exit 0, no case ĐẠT, record problem'
+OK  A28b DETECTED           target='F3 group with every rc 2 -> never exit 0, no case ĐẠT, record problem'
+OK  A28c DETECTED           target='F3 group with guest baseline incomplete -> never exit 0, no case ĐẠT, record problem'
+OK  A28d DETECTED           target='F3 group with restore says restored with diffs -> never exit 0, no case ĐẠT, record problem'
+OK  A28e DETECTED           target='F3.t a STOPPED case whose earlier step is outside the contract -> record problem'
+OK  A29  DETECTED           target='D8 a registry change changes the command (single source)'
+OK  B1   DETECTED           target='F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error'
+OK  B2   DETECTED           target='F5.4 frame violation but read times overlap (A ends after B starts: window not valid) -> no FAIL inferred from frame positions; LỖI PHÉP ĐO'
+OK  B3   DETECTED           target='F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error'
+OK  B4   DETECTED           target='F5.5 neighbour violation with the capture unreadable -> FAIL (neighbour evidence kept), capture error kept'
+OK  B5   DETECTED           target='F5.7 group_exit: FAIL wins over LỖI PHÉP ĐO in the same group'
+OK  B6   DETECTED           target='F5.3 neighbour violation (valid rows) + read_error -> FAIL, both kept'
+OK  C1   DETECTED           target="H1 restore 'after' MAC differs from the baseline (restored=True, diffs=[]) -> not ĐẠT, record problem, never exit 0"
+OK  C2   DETECTED           target="H1 restore 'after' with a malformed dynamic neighbour (diff() ignores dynamic) -> not ĐẠT, record problem, never exit 0"
+OK  C3   DETECTED           target='H1 restored=True with an error -> not ĐẠT, record problem, never exit 0'
+OK  C4   DETECTED           target='H1 restore commands [42] -> not ĐẠT, record problem, never exit 0'
+OK  C5   DETECTED           target='H1 baseline AND after addrs [42] -> not ĐẠT, record problem, never exit 0'
+OK  C6   DETECTED           target="H1 baseline AND after operstate 'weird' -> not ĐẠT, record problem, never exit 0"
+OK  C7   DETECTED           target='H1 baseline AND after static neighbour not a MAC -> not ĐẠT, record problem, never exit 0'
+OK  C8   DETECTED           target='H1 baseline dynamic neighbour malformed -> not ĐẠT, record problem, never exit 0'
+OK  C9   DETECTED           target='H1 baseline AND after arp_notify -1 -> not ĐẠT, record problem, never exit 0'
+OK  C10  DETECTED           target='H1 baseline AND after route object -> not ĐẠT, record problem, never exit 0'
+OK  C11  DETECTED           target="H1 restore 'after' MAC differs from the baseline (restored=True, diffs=[]) -> not ĐẠT, record problem, never exit 0"
+OK  C12  DETECTED           target="H2.1 mandatory tap0 row with states ['PERMANENT', 'FAILED'] -> LỖI PHÉP ĐO, never ĐẠT"
+OK  C13  DETECTED           target='H2.4 mandatory row REACHABLE both before and after (no tap0 change) -> still FAIL (binding must be PERMANENT)'
+OK  C14  DETECTED           target='H3.1 not started (state unreadable) + valid mandatory neighbour change -> FAIL, not_started kept, no command sent'
+OK  C15  DETECTED           target='H3.4 not started, inputs readable, neighbours clean -> LỖI THỰC THI with every evidence field present'
+OK  C16  DETECTED           target='H4.1 mandatory row unreadable (lladdr 1) after -> LỖI PHÉP ĐO, no FAIL inferred'
+OK  C17  DETECTED           target="H4.2 mandatory row unreadable BEFORE, after clean -> LỖI PHÉP ĐO, not 'tap0 changed'"
+OK  C18  DETECTED           target="H4.7 watched IP: valid before, row unreadable after -> LỖI PHÉP ĐO and NOT reported as 'missing'"
+OK  C19  DETECTED           target='H4.1 mandatory row unreadable (lladdr 1) after -> LỖI PHÉP ĐO, no FAIL inferred'
+OK  C20  DETECTED           target="H4.5 an unidentifiable row (no dst) -> LỖI PHÉP ĐO, no 'missing'/'changed' inferred for any entry"
+OK  C21  DETECTED           target='H5 control callback returns True -> record kept, control not ok, case not ĐẠT'
+OK  C22  DETECTED           target="H5 control callback returns (1, 'x') -> record kept, control not ok, case not ĐẠT"
+OK  C23  DETECTED           target="H6 JSON branch 'not_run' has every evidence/error field with the right type"
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP: 73 OK, 0 not as expected; harness unchanged

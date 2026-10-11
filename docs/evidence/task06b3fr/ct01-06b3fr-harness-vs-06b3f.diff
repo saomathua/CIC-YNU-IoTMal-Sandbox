@@ -1,0 +1,400 @@
+--- 06b3f/probe_matrix.py
++++ 06b3fr/probe_matrix.py
+@@ -544,7 +544,11 @@
+             if "read_before" in session:
+                 session["exit_confirmed"] = not proc.isalive()
+                 session["exit_confirmed_t"] = time.time()
+-                session["qemu_pids_after_exit"] = qemu_pids()
++                try:   # 06B-3FR: part of the session verdict; an error leaves it unverified (None)
++                    session["qemu_pids_after_exit"] = qemu_pids()
++                except Exception as e:
++                    session["qemu_pids_after_exit"] = None
++                    session["qemu_pids_after_exit_error"] = f"{type(e).__name__}: {e}"
+                 session["finals"] = []
+                 if session["exit_confirmed"]:
+                     try:
+@@ -612,13 +616,14 @@
+         capture["pcap_error"] = str(e)[:300]
+     frames = [{"t": r["t"], "cls": classify(r)} for r in rows]
+     qemu = {"no_qemu_before": session.get("no_qemu_before", False),
++            "pids_before": session.get("qemu_pids_before"),
+             "exit_confirmed": session.get("exit_confirmed", False),
+-            "exit_confirmed_t": session.get("exit_confirmed_t")}
++            "exit_confirmed_t": session.get("exit_confirmed_t"),
++            "pids_after_exit": session.get("qemu_pids_after_exit"),
++            "pids_after_exit_error": session.get("qemu_pids_after_exit_error")}
+     res = counter_window.session_reconcile(frames, session.get("read_before"), session.get("finals", []),
+-                                           CLASSES, qemu, capture)
+-    res["final_read_error"] = session.get("final_read_error")
+-    res["qemu_pids_before"] = session.get("qemu_pids_before")
+-    res["qemu_pids_after_exit"] = session.get("qemu_pids_after_exit")
++                                           CLASSES, qemu, capture, required_finals=SESSION_FINAL_READS,
++                                           final_read_error=session.get("final_read_error"))
+     res["assumption"] = ("guard %.3f s covers the delay from capture timestamp to nft counter hit; "
+                          "NOT measured" % counter_window.GUARD_S)
+     json.dump(res, open(os.path.join(OUT, "session.json"), "w"), indent=1, default=str)
+--- 06b3f/counter_window.py
++++ 06b3fr/counter_window.py
+@@ -192,34 +192,59 @@
+                                             for v in values.values())
+ 
+ 
+-def session_reconcile(frames, read_before, final_reads, classes, qemu, capture, guard=GUARD_S):
++def session_reconcile(frames, read_before, final_reads, classes, qemu, capture, guard=GUARD_S,
++                      required_finals=2, final_read_error=None):
+     """frames: every frame of the tap0 pcap as {"t", "cls"} (cls None for frames not sent by the guest).
+     read_before: counter read before QEMU was spawned; final_reads: every counter read taken after QEMU
+-    exit was confirmed (all kept; the FIRST one closes the window, the others only check stability).
+-    qemu: {"no_qemu_before": bool, "exit_confirmed": bool, "exit_confirmed_t": float}
++    exit was confirmed (all kept; the FIRST one closes the window, the others check stability).
++    qemu: {"no_qemu_before": bool, "pids_before": list, "exit_confirmed": bool, "exit_confirmed_t": float,
++           "pids_after_exit": list | None, "pids_after_exit_error": str | None}
+     capture: {"tshark_rc": int|None, "drop_verdict": "PASS"|..., "pcap_readable": bool}
+-    Verdict: ERROR (invalid measurement / precondition) > FAIL (real mismatch) > UNVERIFIED > PASS."""
++    Verdict: ERROR (invalid measurement / precondition) > FAIL (real mismatch) > UNVERIFIED > PASS.
++    06B-3FR: guest frames before the window are checked (all classes, ARP included); QEMU process
++    state after exit is part of the verdict; F1 and F2 are both required and a final read error
++    blocks PASS; every compared class must be present in A, F1 and F2 (a missing counter is never 0)."""
+     out = {"verdict": None, "reasons": [], "guard_s": guard, "classes_compared": list(classes),
+-           "reads": {"before": read_before, "finals": final_reads}, "qemu": qemu, "capture": capture}
++           "reads": {"before": read_before, "finals": final_reads, "required_finals": required_finals,
++                     "final_read_error": final_read_error},
++           "qemu": qemu, "capture": capture}
+ 
+     def done(verdict, *reasons):
+         out["verdict"] = verdict
+         out["reasons"] += list(reasons)
+         return out
+ 
+-    # --- preconditions and measurement data
+-    if not qemu.get("no_qemu_before"):
+-        return done("ERROR", "QEMU was already running when the session read before boot was taken")
++    # --- QEMU process state before boot and after exit (06B-3FR: both are part of the verdict)
++    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:
++        return done("ERROR", f"QEMU process state before boot not clean or not verified: "
++                             f"no_qemu_before={qemu.get('no_qemu_before')!r}, pids_before={qemu.get('pids_before')!r}")
+     if not qemu.get("exit_confirmed"):
+         return done("ERROR", "QEMU exit was not confirmed before the final reads")
+-    if not final_reads:
+-        return done("ERROR", "no final counter read after QEMU exit")
+-    reads = [read_before] + list(final_reads)
+-    for r in reads:
++    pa = qemu.get("pids_after_exit")
++    if not isinstance(pa, list) or qemu.get("pids_after_exit_error"):
++        return done("ERROR", f"QEMU process state after exit could not be verified: pids_after_exit={pa!r}, "
++                             f"error={qemu.get('pids_after_exit_error')!r}")
++    if pa:
++        return done("ERROR", f"QEMU process(es) still present after exit was confirmed: {pa}")
++
++    # --- final reads: F1 and F2 required, no read error
++    if final_read_error:
++        return done("ERROR", f"a final counter read failed: {final_read_error}")
++    if not isinstance(final_reads, list) or len(final_reads) < required_finals:
++        n = len(final_reads) if isinstance(final_reads, list) else final_reads
++        return done("ERROR", f"{n} final read(s) after QEMU exit, {required_finals} required "
++                             "(one snapshot is no evidence of stability)")
++
++    # --- measurement data: values, completeness of compared classes, times
++    reads = [("A", read_before)] + [(f"F{i + 1}", r) for i, r in enumerate(final_reads)]
++    for name, r in reads:
+         if not isinstance(r, dict) or not _values_ok(r.get("values")):
+-            return done("ERROR", f"counter read without valid values: {r!r:.200}")
++            return done("ERROR", f"counter read {name} without valid values (non-negative integers): {r!r:.200}")
++        missing = [k for k in classes if k not in r["values"]]
++        if missing:
++            return done("ERROR", f"counter read {name} lacks compared counter(s) {missing}; a missing counter is not 0")
+         if not (_finite(r.get("t_start")) and _finite(r.get("t_end"))):
+-            return done("ERROR", f"counter read times not finite: {r.get('t_start')!r}, {r.get('t_end')!r}")
++            return done("ERROR", f"counter read {name} times not finite: {r.get('t_start')!r}, {r.get('t_end')!r}")
+     if not _finite(qemu.get("exit_confirmed_t")):
+         return done("ERROR", f"QEMU exit time not finite: {qemu.get('exit_confirmed_t')!r}")
+     seq = [read_before["t_start"], read_before["t_end"], qemu["exit_confirmed_t"]]
+@@ -229,21 +254,33 @@
+         return done("ERROR", "times out of order (need read_before <= QEMU exit confirmed <= final reads, "
+                              f"each read start <= end, final reads in order): {seq}")
+     first = final_reads[0]
+-    delta = {k: first["values"].get(k, 0) - read_before["values"].get(k, 0)
+-             for k in set(first["values"]) | set(read_before["values"])}
++    delta = {k: first["values"][k] - read_before["values"][k] for k in classes}
+     recon = reconcile(frames, read_before, first, delta, classes, guard)
+     out["reconciliation"] = recon
+-    out["not_compared"] = {k: {"delta": d, "reason": NOT_COMPARED_REASON.get(k, "no pcap mapping in the harness")}
+-                           for k, d in sorted(delta.items()) if k not in classes}
++    nc = {}
++    for k in sorted((set(first["values"]) | set(read_before["values"])) - set(classes)):
++        reason = NOT_COMPARED_REASON.get(k, "no pcap mapping in the harness")
++        if k in first["values"] and k in read_before["values"]:
++            nc[k] = {"delta": first["values"][k] - read_before["values"][k], "reason": reason}
++        else:
++            nc[k] = {"delta": None, "reason": reason, "missing_in": "A" if k not in read_before["values"] else "F1"}
++    out["not_compared"] = nc
+     if recon["verdict"] == "ERROR":
+         return done("ERROR", f"measurement data invalid: {recon.get('error')}")
+ 
+-    # --- capture completeness, stability after exit, guest frames after exit
++    # --- guest frames outside the window (all classes), capture, stability
++    a_start, a_end = read_before["t_start"], read_before["t_end"]
++    pre = [{"t": fr["t"], "cls": fr.get("cls"),
++            "reason": ("before A.start - guard (outside the window)" if fr["t"] < a_start - guard
++                       else "in the start edge [A.start - guard, A.end]")}
++           for fr in frames if fr.get("cls") is not None and fr["t"] <= a_end]
++    late = [{"t": fr["t"], "cls": fr.get("cls"), "reason": "after QEMU exit was confirmed"}
++            for fr in frames if fr.get("cls") is not None and fr["t"] > qemu["exit_confirmed_t"]]
+     capture_ok = (capture.get("tshark_rc") == 0 and capture.get("drop_verdict") == "PASS"
+                   and capture.get("pcap_readable") is True)
+-    unstable = {k: [r["values"].get(k, 0) for r in final_reads] for k in classes
+-                if len({r["values"].get(k, 0) for r in final_reads}) > 1}
+-    late = [fr["t"] for fr in frames if fr.get("cls") is not None and fr["t"] > qemu["exit_confirmed_t"]]
++    unstable = {k: [r["values"][k] for r in final_reads] for k in classes
++                if len({r["values"][k] for r in final_reads}) > 1}
++    out["guest_frames_before_window"] = pre
+     out["unstable_after_exit"] = unstable
+     out["guest_frames_after_exit"] = late
+     low = [k for k, v in recon["per_class"].items() if v["delta"] < v["lo"]]
+@@ -252,6 +289,9 @@
+         # with an incomplete capture only "counter below the captured frames" is a determined mismatch
+         return done("FAIL", "counter delta outside [certain, certain + edges] for: "
+                     + ", ".join(k for k, v in recon["per_class"].items() if v["status"] == "FAIL"))
++    if pre:
++        out["reasons"].append(f"{len(pre)} guest frame(s) at or before the session read before boot "
++                              f"(QEMU was not supposed to run yet): {sorted({str(x['cls']) for x in pre})}")
+     if not capture_ok:
+         out["reasons"].append(f"capture not complete: {capture}")
+     if unstable:
+--- 06b3f/selftest.sh
++++ 06b3fr/selftest.sh
+@@ -19,7 +19,9 @@
+ #  F. capture stop with deadline: exit 0, exit 3, SIGINT ignored -> killed at the deadline
+ #  G. tcpdump statistics parsing: a missing line is a failure, never 0
+ #  I. session-wide reconciliation (06B-3F): 17 cases (clean, edges, real mismatch, missing capture,
+-#     wrong times, preconditions, instability / guest frames after QEMU exit)
++#     wrong times, preconditions, instability / guest frames after QEMU exit); 06B-3FR adds 14:
++#     guest frames before the window (ARP included), QEMU state after exit, F1+F2 and read errors,
++#     missing compared counters
+ #  H. probe_matrix.py evaluate() replayed offline with stub worker modules: clean -> ĐẠT,
+ #     IPv6 frame inside read A (06B-3D shape) -> CHƯA KIỂM CHỨNG, real mismatch -> FAIL
+ # Lines "[FAIL] ..." are behavioural failures; "SELFTEST-ERROR: ..." means the test itself could not
+@@ -556,7 +558,7 @@
+     pm.session.clear()
+     pm.session.update(no_qemu_before=True, qemu_pids_before=[],
+                       read_before={"t_start": 50.0, "t_end": 50.01, "values": vals_before},
+-                      exit_confirmed=True, exit_confirmed_t=600.0,
++                      exit_confirmed=True, exit_confirmed_t=600.0, qemu_pids_after_exit=[],
+                       finals=[{"t_start": 600.5, "t_end": 600.51, "values": after_values},
+                               {"t_start": 601.0, "t_end": 601.01, "values": after_values}],
+                       capture={"tshark_rc": 0, "drop_verdict": "PASS"})
+@@ -575,10 +577,45 @@
+ pm.results.clear()
+ pm.probes[:] = [probe("clean", 41000, 100.0, {"drop_public": 3})]
+ pm.evaluate()
++n_results_after_clean = len(pm.results)
+ set_session({**vals_after, "drop_public": vals_after["drop_public"] + 1})
+ sres = pm.evaluate_session()
+ check("session: one extra counted packet -> FAIL", sres["verdict"] == "FAIL")
+ check("session FAIL is reported separately: run outcome of the probes unchanged (PASS)", cw.run_outcome(pm.results) == "PASS")
++# ---- 06B-3FR regressions through the real evaluate_session()
++def sess_with(**kw):
++    set_session(vals_after)
++    for k, v in kw.items():
++        if v is _DEL:
++            pm.session.pop(k, None)
++        else:
++            pm.session[k] = v
++    return pm.evaluate_session()
++_DEL = object()
++r0 = sess_with()
++check("3FR replay baseline: complete session -> PASS", r0["verdict"] == "PASS")
++rows.append({"t": 40.0, "src_mac": MAC, "etype": "0x0806", "ip_src": "", "ip_dst": "", "proto": "", "sport": "",
++             "dport": "", "qname": ""})   # guest ARP long before the session read A
++r1 = sess_with()
++check("3FR replay 1: guest ARP before the window -> not PASS, listed in session.json",
++      r1["verdict"] != "PASS" and json.load(open(os.path.join(pm.OUT, "session.json")))["guest_frames_before_window"]
++      == [{"t": 40.0, "cls": "arp", "reason": "before A.start - guard (outside the window)"}])
++rows.pop()
++r2a = sess_with(qemu_pids_after_exit=[999])
++r2b = sess_with(qemu_pids_after_exit=_DEL)
++r2c = sess_with(qemu_pids_after_exit=None, qemu_pids_after_exit_error="PermissionError: /proc")
++check("3FR replay 2: QEMU left after exit -> ERROR", r2a["verdict"] == "ERROR")
++check("3FR replay 2: QEMU state after exit not recorded -> ERROR", r2b["verdict"] == "ERROR")
++check("3FR replay 2: QEMU state scan failed -> ERROR", r2c["verdict"] == "ERROR")
++r3a = sess_with(finals=[{"t_start": 600.5, "t_end": 600.51, "values": vals_after}])
++r3b = sess_with(final_read_error="RuntimeError: nft -j list counters failed")
++check("3FR replay 3: only F1 -> ERROR", r3a["verdict"] == "ERROR")
++check("3FR replay 3: final read error -> ERROR (kept in session.json)",
++      r3b["verdict"] == "ERROR" and json.load(open(os.path.join(pm.OUT, "session.json")))["reads"]["final_read_error"])
++short = {k: v for k, v in vals_before.items() if k != "drop_spoof"}
++r4 = sess_with(read_before={"t_start": 50.0, "t_end": 50.01, "values": short})
++check("3FR replay 4: compared counter missing in A -> ERROR (not taken as 0)", r4["verdict"] == "ERROR")
++check("3FR replay: session results still not in results", len(pm.results) == n_results_after_clean)
+ sys.exit(1 if fails else 0)
+ EOF
+ rc=$?; [ $rc -eq 3 ] && infra "evaluate replay could not run"
+@@ -595,7 +632,11 @@
+     print(f"SELFTEST-ERROR: session cases: {e}"); sys.exit(3)
+ fails = 0
+ for c in F["cases"]:
+-    r = cw.session_reconcile(c["frames"], c["read_before"], c["finals"], F["classes"], c["qemu"], c["capture"])
++    try:
++        r = cw.session_reconcile(c["frames"], c["read_before"], c["finals"], F["classes"], c["qemu"], c["capture"],
++                                 required_finals=2, final_read_error=c.get("final_read_error"))
++    except Exception as e:   # a crash is reported against the case, never as a pass
++        r = {"verdict": f"EXCEPTION {type(e).__name__}", "reasons": [str(e)[:120]]}
+     good = r["verdict"] == c["expected"]
+     fails += not good
+     print(f"[{'PASS' if good else 'FAIL'}] session {c['name']}: expected {c['expected']}, got {r['verdict']} ({'; '.join(r['reasons'])[:150]})")
+@@ -603,6 +644,11 @@
+         g2 = r.get("not_compared", {}).get("arp_in_ok", {}).get("delta") == 1 and "reason" in r["not_compared"]["arp_in_ok"]
+         fails += not g2
+         print(f"[{'PASS' if g2 else 'FAIL'}] session clean: not-compared counters listed with delta and reason")
++    if c["name"] == "pre-window-arp":
++        pre = r.get("guest_frames_before_window", [])
++        g3 = pre == [{"t": 90.0, "cls": "arp", "reason": "before A.start - guard (outside the window)"}]
++        fails += not g3
++        print(f"[{'PASS' if g3 else 'FAIL'}] session pre-window-arp: frame recorded with timestamp, class and reason ({pre})")
+ sys.exit(1 if fails else 0)
+ EOF
+ rc=$?; [ $rc -eq 3 ] && infra "session test could not run"
+--- 06b3f/mutation_test.sh
++++ 06b3fr/mutation_test.sh
+@@ -212,7 +212,9 @@
+     'if not _finite(fr.get("t")):' 'if False:'
+ 
+ echo "== 06B-3F mutations (session-wide reconciliation)"
+-mut SE1-session-edges-ignored DETECTED "session edge-start" counter_window.py \
++# 06B-3FR: the start edge is now also covered by the pre-window guest-frame rule, so the edge-end case is
++# the one that isolates the edge handling of the session window
++mut SE1-session-edges-ignored DETECTED "session edge-end" counter_window.py \
+     '    if recon["verdict"] == "UNVERIFIED":
+         out["reasons"].append("frames in the edge zones' '    if False:
+         out["reasons"].append("frames in the edge zones'
+@@ -224,13 +226,13 @@
+ mut SE4-instability-after-exit-ignored DETECTED "session unstable-after-exit" counter_window.py \
+     '    if unstable:' '    if False:'
+ mut SE5-qemu-before-not-checked DETECTED "session qemu-running-before" counter_window.py \
+-    '    if not qemu.get("no_qemu_before"):' '    if False:'
++    '    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:' '    if False:'
+ mut SE6-time-order-not-checked DETECTED "session exit-after-final-read" counter_window.py \
+     '    if any(a > b for a, b in zip(seq, seq[1:])):' '    if False:'
+ mut SE7-low-counter-softened-by-capture DETECTED "session capture-incomplete-counter-below" counter_window.py \
+     'if recon["verdict"] == "FAIL" and (capture_ok or low):' 'if recon["verdict"] == "FAIL" and capture_ok:'
+ mut SE8-not-compared-hidden DETECTED "session clean: not-compared counters listed" counter_window.py \
+-    '    out["not_compared"] = {k:' '    out["not_compared"] = {} and {k:'
++    '    out["not_compared"] = nc' '    out["not_compared"] = {}'
+ mut SE9-session-enters-results DETECTED "session result does not enter results" probe_matrix.py \
+     '    json.dump(res, open(os.path.join(OUT, "session.json"), "w"), indent=1, default=str)' \
+     '    json.dump(res, open(os.path.join(OUT, "session.json"), "w"), indent=1, default=str)
+@@ -254,6 +256,38 @@
+                        read_before=counters_read("session before boot"))
+ ' ''
+ 
++echo "== 06B-3FR mutations (session completeness: pre-window frames, QEMU state, F1+F2, counters)"
++mut PW1-pre-window-frames-ignored DETECTED "session pre-window-guest-frame" counter_window.py \
++    'for fr in frames if fr.get("cls") is not None and fr["t"] <= a_end]' 'for fr in frames if False]'
++mut PW2-pre-window-compared-classes-only DETECTED "session pre-window-arp: expected" counter_window.py \
++    'for fr in frames if fr.get("cls") is not None and fr["t"] <= a_end]' 'for fr in frames if fr.get("cls") in classes and fr["t"] <= a_end]'
++mut PW3-pre-window-details-dropped DETECTED "frame recorded with timestamp, class and reason" counter_window.py \
++    '    out["guest_frames_before_window"] = pre' '    out["guest_frames_before_window"] = [x["t"] for x in pre]'
++mut QP1-qemu-after-exit-ignored DETECTED "session qemu-left-after-exit" counter_window.py \
++    '    if pa:
++        return done("ERROR", f"QEMU process(es) still present' '    if False:
++        return done("ERROR", f"QEMU process(es) still present'
++mut QP2-unverifiable-qemu-state-accepted DETECTED "session qemu-state-unverifiable" counter_window.py \
++    'if not isinstance(pa, list) or qemu.get("pids_after_exit_error"):' 'if False:'
++mut QP3-evaluate-session-drops-pids DETECTED "3FR replay 2: QEMU left after exit" probe_matrix.py \
++    '"pids_after_exit": session.get("qemu_pids_after_exit"),' '"pids_after_exit": [],'
++mut QP4-pids-before-not-checked DETECTED "session qemu-pids-before-inconsistent" counter_window.py \
++    'if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:' 'if not qemu.get("no_qemu_before"):'
++mut FR1-f2-not-required DETECTED "session missing-F2" counter_window.py \
++    'if not isinstance(final_reads, list) or len(final_reads) < required_finals:' 'if not final_reads:'
++mut FR2-final-read-error-ignored DETECTED "session final-read-error" counter_window.py \
++    '    if final_read_error:
++        return done("ERROR", f"a final counter read failed' '    if False:
++        return done("ERROR", f"a final counter read failed'
++mut FR3-evaluate-session-drops-read-error DETECTED "3FR replay 3: final read error" probe_matrix.py \
++    'final_read_error=session.get("final_read_error"))' 'final_read_error=None)'
++mut CC1-missing-counter-as-zero DETECTED "session class-missing-in-A" counter_window.py \
++    '        if missing:
++            return done("ERROR", f"counter read {name} lacks' '        if False:
++            return done("ERROR", f"counter read {name} lacks' \
++    'delta = {k: first["values"][k] - read_before["values"][k] for k in classes}' \
++    'delta = {k: first["values"].get(k, 0) - read_before["values"].get(k, 0) for k in classes}'
++
+ echo "== control mutations (must NOT be counted as caught)"
+ mut X1-syntax-error INVALID "-" pcapng_stats.py 'def drop_verdict(st):' 'def drop_verdict(st:'
+ mut X2-missing-dependency ERROR "-" selftest.sh 'import pcapng_stats as P' 'import pcapng_stats_missing as P'
+--- 06b3f/make_fixtures.py
++++ 06b3fr/make_fixtures.py
+@@ -221,7 +221,7 @@
+ 
+ 
+ def sb_case(name, expected, frames_add=(), delta_add=None, f2_add=None, exit_t=300.0, finals=None,
+-            capture=None, qemu=None, before=None):
++            capture=None, qemu=None, before=None, final_read_error=None, drop_from=None):
+     d = dict(SB_DELTA)
+     for k, v in (delta_add or {}).items():
+         d[k] = d.get(k, 0) + v
+@@ -232,10 +232,16 @@
+     if finals is None:
+         finals = [{"t_start": 300.500, "t_end": 300.510, "values": vals},
+                   {"t_start": 301.000, "t_end": 301.010, "values": f2}]
++    read_before = copy.deepcopy(before or SB_BEFORE)
++    finals = copy.deepcopy(finals)
++    for where, key in (drop_from or []):   # 06B-3FR: remove a counter from A / F1 / F2
++        (read_before if where == "A" else finals[int(where[1]) - 1])["values"].pop(key)
++    q = {"no_qemu_before": True, "pids_before": [], "exit_confirmed": True, "exit_confirmed_t": exit_t,
++         "pids_after_exit": [], "pids_after_exit_error": None}
++    q.update(qemu or {})
+     return {"name": name, "expected": expected,
+             "frames": [{"t": t, "cls": c} for t, c in SB_FRAMES + list(frames_add)],
+-            "read_before": copy.deepcopy(before or SB_BEFORE), "finals": finals,
+-            "qemu": qemu or {"no_qemu_before": True, "exit_confirmed": True, "exit_confirmed_t": exit_t},
++            "read_before": read_before, "finals": finals, "qemu": q, "final_read_error": final_read_error,
+             "capture": capture or {"tshark_rc": 0, "drop_verdict": "PASS", "pcap_readable": True}}
+ 
+ 
+@@ -251,16 +257,39 @@
+     sb_case("pcap-unreadable", "UNVERIFIED", capture={"tshark_rc": 0, "drop_verdict": "PASS", "pcap_readable": False}),
+     sb_case("tshark-exit-nonzero", "UNVERIFIED", capture={"tshark_rc": 1, "drop_verdict": "PASS", "pcap_readable": True}),
+     sb_case("exit-after-final-read", "ERROR", exit_t=300.6),
+-    sb_case("final-before-read-before", "ERROR", finals=[{"t_start": 99.0, "t_end": 99.01,
+-                                                         "values": {"drop_public": 13, "l2_bad_ethertype": 7}}]),
+-    sb_case("final-time-nan", "ERROR", finals=[{"t_start": 300.5, "t_end": float("nan"),
+-                                               "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}}]),
+-    sb_case("qemu-running-before", "ERROR", qemu={"no_qemu_before": False, "exit_confirmed": True, "exit_confirmed_t": 300.0}),
+-    sb_case("exit-not-confirmed", "ERROR", qemu={"no_qemu_before": True, "exit_confirmed": False, "exit_confirmed_t": 300.0}),
++    # 06B-3FR: both cases carry F1 and F2 so that they still reach the time-order / NaN check
++    sb_case("final-before-read-before", "ERROR", finals=[
++        {"t_start": 99.0, "t_end": 99.01, "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}},
++        {"t_start": 99.5, "t_end": 99.51, "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}}]),
++    sb_case("final-time-nan", "ERROR", finals=[
++        {"t_start": 300.5, "t_end": float("nan"), "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}},
++        {"t_start": 301.0, "t_end": 301.01, "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}}]),
++    sb_case("qemu-running-before", "ERROR", qemu={"no_qemu_before": False, "pids_before": [42]}),
++    sb_case("exit-not-confirmed", "ERROR", qemu={"exit_confirmed": False}),
+     sb_case("no-final-read", "ERROR", finals=[]),
+     sb_case("counter-decreased", "ERROR", delta_add={"drop_public": -4}),
+     sb_case("unstable-after-exit", "UNVERIFIED", f2_add={"drop_public": 1}),
+     sb_case("late-guest-frame", "UNVERIFIED", [(300.2, "l2_bad_ethertype")], {"l2_bad_ethertype": 1}),
++    # ---- 06B-3FR regressions
++    # 1. guest frames before the window (any class, ARP included) block PASS; non-guest frames do not
++    sb_case("pre-window-guest-frame", "UNVERIFIED", [(90.0, "drop_public")]),
++    sb_case("pre-window-arp", "UNVERIFIED", [(90.0, "arp")]),
++    sb_case("arp-in-start-edge", "UNVERIFIED", [(100.005, "arp")]),
++    sb_case("pre-window-non-guest-frame", "PASS", [(90.0, None)]),
++    # 2. QEMU process state after exit is part of the verdict
++    sb_case("qemu-left-after-exit", "ERROR", qemu={"pids_after_exit": [4242]}),
++    sb_case("qemu-state-unverifiable", "ERROR", qemu={"pids_after_exit": None}),
++    sb_case("qemu-state-scan-error", "ERROR", qemu={"pids_after_exit": [], "pids_after_exit_error": "OSError: /proc"}),
++    sb_case("qemu-pids-before-inconsistent", "ERROR", qemu={"no_qemu_before": True, "pids_before": [7]}),
++    # 3. F1 and F2 required; a final read error blocks PASS
++    sb_case("missing-F2", "ERROR", finals=[{"t_start": 300.500, "t_end": 300.510,
++                                           "values": {"drop_public": 13, "l2_bad_ethertype": 7, "drop_spoof": 0, "arp_in_ok": 2}}]),
++    sb_case("final-read-error", "ERROR", final_read_error="RuntimeError: nft failed"),
++    # 4. every compared counter present in A, F1 and F2 (a missing counter is never 0)
++    sb_case("class-missing-in-A", "ERROR", drop_from=[("A", "drop_spoof")]),
++    sb_case("class-missing-in-F1", "ERROR", drop_from=[("F1", "drop_spoof")]),
++    sb_case("class-missing-in-F2", "ERROR", drop_from=[("F2", "drop_spoof")]),
++    sb_case("counter-value-bool", "ERROR", before={**SB_BEFORE, "values": {**SB_BEFORE["values"], "drop_spoof": False}}),
+ ]
+ json.dump({"classes": ["drop_public", "l2_bad_ethertype", "drop_spoof"], "cases": SESSION},
+           open(os.path.join(out, "session-cases.json"), "w"), indent=1)

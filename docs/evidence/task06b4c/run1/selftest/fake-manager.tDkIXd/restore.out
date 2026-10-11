@@ -1,0 +1,1 @@
+manager after: state=paused id=cid1 startedAt=T0 (before: paused cid1 T0; started by this run: 0)

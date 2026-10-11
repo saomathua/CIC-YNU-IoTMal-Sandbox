@@ -1,0 +1,8 @@
+0 packets captured
+0 packets received by filter
+veth: probe-signature packets=0 (tcpdump rc=0)
+bridge: probe-signature packets=0 (tcpdump rc=0)
+ens33: probe-signature packets=0 (tcpdump rc=0)
+veth: control packets from worker=122 (rc=0)
+ens33: NATed control packets=90 (rc=0)
+bridge: packets from worker=1604 (rc=0)

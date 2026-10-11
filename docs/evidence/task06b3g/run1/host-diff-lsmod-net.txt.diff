@@ -1,0 +1,10 @@
+--- /home/dathq/projects/ct01-06b3c/out/host-before/lsmod-net.txt	2026-10-07 16:12:39.240384305 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/lsmod-net.txt	2026-10-07 16:15:39.284567360 +0000
+@@ -9,6 +9,7 @@
+ nf_tables
+ nft_chain_nat
+ nft_compat
++nft_ct
+ veth
+ x_tables
+ xt_addrtype

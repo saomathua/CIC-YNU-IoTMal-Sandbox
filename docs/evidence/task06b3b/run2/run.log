@@ -1,0 +1,50 @@
+4392b3974ca644abd4b229a40638cb32dd5d31159effb234ab06536dc7385340  /home/dathq/projects/ct01-06b3b/out/harness-copy/ctl_loop.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b3b/out/harness-copy/poller.py
+4d7391d8e2e305652485693b5416f7738dbd8a638fc1ba97228b4abac13de457  /home/dathq/projects/ct01-06b3b/out/harness-copy/probe_matrix.py
+347ef90cc51d069e39ff225cf6a75475aacc0066c25fa839a5429cfb2c68981c  /home/dathq/projects/ct01-06b3b/out/harness-copy/run-06b3b.sh
+
+===== 1. preparation (15:16:06)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 12 minutes ago
+mongo-db Up 47 minutes
+manager state before: exited
+sandboxnet=cic-ynu-iotmal-sandbox_sandboxnet bridge=br-1d86fe3e8bbe dbnet=cic-ynu-iotmal-sandbox_dbnet mongo=172.18.0.2 host-ips=192.168.60.1,192.168.177.128,172.18.0.1 lan-dns=192.168.177.2
+
+===== 2. start existing manager for controls (--no-deps --no-build) (15:16:06)
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+[PASS] manager healthy (127.0.0.1:8011/healthcheck)
+manager: running ip=192.168.60.10
+
+===== 3. worker test container (15:16:08)
+worker test container: 44d0d10035bb2e83f7d996eb6297abc6be182cb2ee3750d32ea7ddf352027b8c
+[PASS] worker server ready
+[PASS] V0 passed
+worker eth0=192.168.60.2 host veth=vetha95c891 (ifindex 23)
+[PASS] code and guest images in container equal working tree
+
+===== 4. control container (sandboxnet + dbnet) (15:16:10)
+[PASS] control 'mongo 172.18.0.2:27017' alive
+[PASS] control 'worker-eth0 192.168.60.2:8011' alive
+[PASS] control 'manager 192.168.60.10:8011' alive
+
+===== 5. host captures on vetha95c891, br-1d86fe3e8bbe, ens33 + leak alert (15:16:14)
+capture dir: /tmp/ct01-06b3b-cap.0Cnn6D
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 180:  8022 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i "$VETH" -w "$CAPD/veth.pcap" 2> "$OUT/hostcap/veth.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 180:  8023 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i "$BR" -w "$CAPD/bridge.pcap" 2> "$OUT/hostcap/bridge.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 180:  8024 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i ens33 -w "$CAPD/ens33.pcap" "ether host $GUEST_MAC or net 10.200.0.0/30 or host 1.1.1.1 or host $LAN_DNS" 2> "$OUT/hostcap/ens33.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (8022) - No such process
+[FAIL] host tcpdump pid 8022 running
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (8023) - No such process
+[FAIL] host tcpdump pid 8023 running
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (8024) - No such process
+[FAIL] host tcpdump pid 8024 running
+[PASS] host tcpdump pid 8026 running
+[FAIL] host capture veth.pcap being written
+[FAIL] host capture bridge.pcap being written
+[FAIL] host capture ens33.pcap being written
+ABORT: host-side capture not running; no guest is booted without it

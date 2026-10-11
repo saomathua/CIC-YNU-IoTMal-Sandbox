@@ -1,0 +1,3 @@
+manager before: state=exited id=cid1 startedAt=T0
+
+compose up failed (rc=1)

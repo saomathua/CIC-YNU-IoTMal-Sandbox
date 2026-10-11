@@ -1,0 +1,92 @@
+{
+ "iface": "br-lan",
+ "cases": [
+  {
+   "id": "T12-B1",
+   "before": "T12-B1 before",
+   "after": "T12-B1 after",
+   "command": "ping -c 3 -s 1201 -w 5 255.255.255.255",
+   "exec": {
+    "rc": 1,
+    "output_tail": "PING 255.255.255.255 (255.255.255.255): 1201 data bytes\n\n--- 255.255.255.255 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss\n"
+   },
+   "read_error": null
+  },
+  {
+   "id": "T12-B2",
+   "before": "T12-B2 before",
+   "after": "T12-B2 after",
+   "command": "ping -c 3 -s 1202 -w 5 224.0.0.1",
+   "exec": {
+    "rc": 1,
+    "output_tail": "PING 224.0.0.1 (224.0.0.1): 1202 data bytes\n\n--- 224.0.0.1 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss\n"
+   },
+   "read_error": null
+  },
+  {
+   "id": "T12-B4",
+   "before": "T12-B4 before",
+   "after": "T12-B4 after",
+   "command": "ping -c 3 -s 1204 -w 5 10.200.0.3",
+   "exec": {
+    "rc": 1,
+    "output_tail": "PING 10.200.0.3 (10.200.0.3): 1204 data bytes\n\n--- 10.200.0.3 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss\n"
+   },
+   "read_error": null
+  },
+  {
+   "id": "T13-I1",
+   "before": "T13-I1 before",
+   "after": "T13-I1 after",
+   "command": "ping6 -c 3 -s 1301 -w 5 -I br-lan ff02::1",
+   "exec": {
+    "rc": 1,
+    "output_tail": "PING ff02::1 (ff02::1): 1301 data bytes\n\n--- ff02::1 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss\n"
+   },
+   "read_error": null
+  },
+  {
+   "id": "T13-I2",
+   "before": "T13-I2 before",
+   "after": "T13-I2 after",
+   "command": "ping6 -c 3 -s 1302 -w 5 -I br-lan fe80::24b3:9fff:fea4:8c01",
+   "exec": {
+    "rc": 1,
+    "output_tail": "PING fe80::24b3:9fff:fea4:8c01 (fe80::24b3:9fff:fea4:8c01): 1302 data bytes\n\n--- fe80::24b3:9fff:fea4:8c01 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss\n"
+   },
+   "read_error": null
+  }
+ ],
+ "service_link_before": {
+  "ok": true,
+  "detail": {
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  }
+ },
+ "service_link_after": {
+  "ok": true,
+  "detail": {
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  }
+ },
+ "arch": "MIPS",
+ "tap_mac": "26:b3:9f:a4:8c:01",
+ "fixture_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+ "planned_case_ids": [
+  "T12-B1",
+  "T12-B2",
+  "T12-B4",
+  "T13-I1",
+  "T13-I2"
+ ],
+ "evidence_kind": "rule_check",
+ "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations"
+}

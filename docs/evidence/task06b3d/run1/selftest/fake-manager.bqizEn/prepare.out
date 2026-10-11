@@ -1,0 +1,2 @@
+manager before: state=running id=cid1 startedAt=T0
+manager already running: used as is, will be left running

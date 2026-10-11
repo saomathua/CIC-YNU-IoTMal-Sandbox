@@ -1,0 +1,33 @@
+baseline: 90/90 tests pass
+OK  A1   DETECTED           target='P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT'
+OK  A2   DETECTED           target='P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT'
+OK  A3   DETECTED           target='P3 T14-A1 wrong ARP field (opcode 2 (reply) instead of a request) -> no probe frame, never ĐẠT'
+OK  A4   DETECTED           target='P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame'
+OK  A5   DETECTED           target='P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it'
+OK  A6   DETECTED           target='P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking'
+OK  A7   DETECTED           target='P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames'
+OK  A8   DETECTED           target='P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT'
+OK  A9   DETECTED           target='P22 service link after the case failed -> CHƯA KIỂM CHỨNG'
+OK  A10  DETECTED           target='P37 service link after with ok "true" (not the boolean) -> CHƯA KIỂM CHỨNG'
+OK  A11  DETECTED           target='P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)'
+OK  A12  DETECTED           target='P13 neighbour table not readable -> LỖI PHÉP ĐO'
+OK  A13  DETECTED           target='P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)'
+OK  A14  DETECTED           target='P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)'
+OK  A15  DETECTED           target='P28 worker ARP reply for the probed IP towards the guest -> FAIL'
+OK  A16  DETECTED           target='P29 probe ICMP packet seen (ARP was resolved) -> FAIL'
+OK  A17  DETECTED           target='P35 worker ARP about a spoofed IP during T15 -> FAIL'
+OK  A18  DETECTED           target='N4 new entry on tap0 -> problem'
+OK  A19  DETECTED           target='N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem'
+OK  A20  DETECTED           target='N7 watched IP changes its MAC on eth0 -> problem'
+OK  A21  DETECTED           target="N8 unreadable neighbour output -> NeighReadError (never 'unchanged')"
+OK  A22  DETECTED           target='X6 restore failure: the next case is not run (not_run), no service link after the failed case'
+OK  A23  DETECTED           target='X8 setup failed: trigger not sent, exec error, still restored'
+OK  A24  DETECTED           target="X18 link down failed (trigger): exec error, 'link up' not sent, still restored"
+OK  A25  DETECTED           target='X19 service link returning a truthy non-True value is not ok: group skipped'
+OK  A26  DETECTED           target='X15 record_problems: missing case'
+OK  A27  DETECTED           target='C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass'
+OK  A28  DETECTED           target='X16 record_problems: a guest command that is not the reviewed one'
+OK  A29  DETECTED           target='D8 a registry change changes the command (single source)'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP: 31 OK, 0 not as expected; harness unchanged

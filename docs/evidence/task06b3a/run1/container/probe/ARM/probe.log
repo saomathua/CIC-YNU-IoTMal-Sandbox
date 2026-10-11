@@ -1,0 +1,49 @@
+14:36:16 [PASS] ARM: fresh guest image extracted {"rootfs_sha256": "1caa6fd8bdb98fa7606fc198ad93ed61d239396199ce10e0df53b590201b2b27", "zip": "./ARM/image.zip"}
+14:36:17 [PASS] ARM: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+14:36:17 [PASS] ARM: tshark capturing on tap0 {}
+14:36:17 spawning: qemu-system-arm -M virt-2.9 -kernel /tmp/g-ARM/image/zImage -no-reboot -nographic -device virtio-net-pci -netdev tap,id=net1,ifname=tap0,script=no,downscript=no -device virtio-net-pci,netdev=net1,mac=52:54:00:c7:00:02 -drive file=/tmp/g-ARM/image/root.ext4,if=virtio,format=raw -append "root=/dev/vda"
+14:36:23 [PASS] ARM: guest booted to shell {"qemu_pid": 105, "seconds": 6.3}
+14:36:31 [PASS] ARM: guest network configured by Analysis._configure_network {}
+14:36:33 info network:
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+virtio-net-pci.0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:12:34:56
+virtio-net-pci.1: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02
+ \ net1: index=0,type=tap,ifname=tap0,script=no,downscript=no
+
+14:36:33 [PASS] ARM: QEMU info network: only tap0 backend, no user/slirp/socket {"backends": ["nic", "tap"], "problems": []}
+14:36:33 [PASS] ARM: guest has 10.200.0.2/30 on eth1 {}
+14:36:33 [PASS] ARM: guest default route via 10.200.0.1 on eth1 {}
+14:36:33 [PASS] ARM: a guest NIC carries the pinned MAC 52:54:00:c7:00:02 {"all_macs": {"at": "$i/address);", "br-lan": "52:54:00:12:34:56", "echo": "@@B5;", "eth0": "52:54:00:12:34:56", "eth1": "52:54:00:c7:00:02", "lo": "00:00:00:00:00:00"}, "interfaces": ["eth1"]}
+14:36:33 [PASS] ARM: no current_task: GET get-task/06b3a-arm-task/file -> 403 {"status": 403}
+14:36:34 [PASS] ARM: no current_task: POST update-task/06b3a-arm-task/strace -> 403 {"status": 403}
+14:36:34 [PASS] ARM: no current_task: POST update-task/06b3a-arm-task/sar -> 403 {"status": 403}
+14:36:34 [PASS] ARM: no current_task: nothing written {}
+14:36:34 group '1-no-current-task' counter delta: {'sandbox_guest_arp.arp_in_ok': 1, 'sandbox_guest_arp.arp_out_ok': 1, 'sandbox_guest.allow_svc': 21, 'sandbox_guest.allow_out_svc': 15}
+14:36:35 [PASS] ARM: GET get-task/T/file -> 200 {"status": 200}
+14:36:35 [FAIL] ARM: downloaded file hash (computed in guest) == fixture {"expected": "74bb7b3cdb453c8002198f45d3458717", "guest": "echo"}
+14:36:35 group '2-download' counter delta: {'sandbox_guest_l2.l2_bad_ethertype': 2, 'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 5}
+14:36:35 [PASS] ARM: POST update-task/T/strace -> 200 {"status": 200}
+14:36:35 [PASS] ARM: received strace.log hash == payload {"expected": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611", "got": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611"}
+14:36:36 [PASS] ARM: POST update-task/T/sar -> 200 {"status": 200}
+14:36:36 [PASS] ARM: received sar.out hash == payload {"expected": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401", "got": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401"}
+14:36:36 group '3-upload' counter delta: {'sandbox_guest.allow_svc': 16, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 12}
+14:36:36 [PASS] ARM: forbidden: GET /healthcheck -> 403 {"status": 403}
+14:36:37 [PASS] ARM: forbidden: POST /stop -> 403 {"status": 403}
+14:36:37 [PASS] ARM: forbidden: GET other task file -> 403 {"status": 403}
+14:36:37 [PASS] ARM: forbidden: POST other task strace -> 403 {"status": 403}
+14:36:37 group '4-forbidden' counter delta: {'sandbox_guest.allow_svc': 28, 'sandbox_guest.allow_out_svc': 20}
+14:36:37 [PASS] ARM: no stop file created {}
+14:36:37 [PASS] ARM: no task created / other task not written {"data_dir": ["06b3a-arm-other", "06b3a-arm-task"]}
+14:36:38 [PASS] ARM: after clearing current_task: GET get-task/T/file -> 403 {"status": 403}
+14:36:38 group '5-after-clear' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 5}
+14:36:38 [PASS] ARM: QEMU exit confirmed (shutdown_qemu) {"exitstatus": 0, "signalstatus": null}
+14:36:38 [PASS] ARM: tshark capture stopped {"returncode": 0}
+14:36:38 [PASS] ARM: fixtures, marker and temporary guest disk removed {}
+14:36:39 [PASS] ARM: capture: guest frames seen on tap0 {"frames_from_guest": 95}
+14:36:39 [PASS] ARM: group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 21, "pcap": 21}
+14:36:39 [PASS] ARM: group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:36:39 [PASS] ARM: group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 16, "pcap": 16}
+14:36:39 [PASS] ARM: group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 28, "pcap": 28}
+14:36:39 [PASS] ARM: group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:36:40 [PASS] ARM: info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A) {"count": 5}
+14:36:40 == ARM: status=COMPLETED; 35/36 checks passed

@@ -1,0 +1,1 @@
+manager after: state=exited id=494ae3d2e2eb startedAt=2026-10-08T08:42:17.624923816Z (before: exited 494ae3d2e2eb 2026-10-08T04:31:14.803522659Z; started by this run: 1)

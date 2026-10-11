@@ -1,0 +1,4 @@
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+virtio-net-pci.0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:12:34:56
+virtio-net-pci.1: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02
+ \ net1: index=0,type=tap,ifname=tap0,script=no,downscript=no

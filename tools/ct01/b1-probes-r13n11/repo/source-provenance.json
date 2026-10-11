@@ -1,0 +1,19 @@
+{
+  "schema": "ct01-runtime-source/1",
+  "repo": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox",
+  "branch": "feat/ct01-network-isolation",
+  "head": "3c54d55925b7471687b9be5b3cebcbb5b2e4bd43",
+  "files": {
+    "sandbox-worker/run.sh": "d0a22a19f9fe20b31ff627f30b55a851da0ca73462b2b8cb622ced0035ba23f9",
+    "sandbox-worker/server.py": "5b170041f22485f9e946367b9c27ff5ac49d47a02a3e1708efded55c902753ea",
+    "sandbox-worker/service/analysis.py": "1ae47c15234ec1f62f5482c030c4752e00981aa7f495d54bd640ccda4a820274",
+    "sandbox-worker/isolation/apifilter.py": "aeb3dd56b23ad166cd05574ac4f0bb5d592831a32a75849bca1f84f22dafffe4",
+    "sandbox-worker/isolation/verify.py": "692dcae87e013e188214a448d0604f7b53d6f4351be2af45b504ca57ed4c5ebf",
+    "sandbox-worker/isolation/guest.nft": "5892d2d74f97c446ffa0f72f3de06764148a79ff3b4e7b80f4d791662b7fdce4",
+    "sandbox-worker/isolation/expected-ruleset.json": "9fb32d7f7ec0e83d0440f7a9bce2e18021da6f9ee4557cfe26ac38eae8572b16",
+    "sandbox-worker/ARM/image.zip": "1775e3285b3975dd6fe12ab17047fb2270b65a0876037028e3975917d66d7095",
+    "sandbox-worker/MIPS/image.zip": "0aa4928e2c35dcf986443cfe58bd48525f0a68fde8d2366ebdf7d6eaaa6733a6",
+    "docker-compose.yml": "4385f30606b26ea15c1bf6a0bead17ee9c28cab6f802fa00ff1f78cc084b01b0"
+  },
+  "note": "offline runtime source pins; no env/credentials/malware read"
+}

@@ -1,0 +1,239 @@
+wall_utc	step	heartbeat	age_s	dead_marker_bytes	procs
+16:40:59	-	-	FileNotFoundError	-	-
+16:41:00	-	-	FileNotFoundError	-	-
+16:41:01	-	-	FileNotFoundError	-	-
+16:41:02	-	-	FileNotFoundError	-	-
+16:41:03	-	-	FileNotFoundError	-	-
+16:41:04	-	-	FileNotFoundError	-	-
+16:41:05	-	-	FileNotFoundError	-	-
+16:41:06	-	-	FileNotFoundError	-	-
+16:41:07	-	-	FileNotFoundError	-	-
+16:41:08	-	-	FileNotFoundError	-	-
+16:41:09	-	-	FileNotFoundError	-	-
+16:41:10	-	-	FileNotFoundError	-	-
+16:41:11	-	-	FileNotFoundError	-	-
+16:41:12	-	-	FileNotFoundError	-	-
+16:41:13	-	-	FileNotFoundError	-	-
+16:41:14	-	-	FileNotFoundError	-	-
+16:41:15	-	-	FileNotFoundError	-	-
+16:41:16	-	-	FileNotFoundError	-	-
+16:41:17	-	-	FileNotFoundError	-	-
+16:41:18	-	-	FileNotFoundError	-	-
+16:41:19	-	-	FileNotFoundError	-	-
+16:41:20	-	-	FileNotFoundError	-	-
+16:41:21	-	-	FileNotFoundError	-	-
+16:41:22	-	-	FileNotFoundError	-	-
+16:41:23	-	-	FileNotFoundError	-	-
+16:41:24	-	-	FileNotFoundError	-	-
+16:41:25	-	-	FileNotFoundError	-	-
+16:41:26	-	-	FileNotFoundError	-	-
+16:41:27	-	-	FileNotFoundError	-	-
+16:41:28	-	-	FileNotFoundError	-	-
+16:41:29	-	-	FileNotFoundError	-	-
+16:41:30	-	-	FileNotFoundError	-	-
+16:41:31	-	-	FileNotFoundError	-	-
+16:41:32	-	-	FileNotFoundError	-	-
+16:41:34	-	-	FileNotFoundError	-	-
+16:41:35	-	-	FileNotFoundError	-	-
+16:41:36	-	-	FileNotFoundError	-	-
+16:41:37	-	-	FileNotFoundError	-	-
+16:41:38	-	-	FileNotFoundError	-	-
+16:41:39	-	-	FileNotFoundError	-	-
+16:41:40	-	-	FileNotFoundError	-	-
+16:41:41	-	-	FileNotFoundError	-	-
+16:41:42	-	-	FileNotFoundError	-	-
+16:41:43	-	-	FileNotFoundError	-	-
+16:41:44	-	-	FileNotFoundError	-	-
+16:41:45	-	-	FileNotFoundError	-	-
+16:41:46	-	-	FileNotFoundError	-	-
+16:41:47	-	-	FileNotFoundError	-	-
+16:41:48	-	-	FileNotFoundError	-	-
+16:41:49	-	-	FileNotFoundError	-	-
+16:41:50	-	-	FileNotFoundError	-	-
+16:41:51	-	-	FileNotFoundError	-	-
+16:41:52	-	-	FileNotFoundError	-	-
+16:41:53	-	-	FileNotFoundError	-	-
+16:41:54	-	-	FileNotFoundError	-	-
+16:41:55	-	-	FileNotFoundError	-	-
+16:41:56	-	-	FileNotFoundError	-	-
+16:41:57	-	-	FileNotFoundError	-	-
+16:41:58	-	-	FileNotFoundError	-	-
+16:41:59	-	-	FileNotFoundError	-	-
+16:42:00	-	-	FileNotFoundError	-	-
+16:42:01	-	-	FileNotFoundError	-	-
+16:42:02	-	-	FileNotFoundError	-	-
+16:42:03	-	-	FileNotFoundError	-	-
+16:42:04	-	-	FileNotFoundError	-	-
+16:42:05	===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (16:42:05)	-	FileNotFoundError	-	-
+16:42:06	===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (16:42:05)	-	FileNotFoundError	-	-
+16:42:07	===== 3. worker test container (16:42:07)	-	FileNotFoundError	-	-
+16:42:08	===== 3. worker test container (16:42:07)	-	FileNotFoundError	-	-
+16:42:09	===== 4. control container (sandboxnet + dbnet) (16:42:08)	-	FileNotFoundError	-	-
+16:42:10	===== 4. control container (sandboxnet + dbnet) (16:42:08)	-	FileNotFoundError	-	-
+16:42:11	===== 4. control container (sandboxnet + dbnet) (16:42:08)	-	FileNotFoundError	-	-
+16:42:12	===== 4. control container (sandboxnet + dbnet) (16:42:08)	-	FileNotFoundError	-	-
+16:42:13	===== 5. host captures on veth25d2c45, br-1d86fe3e8bbe, ens33 + leak alert (16:42:13)	-	FileNotFoundError	-	tcpdump=4
+16:42:14	===== 5. host captures on veth25d2c45, br-1d86fe3e8bbe, ens33 + leak alert (16:42:13)	-	FileNotFoundError	-	tcpdump=4
+16:42:15	===== 5. host captures on veth25d2c45, br-1d86fe3e8bbe, ens33 + leak alert (16:42:13)	-	FileNotFoundError	-	tcpdump=4
+16:42:16	===== 6. guest ARM (16:42:16)	1791304936.249328217	0.47	-	tcpdump=4
+16:42:17	===== 6. guest ARM (16:42:16)	1791304937.292568885	0.44	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:18	===== 6. guest ARM (16:42:16)	1791304938.337211760	0.41	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:19	===== 6. guest ARM (16:42:16)	1791304939.379568741	0.38	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:20	===== 6. guest ARM (16:42:16)	1791304940.429850217	0.35	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:21	===== 6. guest ARM (16:42:16)	1791304941.480655864	0.31	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:22	===== 6. guest ARM (16:42:16)	1791304942.530409745	0.28	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:23	===== 6. guest ARM (16:42:16)	1791304943.569532413	0.25	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:24	===== 6. guest ARM (16:42:16)	1791304944.618511767	0.21	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:25	===== 6. guest ARM (16:42:16)	1791304945.662783929	0.18	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:26	===== 6. guest ARM (16:42:16)	1791304946.703018387	0.15	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:27	===== 6. guest ARM (16:42:16)	1791304947.750268714	0.12	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:28	===== 6. guest ARM (16:42:16)	1791304948.791970632	0.09	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:29	===== 6. guest ARM (16:42:16)	1791304949.834459397	0.05	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:30	===== 6. guest ARM (16:42:16)	1791304950.878005719	0.02	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:31	===== 6. guest ARM (16:42:16)	1791304950.878005719	1.03	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:32	===== 6. guest ARM (16:42:16)	1791304951.917086475	1.00	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:33	===== 6. guest ARM (16:42:16)	1791304952.961449380	0.97	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:34	===== 6. guest ARM (16:42:16)	1791304954.014548609	0.94	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:35	===== 6. guest ARM (16:42:16)	1791304955.074721299	0.90	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:36	===== 6. guest ARM (16:42:16)	1791304956.113308267	0.87	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:37	===== 6. guest ARM (16:42:16)	1791304957.153039774	0.84	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:39	===== 6. guest ARM (16:42:16)	1791304958.200128590	0.82	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:40	===== 6. guest ARM (16:42:16)	1791304959.243927797	0.79	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:41	===== 6. guest ARM (16:42:16)	1791304960.287557150	0.76	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:42	===== 6. guest ARM (16:42:16)	1791304961.333844835	0.74	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:43	===== 6. guest ARM (16:42:16)	1791304962.383853519	0.71	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:44	===== 6. guest ARM (16:42:16)	1791304963.439056276	0.67	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:45	===== 6. guest ARM (16:42:16)	1791304964.490131803	0.64	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:46	===== 6. guest ARM (16:42:16)	1791304965.537127219	0.61	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:47	===== 6. guest ARM (16:42:16)	1791304966.585590302	0.57	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:48	===== 6. guest ARM (16:42:16)	1791304967.638598621	0.54	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:49	===== 6. guest ARM (16:42:16)	1791304968.689817008	0.51	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:50	===== 6. guest ARM (16:42:16)	1791304969.741286942	0.48	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:51	===== 6. guest ARM (16:42:16)	1791304970.788223120	0.45	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:52	===== 6. guest ARM (16:42:16)	1791304971.837374141	0.43	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:53	===== 6. guest ARM (16:42:16)	1791304972.880138567	0.40	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:54	===== 6. guest ARM (16:42:16)	1791304973.932228453	0.37	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:55	===== 6. guest ARM (16:42:16)	1791304974.981202823	0.35	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:56	===== 6. guest ARM (16:42:16)	1791304976.033225412	0.32	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:57	===== 6. guest ARM (16:42:16)	1791304977.081204969	0.28	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:58	===== 6. guest ARM (16:42:16)	1791304978.160611116	0.22	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:42:59	===== 6. guest ARM (16:42:16)	1791304979.217794295	0.19	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:00	===== 6. guest ARM (16:42:16)	1791304980.271038090	0.15	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:01	===== 6. guest ARM (16:42:16)	1791304981.326081367	0.12	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:02	===== 6. guest ARM (16:42:16)	1791304982.380025468	0.10	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:03	===== 6. guest ARM (16:42:16)	1791304983.426137349	0.07	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:04	===== 6. guest ARM (16:42:16)	1791304984.468531598	0.05	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:05	===== 6. guest ARM (16:42:16)	1791304985.519152164	0.02	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:06	===== 6. guest ARM (16:42:16)	1791304985.519152164	1.03	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:07	===== 6. guest ARM (16:42:16)	1791304986.566316491	1.00	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:08	===== 6. guest ARM (16:42:16)	1791304987.606481599	0.97	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:09	===== 6. guest ARM (16:42:16)	1791304988.646907363	0.96	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:10	===== 6. guest ARM (16:42:16)	1791304989.690866744	0.93	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:11	===== 6. guest ARM (16:42:16)	1791304990.743973653	0.90	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:12	===== 6. guest ARM (16:42:16)	1791304991.790330715	0.87	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:13	===== 6. guest ARM (16:42:16)	1791304992.840559451	0.84	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:14	===== 6. guest ARM (16:42:16)	1791304993.885403675	0.81	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:15	===== 6. guest ARM (16:42:16)	1791304994.936153308	0.78	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:16	===== 6. guest ARM (16:42:16)	1791304995.984656351	0.76	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:17	===== 6. guest ARM (16:42:16)	1791304997.037533673	0.72	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:18	===== 6. guest ARM (16:42:16)	1791304998.082860072	0.69	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:19	===== 6. guest ARM (16:42:16)	1791304999.129592752	0.67	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:20	===== 6. guest ARM (16:42:16)	1791305000.180209824	0.64	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:21	===== 6. guest ARM (16:42:16)	1791305001.226117423	0.61	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:22	===== 6. guest ARM (16:42:16)	1791305002.279154267	0.58	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:23	===== 6. guest ARM (16:42:16)	1791305003.325392355	0.55	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:24	===== 6. guest ARM (16:42:16)	1791305004.371824891	0.53	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:25	===== 6. guest ARM (16:42:16)	1791305005.420127350	0.50	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:26	===== 6. guest ARM (16:42:16)	1791305006.467731390	0.47	-	dumpcap=1,qemu-system-arm=1,tcpdump=4,tshark=1
+16:43:27	===== 6. guest ARM (16:42:16)	1791305007.507056079	0.45	-	tcpdump=4
+16:43:28	===== 6. guest ARM (16:42:16)	1791305008.563903335	0.41	-	tcpdump=4
+16:43:29	===== 6. guest ARM (16:42:16)	1791305009.613450822	0.38	-	tcpdump=4
+16:43:31	===== 6. guest ARM (16:42:16)	1791305010.658984158	0.35	-	tcpdump=4
+16:43:32	===== 6. guest ARM (16:42:16)	1791305011.709399559	0.32	-	tcpdump=4
+16:43:33	===== 6. guest MIPS (16:43:32)	1791305012.747218097	0.30	-	tcpdump=4,tshark=1
+16:43:34	===== 6. guest MIPS (16:43:32)	1791305013.783752578	0.27	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:35	===== 6. guest MIPS (16:43:32)	1791305014.819444714	0.25	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:36	===== 6. guest MIPS (16:43:32)	1791305015.868010150	0.21	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:37	===== 6. guest MIPS (16:43:32)	1791305016.905948318	0.18	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:38	===== 6. guest MIPS (16:43:32)	1791305017.943986822	0.15	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:39	===== 6. guest MIPS (16:43:32)	1791305018.982376672	0.12	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:40	===== 6. guest MIPS (16:43:32)	1791305020.030107136	0.09	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:41	===== 6. guest MIPS (16:43:32)	1791305021.078896291	0.06	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:42	===== 6. guest MIPS (16:43:32)	1791305022.131196036	0.03	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:43	===== 6. guest MIPS (16:43:32)	1791305022.131196036	1.05	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:44	===== 6. guest MIPS (16:43:32)	1791305023.175270336	1.01	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:45	===== 6. guest MIPS (16:43:32)	1791305024.223434238	0.98	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:46	===== 6. guest MIPS (16:43:32)	1791305025.260581514	0.95	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:47	===== 6. guest MIPS (16:43:32)	1791305026.296143430	0.93	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:48	===== 6. guest MIPS (16:43:32)	1791305027.332914696	0.90	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:49	===== 6. guest MIPS (16:43:32)	1791305028.370893350	0.87	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:50	===== 6. guest MIPS (16:43:32)	1791305029.408504972	0.84	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:51	===== 6. guest MIPS (16:43:32)	1791305030.446986243	0.81	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:52	===== 6. guest MIPS (16:43:32)	1791305031.484065680	0.79	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:53	===== 6. guest MIPS (16:43:32)	1791305032.523209880	0.76	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:54	===== 6. guest MIPS (16:43:32)	1791305033.562526152	0.73	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:55	===== 6. guest MIPS (16:43:32)	1791305034.601306178	0.70	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:56	===== 6. guest MIPS (16:43:32)	1791305035.640558289	0.67	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:57	===== 6. guest MIPS (16:43:32)	1791305036.678949528	0.64	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:58	===== 6. guest MIPS (16:43:32)	1791305037.719468674	0.61	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:43:59	===== 6. guest MIPS (16:43:32)	1791305038.760470822	0.58	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:00	===== 6. guest MIPS (16:43:32)	1791305039.803747272	0.55	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:01	===== 6. guest MIPS (16:43:32)	1791305040.860304913	0.51	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:02	===== 6. guest MIPS (16:43:32)	1791305041.915039261	0.48	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:03	===== 6. guest MIPS (16:43:32)	1791305042.962254733	0.45	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:04	===== 6. guest MIPS (16:43:32)	1791305044.010561113	0.42	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:05	===== 6. guest MIPS (16:43:32)	1791305045.061102423	0.39	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:06	===== 6. guest MIPS (16:43:32)	1791305046.117101362	0.35	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:07	===== 6. guest MIPS (16:43:32)	1791305047.165051998	0.32	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:08	===== 6. guest MIPS (16:43:32)	1791305048.215948530	0.29	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:09	===== 6. guest MIPS (16:43:32)	1791305049.264654512	0.26	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:10	===== 6. guest MIPS (16:43:32)	1791305050.315226216	0.22	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:11	===== 6. guest MIPS (16:43:32)	1791305051.358826742	0.20	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:12	===== 6. guest MIPS (16:43:32)	1791305052.398779122	0.17	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:13	===== 6. guest MIPS (16:43:32)	1791305053.444693064	0.15	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:14	===== 6. guest MIPS (16:43:32)	1791305054.492482021	0.11	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:15	===== 6. guest MIPS (16:43:32)	1791305055.554935910	0.06	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:16	===== 6. guest MIPS (16:43:32)	1791305056.603313712	0.04	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:17	===== 6. guest MIPS (16:43:32)	1791305057.646507413	0.01	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:18	===== 6. guest MIPS (16:43:32)	1791305057.646507413	1.02	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:19	===== 6. guest MIPS (16:43:32)	1791305058.692899521	0.98	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:20	===== 6. guest MIPS (16:43:32)	1791305059.732171286	0.97	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:21	===== 6. guest MIPS (16:43:32)	1791305060.778114837	0.94	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:22	===== 6. guest MIPS (16:43:32)	1791305061.830542878	0.91	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:23	===== 6. guest MIPS (16:43:32)	1791305062.876500043	0.88	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:24	===== 6. guest MIPS (16:43:32)	1791305063.916140213	0.86	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:25	===== 6. guest MIPS (16:43:32)	1791305064.954454924	0.84	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:26	===== 6. guest MIPS (16:43:32)	1791305066.002082663	0.82	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:27	===== 6. guest MIPS (16:43:32)	1791305067.049259853	0.79	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:28	===== 6. guest MIPS (16:43:32)	1791305068.096249969	0.76	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:29	===== 6. guest MIPS (16:43:32)	1791305069.141900536	0.74	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:30	===== 6. guest MIPS (16:43:32)	1791305070.177853793	0.72	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:31	===== 6. guest MIPS (16:43:32)	1791305071.223874416	0.70	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:32	===== 6. guest MIPS (16:43:32)	1791305072.268327508	0.67	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:33	===== 6. guest MIPS (16:43:32)	1791305073.313796741	0.65	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:34	===== 6. guest MIPS (16:43:32)	1791305074.359673343	0.62	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:35	===== 6. guest MIPS (16:43:32)	1791305075.413422571	0.58	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:37	===== 6. guest MIPS (16:43:32)	1791305076.465915112	0.55	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:38	===== 6. guest MIPS (16:43:32)	1791305077.508215277	0.53	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:39	===== 6. guest MIPS (16:43:32)	1791305078.559533479	0.49	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:40	===== 6. guest MIPS (16:43:32)	1791305079.609552381	0.46	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:41	===== 6. guest MIPS (16:43:32)	1791305080.657032298	0.44	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:42	===== 6. guest MIPS (16:43:32)	1791305081.709320701	0.41	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:43	===== 6. guest MIPS (16:43:32)	1791305082.757495271	0.38	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:44	===== 6. guest MIPS (16:43:32)	1791305083.801482850	0.35	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:45	===== 6. guest MIPS (16:43:32)	1791305084.839069847	0.34	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:46	===== 6. guest MIPS (16:43:32)	1791305085.884598829	0.31	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:47	===== 6. guest MIPS (16:43:32)	1791305086.935187191	0.28	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:48	===== 6. guest MIPS (16:43:32)	1791305087.978700613	0.25	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:49	===== 6. guest MIPS (16:43:32)	1791305089.028002496	0.22	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:50	===== 6. guest MIPS (16:43:32)	1791305090.074762798	0.20	-	dumpcap=1,qemu-system-mip=1,tcpdump=4,tshark=1
+16:44:51	===== 6. guest MIPS (16:43:32)	1791305091.115356499	0.18	-	tcpdump=4
+16:44:52	===== 6. guest MIPS (16:43:32)	1791305092.165112447	0.15	-	tcpdump=4
+16:44:53	===== 6. guest MIPS (16:43:32)	1791305093.223525303	0.11	-	tcpdump=4
+16:44:54	===== 6. guest MIPS (16:43:32)	1791305094.270397834	0.08	-	tcpdump=4
+16:44:55	===== 6. guest MIPS (16:43:32)	1791305095.311437917	0.06	-	tcpdump=4
+16:44:56	===== 7. host capture analysis (16:44:55)	1791305095.311437917	1.07	-	-
+16:44:57	===== 8. teardown (16:44:56)	1791305095.311437917	2.08	-	-
+16:44:58	===== 8. teardown (16:44:56)	1791305095.311437917	3.11	-	-
+16:44:59	===== 8. teardown (16:44:56)	1791305095.311437917	4.12	-	-
+16:45:00	===== result (16:45:00)	1791305095.311437917	5.14	-	-

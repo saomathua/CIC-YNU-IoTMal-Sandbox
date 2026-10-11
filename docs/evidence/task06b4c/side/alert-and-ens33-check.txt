@@ -1,0 +1,14 @@
+== alert filters applied (offline, tcpdump -r) to the SAVED captures of this run
+   filters: hostcap/alert-filter-any.txt / alert-filter-eth.txt (written by the run)
+   container/probe/ARM/tap0.pcapng: alert_any matches=77 alert_eth matches=100
+   container/probe/MIPS/tap0.pcapng: alert_any matches=110 alert_eth matches=133
+   hostcap/veth.pcap: alert_any matches=0 alert_eth matches=0
+   hostcap/bridge.pcap: alert_any matches=0 alert_eth matches=0
+   hostcap/ens33.pcap: alert_any matches=0 alert_eth matches=0
+   (tap0 = positive on real guest traffic: the filters are not blind; host captures must be 0)
+
+== ens33 capture: snaplen and truncation (from the pcap itself)
+   pcap header snaplen=512 linktype=1; frames=589; max captured=512; frames with original>captured=7; max original=14654
+   harness-copy signatures.py: ENS33_SNAPLEN = 512
+   harness-copy signatures.py: ENS33_MAX_PACKETS = 200000
+   harness-copy signatures.py:             "icmp6_sizes": ICMP6_SIZES, "qname_prefix": QNAME_PREFIX, "ens33_snaplen": ENS33_SNAPLEN,

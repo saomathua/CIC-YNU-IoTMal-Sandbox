@@ -1,0 +1,110 @@
+== 0. prerequisites
+tcpdump: tcpdump version 4.99.4; python3: Python 3.12.3
+== A. signature scanner
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/empty.pcap
+b2d7c429306ae8c8c1c0cd9f71ff9a7234f72b57cafb5f1f6ba605de8995988e  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/negative.pcap
+943503f3a5c6f7db98aec4f0cc572d8f612bc0858bc08fe5fac3c3c65fdd679c  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/positive.pcap
+537ea160db4175c729bca4a6e6ec64e7e27fa219b14246d26ef4f8e951725e61  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/truncated.pcap
+ebcc737cd88868b5c058a8212de8a5ae8d3cad93029a7a3dd57e352b90dc9344  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-drop0-bigendian.pcapng
+d3f4234b3a2c084b2031caa7a6700bbaaf1d7d42d00b6d3738a1d2f18a7c7ef2  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-drop0.pcapng
+8f604f004a27ceb83341db583ceafb86ae107218c132bbcd305f26a0743e9d2a  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-drop3.pcapng
+98bbd3b7b6755b3a30657fa4d2000476deec9997121609947e1a9b5cfceb4d28  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-drop3-recv6.pcapng
+1c0856b1b5b7a792e626a37be73c18850ef14a548845fbd364f58dc386b2b263  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-isb-without-ifdrop.pcapng
+ed9f48d0b6e899f87668421f7e95c68b9849496ae2a93a17d5c9e594d153caac  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-no-stats.pcapng
+10ed5d40683b77120aa6dae31d677f71a7ce75ec7ad1763828a4c4c234f8941d  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-not-pcapng.pcapng
+c132dfd828d9f499d5efbb99099c0f0faf617fe3e3ca6e3e91e65db2903df628  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-osdrop2.pcapng
+112c0d8c2ef9f0894d0be7fb60152db1b62259be92ffdc8b7a68ba9c30fbbb8f  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-recv-mismatch.pcapng
+162b2298c8e527de9cdc9848f0508b45e6d52986b47f2664cb4192d22aae02b8  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-truncated-in-packet.pcapng
+7b8d8c70fbde5572792c6da786e094963873b54aa471c94f3a6c3a295d80ea34  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/ng-truncated.pcapng
+-- positive.pcap (rc=0)
+frames=6
+guest_l2l3=2
+probe_sport=1
+probe_qname=1
+probe_url=2
+control_qname=0
+[PASS] positive.pcap: sigscan exit 0
+[PASS] positive.pcap: counts equal expected.json
+-- negative.pcap (rc=0)
+frames=8
+guest_l2l3=0
+probe_sport=0
+probe_qname=0
+probe_url=0
+control_qname=2
+[PASS] negative.pcap: sigscan exit 0
+[PASS] negative.pcap: counts equal expected.json
+-- truncated.pcap: rc=2 READ ERROR rc=1 file=/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/truncated.pcap: reading from file /tmp/claude-1000/-home-dathq-projects/92872f
+[PASS] truncated.pcap: read error reported (exit 2), never counted as 0 packets
+-- empty.pcap: rc=2 READ ERROR: /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/fx/empty.pcap is empty or missing
+[PASS] empty.pcap: read error reported (exit 2), never counted as 0 packets
+[PASS] missing file: read error reported (exit 2)
+probe names from probe_matrix.py: internet-tcp lan-dns-udp lan-dns-tcp manager mongodb worker-eth0 tap0-other-port-listener ssh-host-192.168.60.1 ssh-host-192.168.177.128 ssh-host-172.18.0.1
+[PASS] probe_matrix.py plan has 7 fixed names + 3 ssh-host
+[PASS] every real probe URL matches the scanner regex
+[PASS] 06B-3B regex /ct01-06b3b-[0-9] matched none of them (the defect fixed in 06B-3C)
+== A2. pcapng drop statistics (pcapng_stats.py)
+[PASS] ng-drop0.pcapng: expected PASS, got PASS (isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets)
+[PASS] ng-drop0-bigendian.pcapng: expected PASS, got PASS (isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets)
+[PASS] ng-drop3.pcapng: expected FAIL, got FAIL (interface 0: isb_ifdrop=3)
+[PASS] ng-drop3-recv6.pcapng: expected FAIL, got FAIL (interface 0: isb_ifdrop=3)
+[PASS] ng-osdrop2.pcapng: expected FAIL, got FAIL (interface 0: isb_osdrop=2)
+[PASS] ng-recv-mismatch.pcapng: expected FAIL, got FAIL (interface 0: isb_ifrecv=5 but 3 packets stored)
+[PASS] ng-no-stats.pcapng: expected UNVERIFIED, got UNVERIFIED (no interface statistics block: drop count unknown)
+[PASS] ng-isb-without-ifdrop.pcapng: expected UNVERIFIED, got UNVERIFIED (interface 0: statistics block without isb_ifdrop)
+[PASS] ng-truncated.pcapng: expected ERROR, got ERROR (truncated or invalid block (type 0x5, length 84) at offset 456)
+[PASS] ng-truncated-in-packet.pcapng: expected ERROR, got ERROR (truncated or invalid block (type 0x6, length 124) at offset 332)
+[PASS] ng-not-pcapng.pcapng: expected ERROR, got ERROR (not a pcapng file (no section header block))
+[PASS] real 06B-3B ARM tap0.pcapng: PASS, isb={'comment': 'Counters provided by dumpcap', 'isb_ifrecv': 97, 'isb_ifdrop': 0}, stored={0: 97}
+[PASS] real 06B-3B MIPS tap0.pcapng: PASS, isb={'comment': 'Counters provided by dumpcap', 'isb_ifrecv': 125, 'isb_ifdrop': 0}, stored={0: 125}
+[PASS] pcapng_stats verdicts as expected
+== B. capture watcher with heartbeat
+[PASS] watcher quiet while captures run
+[PASS] heartbeat present and fresh
+[PASS] heartbeat refreshed (1791304820.890515480 -> 1791304821.379772800)
+[PASS] captures still alive after the watcher was killed
+[PASS] heartbeat stale 1.6 s after the watcher died (limit 1 s)
+marker: 16:40:23 capture p2 pid 71919 exited during the test
+[PASS] watcher writes marker naming the dead capture
+[PASS] watcher ends after a capture died
+[PASS] precondition: pid 72025 is a zombie and kill -0 still succeeds on it
+[PASS] watcher treats a zombie capture as dead (marker written)
+[PASS] heartbeat_fresh: current -> fresh
+[PASS] heartbeat_fresh: 30 s old -> stale
+[PASS] heartbeat_fresh: unparsable -> stale
+[PASS] heartbeat_fresh: 60 s in the future -> stale
+[PASS] heartbeat_fresh: missing file -> stale
+== B2. probe_matrix.py captures_alive (extracted with ast; sleep stands in for tshark/tcpdump)
+[PASS] tshark alive, no marker, fresh heartbeat -> continue
+[PASS] empty marker file -> continue
+[PASS] host marker present -> CaptureLost (t: host capture lost: 12:00:00 capture ens33 pid 1 exited during the test)
+[PASS] marker unreadable (a directory) -> CaptureLost (t: host capture marker unreadable: [Errno 21] Is a directory: '/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st3d.teHMaR/pm.eCDr6G/marker-dir')
+[PASS] heartbeat missing -> CaptureLost (t: host watcher heartbeat missing (watcher not running))
+[PASS] heartbeat 30 s old -> CaptureLost (t: host watcher heartbeat is 30.0 s old (limit 5.0 s))
+[PASS] heartbeat unparsable -> CaptureLost (t: host watcher heartbeat unreadable: could not convert string to float: 'xyz')
+[PASS] heartbeat in the future -> CaptureLost (t: host watcher heartbeat is -60.0 s old (limit 5.0 s))
+[PASS] real watcher running -> continue
+[PASS] real watcher killed while the capture still runs -> CaptureLost (t: host watcher heartbeat is 1.7 s old (limit 1.0 s))
+[PASS] tshark exited -> CaptureLost (t: tap0 tshark exited rc=-9)
+[PASS] tshark never started -> CaptureLost (t: tap0 tshark exited rc=None)
+[PASS] probe_matrix.py captures_alive behaves as specified
+== C. manager handling (fake docker)
+[PASS] C1 running: prepare 0, restore 0, still running
+[PASS] C1 running: no compose up and no stop (never restarted)
+[PASS] C2 exited: prepare 0, marked started, restore 0, exited again
+[PASS] C2 exited: exactly one compose up, then docker stop of the same id
+[PASS] C3 running, restarted during the test: restore fails, nothing stopped
+[PASS] C4 running, container replaced: restore fails, replacement not stopped
+[PASS] C5 running, stopped by someone else: restore fails
+[PASS] C6 compose up fails: prepare non-zero, NOT marked started
+[PASS] C6 compose up fails: restore 0, nothing stopped, still exited
+[PASS] C7 compose up fails after starting it: prepare non-zero, NOT marked started
+[PASS] C7 ... restore stops that same container and returns 0
+[PASS] C8 compose up replaced the container: prepare non-zero, NOT marked started
+[PASS] C8 ... restore fails and does not stop the replacement
+[PASS] C9 started by us, replaced during the test: restore fails, replacement not stopped
+[PASS] C10 docker stop fails: restore fails
+[PASS] C11 created: refused before any change (no docker call that changes state)
+[PASS] C12 paused: refused before any change
+
+SELFTEST: ALL PASSED

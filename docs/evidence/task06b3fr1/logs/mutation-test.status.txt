@@ -1,0 +1,3 @@
+hash check before mutation: OK
+mutation rc=0
+hash check after mutation: OK (harness unchanged during the run)

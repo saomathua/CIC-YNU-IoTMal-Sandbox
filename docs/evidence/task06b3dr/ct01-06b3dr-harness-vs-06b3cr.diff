@@ -1,0 +1,774 @@
+--- 06b3cr/run-06b3b.sh
++++ 06b3dr/run-06b3b.sh
+@@ -6,6 +6,9 @@
+ #    codes, kernel drops and pcap read errors are checked;
+ #  * ip link / addr / route / neigh / rule of the worker netns recorded before and after;
+ #  * manager restored to its initial state (running stays running and is not restarted).
++# Revised in 06B-3DR: timed nft counter reads with boundary zones (counter_window.py); teardown stops
++# the controls, drains, then stops captures with a deadline and records a timeline and versions;
++# results are PASS (exit 0), FAIL (1), UNVERIFIED (4) or passed-with-open-items (5).
+ #
+ #   sudo bash /home/dathq/projects/ct01-06b3c/run-06b3b.sh
+ #
+@@ -43,14 +46,16 @@
+ exec > >(tee "$OUT/run.log") 2>&1
+ cp "$0" "$H/probe_matrix.py" "$H/ctl_loop.py" "$H/sentinel/poller.py" "$H/harness_lib.sh" "$H/sigscan.sh" \
+     "$H/make_fixtures.py" "$H/selftest.sh" "$H/independent_check.sh" "$H/pcapng_stats.py" "$H/mutation_test.sh" \
+-    "$OUT/harness-copy/"
++    "$H/counter_window.py" "$OUT/harness-copy/"
+ sha256sum "$OUT"/harness-copy/* | tee "$OUT/harness-sha256.txt"
+ # Offline self-test of the scanner, the capture watcher and the manager handling; nothing runs if it fails.
+ bash "$H/selftest.sh" "$OUT/selftest" > "$OUT/selftest.txt" 2>&1 || { cat "$OUT/selftest.txt"; echo "ABORT: harness self-test failed"; exit 3; }
+ tail -1 "$OUT/selftest.txt"
+ source "$H/harness_lib.sh"   # alive, start/stop_capture_watch, manager_prepare/restore
+ 
+-CREATED_IDS=(); FAILS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
++CREATED_IDS=(); FAILS=(); UNVERIFIED=(); OPEN_ITEMS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
++DRAIN_S=3           # 06B-3DR: after the controls stop, captures get this long to process what is left
++CAP_DEADLINE_S=10   # then SIGINT; a capture still running after this many seconds is killed (FAIL)
+ log()  { echo; echo "===== $* ($(date -u +%H:%M:%S))"; }
+ pass() { echo "[PASS] $*"; }
+ fail() { echo "[FAIL] $*"; FAILS+=("$*"); }
+@@ -59,15 +64,16 @@
+ rm_capd() { [[ "${CAPD:-}" == /tmp/ct01-06b3b-cap.?????? ]] && [ -d "$CAPD" ] && rm -r -- "$CAPD"; }
+ COMPOSE=(docker compose --project-directory "$REPO" -f "$REPO/docker-compose.yml")
+ 
+-# Stops the host captures and records each exit code in hostcap/tcpdump-exit.txt ("<name> <rc>").
++# Stops the host captures with a deadline (harness_lib.sh: stop_captures_deadline). Exit codes go to
++# hostcap/tcpdump-exit.txt ("<name> <rc>" or "<name> KILLED_AT_DEADLINE"), every step to the timeline.
+ stop_tcpdumps() {
+-    local i rc
+-    for i in "${!TCPDUMP_PIDS[@]}"; do kill -INT "${TCPDUMP_PIDS[$i]}" 2>/dev/null; done
+-    for i in "${!TCPDUMP_PIDS[@]}"; do
+-        wait "${TCPDUMP_PIDS[$i]}" 2>/dev/null; rc=$?
+-        echo "${TCPDUMP_NAMES[$i]} $rc" >> "$OUT/hostcap/tcpdump-exit.txt"
+-    done
++    local i e=() rc
++    [ ${#TCPDUMP_PIDS[@]} -gt 0 ] || return 0
++    for i in "${!TCPDUMP_PIDS[@]}"; do e+=("${TCPDUMP_NAMES[$i]}:${TCPDUMP_PIDS[$i]}"); done
++    stop_captures_deadline "$CAP_DEADLINE_S" "$OUT/hostcap/tcpdump-exit.txt" "$OUT/hostcap/teardown-timeline.txt" "${e[@]}"
++    rc=$?
+     TCPDUMP_PIDS=(); TCPDUMP_NAMES=()
++    return $rc
+ }
+ CAPD=""
+ cleanup() {
+@@ -150,6 +156,7 @@
+     -e ANALYSIS_DURATION=30 -e POST_ANALYSIS_WAIT=30 -e ALLOW_VM_INTERNET=false \
+     -v "$H/sentinel/poller.py:/app/poller.py:ro" -v "$H/probe_matrix.py:/harness/probe_matrix.py:ro" \
+     -v "$H/pcapng_stats.py:/harness/pcapng_stats.py:ro" \
++    -v "$H/counter_window.py:/harness/counter_window.py:ro" \
+     -v "$D/sentinel:/sentinel-out" -v "$D/probe:/harness-out" \
+     -v "$OUT/hostcap:/hostcap:ro" -v "$OUT/ctl:/ctl:ro" \
+     "$IMAGE") || { echo "ABORT: docker run failed"; exit 3; }
+@@ -196,6 +203,7 @@
+ 
+ # ------------------------------------------------------------------ 5. host captures (read-only)
+ log "5. host captures on $VETH, $BR, ens33 + leak alert"
++tcpdump --version > "$OUT/hostcap/versions.txt" 2>&1; cat "$OUT/hostcap/versions.txt"   # tcpdump + libpcap
+ # Runs 1-3: tcpdump 4.99.4 / libpcap 1.10.4 segfaults ("segfault at 0 ... in libc.so.6") whenever
+ # `-Z root` is combined with `-w` (file or stdout); run 3's diagnosis on lo showed `-w <file>` and
+ # `-w -` without -Z, and `-Z root -l` (text), all work. Pcap captures therefore run without -Z;
+@@ -261,7 +269,16 @@
+     if [ $rc -eq 98 ] || [ -s "$DEAD" ] || ! watch_ok; then
+         fail "$ARCH: capture or watcher lost during the test (probe_matrix rc=$rc; $(cat "$DEAD" 2>/dev/null)) — probes stopped"; break
+     fi
+-    check "$ARCH: probe_matrix exit 0 (all checks and probes passed)" test $rc -eq 0
++    # 06B-3DR: separate real failures from probes that could not be decided (counter-window edges,
++    # missing tool, no live control). Either way the run does not pass.
++    outcome=$(python3 -c 'import json, sys; sys.path.insert(0, sys.argv[1]); import counter_window as cw
++print(cw.run_outcome(json.load(open(sys.argv[2]))["results"]))' "$H" "$D/probe/$ARCH/result.json" 2>&1)
++    echo "$ARCH: probe_matrix outcome: $outcome"
++    case "$rc:$outcome" in
++    0:PASS) pass "$ARCH: probe_matrix exit 0 (all checks and probes passed)" ;;
++    1:UNVERIFIED*) UNVERIFIED+=("$ARCH: $outcome"); echo "[UNVERIFIED] $ARCH: $outcome" ;;
++    *) fail "$ARCH: probe_matrix exit $rc, outcome: $outcome" ;;
++    esac
+     E ps -eo pid,args > "$D/ps-after-$ARCH.txt"
+     check "$ARCH: no qemu-system/tshark left in container" bash -c "! grep -qE 'qemu-system|tshark' '$D/ps-after-$ARCH.txt'"
+     E sh -c 'cd /app && python3 -m isolation.verify --phase "06B-3B after '"$ARCH"'"' > "$D/verify-after-$ARCH.txt" 2>&1
+@@ -276,16 +293,35 @@
+ diff -u "$D/netns-before.txt" "$D/netns-after.txt" > "$D/netns-diff.txt" && echo "worker netns full record: unchanged" \
+     || echo "worker netns full record: differences in container/netns-diff.txt (reported, e.g. neighbor states)"
+ 
+-log "7. host capture analysis"
++log "7. teardown of controls and captures (drain ${DRAIN_S} s, capture deadline ${CAP_DEADLINE_S} s)"
++TL="$OUT/hostcap/teardown-timeline.txt"
++timeline "$TL" "guests finished (last probe_matrix returned)"
++docker stop -t 5 "$CID" > /dev/null 2>&1; rc=$?
++timeline "$TL" "control container stopped (docker stop rc=$rc)"
++check "control container stopped after the guests" test $rc -eq 0
++sleep "$DRAIN_S"
++timeline "$TL" "drain period of ${DRAIN_S} s ended"
+ check "capture watcher still alive with a fresh heartbeat at the end" watch_ok
+ stop_capture_watch
++timeline "$TL" "capture watcher stopped"
+ check "no host capture exited during the test (watcher marker empty)" test ! -s "$DEAD"
+ stop_tcpdumps
+-cat "$OUT/hostcap/tcpdump-exit.txt"
++check "all host captures exited on SIGINT within ${CAP_DEADLINE_S} s with exit 0" test $? -eq 0
++cat "$TL" "$OUT/hostcap/tcpdump-exit.txt"
++printf 'capture\tcaptured\treceived_by_filter\tdropped_by_kernel\n' > "$OUT/hostcap/capture-stats.tsv"
+ for f in veth bridge ens33 alert; do
+     check "tcpdump $f: exit 0 on stop" grep -qx "$f 0" "$OUT/hostcap/tcpdump-exit.txt"
+-    check "tcpdump $f: ended normally (statistics printed)" grep -q ' packets captured$' "$OUT/hostcap/$f.err"
+-    check "tcpdump $f: 0 packets dropped by kernel" grep -qx '0 packets dropped by kernel' "$OUT/hostcap/$f.err"
++    st=$(capture_stats "$OUT/hostcap/$f.err")
++    check "tcpdump $f: statistics present (captured, received by filter, dropped by kernel)" test -n "$st" || continue
++    read -r cap rcv drp <<< "$st"
++    printf '%s\t%s\t%s\t%s\n' "$f" "$cap" "$rcv" "$drp" >> "$OUT/hostcap/capture-stats.tsv"
++    check "tcpdump $f: 0 packets dropped by kernel" test "$drp" -eq 0
++    if [ "$rcv" -ne "$cap" ]; then
++        # Reported, not judged: what "received by filter" counts depends on the capture backend and
++        # has not been verified for this one; nothing is inferred about which packets these were.
++        OPEN_ITEMS+=("tcpdump $f: received by filter ($rcv) - captured ($cap) = $((rcv - cap)), not explained")
++        echo "[OPEN] tcpdump $f: received by filter $rcv, captured $cap (difference $((rcv - cap)) not explained)"
++    fi
+ done
+ # tcpdump prints a bare newline on SIGINT: only non-empty lines are packets
+ check "leak alert: no 10.200.0.0/30 packet line on any host interface" bash -c "! grep -q . '$OUT/hostcap/alert.txt'"
+@@ -357,5 +393,11 @@
+ 
+ log "result"
+ [ $LEAK -eq 1 ] && echo "!!! LEAK DETECTED — tests were stopped; report to reviewer immediately"
+-if [ ${#FAILS[@]} -eq 0 ]; then echo "ALL CHECKS PASSED"; exit 0; fi
+-echo "${#FAILS[@]} CHECK(S) FAILED:"; printf ' - %s\n' "${FAILS[@]}"; exit 1
++[ ${#OPEN_ITEMS[@]} -gt 0 ] && { echo "OPEN ITEMS (reported, not explained):"; printf ' - %s\n' "${OPEN_ITEMS[@]}"; }
++[ ${#UNVERIFIED[@]} -gt 0 ] && { echo "UNVERIFIED (could not be decided):"; printf ' - %s\n' "${UNVERIFIED[@]}"; }
++if [ ${#FAILS[@]} -gt 0 ]; then
++    echo "${#FAILS[@]} CHECK(S) FAILED:"; printf ' - %s\n' "${FAILS[@]}"; exit 1
++fi
++[ ${#UNVERIFIED[@]} -gt 0 ] && { echo "NOT PASSED: no check failed, but some results are UNVERIFIED"; exit 4; }
++[ ${#OPEN_ITEMS[@]} -gt 0 ] && { echo "CHECKS PASSED, INCONCLUSIVE: open items above are not explained"; exit 5; }
++echo "ALL CHECKS PASSED"; exit 0
+--- 06b3cr/probe_matrix.py
++++ 06b3dr/probe_matrix.py
+@@ -18,6 +18,12 @@
+ (/hostcap/capture-watch.heartbeat) fresh; otherwise the probes stop (exit 98). tshark must exit 0,
+ and the drop statistics are taken from the pcapng interface statistics block (pcapng_stats.py):
+ missing statistics are a failed check, not "0 dropped".
++
++06B-3DR: every nft counter read records the start and end of the call (raw JSON kept in
++counters-raw.jsonl). counter_window.py splits the pcap into a certain zone between the two reads
++and two ambiguous edge zones; any edge frame of a compared class makes the reconciliation
++UNVERIFIED (CHƯA KIỂM CHỨNG), a delta outside [certain, certain + edges] is FAIL, and only an
++unambiguous exact match passes. Nothing is widened or compensated.
+ """
+ import ipaddress
+ import json
+@@ -35,6 +41,7 @@
+ import http.server
+ 
+ import pcapng_stats   # /harness/pcapng_stats.py, next to this script (06B-3CR)
++import counter_window   # /harness/counter_window.py (06B-3DR)
+ from zipfile import ZipFile
+ 
+ sys.path.insert(0, "/app")
+@@ -122,9 +129,16 @@
+     return r.stdout
+ 
+ 
+-def counters():
+-    out = json.loads(run_checked(["nft", "-j", "list", "counters"]))
+-    return {o["counter"]["name"]: o["counter"]["packets"] for o in out["nftables"] if "counter" in o}
++def counters_read(label):
++    """06B-3DR: one nft counter read with the wall-clock start/end of the call. The raw JSON is kept
++    in counters-raw.jsonl; the snapshot happened somewhere between t_start and t_end."""
++    t_start = time.time()
++    raw = run_checked(["nft", "-j", "list", "counters"])
++    t_end = time.time()
++    with open(os.path.join(OUT, "counters-raw.jsonl"), "a") as f:
++        f.write(json.dumps({"label": label, "t_start": t_start, "t_end": t_end, "raw": raw}) + "\n")
++    values = {o["counter"]["name"]: o["counter"]["packets"] for o in json.loads(raw)["nftables"] if "counter" in o}
++    return {"label": label, "t_start": t_start, "t_end": t_end, "values": values}
+ 
+ 
+ def alert_lines():
+@@ -448,7 +462,7 @@
+             say(f"--- probe {pid}: {proto} {ip}:{port} (expected block point: {klass})")
+             captures_alive(tshark, f"before probe {pid}")
+             cb = run_ctl(local_ctl) if local_ctl else None
+-            c0, t0 = counters(), time.time()
++            ra = counters_read(f"{pid} before")
+             if proto == "tcp":
+                 rc, out = g.run(f"curl -s -o /dev/null --local-port {lport} --connect-timeout 4 -m 5 "
+                                 f"-w 'HTTP=%{{http_code}}\\n' http://{ip}:{port}/ct01-06b3b-{pid}", timeout=30)
+@@ -459,12 +473,15 @@
+             else:
+                 rc, out, guest_failed = None, "TOOL_MISSING: nslookup not available in guest", False
+             time.sleep(1.0)
+-            t1, c1 = time.time(), counters()
++            rb = counters_read(f"{pid} after")
++            c0, c1, t0, t1 = ra["values"], rb["values"], ra["t_start"], rb["t_end"]
+             ca = run_ctl(local_ctl) if local_ctl else None
+             remote = {"prefix": remote_ctl} if remote_ctl else None   # evaluated in evaluate()
+             alerts = alert_lines()
+             p = {"probe": pid, "dst": ip, "proto": proto, "port": port, "lport": lport if proto == "tcp" else None,
+                  "qname": qname if proto == "udp" else None, "expected_class": klass, "t0": t0, "t1": t1,
++                 "read_before": {k: ra[k] for k in ("t_start", "t_end")},
++                 "read_after": {k: rb[k] for k in ("t_start", "t_end")},
+                  "guest_rc": rc, "guest_output": (out or "").strip()[-300:], "guest_failed": guest_failed,
+                  "control_before": cb, "control_after": ca, "remote_control": remote,
+                  "counter_delta": {k: c1.get(k, 0) - c0.get(k, 0) for k in c1 if c1.get(k, 0) != c0.get(k, 0)},
+@@ -560,19 +577,21 @@
+     for p in probes:
+         if p["remote_control"] is not None:
+             p["remote_control"] = ctl_log_window(p["remote_control"]["prefix"], p["t0"], p["t1"])
+-        win = [r for r in rows if p["t0"] <= r["t"] <= p["t1"]]
+-        cls = {}
+-        for r in win:
+-            c = classify(r)
+-            if c:
+-                cls[c] = cls.get(c, 0) + 1
++        # 06B-3DR: zones from the timed counter reads; no widening, no compensation
++        ra, rb = p["read_before"], p["read_after"]
++        span = [r for r in rows if ra["t_start"] - counter_window.GUARD_S <= r["t"] <= rb["t_end"]]
++        frames = [{"t": r["t"], "cls": classify(r)} for r in span]
++        dl = p["counter_delta"]
++        recon = counter_window.reconcile(frames, ra, rb, dl, CLASSES)
++        cls = {k: v["certain"] for k, v in recon["per_class"].items() if v["certain"]}
++        mismatch = {k: {"delta": v["delta"], "certain": v["lo"], "with_edges": v["hi"], "status": v["status"],
++                        "edge_start_t": v["edge_start"], "edge_end_t": v["edge_end"]}
++                    for k, v in recon["per_class"].items() if v["status"] != "PASS"}
+         if p["proto"] == "tcp":
+-            mine = [r for r in win if r["src_mac"] == C.GUEST_MAC and r["sport"] == str(p["lport"])]
++            mine = [r for r in span if r["src_mac"] == C.GUEST_MAC and r["sport"] == str(p["lport"])]
+         else:
+-            mine = [r for r in win if r["src_mac"] == C.GUEST_MAC and r["qname"] == p["qname"]]
++            mine = [r for r in span if r["src_mac"] == C.GUEST_MAC and r["qname"] == p["qname"]]
+         mine_cls = sorted({classify(r) for r in mine})
+-        dl = p["counter_delta"]
+-        mismatch = {k: (dl.get(k, 0), cls.get(k, 0)) for k in CLASSES if dl.get(k, 0) != cls.get(k, 0)}
+         local_ok = p["control_before"] is None or (p["control_before"]["ok"] and p["control_after"]["ok"])
+         remote_ok = p["remote_control"] is None or p["remote_control"]["ok"]
+         control_alive = local_ok and remote_ok and (p["control_before"] is not None or p["remote_control"] is not None)
+@@ -581,34 +600,30 @@
+             "control_alive_same_dst_proto_port": control_alive,
+             "probe_packets_in_tap0_pcap": len(mine) > 0,
+             "probe_packets_hit_expected_counter": mine_cls == [p["expected_class"]],
+-            "expected_counter_delta_eq_pcap": dl.get(p["expected_class"], 0) == cls.get(p["expected_class"], 0) > 0,
+-            "all_counter_deltas_eq_pcap_classification": not mismatch,
+             "no_host_alert": p["host_alert_lines"] == 0,
+         }
+-        if p["guest_output"].startswith("TOOL_MISSING"):
+-            verdict = "CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)"
+-        elif not control_alive:
+-            verdict = "CHƯA KIỂM CHỨNG (không có đối chứng sống)"
+-        elif all(checks.values()):
+-            verdict = "ĐẠT"
+-        else:
+-            verdict = "FAIL"
++        verdict, ok = counter_window.probe_verdict(
++            checks, recon, p["expected_class"], tool_missing=p["guest_output"].startswith("TOOL_MISSING"),
++            control_alive=control_alive)
+         row = {"probe": p["probe"], "dst": f"{p['proto']} {p['dst']}:{p['port']}", "verdict": verdict,
+                "probe_packets": len(mine), "expected_class": p["expected_class"],
+-               "counter_delta": dl, "pcap_classified": cls, "mismatch": mismatch, "checks": checks,
++               "counter_delta": dl, "pcap_certain": cls, "mismatch": mismatch, "checks": checks,
++               "counter_reconciliation": recon,
+                "guest_rc": p["guest_rc"], "control_before": p["control_before"], "control_after": p["control_after"],
+                "remote_control": p["remote_control"]}
+         table.append(row)
+-        record(f"probe {p['probe']} ({row['dst']}) -> {verdict}", verdict == "ĐẠT",
++        record(f"probe {p['probe']} ({row['dst']}) -> {verdict}", ok,
+                probe_packets=len(mine), expected=p["expected_class"], counter=dl.get(p["expected_class"], 0),
+-               pcap=cls.get(p["expected_class"], 0), mismatch=mismatch,
++               pcap_certain=cls.get(p["expected_class"], 0), reconciliation=recon["verdict"], mismatch=mismatch,
+                failed_checks=[k for k, v in checks.items() if not v])
+     json.dump(table, open(os.path.join(OUT, "matrix.json"), "w"), indent=1, default=str)
+     with open(os.path.join(OUT, "matrix.md"), "w") as f:
+-        f.write("| probe | dst | probe pkts | expected counter = delta | pcap (same class) | verdict |\n|---|---|---|---|---|---|\n")
++        f.write("| probe | dst | probe pkts | expected counter = delta | pcap certain (same class) | "
++                "reconciliation (all classes) | verdict |\n|---|---|---|---|---|---|---|\n")
+         for r in table:
+             f.write(f"| {r['probe']} | {r['dst']} | {r['probe_packets']} | {r['expected_class']}="
+-                    f"{r['counter_delta'].get(r['expected_class'], 0)} | {r['pcap_classified'].get(r['expected_class'], 0)} | {r['verdict']} |\n")
++                    f"{r['counter_delta'].get(r['expected_class'], 0)} | {r['pcap_certain'].get(r['expected_class'], 0)} | "
++                    f"{r['counter_reconciliation']['verdict']} | {r['verdict']} |\n")
+ 
+ 
+ if __name__ == "__main__":
+--- /dev/null
++++ 06b3dr/counter_window.py
+@@ -0,0 +1,100 @@
++"""06B-3DR — reconcile nft counter deltas with tap0 pcap frames without hiding boundary effects.
++
++Each counter read records when the `nft -j list counters` call started and ended (t_start, t_end).
++The snapshot happens somewhere inside that interval, so for a probe with reads A (before) and B
++(after) every guest frame falls into one of four zones by its capture timestamp t:
++
++    outside      t <  A.t_start - GUARD   or   t > B.t_end         -> not in the delta
++    edge_start   A.t_start - GUARD <= t <= A.t_end                  -> may or may not be in the delta
++    certain      A.t_end < t < B.t_start - GUARD                     -> in the delta
++    edge_end     B.t_start - GUARD <= t <= B.t_end                  -> may or may not be in the delta
++
++GUARD covers the delay between the capture timestamp of a frame and the moment the same frame
++reaches the nft counter (the timestamp can be earlier, never later). Its value is an ASSUMPTION
++(not measured) and only widens the ambiguous zones; it never widens the certain zone.
++
++Per counter class:  lo = certain frames,  hi = certain + edge frames,  d = counter delta
++    FAIL        d < lo or d > hi           a real mismatch, whatever the edge frames did
++    UNVERIFIED  lo <= d <= hi and hi > lo  edge frames make the comparison undecidable
++    PASS        d == lo == hi              no ambiguity and the counter equals the pcap
++Overall: FAIL if any class fails, else UNVERIFIED if any class is undecidable, else PASS.
++Nothing is offset or compensated: two errors of opposite sign at the two edges cannot cancel,
++because any edge frame makes the class UNVERIFIED.
++"""
++
++GUARD_S = 0.020
++ZONES = ("outside", "edge_start", "certain", "edge_end")
++
++
++def zone(t, read_a, read_b, guard=GUARD_S):
++    if t < read_a["t_start"] - guard or t > read_b["t_end"]:
++        return "outside"
++    if t <= read_a["t_end"]:
++        return "edge_start"
++    if t < read_b["t_start"] - guard:
++        return "certain"
++    return "edge_end"
++
++
++def reconcile(frames, read_a, read_b, delta, classes, guard=GUARD_S):
++    """frames: [{"t": float, "cls": str|None}]; delta: {counter: packets}; classes: counters compared.
++    Returns {"verdict", "per_class": {cls: {...}}, "not_compared": {...}, "guard_s", "reads"}."""
++    per = {k: {"certain": 0, "edge_start": [], "edge_end": [], "delta": delta.get(k, 0)} for k in classes}
++    for fr in frames:
++        k = fr.get("cls")
++        if k not in per:
++            continue
++        z = zone(fr["t"], read_a, read_b, guard)
++        if z == "certain":
++            per[k]["certain"] += 1
++        elif z in ("edge_start", "edge_end"):
++            per[k][z].append(fr["t"])
++    verdicts = []
++    for k, v in per.items():
++        lo = v["certain"]
++        hi = lo + len(v["edge_start"]) + len(v["edge_end"])
++        d = v["delta"]
++        v["lo"], v["hi"] = lo, hi
++        if d < lo or d > hi:
++            v["status"] = "FAIL"
++        elif hi > lo:
++            v["status"] = "UNVERIFIED"
++        else:
++            v["status"] = "PASS"
++        verdicts.append(v["status"])
++    overall = "FAIL" if "FAIL" in verdicts else "UNVERIFIED" if "UNVERIFIED" in verdicts else "PASS"
++    return {"verdict": overall, "per_class": per, "guard_s": guard,
++            "not_compared": {k: d for k, d in delta.items() if k not in per and d},
++            "reads": {"before": {x: read_a[x] for x in ("t_start", "t_end")},
++                      "after": {x: read_b[x] for x in ("t_start", "t_end")}}}
++
++
++def probe_verdict(checks, recon, expected_class, tool_missing=False, control_alive=True):
++    """checks: boolean checks other than the counter reconciliation.
++    Returns (verdict text, ok). ok is True only for ĐẠT; UNVERIFIED never counts as passed."""
++    exp = recon["per_class"].get(expected_class, {})
++    expected_ok = exp.get("status") == "PASS" and exp.get("delta", 0) > 0
++    if tool_missing:
++        return "CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False
++    if not control_alive:
++        return "CHƯA KIỂM CHỨNG (không có đối chứng sống)", False
++    if not all(checks.values()) or recon["verdict"] == "FAIL" or exp.get("status") == "FAIL":
++        return "FAIL", False
++    if recon["verdict"] == "UNVERIFIED":
++        return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False
++    if not expected_ok:
++        return "FAIL", False
++    return "ĐẠT", True
++
++
++def run_outcome(results):
++    """One architecture's result.json "results" -> "PASS", "UNVERIFIED: ..." or "FAIL: ...".
++    Only probe records whose verdict is CHƯA KIỂM CHỨNG may be undecided; any other failed check
++    (or a failed probe) is a FAIL. UNVERIFIED is never a pass."""
++    bad = [r for r in results if not r["ok"]]
++    if not bad:
++        return "PASS"
++    hard = [r["test"] for r in bad if not (r["test"].startswith("probe ") and "-> CHƯA KIỂM CHỨNG" in r["test"])]
++    if hard:
++        return "FAIL: " + "; ".join(hard[:5])
++    return "UNVERIFIED: " + "; ".join(r["test"] for r in bad[:10])
+--- 06b3cr/harness_lib.sh
++++ 06b3dr/harness_lib.sh
+@@ -136,3 +136,50 @@
+     MANAGER_RESTORE_RC=$rc
+     return $rc
+ }
++
++# ---------------------------------------------------------------- capture teardown (06B-3DR)
++# now_us: wall clock in microseconds (bash 5 EPOCHREALTIME)
++now_us() { local t=$EPOCHREALTIME; echo "${t/./}"; }
++
++# timeline <file> <text>: append "<epoch.us> <UTC time> <text>"
++timeline() { echo "$EPOCHREALTIME $(date -u +%H:%M:%S.%N | cut -c1-12) $2" >> "$1"; }
++
++# stop_captures_deadline <deadline-s> <exit-file> <timeline-file> <name:pid>...
++# Sends SIGINT to every capture, then waits for each until one common deadline. A capture still
++# running at the deadline is killed (SIGKILL) and recorded as "<name> KILLED_AT_DEADLINE";
++# otherwise "<name> <exit code>". Every step goes to the timeline. Returns 1 if any capture had to
++# be killed or exited non-zero. The captures must be children of the calling shell (for wait).
++stop_captures_deadline() {
++    local deadline_s=$1 exitf=$2 tl=$3 e p n rc bad=0 end_us
++    shift 3
++    for e in "$@"; do
++        kill -INT "${e##*:}" 2>/dev/null
++        timeline "$tl" "${e%%:*} pid ${e##*:}: SIGINT sent"
++    done
++    end_us=$(( $(now_us) + deadline_s * 1000000 ))
++    for e in "$@"; do
++        n=${e%%:*}; p=${e##*:}
++        while alive "$p" && [ "$(now_us)" -lt "$end_us" ]; do sleep 0.05; done
++        if alive "$p"; then
++            kill -KILL "$p" 2>/dev/null; wait "$p" 2>/dev/null
++            timeline "$tl" "$n pid $p: still running at the ${deadline_s} s deadline -> SIGKILL"
++            echo "$n KILLED_AT_DEADLINE" >> "$exitf"; bad=1
++        else
++            wait "$p" 2>/dev/null; rc=$?
++            timeline "$tl" "$n pid $p: exited rc=$rc"
++            echo "$n $rc" >> "$exitf"
++            [ "$rc" -eq 0 ] || bad=1
++        fi
++    done
++    return $bad
++}
++
++# capture_stats <tcpdump stderr file>: prints "captured received_by_filter dropped_by_kernel".
++# Returns 1 (and prints nothing) if any of the three statistics lines is missing: a missing line is
++# never read as 0.
++capture_stats() {
++    awk '/^[0-9]+ packets captured$/ {c=$1; nc++}
++         /^[0-9]+ packets received by filter$/ {r=$1; nr++}
++         /^[0-9]+ packets dropped by kernel$/ {d=$1; nd++}
++         END { if (nc != 1 || nr != 1 || nd != 1) exit 1; print c, r, d }' "$1"
++}
+--- 06b3cr/selftest.sh
++++ 06b3dr/selftest.sh
+@@ -13,6 +13,13 @@
+ #  B2. probe_matrix.py captures_alive (extracted with ast): tshark, marker and heartbeat cases, and a
+ #      real watcher killed while captures run -> CaptureLost
+ #  C. manager handling (harness_lib.sh) with a fake docker/compose, 12 scenarios
++#  D. counter window reconciliation (counter_window.py): 11 cases incl. edges, guard zone, real
++#     mismatch and two errors that cancel (the old 06B-3B/3D method gives a false PASS there)
++#  E. probe verdict and run outcome: UNVERIFIED is never a pass; a real failure wins over UNVERIFIED
++#  F. capture stop with deadline: exit 0, exit 3, SIGINT ignored -> killed at the deadline
++#  G. tcpdump statistics parsing: a missing line is a failure, never 0
++#  H. probe_matrix.py evaluate() replayed offline with stub worker modules: clean -> ĐẠT,
++#     IPv6 frame inside read A (06B-3D shape) -> CHƯA KIỂM CHỨNG, real mismatch -> FAIL
+ # Lines "[FAIL] ..." are behavioural failures; "SELFTEST-ERROR: ..." means the test itself could not
+ # run (missing tool, fixture build, extraction). Exit 0 only if every check passes.
+ set -uo pipefail
+@@ -289,6 +296,215 @@
+ t "C12 paused: refused before any change" test $PREP_RC -ne 0 -a -z "$(calls)" -a "$(st)" = paused
+ unset -f docker
+ 
++echo "== D. counter window reconciliation (counter_window.py, 06B-3DR)"
++python3 - "$H" "$OUTD/fx/counter-window-cases.json" <<'EOF'
++import json, sys
++sys.path.insert(0, sys.argv[1])
++try:
++    import counter_window as cw
++    F = json.load(open(sys.argv[2]))
++except Exception as e:
++    print(f"SELFTEST-ERROR: counter_window / cases: {e}"); sys.exit(3)
++def old(c):   # the 06B-3B/3D method: window [A.t_end, B.t_start], plain equality
++    cnt = {}
++    for f in c["frames"]:
++        if F["read_before"]["t_end"] <= f["t"] <= F["read_after"]["t_start"]:
++            cnt[f["cls"]] = cnt.get(f["cls"], 0) + 1
++    return "PASS" if all(c["delta"].get(k, 0) == cnt.get(k, 0) for k in F["classes"]) else "FAIL"
++fails = 0
++for c in F["cases"]:
++    r = cw.reconcile(c["frames"], F["read_before"], F["read_after"], c["delta"], F["classes"])
++    good = r["verdict"] == c["expected"]
++    fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] counter window {c['name']}: expected {c['expected']}, got {r['verdict']} "
++          f"(old method would say {old(c)})")
++    if c["name"] == "two-errors-cancel":
++        g2 = old(c) == "PASS" and r["verdict"] == "UNVERIFIED"
++        fails += not g2
++        print(f"[{'PASS' if g2 else 'FAIL'}] counter window two-errors-cancel: old method gives a false PASS, new gives UNVERIFIED")
++sys.exit(1 if fails else 0)
++EOF
++rc=$?; [ $rc -eq 3 ] && infra "counter window test could not run"
++t "counter_window reconciliation as expected" test $rc -eq 0
++
++echo "== E. probe verdict and run outcome (counter_window.py)"
++python3 - "$H" <<'EOF'
++import sys
++sys.path.insert(0, sys.argv[1])
++try:
++    import counter_window as cw
++except Exception as e:
++    print(f"SELFTEST-ERROR: import counter_window: {e}"); sys.exit(3)
++ok_checks = {"guest_connection_failed": True, "control_alive_same_dst_proto_port": True}
++def rc(verdict, exp_status="PASS", exp_delta=3):
++    return {"verdict": verdict, "per_class": {"drop_public": {"status": exp_status, "delta": exp_delta}}}
++cases = [
++    ("all checks, reconciliation PASS -> ĐẠT", (ok_checks, rc("PASS")), {}, ("ĐẠT", True)),
++    ("reconciliation UNVERIFIED -> CHƯA KIỂM CHỨNG, not ok", (ok_checks, rc("UNVERIFIED", "UNVERIFIED")), {},
++     ("CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)),
++    ("expected class PASS but another class UNVERIFIED -> CHƯA KIỂM CHỨNG", (ok_checks, rc("UNVERIFIED")), {},
++     ("CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)),
++    ("reconciliation FAIL -> FAIL", (ok_checks, rc("FAIL", "FAIL")), {}, ("FAIL", False)),
++    ("failed check + UNVERIFIED -> FAIL (a real failure wins)", ({**ok_checks, "guest_connection_failed": False},
++     rc("UNVERIFIED", "UNVERIFIED")), {}, ("FAIL", False)),
++    ("expected counter did not move -> FAIL", (ok_checks, rc("PASS", "PASS", 0)), {}, ("FAIL", False)),
++    ("tool missing -> CHƯA KIỂM CHỨNG", (ok_checks, rc("PASS")), {"tool_missing": True},
++     ("CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False)),
++]
++fails = 0
++for name, (checks, recon), kw, want in cases:
++    got = cw.probe_verdict(checks, recon, "drop_public", **kw)
++    good = got == want; fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] probe verdict: {name} (got {got})")
++P = lambda t, ok: {"test": t, "ok": ok}
++outs = [
++    ("all ok -> PASS", [P("x", True), P("probe a (tcp) -> ĐẠT", True)], "PASS"),
++    ("one undecided probe -> UNVERIFIED", [P("x", True), P("probe a (tcp) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)], "UNVERIFIED"),
++    ("one failed probe -> FAIL", [P("probe a (tcp) -> FAIL", False)], "FAIL"),
++    ("failed non-probe check + undecided probe -> FAIL",
++     [P("tap0 capture stopped cleanly", False), P("probe a (tcp) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)], "FAIL"),
++]
++for name, res, want in outs:
++    got = cw.run_outcome(res)
++    good = got.split(":")[0] == want; fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] run outcome: {name} (got {got})")
++sys.exit(1 if fails else 0)
++EOF
++rc=$?; [ $rc -eq 3 ] && infra "verdict test could not run"
++t "probe verdict and run outcome as expected" test $rc -eq 0
++
++echo "== F. capture stop with deadline (harness_lib.sh stop_captures_deadline; python fakes)"
++FK=$(mktemp -d "$OUTD/stop.XXXXXX")
++cat > "$FK/fake_capture.py" <<'EOF'
++import signal, sys, time
++mode = sys.argv[1]   # ok: exit 0 shortly after SIGINT | rc3: exit 3 on SIGINT | ignore: ignore SIGINT
++def on_int(*a):
++    if mode == "ignore":
++        return
++    time.sleep(0.3)
++    sys.exit(3 if mode == "rc3" else 0)
++signal.signal(signal.SIGINT, on_int)
++while True:
++    time.sleep(0.05)
++EOF
++timeout 30 bash -c '
++    source "$1/harness_lib.sh"; FK=$2
++    python3 "$FK/fake_capture.py" ok & A=$!
++    python3 "$FK/fake_capture.py" rc3 & B=$!
++    python3 "$FK/fake_capture.py" ignore & C=$!
++    sleep 0.5
++    t0=$EPOCHREALTIME
++    stop_captures_deadline 2 "$FK/exit.txt" "$FK/timeline.txt" "a:$A" "b:$B" "c:$C"; echo "rc=$?" > "$FK/rc.txt"
++    awk -v a="$t0" -v b="$EPOCHREALTIME" "BEGIN { printf \"%.2f\n\", b - a }" > "$FK/elapsed.txt"
++    for p in $A $B $C; do if kill -0 $p 2>/dev/null; then echo "alive $p"; fi; done > "$FK/left.txt"
++    echo completed > "$FK/completed.txt"
++' _ "$H" "$FK"
++trc=$?   # 124 = killed by timeout (a hang)
++echo "exit file: $(tr '\n' ' ' < "$FK/exit.txt" 2>/dev/null); $(cat "$FK/rc.txt" 2>/dev/null); elapsed $(cat "$FK/elapsed.txt" 2>/dev/null) s"
++cat "$FK/timeline.txt" 2>/dev/null
++t "stop_captures_deadline returned (no hang: not killed by timeout, ran to the end)" bash -c "[ $trc -ne 124 ] && grep -qx completed '$FK/completed.txt'"
++t "capture exiting 0 on SIGINT recorded as 'a 0'" grep -qx "a 0" "$FK/exit.txt"
++t "capture exiting 3 on SIGINT recorded as 'b 3'" grep -qx "b 3" "$FK/exit.txt"
++t "capture ignoring SIGINT killed at the deadline and recorded" grep -qx "c KILLED_AT_DEADLINE" "$FK/exit.txt"
++t "stop_captures_deadline returns non-zero when a capture misbehaved" grep -qx "rc=1" "$FK/rc.txt"
++t "deadline respected (elapsed < 3.5 s for a 2 s deadline)" awk -v e="$(cat "$FK/elapsed.txt" 2>/dev/null)" 'BEGIN { exit !(e != "" && e < 3.5) }'
++t "no fake capture left running" test ! -s "$FK/left.txt"
++t "timeline has SIGINT, exit and SIGKILL entries" bash -c "grep -q 'a pid .*SIGINT sent' '$FK/timeline.txt' && grep -q 'b pid .*exited rc=3' '$FK/timeline.txt' && grep -q 'c pid .*SIGKILL' '$FK/timeline.txt'"
++timeout 30 bash -c '
++    source "$1/harness_lib.sh"; FK=$2
++    python3 "$FK/fake_capture.py" ok & A=$!
++    sleep 0.5
++    stop_captures_deadline 2 "$FK/exit2.txt" "$FK/timeline2.txt" "a:$A"; echo "rc=$?" > "$FK/rc2.txt"
++' _ "$H" "$FK"
++t "all captures well-behaved -> stop_captures_deadline returns 0" grep -qx "rc=0" "$FK/rc2.txt"
++
++echo "== G. tcpdump statistics parsing (harness_lib.sh capture_stats)"
++printf 'tcpdump: listening on x\n10 packets captured\n12 packets received by filter\n0 packets dropped by kernel\n' > "$FK/st-ok.err"
++printf 'tcpdump: listening on x\n10 packets captured\n12 packets received by filter\n' > "$FK/st-nodrop.err"
++printf 'tcpdump: listening on x\n' > "$FK/st-none.err"
++printf '5 packets captured\n5 packets received by filter\n3 packets dropped by kernel\n' > "$FK/st-drop.err"
++t "statistics parsed exactly (10 12 0)" test "$(capture_stats "$FK/st-ok.err")" = "10 12 0"
++t "missing 'dropped by kernel' line -> failure, not 0" bash -c "! { source '$H/harness_lib.sh'; capture_stats '$FK/st-nodrop.err'; }"
++t "no statistics at all -> failure" bash -c "! { source '$H/harness_lib.sh'; capture_stats '$FK/st-none.err'; }"
++t "dropped by kernel > 0 is reported as such (5 5 3)" test "$(capture_stats "$FK/st-drop.err")" = "5 5 3"
++
++echo "== H. probe_matrix.py evaluate() wiring, replayed offline with stub worker modules"
++[ -e /app ] && infra "/app exists on this host: the stub worker modules would be shadowed"
++SB=$(mktemp -d "$OUTD/stubs.XXXXXX"); mkdir -p "$SB/isolation" "$SB/service" "$SB/out"
++: > "$SB/isolation/__init__.py"; : > "$SB/service/__init__.py"
++cat > "$SB/isolation/constants.py" <<'EOF'
++GUEST_MAC = "52:54:00:c7:00:02"; GUEST_IP = "10.200.0.2"; WORKER_GUEST_IP = "10.200.0.1"; SVC_PORT = 8011
++GUEST_IF = "tap0"; GUEST_PREFIX = 30; CURRENT_TASK_FILE = "/nonexistent/current_task"
++EOF
++echo 'def clear(): pass
++def set_current(t): pass' > "$SB/isolation/current_task.py"
++echo 'def verify_isolation(*a, **k): pass' > "$SB/isolation/verify.py"
++echo 'ARCH_CONFIGS = {}
++def shutdown_qemu(*a, **k): pass
++class Analysis: pass' > "$SB/service/analysis.py"
++CT01_TARGETS='{"worker_ip":"192.168.60.2","mongo_ip":"172.18.0.2","manager_ip":"192.168.60.10","ssh_ips":[],"lan_dns":"192.168.177.2"}' \
++python3 - "$H" "$SB" <<'EOF'
++import importlib.util, json, os, sys, time, types
++H, SB = sys.argv[1], sys.argv[2]
++sys.path[:0] = [H, SB]
++sys.argv = ["probe_matrix.py", "ARM", os.path.join(SB, "out")]
++try:
++    spec = importlib.util.spec_from_file_location("probe_matrix", os.path.join(H, "probe_matrix.py"))
++    pm = importlib.util.module_from_spec(spec); spec.loader.exec_module(pm)
++    import counter_window as cw
++except Exception as e:
++    print(f"SELFTEST-ERROR: probe_matrix import with stubs: {type(e).__name__}: {e}"); sys.exit(3)
++pm.time = types.SimpleNamespace(sleep=lambda s: None, time=time.time, strftime=time.strftime)
++MAC = "52:54:00:c7:00:02"
++def syn(t, sport):
++    return {"t": t, "src_mac": MAC, "etype": "0x0800", "ip_src": "10.200.0.2", "ip_dst": "1.1.1.1", "proto": "6",
++            "sport": str(sport), "dport": "443", "qname": ""}
++def v6(t):
++    return {"t": t, "src_mac": MAC, "etype": "0x86dd", "ip_src": "", "ip_dst": "", "proto": "", "sport": "",
++            "dport": "", "qname": ""}
++def probe(name, lport, base, delta, read_a_end=0.020):
++    return {"probe": name, "dst": "1.1.1.1", "proto": "tcp", "port": 443, "lport": lport, "qname": None,
++            "expected_class": "drop_public", "t0": base, "t1": base + 5.02,
++            "read_before": {"t_start": base, "t_end": base + read_a_end},
++            "read_after": {"t_start": base + 5.0, "t_end": base + 5.02},
++            "guest_rc": 28, "guest_output": "HTTP=000", "guest_failed": True,
++            "control_before": {"ok": True}, "control_after": {"ok": True}, "remote_control": None,
++            "counter_delta": delta, "host_alert_lines": 0}
++rows = [syn(101, 41000), syn(102, 41000), syn(104, 41000),                       # clean
++        syn(201, 41001), syn(202, 41001), syn(204, 41001), v6(200.025), v6(202.5),  # 06B-3D shape
++        syn(301, 41002), syn(302, 41002), syn(304, 41002)]                       # real mismatch
++pm.guest_frames = lambda: rows
++fails = 0
++def check(msg, cond):
++    global fails
++    fails += not cond
++    print(f"[{'PASS' if cond else 'FAIL'}] evaluate replay: {msg}")
++pm.probes[:] = [probe("clean", 41000, 100.0, {"drop_public": 3}),
++                probe("ipv6-during-read-a", 41001, 200.0, {"drop_public": 3, "l2_bad_ethertype": 2}, 0.030),
++                probe("real-mismatch", 41002, 300.0, {"drop_public": 2})]
++pm.evaluate()
++m = json.load(open(os.path.join(pm.OUT, "matrix.json")))
++v = {r["probe"]: r["verdict"] for r in m}
++print("verdicts:", v)
++check("clean probe -> ĐẠT", v.get("clean") == "ĐẠT")
++check("IPv6 frame inside read A (06B-3D shape) -> CHƯA KIỂM CHỨNG", v.get("ipv6-during-read-a", "").startswith("CHƯA KIỂM CHỨNG (gói ở biên"))
++check("real mismatch -> FAIL", v.get("real-mismatch") == "FAIL")
++r2 = [r for r in m if r["probe"] == "ipv6-during-read-a"][0]
++check("edge frame listed with its timestamp and class", r2["mismatch"].get("l2_bad_ethertype", {}).get("edge_start_t") == [200.025])
++check("raw reads kept in the matrix row", r2["counter_reconciliation"]["reads"]["before"] == {"t_start": 200.0, "t_end": 200.03})
++check("record of the undecided probe is not ok", [x["ok"] for x in pm.results if x["test"].startswith("probe ipv6")] == [False])
++check("run outcome with a real mismatch -> FAIL", cw.run_outcome(pm.results).startswith("FAIL"))
++pm.results.clear()
++pm.probes[:] = [probe("clean", 41000, 100.0, {"drop_public": 3}),
++                probe("ipv6-during-read-a", 41001, 200.0, {"drop_public": 3, "l2_bad_ethertype": 2}, 0.030)]
++pm.evaluate()
++check("run outcome with only an undecided probe -> UNVERIFIED (not PASS)", cw.run_outcome(pm.results).startswith("UNVERIFIED"))
++check("matrix.md written with a reconciliation column", "reconciliation" in open(os.path.join(pm.OUT, "matrix.md")).read())
++sys.exit(1 if fails else 0)
++EOF
++rc=$?; [ $rc -eq 3 ] && infra "evaluate replay could not run"
++t "probe_matrix.py evaluate() wiring as expected" test $rc -eq 0
++
+ echo
+ [ $FAILS -eq 0 ] && { echo "SELFTEST: ALL PASSED"; exit 0; }
+ echo "SELFTEST: $FAILS FAILED"; exit 1
+--- 06b3cr/mutation_test.sh
++++ 06b3dr/mutation_test.sh
+@@ -18,7 +18,7 @@
+ W=$(mktemp -d "${TMPDIR:-/tmp}/ct01-06b3c-mut.XXXXXX")
+ echo "work dir (left in place for inspection): $W"
+ FILES=(run-06b3b.sh harness_lib.sh sigscan.sh selftest.sh mutation_test.sh independent_check.sh
+-       probe_matrix.py pcapng_stats.py make_fixtures.py ctl_loop.py)
++       probe_matrix.py pcapng_stats.py make_fixtures.py ctl_loop.py counter_window.py)
+ 
+ copy() { local d; d=$(mktemp -d "$W/$1.XXXXXX"); cp "${FILES[@]/#/$H/}" "$d/"; echo "$d"; }
+ syntax_ok() {  # dir -> 0 if every file parses
+@@ -136,6 +136,42 @@
+         if off > len(data): break
+     if st["interfaces"] == 0:'
+ 
++echo "== 06B-3DR mutations (counter window, verdicts, capture stop, statistics)"
++mut CW1-edges-ignored DETECTED "counter window edge-start-not-counted" counter_window.py \
++    'elif hi > lo:' 'elif False:'
++mut CW2-no-guard DETECTED "counter window guard-zone-before-read-b" counter_window.py \
++    'GUARD_S = 0.020' 'GUARD_S = 0.0'
++mut CW3-edges-as-certain DETECTED "counter window two-errors-cancel: expected" counter_window.py \
++    'if z == "certain":' 'if z in ("certain", "edge_start", "edge_end"):'
++mut CW4-ambiguity-hides-real-mismatch DETECTED "counter window real-mismatch-despite-edges" counter_window.py \
++    'if d < lo or d > hi:
++            v["status"] = "FAIL"
++        elif hi > lo:
++            v["status"] = "UNVERIFIED"' 'if hi > lo:
++            v["status"] = "UNVERIFIED"
++        elif d < lo or d > hi:
++            v["status"] = "FAIL"'
++mut V1-unverified-counted-as-ok DETECTED "reconciliation UNVERIFIED -> CHƯA KIỂM CHỨNG, not ok" counter_window.py \
++    'return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False' 'return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", True'
++mut V2-failed-check-hidden-by-unverified DETECTED "a real failure wins" counter_window.py \
++    'if not all(checks.values()) or recon["verdict"] == "FAIL"' 'if recon["verdict"] == "FAIL"'
++mut V3-run-outcome-softens-failures DETECTED "failed non-probe check + undecided probe -> FAIL" counter_window.py \
++    'hard = [r["test"] for r in bad if not (r["test"].startswith("probe ") and "-> CHƯA KIỂM CHỨNG" in r["test"])]' \
++    'hard = [r["test"] for r in bad if r["test"].endswith("-> FAIL")]'
++mut T1-no-kill-at-deadline DETECTED "stop_captures_deadline returned (no hang" harness_lib.sh \
++    'kill -KILL "$p" 2>/dev/null; wait "$p" 2>/dev/null' 'wait "$p" 2>/dev/null'
++mut T2-exit-code-not-kept DETECTED "capture exiting 3 on SIGINT recorded" harness_lib.sh \
++    'wait "$p" 2>/dev/null; rc=$?' 'wait "$p" 2>/dev/null; rc=0'
++mut G1-missing-statistic-as-zero DETECTED "missing 'dropped by kernel' line -> failure" harness_lib.sh \
++    'END { if (nc != 1 || nr != 1 || nd != 1) exit 1; print c, r, d }' 'END { if (nc != 1) exit 1; print c, r, d + 0 }'
++
++mut E1-evaluate-uses-old-window DETECTED "IPv6 frame inside read A (06B-3D shape)" probe_matrix.py \
++    'span = [r for r in rows if ra["t_start"] - counter_window.GUARD_S <= r["t"] <= rb["t_end"]]' \
++    'span = [r for r in rows if ra["t_end"] <= r["t"] <= rb["t_start"]]'
++mut E2-undecided-probe-recorded-ok DETECTED "record of the undecided probe is not ok" probe_matrix.py \
++    'record(f"probe {p['"'"'probe'"'"']} ({row['"'"'dst'"'"']}) -> {verdict}", ok,' \
++    'record(f"probe {p['"'"'probe'"'"']} ({row['"'"'dst'"'"']}) -> {verdict}", True,'
++
+ echo "== control mutations (must NOT be counted as caught)"
+ mut X1-syntax-error INVALID "-" pcapng_stats.py 'def drop_verdict(st):' 'def drop_verdict(st:'
+ mut X2-missing-dependency ERROR "-" selftest.sh 'import pcapng_stats as P' 'import pcapng_stats_missing as P'
+--- 06b3cr/make_fixtures.py
++++ 06b3dr/make_fixtures.py
+@@ -9,6 +9,7 @@
+ empty.pcap      0 bytes (what a crashed tcpdump left in 06B-3B run 1) -> reader must report an error
+ ng-*.pcapng     pcapng drop-statistics cases for pcapng_stats.py (drop=0, drop>0, osdrop>0,
+                 ifrecv mismatch, no statistics, statistics without ifdrop, truncated, not pcapng)
++counter-window-cases.json  counter/pcap reconciliation cases for counter_window.py (06B-3DR)
+ expected.json   exact counts sigscan.sh must print for positive.pcap and negative.pcap, and the
+                 expected pcapng_stats verdict of every ng-*.pcapng
+ """
+@@ -156,6 +157,31 @@
+ open(os.path.join(out, "empty.pcap"), "wb").close()
+ for name, (blob, _) in PCAPNG.items():
+     open(os.path.join(out, name), "wb").write(blob)
++# ---------------------------------------------------------------- counter-window cases (06B-3DR)
++# Read A runs 100.000-100.020, read B 105.000-105.020, guard 0.020 (counter_window.GUARD_S).
++# "old" is what the 06B-3B/3D method (window [A.t_end, B.t_start], plain equality) would have said.
++RA, RB = {"t_start": 100.000, "t_end": 100.020}, {"t_start": 105.000, "t_end": 105.020}
++CLEAN = [(101.0, "drop_public"), (102.0, "drop_public"), (103.0, "drop_public"),
++         (101.5, "l2_bad_ethertype"), (104.0, "l2_bad_ethertype")]
++D0 = {"drop_public": 3, "l2_bad_ethertype": 2}
++CW = [  # name, frames, delta, expected verdict, old-method verdict
++    ("clean", CLEAN, D0, "PASS", "PASS"),
++    ("edge-start-counted", CLEAN + [(100.010, "l2_bad_ethertype")], {**D0, "l2_bad_ethertype": 3}, "UNVERIFIED", "FAIL"),
++    ("edge-start-not-counted", CLEAN + [(99.990, "l2_bad_ethertype")], D0, "UNVERIFIED", "PASS"),
++    ("edge-end", CLEAN + [(105.010, "l2_bad_ethertype")], D0, "UNVERIFIED", "PASS"),
++    ("guard-zone-before-read-b", CLEAN + [(104.990, "l2_bad_ethertype")], {**D0, "l2_bad_ethertype": 3}, "UNVERIFIED", "PASS"),
++    ("real-mismatch", CLEAN, {**D0, "drop_public": 2}, "FAIL", "FAIL"),
++    ("real-mismatch-despite-edges", CLEAN + [(100.010, "drop_public")], {**D0, "drop_public": 5}, "FAIL", "FAIL"),
++    ("two-errors-cancel", [(100.005, "l2_bad_ethertype"), (102.0, "l2_bad_ethertype"), (104.990, "l2_bad_ethertype"),
++                           (101.0, "drop_public")], {"l2_bad_ethertype": 2, "drop_public": 1}, "UNVERIFIED", "PASS"),
++    ("outside-frames-ignored", CLEAN + [(99.900, "l2_bad_ethertype"), (105.100, "l2_bad_ethertype")], D0, "PASS", "PASS"),
++    ("class-not-compared-at-edge", CLEAN + [(100.010, "arp")], {**D0, "arp_in_ok": 1}, "PASS", "PASS"),
++    ("counter-without-frames", CLEAN, {**D0, "drop_spoof": 1}, "FAIL", "FAIL"),
++]
++json.dump({"read_before": RA, "read_after": RB, "classes": ["drop_public", "l2_bad_ethertype", "drop_spoof"],
++           "cases": [{"name": n, "frames": [{"t": t, "cls": c} for t, c in fr], "delta": d,
++                      "expected": e, "old_method": o} for n, fr, d, e, o in CW]},
++          open(os.path.join(out, "counter-window-cases.json"), "w"), indent=1)
+ json.dump({
+     "pcapng_verdicts": {name: verdict for name, (_, verdict) in PCAPNG.items()},
+     "positive.pcap": {"frames": 6, "guest_l2l3": 2, "probe_sport": 1, "probe_qname": 1, "probe_url": 2,

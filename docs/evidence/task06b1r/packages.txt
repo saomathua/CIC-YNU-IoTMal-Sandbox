@@ -1,0 +1,5 @@
+iproute2	5.15.0-1ubuntu2.2
+libjansson4:amd64	2.13.1-1.1build3
+libnftables1:amd64	1.0.2-1ubuntu3.1
+libnftnl11:amd64	1.2.1-1build1
+nftables	1.0.2-1ubuntu3.1

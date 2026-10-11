@@ -1,0 +1,48 @@
+05:33:35 [PASS] ARM: host leak monitor running and empty before boot {}
+05:33:35 [PASS] ARM: temporary listener 10.200.0.1:18080 answers locally {}
+05:33:35 [PASS] ARM: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+05:33:36 [PASS] ARM: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+05:33:36 [PASS] ARM: tshark capturing on tap0 {}
+05:33:50 [PASS] ARM: guest booted and network configured {"qemu_pid": 173}
+05:33:52 [PASS] ARM: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["virtio-net-pci.0", "nic", []], ["virtio-net-pci.1", "nic", ["tap"]]], "probe_iface": "eth1", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+05:33:52 [PASS] ARM: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/bin/wget", "/bin/ping", "missing:arping"]}
+05:33:52 [PASS] ARM: allowed service link before probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0}
+05:33:52 --- probe internet-tcp: tcp 1.1.1.1:443 (expected block point: drop_public)
+05:33:58     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 3, 'drop_spoof': 2, 'drop_public': 7}; host alerts=0
+05:33:58 --- probe lan-dns-udp: udp 192.168.177.2:53 (expected block point: drop_private)
+05:34:04     guest rc=1 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 2, 'drop_spoof': 2, 'drop_private': 4}; host alerts=0
+05:34:04 --- probe lan-dns-tcp: tcp 192.168.177.2:53 (expected block point: drop_private)
+05:34:09     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 1, 'drop_spoof': 1, 'drop_private': 3}; host alerts=0
+05:34:09 --- probe ssh-host-192.168.60.1: tcp 192.168.60.1:22 (expected block point: drop_private)
+05:34:14     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:14 --- probe ssh-host-192.168.177.128: tcp 192.168.177.128:22 (expected block point: drop_private)
+05:34:19     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:19 --- probe ssh-host-172.18.0.1: tcp 172.18.0.1:22 (expected block point: drop_private)
+05:34:24     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 1, 'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:24 --- probe manager: tcp 192.168.60.10:8011 (expected block point: drop_private)
+05:34:30     guest rc=28 failed=True; control before=True after=True remote={'prefix': 'manager '}; counters={'drop_spoof': 1, 'drop_private': 3}; host alerts=0
+05:34:30 --- probe mongodb: tcp 172.18.0.2:27017 (expected block point: drop_private)
+05:34:35     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'mongo '}; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:35 --- probe worker-eth0: tcp 192.168.60.2:8011 (expected block point: drop_private)
+05:34:40     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'worker-eth0 '}; counters={'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:40 --- probe tap0-other-port-listener: tcp 10.200.0.1:18080 (expected block point: drop_worker_other)
+05:34:45     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 1, 'drop_worker_other': 3}; host alerts=0
+05:34:45 [PASS] ARM: all planned probes executed with captures alive {"executed": 10, "planned": 10}
+05:34:45 [PASS] ARM: allowed service link after probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0}
+05:34:45 [PASS] ARM: QEMU exit confirmed {"exitstatus": 0}
+05:34:45 [PASS] ARM: tap0 capture stopped cleanly {"returncode": 0}
+05:34:45 [PASS] ARM: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 83}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 83}}}, "tshark_stderr_tail": "ous.\nCapturing on 'tap0'\n ** (tshark:150) 05:33:36.955817 [Main MESSAGE] -- Capture started.\n ** (tshark:150) 05:33:36.955859 [Main MESSAGE] -- File: \"/harness-out/ARM/tap0.pcapng\"\n83 packets captured", "verdict": "\u0110\u1ea0T"}
+05:34:45 [PASS] ARM: temporary listener stopped {}
+05:34:46 [PASS] ARM: fixture, marker and temporary guest disk removed {}
+05:34:46 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 83}
+05:34:50 [PASS] ARM: probe internet-tcp (tcp 1.1.1.1:443) -> ĐẠT {"counter": 7, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 7, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe lan-dns-udp (udp 192.168.177.2:53) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe lan-dns-tcp (tcp 192.168.177.2:53) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe ssh-host-192.168.60.1 (tcp 192.168.60.1:22) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe ssh-host-192.168.177.128 (tcp 192.168.177.128:22) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [FAIL] ARM: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_spoof": {"certain": 1, "delta": 2, "edge_end_t": [1791351264.9666772], "edge_start_t": [], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+05:34:50 [FAIL] ARM: probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_spoof": {"certain": 1, "delta": 1, "edge_end_t": [], "edge_start_t": [1791351264.9666772], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+05:34:50 [PASS] ARM: probe mongodb (tcp 172.18.0.2:27017) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe worker-eth0 (tcp 192.168.60.2:8011) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe tap0-other-port-listener (tcp 10.200.0.1:18080) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_worker_other", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 == ARM: status=COMPLETED; 25/27 checks passed

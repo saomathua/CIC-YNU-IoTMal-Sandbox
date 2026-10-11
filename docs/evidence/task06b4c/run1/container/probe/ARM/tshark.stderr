@@ -1,0 +1,5 @@
+Running as user "root" and group "root". This could be dangerous.
+Capturing on 'tap0'
+ ** (tshark:150) 04:31:28.751740 [Main MESSAGE] -- Capture started.
+ ** (tshark:150) 04:31:28.751815 [Main MESSAGE] -- File: "/harness-out/ARM/tap0.pcapng"
+100 packets captured

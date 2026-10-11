@@ -1,0 +1,692 @@
+diff -ruN ct01-06b4ir2/arp_cases.py ct01-06b4ir3/arp_cases.py
+--- ct01-06b4ir2/arp_cases.py	2026-10-08 11:09:27.000000000 +0000
++++ ct01-06b4ir3/arp_cases.py	2026-10-09 01:32:38.001952408 +0000
+@@ -385,8 +385,10 @@
+ 
+ 
+ # ------------------------------------------------------------------ execution record contract (06B-4HR)
+-BASELINE_KEYS = {"mac": str, "operstate": str, "addrs": list, "routes": list, "neigh_static": dict,
++BASELINE_KEYS = {"mac": str, "operstate": str, "admin_up": bool, "addrs": list, "routes": list, "neigh_static": dict,
+                  "neigh_dynamic": dict, "arp_notify": int}
++# 06B-4IR3 (PC-3): admin_up (administrative link state from the `ip link` header, guest_state) is required in the
++# baseline and in restore.after; a record without it never counts as a confirmed restore.
+ 
+ 
+ def baseline_problem(before):
+diff -ruN ct01-06b4ir2/guest_state.py ct01-06b4ir3/guest_state.py
+--- ct01-06b4ir2/guest_state.py	2026-10-08 02:10:43.000000000 +0000
++++ ct01-06b4ir3/guest_state.py	2026-10-09 01:31:27.785994492 +0000
+@@ -6,7 +6,9 @@
+ `arp`); that inventory is static evidence, the tools must still be confirmed in the running guest.
+ 
+ State of one probe interface IF (ARM eth1, MIPS br-lan):
+-    mac, operstate       /sys/class/net/IF/{address,operstate}
++    mac, operstate       /sys/class/net/IF/{address,operstate}   (operstate = operational observation, e.g. carrier)
++    admin_up             UP flag of the `ip link show dev IF` header (06B-4IR3: administrative configuration, kept
++                         apart from operstate; a bridge can be admin UP with operstate down / NO-CARRIER)
+     addrs                IPv4 "a.b.c.d/p" on IF                 (ip -4 addr show dev IF)
+     routes               every IPv4 route, whitespace-normalised (ip -4 route show)
+     neigh_static         {(ip, dev): mac} with ATF_PERM          (/proc/net/arp, flags & 0x4)
+@@ -14,7 +16,7 @@
+     arp_notify           /proc/sys/net/ipv4/conf/IF/arp_notify
+ 
+ Restore = return to the state recorded BEFORE the probe, in rounds (each step re-reads the state):
+-link (MAC, up) -> addresses -> routes -> static neighbours -> arp_notify. Static neighbours follow
++link (MAC, admin up/down as recorded) -> addresses -> routes -> static neighbours -> arp_notify. Static neighbours follow
+ the before-state exactly: an entry the probe added is deleted, an entry that existed before and was
+ lost (e.g. flushed by a link down [Kernel]) is re-created with its old MAC. Dynamic entries are
+ kernel-managed: they are reported, never forced, and do not make the restore fail.
+@@ -22,7 +24,8 @@
+ """
+ import re
+ 
+-SECTIONS = ("mac", "operstate", "addr", "route", "arp", "arp_notify")
++SECTIONS = ("mac", "operstate", "link", "addr", "route", "arp", "arp_notify")
++_LINK_HDR = re.compile(r"\d+:\s+([^\s:@]+)(?:@\S+)?:\s+<([A-Z0-9_,-]*)>(?:\s.*)?")
+ 
+ 
+ class StateReadError(Exception):
+@@ -34,6 +37,7 @@
+     parts = []
+     for name, cmd in (("mac", f"cat /sys/class/net/{iface}/address"),
+                       ("operstate", f"cat /sys/class/net/{iface}/operstate"),
++                      ("link", f"ip link show dev {iface}"),
+                       ("addr", f"ip -4 addr show dev {iface}"),
+                       ("route", "ip -4 route show"),
+                       ("arp", "cat /proc/net/arp"),
+@@ -47,7 +51,7 @@
+         raise ValueError(f"bad interface name {iface!r}")
+ 
+ 
+-def parse_snapshot(text):
++def parse_snapshot(text, iface=None):
+     sec, cur, rcs = {}, None, {}
+     for line in text.replace("\r", "").split("\n"):
+         m = re.fullmatch(r"@@S (\w+)", line.strip())
+@@ -73,6 +77,17 @@
+     oper = "".join(sec["operstate"]).strip()
+     if not oper:
+         raise StateReadError("empty operstate")
++    # 06B-4IR3: administrative state from the link header (never inferred from operstate)
++    hdrs = [l.strip() for l in sec["link"] if re.match(r"\s*\d+:\s", l)]
++    if len(hdrs) != 1:
++        raise StateReadError(f"link section: {len(hdrs)} interface header line(s), expected exactly 1")
++    m = _LINK_HDR.fullmatch(hdrs[0])
++    if not m:
++        raise StateReadError(f"link header not understood: {hdrs[0][:120]!r}")
++    if iface is not None and m.group(1) != iface:
++        raise StateReadError(f"link header is for {m.group(1)!r}, not {iface!r}")
++    flags = [f for f in m.group(2).split(",") if f]
++    admin_up = "UP" in flags
+     addrs = sorted(m.group(1) for l in sec["addr"] for m in [re.search(r"\binet (\d+\.\d+\.\d+\.\d+/\d+)", l)] if m)
+     routes = sorted(" ".join(l.split()) for l in sec["route"] if l.strip())
+     static, dynamic = {}, {}
+@@ -91,7 +106,7 @@
+     notify = "".join(sec["arp_notify"]).strip()
+     if not notify.isdigit():
+         raise StateReadError(f"bad arp_notify {notify!r}")
+-    return {"mac": mac, "operstate": oper, "addrs": addrs, "routes": routes, "neigh_static": static,
++    return {"mac": mac, "operstate": oper, "admin_up": admin_up, "addrs": addrs, "routes": routes, "neigh_static": static,
+             "neigh_dynamic": dynamic, "arp_notify": int(notify)}
+ 
+ 
+@@ -99,7 +114,7 @@
+     rc, out = runner.run(snapshot_cmd(iface), timeout=timeout)
+     if rc != 0:
+         raise StateReadError(f"snapshot command rc {rc}")
+-    return parse_snapshot(out)
++    return parse_snapshot(out, iface)
+ 
+ 
+ def diff(before, after):
+@@ -108,6 +123,8 @@
+     for k in ("mac", "operstate", "arp_notify"):
+         if before[k] != after[k]:
+             d.append(f"{k}: {before[k]!r} -> {after[k]!r}")
++    if before["admin_up"] is not after["admin_up"]:          # 06B-4IR3: administrative state, separate field
++        d.append(f"admin_up: {before['admin_up']!r} -> {after['admin_up']!r}")
+     for k in ("addrs", "routes"):
+         b, a = set(before[k]), set(after[k])
+         d += [f"{k}: missing {x!r}" for x in sorted(b - a)] + [f"{k}: extra {x!r}" for x in sorted(a - b)]
+@@ -126,8 +143,10 @@
+ 
+ def _link_cmds(iface, before, now):
+     if now["mac"] != before["mac"]:
+-        return [f"ip link set dev {iface} down", f"ip link set dev {iface} address {before['mac']}",
+-                f"ip link set dev {iface} up"]
++        return ([f"ip link set dev {iface} down", f"ip link set dev {iface} address {before['mac']}"]
++                + ([f"ip link set dev {iface} up"] if before["admin_up"] else []))   # 06B-4IR3: back to admin state
++    if now["admin_up"] is not before["admin_up"]:          # 06B-4IR3: restore the recorded administrative state
++        return [f"ip link set dev {iface} {'up' if before['admin_up'] else 'down'}"]
+     if now["operstate"] != before["operstate"] and before["operstate"] in ("up", "unknown"):
+         return [f"ip link set dev {iface} up"]
+     return []
+diff -ruN ct01-06b4ir2/mutation_arp.py ct01-06b4ir3/mutation_arp.py
+--- ct01-06b4ir2/mutation_arp.py	2026-10-08 11:10:42.000000000 +0000
++++ ct01-06b4ir3/mutation_arp.py	2026-10-09 01:44:13.297540013 +0000
+@@ -194,6 +194,9 @@
+      "R1.1 baseline neigh_dynamic entry with flags 0x4 (PERMANENT bit), lost after restore -> rejected (exit != 0)"),
+     ("D4", AC, [('    bad = baseline_problem(after)\n', '    bad = None\n')],
+      "R1.4 restore 'after' contradictory (dynamic entry with the PERMANENT flag), baseline clean -> rejected"),
++    # ---- 06B-4IR3 (PC-3): admin_up required in the baseline / restore.after record
++    ("D5", AC, [('"operstate": str, "admin_up": bool, "addrs"', '"operstate": str, "addrs"')],
++     "PC3.2 baseline without admin_up -> S1 never ĐẠT, record problem, group exit 2 (a record without a confirmed admin state is not a confirmed restore)"),
+     ("X1", AC, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_arp.py", [("import contextlib\n", "import contextlib(\n")], None),
+ ]
+@@ -217,6 +220,7 @@
+ 
+ 
+ def main():
++    only = set(sys.argv[2].split(",")) if sys.argv[1:2] == ["--only"] else None   # 06B-4IR3: targeted runs
+     h0 = sha(HERE)
+     with tempfile.TemporaryDirectory(prefix="mutation-arp.") as tmp:
+         def copy():
+@@ -248,7 +252,7 @@
+             return mid, ("DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"), target, failed, None
+         good = bad = 0
+         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+-            for mid, klass, target, failed, err in ex.map(one, M):
++            for mid, klass, target, failed, err in ex.map(one, [m for m in M if not only or m[0] in only]):
+                 ok = klass == EXPECT.get(mid, "DETECTED")
+                 good += ok
+                 bad += not ok
+diff -ruN ct01-06b4ir2/mutation_arp_wiring.py ct01-06b4ir3/mutation_arp_wiring.py
+--- ct01-06b4ir2/mutation_arp_wiring.py	2026-10-08 15:31:06.545874178 +0000
++++ ct01-06b4ir3/mutation_arp_wiring.py	2026-10-09 01:49:17.876738207 +0000
+@@ -171,6 +171,19 @@
+      "U43 IR1-R2 control_a1: zero/group MAC equal in config and payload -> not ok; payload zero with a valid config -> not ok (reason names the payload)"),
+     ("V68", AH, [('    bad = endpoint_mac_problem(cmac)\n', '    bad = None if cmac and _MAC.fullmatch(cmac) else "invalid"\n')],
+      "R2.1 zero-mac-cfg: A1 control not alive (endpoint MAC cannot identify the interface), reason and raw MAC kept; A2 ĐẠT; never PASS (function, CLI, Bash)"),
++    # ---- 06B-4IR3 (PC-1): architecture stop policy in run-06b4i.sh
++    ("V69", RS, [('        || { ARCH_STOP="$ARCH: QEMU already running before start: harness not called for $ARCH"; break; }\n', '')],
++     "PC1.3 QEMU already running before ARM: no harness call at all (not 'guest did not boot'), stop reason names it, exit 1"),
++    ("V70", RS, [('    if [ "$ARCH" != MIPS ] && { [ ${#FAILS[@]} -ne "$nf0" ]', '    if false && { [ ${#FAILS[@]} -ne "$nf0" ]')],
++     "PC1.2 arm-fail: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 1 keeps the cause"),
++    ("V71", RS, [(' || [ ${#UNVERIFIED[@]} -ne "$nu0" ]; }; then', '; }; then')],
++     "PC1.2 arm-unverified: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 4 keeps the cause"),
++    ("V72", RS, [('    if [ "$ARCH" != MIPS ] && { [ ${#FAILS[@]}', '    if { [ ${#FAILS[@]}')],
++     "PC1.5 MIPS fails after a clean ARM: both called, no stop needed, run-level check run, exit 1"),
++    ("V73", RS, [('if [ -n "$ARCH_STOP" ]; then\n    echo "[STOPPED]', 'if false; then\n    echo "[STOPPED]')],
++     "PC1.2 arm-fail: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 1 keeps the cause"),
++    ("V74", RS, [('    ARCH_CALLED+=("$ARCH")\n', '')],
++     "PC1.1 both architectures pass: harness called for ARM then MIPS, run-level check run, no stop, exit 0"),
+     # ---- controls
+     ("X1", AH, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_arp_wiring.py", [("import ast\n", "import ast(\n")], None),
+@@ -195,6 +208,7 @@
+ 
+ 
+ def main():
++    only = set(sys.argv[2].split(",")) if sys.argv[1:2] == ["--only"] else None   # 06B-4IR3: targeted runs
+     h0 = sha(HERE)
+     with tempfile.TemporaryDirectory(prefix="mutation-arp-wiring.") as tmp:
+         def copy():
+@@ -226,7 +240,7 @@
+             return mid, ("DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"), target, failed, None
+         good = bad = 0
+         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+-            for mid, klass, target, failed, err in ex.map(one, M):
++            for mid, klass, target, failed, err in ex.map(one, [m for m in M if not only or m[0] in only]):
+                 ok = klass == EXPECT.get(mid, "DETECTED")
+                 good += ok
+                 bad += not ok
+diff -ruN ct01-06b4ir2/mutation_l2.py ct01-06b4ir3/mutation_l2.py
+--- ct01-06b4ir2/mutation_l2.py	2026-10-08 03:24:50.000000000 +0000
++++ ct01-06b4ir3/mutation_l2.py	2026-10-09 01:44:13.296540019 +0000
+@@ -184,6 +184,23 @@
+      "K13 malformed (total length beyond the wire frame): header read, not counted as truncated"),
+     ("TR13", "sigscan_l2.py", [('            blind(f["truncated"])', '            blind(False)')],
+      "K9 Ethernet header cut by snaplen -> unscannable_truncated 1"),
++    # ---- 06B-4IR3 (PC-3): administrative link state in guest_state.py
++    ("GS12", "guest_state.py", [('    if before["admin_up"] is not after["admin_up"]:', '    if False:')],
++     "GA5 only the admin flag differs (both operstate down) -> diff reports admin_up"),
++    ("GS13", "guest_state.py", [('    if now["admin_up"] is not before["admin_up"]:          # 06B-4IR3',
++                                 '    if False:          # 06B-4IR3')],
++     "GA6 baseline admin UP + operstate down, case leaves admin DOWN -> restore sends `ip link set up`, admin UP again, restored True (operstate still down, as recorded)"),
++    ("GS14", "guest_state.py", [('    admin_up = "UP" in flags', '    admin_up = oper in ("up", "unknown")')],
++     "GA2 real MIPS br-lan header (06B-4G: NO-CARRIER, state DOWN) -> admin_up True, operstate kept as read (down)"),
++    ("GS15", "guest_state.py", [('                + ([f"ip link set dev {iface} up"] if before["admin_up"] else []))',
++                                 '                + [f"ip link set dev {iface} up"])')],
++     "GA10 MAC changed while the baseline is admin DOWN -> down + address, no `up`; restored True"),
++    ("GS16", "guest_state.py", [('    if len(hdrs) != 1:', '    if not hdrs:')],
++     "GA4 no header / two headers / header of another interface / malformed flags -> StateReadError"),
++    ("GS17", "guest_state.py", [("{'up' if before['admin_up'] else 'down'}", "up")],
++     "GA8 baseline admin DOWN, case brings it UP -> restore sets it DOWN again (baseline kept), restored True"),
++    ("GS18", "guest_state.py", [('    if iface is not None and m.group(1) != iface:', '    if False:')],
++     "GA4 no header / two headers / header of another interface / malformed flags -> StateReadError"),
+     # ---- controls
+     ("X1", "l2frames.py", [("THIS TEXT DOES NOT EXIST IN THE FILE", "x")], None),
+     ("X2", "l2frames.py", [("import struct\n", "import struct(\n")], None),
+diff -ruN ct01-06b4ir2/run-06b4i.sh ct01-06b4ir3/run-06b4i.sh
+--- ct01-06b4ir2/run-06b4i.sh	2026-10-08 15:25:36.839511861 +0000
++++ ct01-06b4ir3/run-06b4i.sh	2026-10-09 01:36:50.857805139 +0000
+@@ -2,7 +2,7 @@
+ # Nhiệm vụ 06B-4I — ARP group (T14-A1, T14-A2, T14-A3, T15-S1) from real guests, ARM then MIPS.
+ # PREPARED AND TESTED OFFLINE ONLY in 06B-4I/06B-4IR1 (selftest_arp_wiring.py); NOT run. Copy of run-06b4f.sh
+ # with only these changes (selftest_arp_wiring.py W-tests list them):
+-#  * H = ct01-06b4ir2 (06B-4IR2); the worker runs probe_matrix.py with CT01_SUITE=arp: ONLY the four reviewed ARP cases of
++#  * H = ct01-06b4ir3 (06B-4IR3); the worker runs probe_matrix.py with CT01_SUITE=arp: ONLY the four reviewed ARP cases of
+ #    arp_cases.py (06B-4HR2, unchanged) through arp_harness.py; no IPv4 probe, no ICMP case, no case added;
+ #  * arp_cases.py, arp_harness.py, guest_state.py mounted read-only in /harness (with the ICMP modules that
+ #    arp_harness reuses: icmp_harness.py, icmp_cases.py, l2frames.py, l2eval.py, signatures.py);
+@@ -13,12 +13,15 @@
+ #    inputs of the T14-A1/A2 live controls; 06B-4IR1: ctl's own sandboxnet endpoint MAC is passed too
+ #    (CT01_TARGETS ctl_mac): it identifies the ctl interface of the ARP entry (no interface name is assumed);
+ #  * per-architecture outcome from arp_harness.py --outcome, run level from arp_harness.py --run-check.
++#  * 06B-4IR3 (PC-1): stop policy between architectures: MIPS is started only if ARM passed every required check
++#    (outcome PASS and post-checks); otherwise the loop breaks, the run-level check is skipped (reported), and the
++#    teardown/host checks still run; the exit code keeps the cause (FAIL 1 / UNVERIFIED 4).
+ # Everything else in this script (captures, watcher/heartbeat, leak alerts, scanners, host-state checks, exit
+ # codes) is run-06b4f.sh unchanged. Inside the worker, probe_matrix.py 06B-4IR1 also guards the boot network
+ # configuration and the topology gate (startup guard, all suites); 06B-4IR2: the guard is handed over only to a
+ # guarded branch (the IPv4 branch keeps it for every service link and probe). Guard 20 ms: unmeasured assumption.
+ #
+-#   sudo bash /home/dathq/projects/ct01-06b4ir2/run-06b4i.sh   (only when the reviewer allows the run)
++#   sudo bash /home/dathq/projects/ct01-06b4ir3/run-06b4i.sh   (only when the reviewer allows the run)
+ #
+ # ---- HISTORICAL header of run-06b4f.sh (the ICMP script this one was copied from; it does NOT describe what this
+ # ---- script runs: here the suite is CT01_SUITE=arp and the outcome comes from arp_harness.py):
+@@ -80,7 +83,7 @@
+ set -uo pipefail
+ 
+ EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+-H=/home/dathq/projects/ct01-06b4ir2
++H=/home/dathq/projects/ct01-06b4ir3
+ OUT=$H/out
+ REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+ IMAGE=sandbox-worker:latest
+@@ -124,6 +127,7 @@
+ source "$H/harness_lib.sh"   # alive, start/stop_capture_watch, manager_prepare/restore
+ 
+ CREATED_IDS=(); FAILS=(); UNVERIFIED=(); OPEN_ITEMS=(); SESSION_RESULTS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
++ARCH_CALLED=(); ARCH_STOP=""   # 06B-4IR3 (PC-1): architectures whose harness was called; why the loop stopped
+ DRAIN_S=3           # 06B-3DR: after the controls stop, captures get this long to process what is left
+ CAP_DEADLINE_S=10   # then SIGINT; a capture still running after this many seconds is killed (FAIL)
+ log()  { echo; echo "===== $* ($(date -u +%H:%M:%S))"; }
+@@ -341,11 +345,19 @@
+     "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" "$MANAGER_MAC" "$CTL_MAC" "$SANDBOX_GW" "$ENS_IP" "$DB_GW" "$LAN_DNS")
+ echo "$TARGETS" > "$OUT/targets.json"
+ LEAK=0
++# 06B-4IR3 (PC-1) stop policy of the first run: the next architecture's harness is called ONLY if the previous one
++# passed every required check of its iteration (outcome PASS, post-checks ok). Any FAIL, UNVERIFIED or ERROR (and a
++# failed no-QEMU check before an architecture) stops the loop with `break`; the cause stays in FAILS/UNVERIFIED and
++# the teardown and host checks below still run (no early exit). "Harness not called" is recorded in ARCH_STOP; it is
++# not the same as "guest did not boot" (that is decided inside probe_matrix.py).
+ for ARCH in ARM MIPS; do
+     log "6. guest $ARCH"
+-    check "$ARCH: no QEMU running before start (sequential)" bash -c "! pgrep qemu-system >/dev/null"
++    nf0=${#FAILS[@]}; nu0=${#UNVERIFIED[@]}
++    check "$ARCH: no QEMU running before start (sequential)" bash -c "! pgrep qemu-system >/dev/null" \
++        || { ARCH_STOP="$ARCH: QEMU already running before start: harness not called for $ARCH"; break; }
+     check "$ARCH: all host captures alive before start" test ! -s "$DEAD" || break
+     check "$ARCH: capture watcher alive with a fresh heartbeat before start" watch_ok || break
++    ARCH_CALLED+=("$ARCH")
+     timeout 1700 docker exec -e CT01_TARGETS="$TARGETS" -e CT01_SUITE=arp "$ID" sh -c "cd /app && python3 /harness/probe_matrix.py $ARCH /harness-out"
+     rc=$?
+     echo "probe_matrix $ARCH exit=$rc"
+@@ -377,12 +389,24 @@
+     check "$ARCH: no qemu-system/tshark left in container" bash -c "! grep -qE 'qemu-system|tshark' '$D/ps-after-$ARCH.txt'"
+     E sh -c 'cd /app && python3 -m isolation.verify --phase "06B-3B after '"$ARCH"'"' > "$D/verify-after-$ARCH.txt" 2>&1
+     check "$ARCH: full verify after guest shutdown" test $? -eq 0
++    # 06B-4IR3 (PC-1): stop before the NEXT architecture; after the last one (MIPS) there is nothing to stop
++    if [ "$ARCH" != MIPS ] && { [ ${#FAILS[@]} -ne "$nf0" ] || [ ${#UNVERIFIED[@]} -ne "$nu0" ]; }; then
++        ARCH_STOP="$ARCH did not pass every required check (see FAIL/UNVERIFIED above): the next architecture is not started"
++        break
++    fi
+ done
+-
++[ -z "$ARCH_STOP" ] && [ ${#ARCH_CALLED[@]} -lt 2 ] && ARCH_STOP="loop left after ${ARCH_CALLED[*]:-no architecture} (stop above)"
++if [ -n "$ARCH_STOP" ]; then
++    echo "[STOPPED] architecture loop: $ARCH_STOP; harness called for: ${ARCH_CALLED[*]:-none}"
++    # never a pass: the loop only stops after a recorded FAIL/UNVERIFIED; this guards the invariant
++    [ ${#FAILS[@]} -eq 0 ] && [ ${#UNVERIFIED[@]} -eq 0 ] && fail "architecture loop stopped without a recorded cause: $ARCH_STOP"
++    echo "[SKIPPED] ARP run-level check (ARM and MIPS each evaluated): not every architecture was run" | tee "$OUT/arp-run-check.txt"
++else
+ # 06B-4I: both architectures evaluated, each with the four reviewed ARP cases exactly once
+ python3 "$H/arp_harness.py" --run-check "$D/probe" ARM MIPS > "$OUT/arp-run-check.txt" 2>&1; rc=$?
+ cat "$OUT/arp-run-check.txt"
+ check "ARP group evaluated for ARM and MIPS, each case exactly once per architecture" test $rc -eq 0
++fi
+ 
+ # ------------------------------------------------------------------ 7. stop captures, analyse host side
+ netns_state after
+@@ -504,6 +528,7 @@
+ chown -R "${SUDO_UID:-0}:${SUDO_GID:-0}" "$OUT" 2>/dev/null || true
+ 
+ log "result"
++[ -n "$ARCH_STOP" ] && echo "ARCHITECTURE LOOP STOPPED (06B-4IR3 stop policy): $ARCH_STOP; harness called for: ${ARCH_CALLED[*]:-none}"
+ [ $LEAK -eq 1 ] && echo "!!! LEAK DETECTED — tests were stopped; report to reviewer immediately"
+ [ ${#OPEN_ITEMS[@]} -gt 0 ] && { echo "OPEN ITEMS (reported, not explained):"; printf ' - %s\n' "${OPEN_ITEMS[@]}"; }
+ [ ${#UNVERIFIED[@]} -gt 0 ] && { echo "UNVERIFIED (could not be decided):"; printf ' - %s\n' "${UNVERIFIED[@]}"; }
+diff -ruN ct01-06b4ir2/selftest_arp.py ct01-06b4ir3/selftest_arp.py
+--- ct01-06b4ir2/selftest_arp.py	2026-10-08 11:16:38.000000000 +0000
++++ ct01-06b4ir3/selftest_arp.py	2026-10-09 01:49:17.875738213 +0000
+@@ -1021,11 +1021,79 @@
+     t("C5 CLI: missing arguments -> exit 2", lambda: rc == 2)
+ 
+ 
++# ------------------------------------------------------------------ PC3 (06B-4IR3): administrative link state
++class FailUpOnce(SimGuest):
++    """`ip link set dev IF up` fails ONCE (the T15 trigger), later attempts (the restore) succeed."""
++
++    def __init__(self, *a, **kw):
++        super().__init__(*a, **kw)
++        self.up_failed = False
++
++    def run(self, cmd, timeout=60):
++        if cmd == f"ip link set dev {self.iface} up" and not self.up_failed:
++            self.up_failed = True
++            self.log.append(cmd)
++            return 2, "RTNETLINK answers: simulated failure"
++        return super().run(cmd, timeout)
++
++
++def sec_PC3(tmp):
++    g, rec, pc, cf = run_sim(tmp, "pc3")
++    t("PC3.1 the record carries admin_up in every baseline and restore.after (bool)",
++      lambda: all(isinstance(c["guest_state"]["before"]["admin_up"], bool)
++                  and isinstance(c["guest_state"]["restore"]["after"]["admin_up"], bool) for c in rec["cases"]))
++
++    def grp(change):
++        r = copy.deepcopy(rec)
++        change(r["cases"][3]["guest_state"])
++        res = A.evaluate_group(pc, cf, TAP, r)
++        return res, A.group_exit(res)
++    for name, ch in (("baseline without admin_up", lambda gs: gs["before"].pop("admin_up")),
++                     ("restore.after without admin_up", lambda gs: gs["restore"]["after"].pop("admin_up")),
++                     ("baseline admin_up 'true' (string)", lambda gs: gs["before"].__setitem__("admin_up", "true")),
++                     ("restore.after admin_up differs from the baseline although restored=True",
++                      lambda gs: gs["restore"]["after"].__setitem__("admin_up", False))):
++        t(f"PC3.2 {name} -> S1 never ĐẠT, record problem, group exit 2 (a record without a confirmed admin state "
++          "is not a confirmed restore)",
++          lambda ch=ch: (lambda r: r[0]["cases"][3]["category"] != "DAT_KIEM_QUY_TAC" and r[0]["record_problems"]
++                         and r[1] == 2)(grp(ch)))
++    t("PC3.3 production order: T14-A1, T14-A2, T14-A3, T15-S1 (S1 is the last case)",
++      lambda: [c["id"] for c in A.build_cases()] == ["T14-A1", "T14-A2", "T14-A3", "T15-S1"])
++    links = []
++
++    def link():
++        links.append(1)
++        return True, "HTTP=200 + hash"
++    g, rec, pc, cf = run_sim(tmp, "pc3-upfail", link=link, guest_kw={"fail_cmds": ["ip link set dev eth1 up"]})
++    s1 = rec["cases"][3]
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("PC3.4 production order, `ip link set up` fails in the S1 trigger AND in the restore -> restore not confirmed "
++      "(admin_up True -> False), NO service link after S1, S1 not ĐẠT",
++      lambda: s1["guest_state"]["restore"]["restored"] is False
++      and "admin_up: True -> False" in s1["guest_state"]["restore"]["diffs"] and s1["service_link_after"] is None
++      and len(links) == 1 + 3 and res["cases"][3]["category"] != "DAT_KIEM_QUY_TAC" and not g.admin)
++    links.clear()
++    g, rec, pc, cf = run_sim(tmp, "pc3-upfail-once", link=link, guest_cls=FailUpOnce)
++    s1 = rec["cases"][3]
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("PC3.5 production order, the S1 trigger `up` fails once, the restore `up` succeeds -> restored True with "
++      "admin UP re-read, service link after S1 sent, S1 LỖI THỰC THI (never ĐẠT)",
++      lambda: s1["guest_state"]["restore"]["restored"] is True and s1["guest_state"]["restore"]["after"]["admin_up"]
++      and any(c["cmd"] == "ip link set dev eth1 up" and c["rc"] == 0 for c in s1["guest_state"]["restore"]["commands"])
++      and len(links) == 1 + 4 and res["cases"][3]["category"] == "LOI_THUC_THI" and g.admin)
++    g, rec, pc, cf = run_sim(tmp, "pc3-nocarrier", guest_kw={"carrier": False})
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("PC3.6 SIMULATED MIPS-like link (admin UP, no carrier, operstate down): T15 down/up keeps admin UP and operstate "
++      "down -> every restore confirmed, group exit 0 (operstate rule unchanged; not a statement about the real guest)",
++      lambda: all(c["guest_state"]["before"]["operstate"] == "down" and c["guest_state"]["before"]["admin_up"]
++                  and c["guest_state"]["restore"]["restored"] for c in rec["cases"]) and A.group_exit(res) == 0)
++
++
+ def main(argv):
+     jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
+     with tempfile.TemporaryDirectory(prefix="selftest-arp.") as tmp:
+         for name, fn in (("D", sec_D), ("N", sec_N), ("P", lambda: sec_P(tmp)), ("X", lambda: sec_X(tmp)),
+-                         ("E", lambda: sec_E(tmp)), ("F", lambda: sec_F(tmp)), ("H", lambda: sec_H(tmp)), ("R1", lambda: sec_R1(tmp)), ("C", lambda: sec_C(tmp))):
++                         ("E", lambda: sec_E(tmp)), ("F", lambda: sec_F(tmp)), ("H", lambda: sec_H(tmp)), ("R1", lambda: sec_R1(tmp)), ("PC3", lambda: sec_PC3(tmp)), ("C", lambda: sec_C(tmp))):
+             print(f"== section {name}")
+             try:
+                 fn()
+diff -ruN ct01-06b4ir2/selftest_arp_wiring.py ct01-06b4ir3/selftest_arp_wiring.py
+--- ct01-06b4ir2/selftest_arp_wiring.py	2026-10-08 15:27:21.032317484 +0000
++++ ct01-06b4ir3/selftest_arp_wiring.py	2026-10-09 01:36:50.859805117 +0000
+@@ -1494,7 +1494,7 @@
+     s = open(os.path.join(HERE, RS)).read()
+     old = open(os.path.join(HERE, RS_OLD)).read()
+     t("W1 run-06b4i.sh: bash -n", lambda: subprocess.run(["bash", "-n", os.path.join(HERE, RS)]).returncode == 0)
+-    t("W2 H is the 06B-4IR2 working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4ir2\n" in s)
++    t("W2 H is the 06B-4IR3 working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4ir3\n" in s)
+     calls = [l for l in s.splitlines() if "probe_matrix.py $ARCH" in l]
+     code = "\n".join(l for l in s.splitlines() if not l.lstrip().startswith("#"))
+     t("W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)",
+@@ -1531,7 +1531,8 @@
+                r"CT01_SUITE=icmp", r"^    # 06B-4F: icmp_harness.py --outcome", r"^    # COMPLETED \+ each ICMP case",
+                r'^    outcome=\$\(python3 "\$H/icmp_harness.py"', r"^# 06B-4F: both architectures evaluated",
+                r'^python3 "\$H/icmp_harness.py" --run-check', r'^cat "\$OUT/icmp-run-check.txt"',
+-               r'^check "ICMP group evaluated')
++               r'^check "ICMP group evaluated',
++               r'^    check "\$ARCH: no QEMU running before start \(sequential\)"', r'^$')   # 06B-4IR3 PC-1: `|| break` added
+     t("W9 everything else is run-06b4f.sh unchanged: only the listed lines were replaced, the rest only added",
+       lambda: removed and all(any(re.search(a, l) for a in allowed) for l in removed))
+     t("W10 run-06b4f.sh and run-06b3b.sh unchanged (hashes of the 06B-4HR2 manifest)",
+@@ -1543,6 +1544,95 @@
+                    "ctl_loop.py")))
+ 
+ 
++# ====================================================================== PC1 (06B-4IR3): architecture stop policy
++PC1_VARIANTS = {
++    # name: (arch -> (rc, outcome)), extra flags
++    "all-pass": {},
++    "arm-fail": {"ARM": (1, "FAIL: probe T14-A2 (arp, live control) -> FAIL")},
++    "arm-restore-fail": {"ARM": (1, "FAIL: required confirmation not passed (ok=False): guest configuration restored after T14-A2")},
++    "arm-error": {"ARM": (1, "FAIL: status 'ERROR: RuntimeError: x'")},
++    "arm-unverified": {"ARM": (1, "UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (x)")},
++    "arm-leak": {"ARM": (99, "FAIL: status 'LEAK: x'")},
++    "arm-capture": {"ARM": (98, "FAIL: status 'CAPTURE LOST: x'")},
++    "arm-verify-after-fail": {"verify_fail": "ARM"},
++    "arm-qemu-left": {"qemu_left": "ARM"},
++    "noqemu-before-ARM": {"qemu_before": "ARM"},
++    "noqemu-before-MIPS": {"qemu_before": "MIPS"},
++    "mips-fail": {"MIPS": (1, "FAIL: probe T15-S1 (arp, rule check) -> FAIL")},
++    "runcheck-fail": {"runcheck_rc": 1},
++}
++
++
++def pc1_run(tmp, name):
++    """The REAL architecture loop, the block after it up to section 7 and the result block of run-06b4i.sh, run by
++    bash; docker/timeout/python3/E/bash/watch_ok are inert shell functions (no container, no process check)."""
++    src = open(os.path.join(HERE, RS)).read()
++    i = src.index("for ARCH in ARM MIPS; do")
++    j = src.index("# ------------------------------------------------------------------ 7.", i)
++    k = src.index('log "result"')
++    init = "\n".join(l for l in src.splitlines() if l.startswith(("CREATED_IDS=();", "ARCH_CALLED=();")))
++    helpers = "\n".join(l for l in src.splitlines() if l.startswith(("fail()", "check()", "pass()")))
++    v = PC1_VARIANTS[name]
++    d = os.path.join(tmp, "pc1-" + name)
++    os.makedirs(os.path.join(d, "hostcap"))
++    open(os.path.join(d, "hostcap", "alert.txt"), "w").write("leak line\n" if name == "arm-leak" else "")
++    open(os.path.join(d, "dead"), "w").write("")
++    stubs = f"""set -u
++{init}
++LEAK=0
++{helpers}
++log() {{ :; }}; watch_ok() {{ return 0; }}
++E() {{ if [ "$1" = ps ]; then :; else [ "$ARCH" != "{v.get('verify_fail', '-')}" ]; fi; }}
++bash() {{ case "$2" in *pgrep*) [ "$ARCH" != "{v.get('qemu_before', '-')}" ];; *grep*) [ "$ARCH" != "{v.get('qemu_left', '-')}" ];; *) return 0;; esac; }}
++timeout() {{ echo "@@SEND_ARCH $ARCH"; case "$ARCH" in ARM) return {v.get('ARM', (0, ''))[0]};; MIPS) return {v.get('MIPS', (0, ''))[0]};; esac; }}
++python3() {{ case "${{2:-}}" in
++  --outcome) case "$ARCH" in ARM) echo "{v.get('ARM', (0, 'PASS'))[1]}";; MIPS) echo "{v.get('MIPS', (0, 'PASS'))[1]}";; esac;;
++  --run-check) echo "run-check stub"; return {v.get('runcheck_rc', 0)};;
++  *) echo PASS;; esac; }}
++H=fixture; ID=fixture; TARGETS='{{}}'; D="$P"; OUT="$P"; DEAD="$P/dead"
++"""
++    prog = stubs + src[i:j] + '\necho "@@AFTER_LOOP (teardown and host checks of sections 7-8 follow here)"\n' + src[k:]
++    p = subprocess.run(["/bin/bash", "-c", prog], env={"P": d, "PATH": "/usr/bin:/bin"}, capture_output=True,
++                       text=True, timeout=60)
++    out = p.stdout + p.stderr
++    open(os.path.join(d, "output.log"), "w").write(out)
++    return {"exit": p.returncode, "out": out,
++            "called": [l.split()[-1] for l in p.stdout.splitlines() if l.startswith("@@SEND_ARCH")],
++            "stopped": "[STOPPED] architecture loop" in out, "after": "@@AFTER_LOOP" in out,
++            "runcheck": "run-check stub" in out, "skipped": "[SKIPPED] ARP run-level check" in out}
++
++
++def sec_PC1(tmp):
++    R = {n: pc1_run(tmp, n) for n in PC1_VARIANTS}
++    x = R["all-pass"]
++    t("PC1.1 both architectures pass: harness called for ARM then MIPS, run-level check run, no stop, exit 0",
++      lambda: x["called"] == ["ARM", "MIPS"] and x["runcheck"] and not x["stopped"] and x["exit"] == 0)
++    for n, code in (("arm-fail", 1), ("arm-restore-fail", 1), ("arm-error", 1), ("arm-unverified", 4),
++                    ("arm-verify-after-fail", 1), ("arm-qemu-left", 1), ("arm-leak", 1), ("arm-capture", 1)):
++        x = R[n]
++        t(f"PC1.2 {n}: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, "
++          f"control continues after the loop (teardown), exit {code} keeps the cause",
++          lambda x=x, code=code: x["called"] == ["ARM"] and x["stopped"] and x["skipped"] and not x["runcheck"]
++          and x["after"] and x["exit"] == code)
++    x = R["noqemu-before-ARM"]
++    t("PC1.3 QEMU already running before ARM: no harness call at all (not 'guest did not boot'), stop reason names "
++      "it, exit 1",
++      lambda: x["called"] == [] and x["stopped"] and "harness not called for ARM" in x["out"] and x["after"]
++      and x["exit"] == 1)
++    x = R["noqemu-before-MIPS"]
++    t("PC1.4 QEMU running before MIPS: ARM called, MIPS harness not called, exit 1",
++      lambda: x["called"] == ["ARM"] and "harness not called for MIPS" in x["out"] and x["exit"] == 1)
++    x = R["mips-fail"]
++    t("PC1.5 MIPS fails after a clean ARM: both called, no stop needed, run-level check run, exit 1",
++      lambda: x["called"] == ["ARM", "MIPS"] and not x["stopped"] and x["runcheck"] and x["exit"] == 1)
++    x = R["runcheck-fail"]
++    t("PC1.6 both pass but the run-level check fails -> exit 1", lambda: x["called"] == ["ARM", "MIPS"] and x["exit"] == 1)
++    x = R["arm-unverified"]
++    t("PC1.7 ARM UNVERIFIED: the result names the stop and the UNVERIFIED cause; never 'ALL CHECKS PASSED'",
++      lambda: "ARCHITECTURE LOOP STOPPED" in x["out"] and "UNVERIFIED (could not be decided)" in x["out"]
++      and "ALL CHECKS PASSED" not in x["out"])
++
++
+ MANIFEST_4HR2 = {   # docs/evidence/task06b4hr2/harness-sha256.txt
+     "run-06b4f.sh": "5bc5ce4ed82ae0bba7c710d8554f5c73cab8c7bac91d1c81b576d9451d60db92",
+     "run-06b3b.sh": "c83273d646a9f3e14ad8976b31dbe71ecf8075c1e40ad97810921eb6181a34a6",
+@@ -1562,6 +1652,7 @@
+         S = sec_S(tmp)
+         sec_R(S, tmp)
+         sec_W(S)
++        sec_PC1(tmp)
+     n = sum(RESULTS.values())
+     if jf:
+         json.dump(RESULTS, open(jf, "w"), indent=1, ensure_ascii=False)
+diff -ruN ct01-06b4ir2/selftest_l2.py ct01-06b4ir3/selftest_l2.py
+--- ct01-06b4ir2/selftest_l2.py	2026-10-08 03:24:25.000000000 +0000
++++ ct01-06b4ir3/selftest_l2.py	2026-10-09 01:32:28.977967741 +0000
+@@ -438,11 +438,15 @@
+ class FakeGuest:
+     """Minimal simulation of the commands guest_state emits. [Kernel] behaviour simulated, NOT verified:
+     link down removes every route through the device and flushes ALL its neighbours (permanent too);
+-    link up re-adds the connected routes; a /32 address has no connected route."""
++    link up re-adds the connected routes; a /32 address has no connected route.
++    06B-4IR3: the administrative state (`admin`, set only by `ip link set up/down`, shown as UP in the `ip link`
++    header) is kept apart from the operational state (`oper`, sysfs operstate): with carrier=False the link is
++    admin UP but operstate "down" / NO-CARRIER (as observed for the MIPS br-lan in 06B-4G; sysfs value assumed)."""
+ 
+-    def __init__(self, iface="eth1", netifd_extra=None, fail=(), bad_section=None):
++    def __init__(self, iface="eth1", netifd_extra=None, fail=(), bad_section=None, carrier=True):
+         self.iface, self.netifd_extra, self.fail, self.bad_section = iface, netifd_extra, set(fail), bad_section
+-        self.mac, self.oper, self.notify = GUEST, "up", 0
++        self.carrier, self.admin = carrier, True
++        self.mac, self.oper, self.notify = GUEST, "up" if carrier else "down", 0
+         self.addrs = {"10.200.0.2/30"}
+         self.routes = {f"default via 10.200.0.1 dev {iface}", f"10.200.0.0/30 dev {iface} scope link src 10.200.0.2",
+                        "192.168.1.0/24 dev br-lan scope link src 192.168.1.1"}
+@@ -463,11 +467,11 @@
+         m = re.fullmatch(rf"ip link set dev {i} (down|up|address (\S+))", cmd)
+         if m:
+             if m.group(1) == "down":
+-                self.oper = "down"
++                self.admin, self.oper = False, "down"
+                 self.routes = {r for r in self.routes if f" dev {i}" not in r}
+                 self.neigh = {k: v for k, v in self.neigh.items() if k[1] != i}
+             elif m.group(1) == "up":
+-                self.oper = "up"
++                self.admin, self.oper = True, "up" if self.carrier else "down"
+                 self.routes |= {c for c in map(self._conn, self.addrs) if c}
+                 if self.netifd_extra:
+                     self.addrs.add(self.netifd_extra)
+@@ -481,7 +485,7 @@
+                 if a in self.addrs:
+                     return 2, "RTNETLINK answers: File exists"
+                 self.addrs.add(a)
+-                if c and self.oper == "up":
++                if c and self.admin:
+                     self.routes.add(c)
+             else:
+                 if a not in self.addrs:
+@@ -523,18 +527,104 @@
+         addr = "\n".join(f"    inet {a} brd x scope global {self.iface}" for a in sorted(self.addrs))
+         arpt = "\n".join([ARP_HDR] + [f"{ip:<16} 0x1         {fl:#x}         {mc}     *        {dev}"
+                                       for (ip, dev), (mc, fl) in sorted(self.neigh.items())])
+-        return (sec("mac", self.mac) + sec("operstate", self.oper)
++        flags = "BROADCAST,MULTICAST" + (",UP" if self.admin else "") + (",LOWER_UP" if self.admin and self.carrier else "")
++        if self.admin and not self.carrier:
++            flags = "NO-CARRIER," + flags
++        link = (f"3: {self.iface}: <{flags}> mtu 1500 qdisc fq_codel state {self.oper.upper()} qlen 1000\n"
++                f"    link/ether {self.mac} brd ff:ff:ff:ff:ff:ff")
++        return (sec("mac", self.mac) + sec("operstate", self.oper) + sec("link", link)
+                 + sec("addr", f"3: {self.iface}: <BROADCAST,UP>\n{addr}") + sec("route", "\n".join(sorted(self.routes)))
+                 + sec("arp", arpt) + sec("arp_notify", str(self.notify)))
+ 
+ 
++def sec_GA():
++    """06B-4IR3 (PC-3): administrative link state, kept apart from sysfs operstate."""
++    arm = "3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000"     # 06B-3G ARM
++    mips = "4: br-lan: <NO-CARRIER,BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state DOWN qlen 1000"  # 06B-4G
++
++    def snap(link, iface="eth1", oper="up"):
++        g = FakeGuest(iface)
++        g.oper = oper
++        txt = g._snap()
++        i, j = txt.index("@@S link\n") + len("@@S link\n"), txt.index("\n@@RC", txt.index("@@S link\n"))
++        return txt[:i] + link + txt[j:]
++    t("GA1 real ARM header (06B-3G ip addr text) -> admin_up True",
++      lambda: GS.parse_snapshot(snap(arm), "eth1")["admin_up"] is True)
++    st = GS.parse_snapshot(snap(mips, "br-lan", "down"), "br-lan")
++    t("GA2 real MIPS br-lan header (06B-4G: NO-CARRIER, state DOWN) -> admin_up True, operstate kept as read (down)",
++      lambda: st["admin_up"] is True and st["operstate"] == "down")
++    t("GA3 header without UP -> admin_up False",
++      lambda: GS.parse_snapshot(snap("3: eth1: <BROADCAST,MULTICAST> mtu 1500 state DOWN"), "eth1")["admin_up"] is False)
++    t("GA4 no header / two headers / header of another interface / malformed flags -> StateReadError",
++      lambda: all(raises(GS.StateReadError, lambda b=b: GS.parse_snapshot(snap(b), "eth1")) for b in (
++          "    link/ether 52:54:00:c7:00:02", arm + "\n" + arm, arm.replace("eth1", "eth2"),
++          "3: eth1: <broadcast,up> mtu 1500", "3: eth1: BROADCAST,UP mtu 1500")))
++    t("GA4b snapshot without the link section (pre-06B-4IR3 format) -> StateReadError, never 'unchanged'",
++      lambda: raises(GS.StateReadError, lambda: GS.parse_snapshot(
++          FakeGuest(bad_section="link-missing")._snap(), "eth1")))
++    b = GS.parse_snapshot(snap(mips, "br-lan", "down"), "br-lan")
++    a = GS.parse_snapshot(snap(mips.replace(",UP,LOWER_UP", ""), "br-lan", "down"), "br-lan")
++    t("GA5 only the admin flag differs (both operstate down) -> diff reports admin_up",
++      lambda: GS.diff(b, a) == ["admin_up: True -> False"])
++
++    def mips_guest(**kw):
++        return FakeGuest("br-lan", carrier=False, **kw)
++    g = mips_guest()
++    before = GS.read_state(g, "br-lan")
++    g.run("ip link set dev br-lan down")
++    r = GS.restore(g, "br-lan", before)
++    t("GA6 baseline admin UP + operstate down, case leaves admin DOWN -> restore sends `ip link set up`, admin UP "
++      "again, restored True (operstate still down, as recorded)",
++      lambda: before["admin_up"] and before["operstate"] == "down"
++      and [c["cmd"] for c in r["commands"] if c["step"] == "link"] == ["ip link set dev br-lan up"]
++      and r["restored"] and g.admin and r["after"]["operstate"] == "down")
++    g = mips_guest(fail={"ip link set dev br-lan up"})
++    before = GS.read_state(g, "br-lan")
++    g.run("ip link set dev br-lan down")
++    r = GS.restore(g, "br-lan", before)
++    t("GA7 restore command `ip link set up` fails -> restored False, diff admin_up kept, rc recorded",
++      lambda: not r["restored"] and "admin_up: True -> False" in r["diffs"]
++      and any(c["cmd"] == "ip link set dev br-lan up" and c["rc"] == 2 for c in r["commands"]))
++    g = FakeGuest()
++    g.run("ip link set dev eth1 down")
++    before = GS.read_state(g, "eth1")
++    g.run("ip link set dev eth1 up")
++    r = GS.restore(g, "eth1", before)
++    t("GA8 baseline admin DOWN, case brings it UP -> restore sets it DOWN again (baseline kept), restored True",
++      lambda: not before["admin_up"] and [c["cmd"] for c in r["commands"] if c["step"] == "link"]
++      == ["ip link set dev eth1 down"] and r["restored"] and not g.admin)
++    g = mips_guest()
++    before = GS.read_state(g, "br-lan")
++    r = GS.restore(g, "br-lan", before)
++    t("GA9 baseline operstate down with admin UP is NOT turned into an admin-down command (no link command)",
++      lambda: [c for c in r["commands"] if c["step"] == "link"] == [] and r["restored"] and g.admin)
++    g = FakeGuest()
++    g.run("ip link set dev eth1 down")
++    before = GS.read_state(g, "eth1")
++    g.run("ip link set dev eth1 address 02:00:00:00:00:99")
++    r = GS.restore(g, "eth1", before)
++    t("GA10 MAC changed while the baseline is admin DOWN -> down + address, no `up`; restored True",
++      lambda: [c["cmd"] for c in r["commands"] if c["step"] == "link"]
++      == ["ip link set dev eth1 down", "ip link set dev eth1 address 52:54:00:c7:00:02"] and r["restored"] and not g.admin)
++    g = FakeGuest()
++    before = GS.read_state(g, "eth1")
++    g.carrier, g.oper = False, "down"           # carrier lost, admin still UP: operational change only
++    r = GS.restore(g, "eth1", before)
++    t("GA11 operstate rule unchanged: baseline operstate up, carrier lost (admin still UP) -> `ip link set up` "
++      "tried, operstate still differs -> restored False (not relaxed)",
++      lambda: [c["cmd"] for c in r["commands"] if c["step"] == "link"] == ["ip link set dev eth1 up"]
++      and not r["restored"] and r["diffs"] == ["operstate: 'up' -> 'down'"])
++
++
+ def sec_G():
+     # parser on the real busybox text recorded in 06B-3G topology.json (ARM)
+     real_addr = ("3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\n"
+                  "    link/ether 52:54:00:c7:00:02 brd ff:ff:ff:ff:ff:ff\n"
+                  "    inet 10.200.0.2/30 brd 10.200.0.3 scope global eth1\n       valid_lft forever preferred_lft forever")
+     real_route = "default via 10.200.0.1 dev eth1 \n10.200.0.0/30 dev eth1 scope link  src 10.200.0.2 \n"
+-    text = (f"@@S mac\n52:54:00:c7:00:02\n@@RC 0\n@@S operstate\nup\n@@RC 0\n@@S addr\n{real_addr}\n@@RC 0\n"
++    real_link = "\n".join(real_addr.splitlines()[:2])   # 06B-4IR3: same busybox header line as `ip addr`
++    text = (f"@@S mac\n52:54:00:c7:00:02\n@@RC 0\n@@S operstate\nup\n@@RC 0\n@@S link\n{real_link}\n@@RC 0\n"
++            f"@@S addr\n{real_addr}\n@@RC 0\n"
+             f"@@S route\n{real_route}@@RC 0\n@@S arp\n{ARP_HDR}\n10.200.0.1       0x1         0x2         "
+             f"{TAP}     *        eth1\n@@RC 0\n@@S arp_notify\n0\n@@RC 0\n")
+     st = GS.parse_snapshot(text)
+@@ -894,7 +984,7 @@
+         return 64
+     with tempfile.TemporaryDirectory(prefix="selftest-l2.") as tmp:
+         for name, fn in (("A", lambda: sec_A(tmp)), ("B", lambda: sec_B(tmp)), ("D", sec_D), ("E", sec_E),
+-                         ("F", sec_F), ("G", sec_G), ("H", lambda: sec_H(tmp)), ("K", lambda: sec_K(tmp)), ("I", sec_I)) + \
++                         ("F", sec_F), ("G", sec_G), ("GA", sec_GA), ("H", lambda: sec_H(tmp)), ("K", lambda: sec_K(tmp)), ("I", sec_I)) + \
+                 ((("R", lambda: sec_R(reg)),) if reg else ()):
+             print(f"== section {name}")
+             try:

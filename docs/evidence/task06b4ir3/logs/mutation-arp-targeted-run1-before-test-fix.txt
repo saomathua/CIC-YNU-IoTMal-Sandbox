@@ -1,0 +1,6 @@
+baseline: 233/233 tests pass
+BAD D5   DETECTED-ELSEWHERE target='PC3.2 baseline without admin_up -> S1 never ĐẠT, record problem, group exit 2 (a record without a confirmed admin state is not a confirmed restore)' failed=['PC3-INFRA section crashed'] 
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP: 2 OK, 1 not as expected; harness unchanged
+exit=1

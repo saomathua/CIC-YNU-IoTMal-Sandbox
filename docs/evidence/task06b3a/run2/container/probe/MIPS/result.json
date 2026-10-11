@@ -1,0 +1,320 @@
+{
+ "status": "COMPLETED",
+ "results": [
+  {
+   "arch": "MIPS",
+   "test": "fresh guest image extracted",
+   "ok": true,
+   "zip": "./MIPS/image.zip",
+   "rootfs_sha256": "694fd1b8e3b34a879f56c9de6499d5220484c105534bd1e763157fc8fad6b445"
+  },
+  {
+   "arch": "MIPS",
+   "test": "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "tshark capturing on tap0",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest booted to shell",
+   "ok": true,
+   "seconds": 11.8,
+   "qemu_pid": 218
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest network configured by Analysis._configure_network",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "QEMU info network: only tap0 backend, no user/slirp/socket",
+   "ok": true,
+   "problems": [],
+   "backends": [
+    "nic",
+    "tap"
+   ]
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest has 10.200.0.2/30 on br-lan",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest default route via 10.200.0.1 on br-lan",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "a guest NIC carries the pinned MAC 52:54:00:c7:00:02",
+   "ok": true,
+   "interfaces": [
+    "br-lan",
+    "eth0"
+   ],
+   "all_macs": {
+    "br-lan": "52:54:00:c7:00:02",
+    "eth0": "52:54:00:c7:00:02",
+    "hwsim0": "12:00:00:00:00:00",
+    "lo": "00:00:00:00:00:00"
+   }
+  },
+  {
+   "arch": "MIPS",
+   "test": "harmless dummy upload file created in guest",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "no current_task: GET get-task/06b3a-mips-task/file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "no current_task: POST update-task/06b3a-mips-task/strace -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "no current_task: POST update-task/06b3a-mips-task/sar -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "no current_task: nothing written",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "GET get-task/T/file -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "MIPS",
+   "test": "downloaded file hash (computed in guest) == fixture",
+   "ok": true,
+   "guest": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38",
+   "expected": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38"
+  },
+  {
+   "arch": "MIPS",
+   "test": "POST update-task/T/strace -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "MIPS",
+   "test": "received strace.log hash == payload",
+   "ok": true,
+   "got": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c",
+   "expected": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c"
+  },
+  {
+   "arch": "MIPS",
+   "test": "POST update-task/T/sar -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "MIPS",
+   "test": "received sar.out hash == payload",
+   "ok": true,
+   "got": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57",
+   "expected": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57"
+  },
+  {
+   "arch": "MIPS",
+   "test": "forbidden: GET /healthcheck -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "forbidden: POST /stop -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "forbidden: GET other task file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "forbidden: POST other task strace -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "no stop file created",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "no task created / other task not written",
+   "ok": true,
+   "data_dir": [
+    "06b3a-mips-other",
+    "06b3a-mips-task"
+   ]
+  },
+  {
+   "arch": "MIPS",
+   "test": "after clearing current_task: GET get-task/T/file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "MIPS",
+   "test": "QEMU exit confirmed (shutdown_qemu)",
+   "ok": true,
+   "exitstatus": 0,
+   "signalstatus": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "tshark capture stopped",
+   "ok": true,
+   "returncode": 0
+  },
+  {
+   "arch": "MIPS",
+   "test": "fixtures, marker and temporary guest disk removed",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "capture: guest frames seen on tap0",
+   "ok": true,
+   "frames_from_guest": 93
+  },
+  {
+   "arch": "MIPS",
+   "test": "group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 21,
+   "pcap": 21
+  },
+  {
+   "arch": "MIPS",
+   "test": "group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 7,
+   "pcap": 7
+  },
+  {
+   "arch": "MIPS",
+   "test": "group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 14,
+   "pcap": 14
+  },
+  {
+   "arch": "MIPS",
+   "test": "group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 28,
+   "pcap": 28
+  },
+  {
+   "arch": "MIPS",
+   "test": "group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 7,
+   "pcap": 7
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A)",
+   "ok": true,
+   "count": 8
+  }
+ ],
+ "groups": [
+  {
+   "group": "1-no-current-task",
+   "t0": 1791297631.4181972,
+   "t1": 1791297632.6025836,
+   "counter_delta": {
+    "sandbox_guest_l2.l2_bad_ethertype": 4,
+    "sandbox_guest.allow_svc": 21,
+    "sandbox_guest.allow_out_svc": 15
+   },
+   "pcap_guest_to_svc": 21
+  },
+  {
+   "group": "2-download",
+   "t0": 1791297632.6220906,
+   "t1": 1791297633.329386,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 7,
+    "sandbox_guest.drop_public": 2,
+    "sandbox_guest.allow_out_svc": 5
+   },
+   "pcap_guest_to_svc": 7
+  },
+  {
+   "group": "3-upload",
+   "t0": 1791297633.3490446,
+   "t1": 1791297634.2542741,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 14,
+    "sandbox_guest.drop_spoof": 1,
+    "sandbox_guest.allow_out_svc": 10
+   },
+   "pcap_guest_to_svc": 14
+  },
+  {
+   "group": "4-forbidden",
+   "t0": 1791297634.2767932,
+   "t1": 1791297635.306279,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 28,
+    "sandbox_guest.allow_out_svc": 20
+   },
+   "pcap_guest_to_svc": 28
+  },
+  {
+   "group": "5-after-clear",
+   "t0": 1791297635.3237722,
+   "t1": 1791297635.9535723,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 7,
+    "sandbox_guest.drop_public": 2,
+    "sandbox_guest.allow_out_svc": 5
+   },
+   "pcap_guest_to_svc": 7
+  }
+ ],
+ "counters_at_boot": {
+  "sandbox_guest_l2.l2_bad_mac": 0,
+  "sandbox_guest_l2.l2_bad_ethertype": 9,
+  "sandbox_guest_arp.arp_in_ok": 1,
+  "sandbox_guest_arp.arp_in_drop": 0,
+  "sandbox_guest_arp.arp_out_ok": 1,
+  "sandbox_guest_arp.arp_out_drop": 0,
+  "sandbox_guest.allow_svc": 80,
+  "sandbox_guest.drop_spoof": 3,
+  "sandbox_guest.drop_non_ipv4": 0,
+  "sandbox_guest.drop_worker_other": 0,
+  "sandbox_guest.drop_private": 0,
+  "sandbox_guest.drop_bcast_mcast": 0,
+  "sandbox_guest.drop_public": 4,
+  "sandbox_guest.drop_input_backstop": 0,
+  "sandbox_guest.drop_forward": 0,
+  "sandbox_guest.allow_out_svc": 58,
+  "sandbox_guest.drop_out": 0
+ }
+}

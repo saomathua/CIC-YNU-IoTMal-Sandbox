@@ -1,0 +1,16 @@
+alert: 0 packets captured
+alert: 0 packets received by filter
+alert_eth: 0 packets captured
+alert_eth: 0 packets received by filter
+veth: probe-signature packets=0 (tcpdump rc=0)
+veth sigscan (rc=0): frames=4072 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+veth sigscan_l2 (rc=0): frames=4072 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=0 unscannable_truncated=0 unscannable_undecoded=0 
+bridge: probe-signature packets=0 (tcpdump rc=0)
+bridge sigscan (rc=0): frames=7960 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+bridge sigscan_l2 (rc=0): frames=7960 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=0 unscannable_truncated=0 unscannable_undecoded=0 
+ens33: probe-signature packets=0 (tcpdump rc=0)
+ens33 sigscan (rc=0): frames=589 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+ens33 sigscan_l2 (rc=0): frames=589 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=7 unscannable_truncated=0 unscannable_undecoded=0 
+veth: control packets from worker=116 (rc=0)
+ens33: NATed control packets=85 (rc=0)
+bridge: packets from worker=1699 (rc=0)

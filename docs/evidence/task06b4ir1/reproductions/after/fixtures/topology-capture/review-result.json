@@ -1,0 +1,26 @@
+{
+  "variant": "topology-capture",
+  "rc": 98,
+  "status": "CAPTURE LOST: startup: after 'ip addr': host capture lost: 12:00:00 capture ens33 pid 77 exited during the test",
+  "outcome": "FAIL: required confirmation missing: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface; required confirmation missing: capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status \"CAPTURE LOST: startup: after 'ip addr': host capture lost: 12:00:00 capture ens33 pid 77 exited during the test\"; arp-eval.json missing or unreadable; captures alive for the whole test (probes stopped)",
+  "cli": "FAIL: required confirmation missing: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface; required confirmation missing: capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status \"CAPTURE LOST: startup: after 'ip addr': host capture lost: 12:00:00 capture ens33 pid 77 exited during the test\"; arp-eval.json missing or unreadable; captures alive for the whole test (probes stopped)",
+  "script_mapping": "FAIL",
+  "categories": {},
+  "commands": [
+    "ip addr"
+  ],
+  "control_A1": null,
+  "infrastructure": [
+    {
+      "test": "QEMU exit confirmed",
+      "ok": true,
+      "error": null
+    },
+    {
+      "test": "fixture, marker and temporary guest disk removed",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "files": "/home/dathq/projects/ct01-06b4ir1-work/after/fixtures/topology-capture/out/ARM"
+}

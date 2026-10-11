@@ -1,0 +1,1 @@
+ISOLATION OK (06B-2BR 1-correct): ruleset,sysctl,link,neighbor,route

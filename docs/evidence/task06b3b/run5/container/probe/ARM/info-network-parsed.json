@@ -1,0 +1,20 @@
+[
+ {
+  "name": "virtio-net-pci.0",
+  "type": "nic",
+  "raw": "index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:12:34:56",
+  "peers": []
+ },
+ {
+  "name": "virtio-net-pci.1",
+  "type": "nic",
+  "raw": "index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02",
+  "peers": [
+   {
+    "name": "net1",
+    "type": "tap",
+    "raw": "index=0,type=tap,ifname=tap0,script=no,downscript=no"
+   }
+  ]
+ }
+]

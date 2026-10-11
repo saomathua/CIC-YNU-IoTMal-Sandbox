@@ -1,0 +1,777 @@
+--- ct01-06b4d1/icmp_cases.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4e/icmp_cases.py	2026-10-08 05:19:08.947953470 +0000
+@@ -0,0 +1,293 @@
++#!/usr/bin/env python3
++"""06B-4E — T12/T13 ICMP cases (prepared OFFLINE; not executed in this task).
++
++Scope: firewall rule checks with the guest's OWN busybox `ping` / `ping6` only:
++    T12-B1  ICMP echo to 255.255.255.255   expected drop_bcast_mcast
++    T12-B2  ICMP echo to 224.0.0.1         expected drop_bcast_mcast
++    T12-B4  ICMP echo to 10.200.0.3        expected drop_private   (subnet broadcast, see plan L3)
++    T13-I1  ICMPv6 echo to ff02::1         expected l2_bad_ethertype
++    T13-I2  ICMPv6 echo to the EUI-64 link-local of TAP_MAC: tap0 has no IPv6, so only Neighbor
++            Solicitations to its solicited-node group are expected; expected l2_bad_ethertype
++Nothing here spoofs, changes the guest configuration, builds raw packets or adds a tool.
++Sizes come ONLY from signatures.py (ICMP4_SIZES / ICMP6_SIZES).
++
++There is NO live control for these destinations: a pass is reported only as "ĐẠT (kiểm quy tắc)"
++(rule matched and dropped at the right place) and evidence_kind is always "rule_check".
++
++Three layers, all injectable for offline tests:
++  build_cases(tap_mac)                       case definitions
++  run_group(runner, read_counters, service_link, cases, iface)
++                                             executes in a guest (NOT called in this task): service link
++                                             before -> per case: read A, ping, read B -> service link after
++  evaluate_group(pcap, counters_file, tap_mac, record)
++                                             capture + counters-raw.jsonl -> per-case verdicts, using the
++                                             reviewed l2frames.reconcile_l2 / l2eval.load_reads / check_classes
++
++Categories (never mixed):
++  LOI_THUC_THI          the ping could not be run in the guest (console error/timeout, tool missing)
++  KHONG_TAO_DUOC_GOI    it ran but no probe frame is in the tap0 capture (e.g. broadcast refused locally)
++  LOI_PHEP_DO           capture unreadable, counter read failed/missing/invalid
++  FAIL                  a determined failure (counter mismatch, probe frame in another class, a reply
++                        towards the guest)
++  CHUA_KIEM_CHUNG       edge frames, frames without a counter, service link not intact
++  DAT_KIEM_QUY_TAC      "ĐẠT (kiểm quy tắc)"
++A ping that times out / gets no reply is NEVER evidence of blocking; only the counter/pcap reconciliation is.
++"""
++import argparse
++import ipaddress
++import json
++import re
++import sys
++
++import counter_window
++import l2eval
++import l2frames as L
++import signatures as S
++
++GUARD_S = counter_window.GUARD_S      # 20 ms, unmeasured assumption (unchanged)
++COUNT = 3                             # echo requests per case (only a hint: the criterion is delta == frames)
++DEADLINE_S = 5                        # busybox -w: overall deadline of one ping
++CASE_IDS = ("T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2")
++CATEGORIES = ("DAT_KIEM_QUY_TAC", "FAIL", "LOI_PHEP_DO", "LOI_THUC_THI", "KHONG_TAO_DUOC_GOI", "CHUA_KIEM_CHUNG")
++EXIT = {"DAT_KIEM_QUY_TAC": 0, "FAIL": 1, "CHUA_KIEM_CHUNG": 4, "KHONG_TAO_DUOC_GOI": 4, "LOI_THUC_THI": 4,
++        "LOI_PHEP_DO": 2}
++
++
++def _iface_ok(iface):
++    if not isinstance(iface, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,15}", iface):
++        raise ValueError(f"bad interface name {iface!r}")
++    return iface
++
++
++def solicited_node(addr):
++    a = ipaddress.IPv6Address(addr).packed
++    return str(ipaddress.IPv6Address(bytes.fromhex("ff02" + "0000" * 4 + "0001" + "ff") + a[13:]))
++
++
++def build_cases(tap_mac):
++    tap = L._norm_mac(tap_mac)
++    tap_ll = S.eui64_ll(tap)
++    return [
++        {"id": "T12-B1", "family": 4, "dst": "255.255.255.255", "size": S.ICMP4_SIZES["T12-B1"], "expected": "drop_bcast_mcast"},
++        {"id": "T12-B2", "family": 4, "dst": "224.0.0.1", "size": S.ICMP4_SIZES["T12-B2"], "expected": "drop_bcast_mcast"},
++        {"id": "T12-B4", "family": 4, "dst": "10.200.0.3", "size": S.ICMP4_SIZES["T12-B4"], "expected": "drop_private"},
++        {"id": "T13-I1", "family": 6, "dst": "ff02::1", "size": S.ICMP6_SIZES["T13-I1"], "expected": "l2_bad_ethertype"},
++        {"id": "T13-I2", "family": 6, "dst": tap_ll, "size": S.ICMP6_SIZES["T13-I2"], "expected": "l2_bad_ethertype",
++         "ns_group": solicited_node(tap_ll)},
++    ]
++
++
++def command(case, iface):
++    """The exact guest command (busybox ping / ping6). Sizes and addresses come from the case."""
++    _iface_ok(iface)
++    size, dst = int(case["size"]), case["dst"]
++    if case["family"] == 4:
++        ipaddress.IPv4Address(dst)
++        return f"ping -c {COUNT} -s {size} -w {DEADLINE_S} {dst}"
++    ipaddress.IPv6Address(dst)
++    return f"ping6 -c {COUNT} -s {size} -w {DEADLINE_S} -I {iface} {dst}"
++
++
++# ------------------------------------------------------------------ execution (prepared, not run here)
++def run_group(runner, read_counters, service_link, cases, iface, timeout=60):
++    """runner.run(cmd, timeout) -> (rc, text); read_counters(label) -> anything (it must append the read
++    to counters-raw.jsonl under `label`); service_link() -> (ok: bool, detail: str).
++    Returns the group record consumed by evaluate_group(). Never raises: every failure is recorded."""
++    rec = {"iface": iface, "cases": [], "service_link_before": None, "service_link_after": None}
++    try:
++        ok, detail = service_link()
++    except Exception as e:                                       # noqa: BLE001
++        ok, detail = False, f"{type(e).__name__}: {e}"
++    rec["service_link_before"] = {"ok": bool(ok), "detail": detail}
++    if not ok:
++        rec["skipped"] = "service link before the group failed: no case was run"
++        return rec
++    for c in cases:
++        r = {"id": c["id"], "before": f"{c['id']} before", "after": f"{c['id']} after", "command": None,
++             "exec": None, "read_error": None}
++        try:
++            r["command"] = command(c, iface)
++        except ValueError as e:
++            r["exec"] = {"error": f"command not built: {e}"}
++            rec["cases"].append(r)
++            continue
++        try:
++            read_counters(r["before"])
++        except Exception as e:                                   # noqa: BLE001
++            r["read_error"] = f"read {r['before']!r}: {type(e).__name__}: {e}"
++        try:
++            rc, out = runner.run(r["command"], timeout=timeout)
++            r["exec"] = {"rc": rc, "output_tail": (out or "")[-300:]}
++            if rc == 127 or "not found" in (out or ""):
++                r["exec"]["error"] = "tool missing in the guest"
++        except Exception as e:                                   # noqa: BLE001
++            r["exec"] = {"error": f"{type(e).__name__}: {e}"}
++        try:
++            read_counters(r["after"])
++        except Exception as e:                                   # noqa: BLE001
++            r["read_error"] = (r["read_error"] + "; " if r["read_error"] else "") + \
++                f"read {r['after']!r}: {type(e).__name__}: {e}"
++        rec["cases"].append(r)
++    try:
++        ok, detail = service_link()
++    except Exception as e:                                       # noqa: BLE001
++        ok, detail = False, f"{type(e).__name__}: {e}"
++    rec["service_link_after"] = {"ok": bool(ok), "detail": detail}
++    return rec
++
++
++# ------------------------------------------------------------------ evaluation
++def is_probe_frame(f, case):
++    """Frames sent by the guest for this case (identified by destination and on-wire size)."""
++    if f.get("direction") != "guest":
++        return False
++    if case["family"] == 4:
++        ip = f.get("ip") or {}
++        return (ip.get("hdr_ok") and ip.get("src") == S.GUEST_IP and ip.get("dst") == case["dst"]
++                and ip.get("proto") == 1 and ip.get("tot_len") == case["size"] + 28)
++    v6 = f.get("ip6") or {}
++    if not v6.get("hdr_ok") or v6.get("nh") != 58:
++        return False
++    if v6.get("icmp6_type") == 128 and v6.get("dst") == case["dst"] and v6.get("plen") == case["size"] + 8:
++        return True
++    return bool(case.get("ns_group")) and v6.get("icmp6_type") == 135 and v6.get("dst") == case["ns_group"]
++
++
++def is_reply_to_guest(f):
++    """Any ICMP/ICMPv6 frame addressed to the guest: a reply must never reach it in these cases."""
++    if f.get("dst") != S.GUEST_MAC:
++        return False
++    ip, v6 = f.get("ip") or {}, f.get("ip6") or {}
++    return (ip.get("hdr_ok") and ip.get("proto") == 1) or (v6.get("hdr_ok") and v6.get("nh") == 58)
++
++
++def _result(case_id, category, text, **kw):
++    assert category in CATEGORIES
++    out = {"id": case_id, "category": category, "verdict": text, "ok": category == "DAT_KIEM_QUY_TAC",
++           "evidence_kind": "rule_check"}
++    out.update(kw)
++    return out
++
++
++def evaluate_case(frames, reads, case, crec, link_after_ok, guard=GUARD_S):
++    """One case. `frames` are l2frames.classified_frames() output, `reads` l2eval.load_reads() output."""
++    cid = case["id"]
++    classes = l2eval.check_classes(None)           # every frame-mapped counter class
++    if crec.get("read_error"):
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({crec['read_error']})")
++    missing = [lbl for lbl in (crec["before"], crec["after"]) if lbl not in reads]
++    if missing:
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO (counter read(s) {missing} not found)")
++    ra, rb = reads[crec["before"]], reads[crec["after"]]
++    recon = L.reconcile_l2(frames, ra, rb, classes, guard)
++    if recon["verdict"] == "ERROR":
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({recon.get('error')})", reconciliation=recon)
++    window = [f for f in frames if counter_window.zone(f["t"], ra, rb, guard) != "outside"]
++    probe = [f for f in window if is_probe_frame(f, case)]
++    certain = [f for f in probe if counter_window.zone(f["t"], ra, rb, guard) == "certain"]
++    replies = [f for f in window if is_reply_to_guest(f)]
++    checks = {
++        "probe_packets_hit_expected_counter": all(f["cls"] == case["expected"] for f in certain),
++        "no_reply_to_guest": not replies,
++    }
++    detail = {"probe_frames": len(probe), "probe_frames_certain": len(certain), "replies_to_guest": len(replies),
++              "probe_frame_classes": sorted({f["cls"] for f in probe}), "checks": checks,
++              "reconciliation": {k: recon.get(k) for k in ("verdict", "per_class", "no_counter_frames", "guard_s")},
++              "exec": crec.get("exec"), "command": crec.get("command")}
++    # 1. determined failures win over everything that only prevents judging
++    if recon["verdict"] == "FAIL" or not all(checks.values()):
++        why = [k for k, v in checks.items() if not v] + (["counter_reconciliation"] if recon["verdict"] == "FAIL" else [])
++        return _result(cid, "FAIL", "FAIL", failed=why, **detail)
++    # 2. the guest could not run the probe
++    ex = crec.get("exec") or {"error": "not executed"}
++    if ex.get("error"):
++        return _result(cid, "LOI_THUC_THI", f"CHƯA KIỂM CHỨNG (lỗi thực thi: {ex['error']})", **detail)
++    # 3. no probe frame: a failed/timed-out ping is NOT evidence of blocking
++    if not probe:
++        return _result(cid, "KHONG_TAO_DUOC_GOI", "CHƯA KIỂM CHỨNG (không tạo được gói probe; ping rc "
++                       f"{ex.get('rc')} không phải bằng chứng chặn)", **detail)
++    # 4. the reviewed verdict function, rule-check kind (no live control exists for these targets)
++    pv_checks = {"probe_packets_in_tap0_pcap": True, **checks}
++    text, ok = L.probe_verdict_l2(pv_checks, recon, case["expected"], "rule_check")
++    if text == "FAIL":
++        return _result(cid, "FAIL", "FAIL", failed=["probe_verdict"], **detail)
++    if not ok:
++        return _result(cid, "CHUA_KIEM_CHUNG", text, **detail)
++    if not link_after_ok:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (liên kết dịch vụ sau nhóm thử không đạt)", **detail)
++    assert text == "ĐẠT (kiểm quy tắc)"
++    return _result(cid, "DAT_KIEM_QUY_TAC", text, **detail)
++
++
++def evaluate_group(pcap, counters_file, tap_mac, record, guard=GUARD_S):
++    """-> {"cases": [...], "group": {...}}. A capture/counter-file problem makes every case LOI_PHEP_DO."""
++    cases = {c["id"]: c for c in build_cases(tap_mac)}
++    out = {"guard_s": guard, "assumption": l2eval.ASSUMPTION, "evidence_kind": "rule_check",
++           "service_link_before": record.get("service_link_before"),
++           "service_link_after": record.get("service_link_after"), "cases": []}
++    if record.get("skipped"):
++        out["cases"] = [_result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG ({record['skipped']})") for cid in CASE_IDS]
++        return out
++    try:
++        frames = L.classified_frames(pcap, tap_mac)
++        reads = l2eval.load_reads(counters_file)
++        err = None
++    except L.FrameReadError as e:
++        err = f"capture read error: {e}"
++    except l2eval.InputError as e:
++        err = f"invalid measurement data: {e}"
++    if err:
++        out["cases"] = [_result(c["id"], "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})") for c in record.get("cases", [])]
++        return out
++    link_after = bool((record.get("service_link_after") or {}).get("ok"))
++    for crec in record.get("cases", []):
++        if crec.get("id") not in cases:
++            out["cases"].append(_result(str(crec.get("id")), "LOI_PHEP_DO", "LỖI PHÉP ĐO (unknown case id)"))
++            continue
++        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, link_after, guard))
++    return out
++
++
++def group_exit(result):
++    """Worst category of the group: LOI_PHEP_DO 2 > FAIL 1 > not judged 4 > DAT 0."""
++    cats = {c["category"] for c in result["cases"]}
++    if not result["cases"]:
++        return 2
++    for cat, code in (("FAIL", 1), ("LOI_PHEP_DO", 2)):
++        if cat in cats:
++            return code
++    return 4 if cats - {"DAT_KIEM_QUY_TAC"} else 0
++
++
++def main(argv):
++    ap = argparse.ArgumentParser(description="evaluate a recorded T12/T13 ICMP group (offline)")
++    ap.add_argument("--pcap", required=True)
++    ap.add_argument("--counters", required=True)
++    ap.add_argument("--tap-mac", required=True)
++    ap.add_argument("--record", required=True, help="group record JSON written by run_group()")
++    ap.add_argument("--out")
++    try:
++        a = ap.parse_args(argv)
++    except SystemExit:
++        return 2
++    try:
++        record = json.load(open(a.record))
++        if not isinstance(record, dict):
++            raise ValueError("group record is not an object")
++        res = evaluate_group(a.pcap, a.counters, a.tap_mac, record)
++    except (OSError, ValueError) as e:                 # unreadable/invalid record, malformed TAP MAC
++        res = {"error": f"{type(e).__name__}: {e}", "cases": []}
++    if a.out:
++        with open(a.out, "w") as f:
++            json.dump(res, f, indent=1, sort_keys=True, ensure_ascii=False)
++            f.write("\n")
++    for c in res["cases"]:
++        print(f"{c['id']}: {c['verdict']}")
++    if res.get("error"):
++        print(f"ERROR: {res['error']}")
++        return 2
++    return group_exit(res)
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+--- ct01-06b4d1/selftest_icmp.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4e/selftest_icmp.py	2026-10-08 05:22:09.934766108 +0000
+@@ -0,0 +1,355 @@
++#!/usr/bin/env python3
++"""06B-4E — offline tests of icmp_cases.py on SYNTHETIC captures/counter files generated here.
++Sends nothing, runs nothing in a guest (the guest, the counter reader and the service link are fakes).
++
++    python3 selftest_icmp.py [--json FILE]
++"""
++import contextlib
++import io
++import json
++import os
++import sys
++import tempfile
++import traceback
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import icmp_cases as I         # noqa: E402
++import signatures as S         # noqa: E402
++import selftest_l2 as B        # noqa: E402  (frame builders only)
++import selftest_l2eval as V    # noqa: E402  (counter-file builders only)
++
++RESULTS = {}
++TAP, GUEST = B.TAP, B.GUEST
++CASES = {c["id"]: c for c in I.build_cases(TAP)}
++DMAC = {"255.255.255.255": "ff:ff:ff:ff:ff:ff", "10.200.0.3": "ff:ff:ff:ff:ff:ff", "224.0.0.1": "01:00:5e:00:00:01"}
++
++
++def t(name, fn):
++    if name in RESULTS:
++        raise SystemExit(f"duplicate test name {name}")
++    try:
++        ok, why = bool(fn()), ""
++    except Exception:
++        ok, why = False, traceback.format_exc(limit=3).strip().splitlines()[-1]
++    if not ok and not why:
++        why = "returned False"
++    RESULTS[name] = ok
++    print(f"[{'PASS' if ok else 'FAIL'}] {name}" + (f"  ({why})" if why else ""))
++
++
++# ------------------------------------------------------------------ synthetic frames
++def probe_frames(cid, n=3):
++    c = CASES[cid]
++    if c["family"] == 4:
++        return [B.eth(DMAC[c["dst"]], GUEST, 0x0800, B.ipv4(S.GUEST_IP, c["dst"], 1, B.icmp(c["size"])))] * n
++    if cid == "T13-I1":
++        return [B.eth("33:33:00:00:00:01", GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, "ff02::1", 58, B.icmp6(c["size"])))] * n
++    grp = c["ns_group"]
++    mac = "33:33:" + ":".join(f"{b:02x}" for b in __import__("ipaddress").IPv6Address(grp).packed[12:])
++    return [B.eth(mac, GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, grp, 58, B.icmp6(16, typ=135)))] * n
++
++
++def dhcp():
++    return B.eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0800, B.ipv4("0.0.0.0", "255.255.255.255", 17, B.udp(68, 67)))
++
++
++def reply_to_guest():
++    return B.eth(GUEST, TAP, 0x0800, B.ipv4("10.200.0.1", "10.200.0.2", 1, B.icmp(8)))
++
++
++# ------------------------------------------------------------------ scenario builder
++def scenario(tmp, name, specs, link_before=True, link_after=True, counters_override=None, frames_override=None):
++    """specs: [(case id, [(dt, frame), ...] frames relative to the case window, {counter: increment}, exec)].
++    Case i window: A=[t0, t0+0.01], B=[t0+10, t0+10.01] with t0 = 100 + 20 i. Counters are cumulative."""
++    values = dict(V.BASE)
++    recs, frames, cases = [], [], []
++    for i, (cid, fr, inc, ex) in enumerate(specs):
++        t0 = 100.0 + 20 * i
++        recs.append(V.rec(f"{cid} before", t0, t0 + 0.01, values))
++        values = dict(values)
++        for k, n in inc.items():
++            values[k] += n
++        recs.append(V.rec(f"{cid} after", t0 + 10, t0 + 10.01, values))
++        frames += [(t0 + dt, f) for dt, f in fr]
++        cases.append({"id": cid, "before": f"{cid} before", "after": f"{cid} after",
++                      "command": I.command(CASES[cid], "eth1"), "exec": ex, "read_error": None})
++    pc = V.pcapng(os.path.join(tmp, name + ".pcapng"), frames_override if frames_override is not None else frames)
++    cf = V.write_counters(os.path.join(tmp, name + ".jsonl"), counters_override if counters_override is not None else recs)
++    record = {"iface": "eth1", "cases": cases, "service_link_before": {"ok": link_before, "detail": "x"},
++              "service_link_after": {"ok": link_after, "detail": "x"}}
++    if not link_before:
++        record = {"iface": "eth1", "cases": [], "service_link_before": {"ok": False, "detail": "x"},
++                  "service_link_after": None, "skipped": "service link before the group failed: no case was run"}
++    return pc, cf, record
++
++
++OK_EXEC = {"rc": 1, "output_tail": "3 packets transmitted, 0 received"}
++
++
++def spaced(frames, start=1.0, step=0.5):
++    return [(start + step * k, f) for k, f in enumerate(frames)]
++
++
++def one(tmp, name, cid, frames, inc, ex=OK_EXEC, **kw):
++    pc, cf, rec = scenario(tmp, name, [(cid, frames, inc, ex)], **kw)
++    res = I.evaluate_group(pc, cf, TAP, rec)
++    return res, res["cases"][0] if res["cases"] else None
++
++
++# ------------------------------------------------------------------ D. definitions and commands
++def sec_D():
++    t("D1 five cases, ids as planned", lambda: [c["id"] for c in I.build_cases(TAP)] == list(I.CASE_IDS))
++    t("D2 every size comes from signatures.py",
++      lambda: all(c["size"] == (S.ICMP4_SIZES if c["family"] == 4 else S.ICMP6_SIZES)[c["id"]] for c in I.build_cases(TAP)))
++    t("D3 a registry change changes the command (single source)",
++      lambda: _with(S.ICMP4_SIZES, "T12-B1", 1999, lambda: " -s 1999 " in I.command(I.build_cases(TAP)[0], "eth1")))
++    t("D4 expected classes: broadcast/multicast -> drop_bcast_mcast, subnet broadcast -> drop_private, IPv6 -> l2_bad_ethertype",
++      lambda: [CASES[k]["expected"] for k in I.CASE_IDS] ==
++      ["drop_bcast_mcast", "drop_bcast_mcast", "drop_private", "l2_bad_ethertype", "l2_bad_ethertype"])
++    t("D5 T13-I2 target is the EUI-64 link-local of TAP_MAC, NS group derived from it",
++      lambda: CASES["T13-I2"]["dst"] == S.eui64_ll(TAP) and CASES["T13-I2"]["ns_group"].startswith("ff02::1:ff"))
++    t("D6 commands are plain busybox ping/ping6 with count, size and deadline",
++      lambda: I.command(CASES["T12-B2"], "eth1") == "ping -c 3 -s 1202 -w 5 224.0.0.1"
++      and I.command(CASES["T13-I1"], "br-lan") == "ping6 -c 3 -s 1301 -w 5 -I br-lan ff02::1")
++    t("D7 bad interface name refused", lambda: _raises(ValueError, lambda: I.command(CASES["T13-I1"], "eth1; reboot")))
++    t("D8 bad TAP MAC refused", lambda: _raises(ValueError, lambda: I.build_cases("7a:93")))
++
++
++def _with(d, k, v, fn):
++    old = d[k]
++    d[k] = v
++    try:
++        return fn()
++    finally:
++        d[k] = old
++
++
++def _raises(exc, fn):
++    try:
++        fn()
++    except exc:
++        return True
++    return False
++
++
++# ------------------------------------------------------------------ P/F/U/K/E/M. evaluation through evaluate_group()
++def sec_P(tmp):
++    for cid, cls in (("T12-B1", "drop_bcast_mcast"), ("T12-B2", "drop_bcast_mcast"), ("T12-B4", "drop_private"),
++                     ("T13-I1", "l2_bad_ethertype"), ("T13-I2", "l2_bad_ethertype")):
++        t(f"P {cid}: 3 probe frames = {cls} delta 3 -> ĐẠT (kiểm quy tắc), rule_check only",
++          lambda: (lambda r: r["category"] == "DAT_KIEM_QUY_TAC" and r["verdict"] == "ĐẠT (kiểm quy tắc)"
++          and r["evidence_kind"] == "rule_check" and r["probe_frames"] == 3)(one(tmp, "p-" + cid, cid, spaced(probe_frames(cid)), {cls: 3})[1]))
++    t("P6 background frame (DHCP -> drop_spoof) reconciled separately, still ĐẠT (kiểm quy tắc)",
++      lambda: (lambda r: r["category"] == "DAT_KIEM_QUY_TAC" and r["probe_frames"] == 3)(one(tmp, "p-bg", "T12-B1", spaced(probe_frames("T12-B1") + [dhcp()]), {"drop_bcast_mcast": 3, "drop_spoof": 1})[1]))
++
++
++def sec_F(tmp):
++    t("F1 counter delta 2 for 3 probe frames -> FAIL (counter_reconciliation)",
++      lambda: (lambda r: r["category"] == "FAIL" and "counter_reconciliation" in r["failed"])(one(tmp, "f-delta", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 2})[1]))
++    t("F2 an ICMP frame towards the guest in the window -> FAIL (no_reply_to_guest)",
++      lambda: (lambda r: r["category"] == "FAIL" and "no_reply_to_guest" in r["failed"] and r["replies_to_guest"] == 1)(one(tmp, "f-reply", "T12-B2", spaced(probe_frames("T12-B2") + [reply_to_guest()]), {"drop_bcast_mcast": 3})[1]))
++    other = [B.eth(B.MANAGER_MAC, GUEST, 0x0800, B.ipv4(S.GUEST_IP, "10.200.0.3", 1, B.icmp(CASES["T12-B4"]["size"])))]
++    t("F3 a probe frame that does not reach the expected counter (OTHERHOST) -> FAIL",
++      lambda: (lambda r: r["category"] == "FAIL" and "probe_packets_hit_expected_counter" in r["failed"])(one(tmp, "f-class", "T12-B4", spaced(probe_frames("T12-B4", 2) + other), {"drop_private": 2})[1]))
++    t("F4 a determined failure is reported even when execution also failed",
++      lambda: (lambda r: r["category"] == "FAIL")(one(tmp, "f-exec", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 1},
++               ex={"error": "TIMEOUT: console"})[1]))
++
++
++def sec_U(tmp):
++    t("U1 a probe frame at the window edge -> CHƯA KIỂM CHỨNG (edge)",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "biên" in r["verdict"])(one(tmp, "u-edge", "T12-B1", spaced(probe_frames("T12-B1")) + [(9.995, probe_frames("T12-B1", 1)[0])],
++               {"drop_bcast_mcast": 4})[1]))
++    unk = B.eth("ff:ff:ff:ff:ff:ff", "02:42:00:00:bb:02", 0x0800, B.ipv4("10.200.0.2", "1.1.1.1", 6, B.tcp(1, 2)))
++    t("U2 a frame without a counter mapping in the window -> CHƯA KIỂM CHỨNG (named as such)",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "không có bộ đếm" in r["verdict"])(one(tmp, "u-nocounter", "T12-B2", spaced(probe_frames("T12-B2") + [unk]), {"drop_bcast_mcast": 3})[1]))
++    t("U3 service link after the group not intact -> CHƯA KIỂM CHỨNG, never ĐẠT",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "liên kết dịch vụ sau" in r["verdict"])(one(tmp, "u-linkafter", "T13-I1", spaced(probe_frames("T13-I1")), {"l2_bad_ethertype": 3}, link_after=False)[1]))
++    res, _ = one(tmp, "u-linkbefore", "T13-I1", spaced(probe_frames("T13-I1")), {"l2_bad_ethertype": 3}, link_before=False)
++    t("U4 service link before the group failed -> every case CHƯA KIỂM CHỨNG, none judged",
++      lambda: [c["category"] for c in res["cases"]] == ["CHUA_KIEM_CHUNG"] * 5)
++
++
++def sec_K(tmp):
++    t("K1 no probe frame (broadcast refused locally), counters unchanged -> KHÔNG TẠO ĐƯỢC GÓI, not ĐẠT",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and not r["ok"] and "không phải bằng chứng chặn" in r["verdict"])(one(tmp, "k-none", "T12-B1", [], {}, ex={"rc": 1, "output_tail": "ping: permission denied (are you root?)"})[1]))
++    t("K2 ping timed out with no frame on tap0 -> KHÔNG TẠO ĐƯỢC GÓI (timeout is not evidence)",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(one(tmp, "k-timeout", "T13-I1", [], {}, ex={"rc": 1, "output_tail": "3 packets transmitted, 0 received"})[1]))
++    t("K3 only background traffic in the window -> KHÔNG TẠO ĐƯỢC GÓI (background never replaces a probe)",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(one(tmp, "k-bgonly", "T12-B2", spaced([dhcp()]), {"drop_spoof": 1})[1]))
++
++
++def bg_icmp(cid, size=56):
++    c = CASES[cid]
++    return B.eth(DMAC[c["dst"]], GUEST, 0x0800, B.ipv4(S.GUEST_IP, c["dst"], 1, B.icmp(size)))
++
++
++def sec_K2(tmp):
++    t("K4 an ICMP echo to the same destination with another size is NOT a probe frame -> KHÔNG TẠO ĐƯỢC GÓI",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and r["probe_frames"] == 0)(
++          one(tmp, "k-othersize", "T12-B2", spaced([bg_icmp("T12-B2")]), {"drop_bcast_mcast": 1})[1]))
++
++
++def sec_E(tmp):
++    t("E1 console error during the ping -> LỖI THỰC THI (not ĐẠT even if counters match)",
++      lambda: (lambda r: r["category"] == "LOI_THUC_THI" and not r["ok"])(one(tmp, "e-exc", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3},
++               ex={"error": "TIMEOUT: console did not answer"})[1]))
++    t("E2 tool missing -> LỖI THỰC THI",
++      lambda: (lambda r: r["category"] == "LOI_THUC_THI")(one(tmp, "e-127", "T13-I2", [], {}, ex={"rc": 127, "output_tail": "sh: ping6: not found", "error": "tool missing in the guest"})[1]))
++    t("E3 no execution record -> LỖI THỰC THI",
++      lambda: (lambda r: r["category"] == "LOI_THUC_THI")(one(tmp, "e-none", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3}, ex=None)[1]))
++
++
++def sec_M(tmp):
++    pc, cf, rec = scenario(tmp, "m-ok", [("T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3}, OK_EXEC)])
++    res = I.evaluate_group(os.path.join(tmp, "nope.pcapng"), cf, TAP, rec)
++    t("M1 capture missing -> every case LỖI PHÉP ĐO", lambda: [c["category"] for c in res["cases"]] == ["LOI_PHEP_DO"])
++    res = I.evaluate_group(pc, os.path.join(tmp, "nope.jsonl"), TAP, rec)
++    t("M2 counter file missing -> LỖI PHÉP ĐO", lambda: res["cases"][0]["category"] == "LOI_PHEP_DO")
++    t("M3 counter read 'after' missing -> LỖI PHÉP ĐO (never 0)",
++      lambda: (lambda r: r["category"] == "LOI_PHEP_DO")(one(tmp, "m-label", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3},
++               counters_override=[V.rec("T12-B1 before", 100.0, 100.01, V.BASE)])[1]))
++    vals = {k: v for k, v in V.BASE.items() if k != "drop_bcast_mcast"}
++    t("M4 compared counter missing in read B -> LỖI PHÉP ĐO",
++      lambda: (lambda r: r["category"] == "LOI_PHEP_DO" and "missing" in r["verdict"])(one(tmp, "m-ctr", "T12-B1", spaced(probe_frames("T12-B1")), {},
++               counters_override=[V.rec("T12-B1 before", 100.0, 100.01, V.BASE), V.rec("T12-B1 after", 110.0, 110.01, vals)])[1]))
++    t("M5 malformed counter file -> LỖI PHÉP ĐO",
++      lambda: (lambda r: r["category"] == "LOI_PHEP_DO")(one(tmp, "m-bad", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3},
++               counters_override=[V.rec("T12-B1 before", 100.0, 100.01, V.BASE), "{broken"])[1]))
++    pc, cf, rec = scenario(tmp, "m-rerr", [("T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3}, OK_EXEC)])
++    rec["cases"][0]["read_error"] = "read 'T12-B1 after': RuntimeError: nft failed"
++    res = I.evaluate_group(pc, cf, TAP, rec)
++    t("M6 a counter read that failed during execution -> LỖI PHÉP ĐO", lambda: res["cases"][0]["category"] == "LOI_PHEP_DO")
++    t("M7 malformed TAP MAC -> ValueError raised to the caller (CLI turns it into exit 2)",
++      lambda: _raises(ValueError, lambda: I.evaluate_group(pc, cf, "7a:93", rec)))
++
++
++# ------------------------------------------------------------------ L. labels and limits
++def sec_L(tmp):
++    specs = [(cid, spaced(probe_frames(cid)), {CASES[cid]["expected"]: 3}, OK_EXEC) for cid in I.CASE_IDS]
++    pc, cf, rec = scenario(tmp, "l-all", specs)
++    res = I.evaluate_group(pc, cf, TAP, rec)
++    t("L1 a full group passes as ĐẠT (kiểm quy tắc) x5",
++      lambda: [c["verdict"] for c in res["cases"]] == ["ĐẠT (kiểm quy tắc)"] * 5)
++    t("L2 no result is ever plain 'ĐẠT' or a live-control kind", lambda: all(
++        c["verdict"] != "ĐẠT" and c["evidence_kind"] == "rule_check" for c in res["cases"]) and res["evidence_kind"] == "rule_check")
++    t("L3 guard 20 ms recorded with the unmeasured assumption",
++      lambda: res["guard_s"] == 0.02 and "NOT measured" in res["assumption"])
++    t("L4 group exit 0 for a full pass", lambda: I.group_exit(res) == 0)
++    t("L5 group exit: FAIL 1, measurement error 2, not judged 4", lambda: (
++        I.group_exit({"cases": [{"category": "DAT_KIEM_QUY_TAC"}, {"category": "FAIL"}]}),
++        I.group_exit({"cases": [{"category": "LOI_PHEP_DO"}]}),
++        I.group_exit({"cases": [{"category": "KHONG_TAO_DUOC_GOI"}]}), I.group_exit({"cases": []})) == (1, 2, 4, 2))
++    t("L6 group exit: FAIL wins over a measurement error in the same group (FAIL > LỖI PHÉP ĐO)",
++      lambda: I.group_exit({"cases": [{"category": "LOI_PHEP_DO"}, {"category": "FAIL"}]}) == 1)
++
++
++# ------------------------------------------------------------------ R. run_group() with fakes (no guest)
++class FakeGuest:
++    def __init__(self, fail_on=None, rc=1):
++        self.calls, self.fail_on, self.rc = [], fail_on, rc
++
++    def run(self, cmd, timeout=60):
++        self.calls.append(cmd)
++        if self.fail_on and self.fail_on in cmd:
++            raise TimeoutError("console did not answer")
++        return self.rc, "3 packets transmitted, 0 received\n"
++
++
++def sec_R(tmp):
++    log = []
++    g = FakeGuest()
++    rec = I.run_group(g, lambda lbl: log.append(("read", lbl)), lambda: (log.append(("link",)) or (True, "200")),
++                      I.build_cases(TAP), "eth1")
++    t("R1 order: link before, then per case read A / ping / read B, link after",
++      lambda: log[0] == ("link",) and log[-1] == ("link",) and [x[1] for x in log[1:-1]] ==
++      [f"{c} {w}" for c in I.CASE_IDS for w in ("before", "after")] and len(g.calls) == 5)
++    t("R2 commands recorded exactly as built", lambda: [c["command"] for c in rec["cases"]] ==
++      [I.command(c, "eth1") for c in I.build_cases(TAP)])
++    g = FakeGuest()
++    rec = I.run_group(g, lambda lbl: None, lambda: (False, "HTTP 000"), I.build_cases(TAP), "eth1")
++    t("R3 link before fails -> no ping is run, group skipped", lambda: g.calls == [] and "skipped" in rec)
++    g = FakeGuest(fail_on="224.0.0.1")
++    rec = I.run_group(g, lambda lbl: None, lambda: (True, "200"), I.build_cases(TAP), "eth1")
++    t("R4 a console error is recorded for that case, the group continues",
++      lambda: "TimeoutError" in rec["cases"][1]["exec"]["error"] and len(g.calls) == 5 and not rec["cases"][2]["exec"].get("error"))
++
++    def bad_read(lbl):
++        if lbl == "T12-B4 after":
++            raise RuntimeError("nft failed")
++    rec = I.run_group(FakeGuest(), bad_read, lambda: (True, "200"), I.build_cases(TAP), "eth1")
++    t("R5 a failed counter read is recorded as read_error", lambda: "nft failed" in rec["cases"][2]["read_error"])
++    rec = I.run_group(FakeGuest(rc=127), lambda lbl: None, lambda: (True, "200"), I.build_cases(TAP), "eth1")
++    t("R6 rc 127 -> 'tool missing' execution error", lambda: all(c["exec"]["error"] == "tool missing in the guest" for c in rec["cases"]))
++    rec = I.run_group(FakeGuest(), lambda lbl: None, lambda: (_ for _ in ()).throw(OSError("down")), I.build_cases(TAP), "eth1")
++    t("R7 an exception in the service link check counts as failed", lambda: "skipped" in rec)
++    # end to end: run_group (fakes) -> counter file -> evaluate_group
++    values = dict(V.BASE)
++    clock = {"t": 100.0}
++    lines = []
++
++    def reader(lbl):
++        cid, when = lbl.rsplit(" ", 1)
++        if when == "after":
++            values[CASES[cid]["expected"]] += 3
++        lines.append(V.rec(lbl, clock["t"], clock["t"] + 0.01, dict(values)))
++        clock["t"] += 10.0
++    rec = I.run_group(FakeGuest(), reader, lambda: (True, "200"), I.build_cases(TAP), "eth1")
++    frames = []
++    for i, cid in enumerate(I.CASE_IDS):
++        frames += [(100.0 + 20 * i + 1.0 + 0.5 * k, f) for k, f in enumerate(probe_frames(cid))]
++    pc = V.pcapng(os.path.join(tmp, "r-e2e.pcapng"), frames)
++    cf = V.write_counters(os.path.join(tmp, "r-e2e.jsonl"), lines)
++    res = I.evaluate_group(pc, cf, TAP, rec)
++    t("R8 end to end (fake guest -> counters file -> evaluate_group) -> ĐẠT (kiểm quy tắc) x5",
++      lambda: [c["category"] for c in res["cases"]] == ["DAT_KIEM_QUY_TAC"] * 5)
++
++
++# ------------------------------------------------------------------ C. command line
++def sec_C(tmp):
++    def cli(name, specs, **kw):
++        pc, cf, rec = scenario(tmp, name, specs, **kw)
++        rp, out = os.path.join(tmp, name + "-rec.json"), os.path.join(tmp, name + "-out.json")
++        json.dump(rec, open(rp, "w"))
++        with contextlib.redirect_stdout(io.StringIO()):
++            rc = I.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp, "--out", out])
++        return rc, json.load(open(out))
++    rc, j = cli("c-pass", [("T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3}, OK_EXEC)])
++    t("C1 CLI: pass -> exit 0", lambda: rc == 0 and j["cases"][0]["category"] == "DAT_KIEM_QUY_TAC")
++    rc, j = cli("c-fail", [("T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 1}, OK_EXEC)])
++    t("C2 CLI: fail -> exit 1", lambda: rc == 1)
++    rc, j = cli("c-none", [("T12-B1", [], {}, OK_EXEC)])
++    t("C3 CLI: no probe frame -> exit 4", lambda: rc == 4 and j["cases"][0]["category"] == "KHONG_TAO_DUOC_GOI")
++    rp = os.path.join(tmp, "c-badrec.json")
++    open(rp, "w").write("[1, 2]")
++    out = os.path.join(tmp, "c-badrec-out.json")
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = I.main(["--pcap", "x", "--counters", "y", "--tap-mac", TAP, "--record", rp, "--out", out])
++    t("C4 CLI: invalid group record -> exit 2, JSON written with the error", lambda: rc == 2 and "error" in json.load(open(out)))
++    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
++        rc = I.main(["--pcap", "x"])
++    t("C5 CLI: missing arguments -> exit 2", lambda: rc == 2)
++
++
++def main(argv):
++    jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
++    with tempfile.TemporaryDirectory(prefix="selftest-icmp.") as tmp:
++        for name, fn in (("D", sec_D), ("P", lambda: sec_P(tmp)), ("F", lambda: sec_F(tmp)), ("U", lambda: sec_U(tmp)),
++                         ("K", lambda: sec_K(tmp)), ("K2", lambda: sec_K2(tmp)), ("E", lambda: sec_E(tmp)), ("M", lambda: sec_M(tmp)),
++                         ("L", lambda: sec_L(tmp)), ("R", lambda: sec_R(tmp)), ("C", lambda: sec_C(tmp))):
++            print(f"== section {name}")
++            try:
++                fn()
++            except Exception:
++                t(f"{name}-INFRA section crashed", lambda: False)
++                traceback.print_exc()
++    if jpath:
++        json.dump(RESULTS, open(jpath, "w"), indent=0, sort_keys=True)
++    bad = [k for k, v in RESULTS.items() if not v]
++    print(f"SELFTEST-ICMP: {len(RESULTS) - len(bad)}/{len(RESULTS)} passed" + ("" if not bad else f"; FAILED: {bad}"))
++    return 0 if not bad else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+--- ct01-06b4d1/mutation_icmp.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4e/mutation_icmp.py	2026-10-08 05:22:09.934766108 +0000
+@@ -0,0 +1,120 @@
++#!/usr/bin/env python3
++"""06B-4E — mutation test of icmp_cases.py (offline). Each mutant runs selftest_icmp.py in its own
++mktemp copy; every replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE /
++MISSED / INVALID / ERROR as in mutation_l2.py. Baseline must pass; harness hash checked before/after.
++    python3 mutation_icmp.py
++"""
++import hashlib, os, shutil, subprocess, sys, tempfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++FILES = ("icmp_cases.py", "selftest_icmp.py", "l2eval.py", "selftest_l2eval.py", "selftest_l2.py", "l2frames.py",
++         "counter_window.py", "signatures.py", "sigscan_l2.py", "guest_state.py", "run-06b3b.sh")
++M = [
++    ("C1", [('    if not probe:\n        return _result(cid, "KHONG_TAO_DUOC_GOI"', '    if False:\n        return _result(cid, "KHONG_TAO_DUOC_GOI"')],
++     "K1 no probe frame (broadcast refused locally), counters unchanged -> KHÔNG TẠO ĐƯỢC GÓI, not ĐẠT"),
++    ("C2", [('    if ex.get("error"):\n        return _result(cid, "LOI_THUC_THI"', '    if False:\n        return _result(cid, "LOI_THUC_THI"')],
++     "E1 console error during the ping -> LỖI THỰC THI (not ĐẠT even if counters match)"),
++    ("C3", [('    if not link_after_ok:', '    if False:')],
++     "U3 service link after the group not intact -> CHƯA KIỂM CHỨNG, never ĐẠT"),
++    ("C4", [('        "no_reply_to_guest": not replies,', '        "no_reply_to_guest": True,')],
++     "F2 an ICMP frame towards the guest in the window -> FAIL (no_reply_to_guest)"),
++    ("C5", [('        "probe_packets_hit_expected_counter": all(f["cls"] == case["expected"] for f in certain),',
++             '        "probe_packets_hit_expected_counter": True,')],
++     "F3 a probe frame that does not reach the expected counter (OTHERHOST) -> FAIL"),
++    ("C6", [('    return _result(cid, "DAT_KIEM_QUY_TAC", text, **detail)', '    return _result(cid, "DAT_KIEM_QUY_TAC", "ĐẠT", **detail)')],
++     "P T12-B1: 3 probe frames = drop_bcast_mcast delta 3 -> ĐẠT (kiểm quy tắc), rule_check only"),
++    ("C7", [('    if recon["verdict"] == "FAIL" or not all(checks.values()):', '    if False:')],
++     "F4 a determined failure is reported even when execution also failed"),
++    ("C8", [('"size": S.ICMP4_SIZES["T12-B1"]', '"size": 1201')], "D3 a registry change changes the command (single source)"),
++    ("C9", [('    if crec.get("read_error"):\n        return', '    if False:\n        return')],
++     "M6 a counter read that failed during execution -> LỖI PHÉP ĐO"),
++    ("C10", [('    if missing:\n        return _result(cid, "LOI_PHEP_DO"', '    if False:\n        return _result(cid, "LOI_PHEP_DO"')],
++     "M3 counter read 'after' missing -> LỖI PHÉP ĐO (never 0)"),
++    ("C11", [('    if not ok:\n        rec["skipped"]', '    if False:\n        rec["skipped"]')],
++     "R3 link before fails -> no ping is run, group skipped"),
++    ("C12", [('            if rc == 127 or "not found" in (out or ""):', '            if False:')],
++     "R6 rc 127 -> 'tool missing' execution error"),
++    ("C13", [('    return bool(case.get("ns_group")) and v6.get("icmp6_type") == 135 and v6.get("dst") == case["ns_group"]',
++              '    return False')], "P T13-I2: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only"),
++    ("C14", [('and ip.get("proto") == 1 and ip.get("tot_len") == case["size"] + 28)', 'and ip.get("proto") == 1)')],
++     "K4 an ICMP echo to the same destination with another size is NOT a probe frame -> KHÔNG TẠO ĐƯỢC GÓI"),
++    ("C15", [('    if record.get("skipped"):', '    if False:')],
++     "U4 service link before the group failed -> every case CHƯA KIỂM CHỨNG, none judged"),
++    ("C16", [('    except L.FrameReadError as e:\n        err = f"capture read error: {e}"',
++              '    except L.FrameReadError as e:\n        frames, reads, err = [], l2eval.load_reads(counters_file), None')],
++     "M1 capture missing -> every case LỖI PHÉP ĐO"),
++    ("C17", [('            r["read_error"] = (r["read_error"] + "; " if r["read_error"] else "") + \\\n                f"read {r[\'after\']!r}: {type(e).__name__}: {e}"',
++              '            pass')], "R5 a failed counter read is recorded as read_error"),
++    ("C18", [('    for cat, code in (("FAIL", 1), ("LOI_PHEP_DO", 2)):', '    for cat, code in (("LOI_PHEP_DO", 2), ("FAIL", 1)):')],
++     "L6 group exit: FAIL wins over a measurement error in the same group (FAIL > LỖI PHÉP ĐO)"),
++    ("C19", [('        raise ValueError(f"bad interface name {iface!r}")', '        pass')], "D7 bad interface name refused"),
++    ("X1", [("THIS TEXT IS NOT IN THE FILE", "x")], None),
++    ("X2", [("import argparse\n", "import argparse(\n")], None),
++]
++EXPECT = {"X1": "INVALID", "X2": "ERROR"}
++
++
++def sha(d):
++    return {f: hashlib.sha256(open(os.path.join(d, f), "rb").read()).hexdigest() for f in FILES}
++
++
++def suite(d):
++    p = subprocess.run([sys.executable, os.path.join(d, "selftest_icmp.py")], capture_output=True, text=True,
++                       timeout=600, cwd=d)
++    res = {}
++    for l in p.stdout.splitlines():
++        if l.startswith("[PASS] ") or l.startswith("[FAIL] "):
++            res[l[7:].split("  (")[0]] = l.startswith("[PASS]")
++    if not any(l.startswith("SELFTEST-ICMP:") for l in p.stdout.splitlines()):
++        return None, (p.stderr or p.stdout).strip().splitlines()[-1:]
++    return res, None
++
++
++def main():
++    h0 = sha(HERE)
++    good = bad = 0
++    with tempfile.TemporaryDirectory(prefix="mutation-icmp.") as tmp:
++        def copy():
++            d = tempfile.mkdtemp(dir=tmp)
++            for f in FILES:
++                shutil.copy2(os.path.join(HERE, f), d)
++            return d
++        base, err = suite(copy())
++        if base is None or not all(base.values()):
++            print("BASELINE FAILED", err or [k for k, v in base.items() if not v])
++            return 2
++        print(f"baseline: {len(base)}/{len(base)} tests pass")
++        for mid, reps, target in M:
++            if target is not None and target not in base:
++                print(f"BAD-TARGET {mid}: {target!r}")
++                bad += 1
++                continue
++            d = copy()
++            src = open(os.path.join(d, "icmp_cases.py")).read()
++            klass, failed = None, []
++            for old, new in reps:
++                if src.count(old) != 1:
++                    klass = "INVALID"
++                    break
++                src = src.replace(old, new)
++            if klass is None:
++                open(os.path.join(d, "icmp_cases.py"), "w").write(src)
++                res, err = suite(d)
++                if res is None:
++                    klass = "ERROR"
++                else:
++                    failed = sorted(k for k, v in res.items() if not v)
++                    klass = "DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"
++            exp = EXPECT.get(mid, "DETECTED")
++            ok = klass == exp
++            good += ok
++            bad += not ok
++            print(f"{'OK ' if ok else 'BAD'} {mid:4s} {klass:18s} target={target!r}"
++                  + ("" if klass in ("DETECTED", "INVALID", "MISSED") else f" failed={failed[:5]} {err or ''}"))
++    same = sha(HERE) == h0
++    print(f"MUTATION-ICMP: {good} OK, {bad} not as expected; harness {'unchanged' if same else 'CHANGED'}")
++    return 0 if bad == 0 and same else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())

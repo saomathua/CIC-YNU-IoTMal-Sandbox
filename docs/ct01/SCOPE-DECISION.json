@@ -1,0 +1,14 @@
+{
+  "schema": "ct01-scope-decision-review-record/1",
+  "source": "User message in this reviewer session, responding to the immediately preceding concrete T07–T10 scope proposal",
+  "user_quote_verbatim": "chấp nhận phạm vi",
+  "message_local_time": "2026-10-11T13:32:02+07:00",
+  "scope_mapping_by_reviewer_not_verbatim_user_quote": {
+    "T07/T08": "Accepted network isolation proof; supplementary SSH/manager logs not measured",
+    "T09": "Live TCP27017 control from dbnet accepted for network scope; no M/status or mongosh ping claim",
+    "T10": "Aggregate old network proof + T19 manager-to-worker path proof; T19 is not a simultaneous control for the old guest probe"
+  },
+  "historical_limits_preserved": true,
+  "new_runtime_approval": false,
+  "ct01_final_closure_requires_complete_evidence_index_and_consistent_final_report": true
+}

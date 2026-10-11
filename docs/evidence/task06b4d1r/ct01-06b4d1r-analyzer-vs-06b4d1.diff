@@ -1,0 +1,241 @@
+--- base-06b4d1/l2eval.py	2026-10-08 05:00:33.628932824 +0000
++++ l2eval.py	2026-10-08 05:10:32.773574802 +0000
+@@ -55,12 +55,29 @@
+     for n, line in enumerate(lines, 1):
+         if not line.strip():
+             continue
++        # 06B-4D1R: the type of every level is checked before it is used; anything else is an InputError
++        # (never skipped, never replaced by 0).
+         try:
+             rec = json.loads(line)
+-            label, t0, t1, raw = rec["label"], rec["t_start"], rec["t_end"], rec["raw"]
+-            objs = json.loads(raw)["nftables"]
+-        except (ValueError, KeyError, TypeError) as e:
+-            raise InputError(f"{path}:{n}: malformed counter record ({e!r})") from e
++        except ValueError as e:
++            raise InputError(f"{path}:{n}: line is not JSON ({e})") from e
++        if not isinstance(rec, dict):
++            raise InputError(f"{path}:{n}: record is {type(rec).__name__}, expected an object")
++        for k in ("label", "t_start", "t_end", "raw"):
++            if k not in rec:
++                raise InputError(f"{path}:{n}: record field {k!r} missing")
++        label, t0, t1, raw = rec["label"], rec["t_start"], rec["t_end"], rec["raw"]
++        if not isinstance(raw, str):
++            raise InputError(f"{path}:{n}: field 'raw' is {type(raw).__name__}, expected the nft JSON text")
++        try:
++            doc = json.loads(raw)
++        except ValueError as e:
++            raise InputError(f"{path}:{n}: field 'raw' is not JSON ({e})") from e
++        if not isinstance(doc, dict) or "nftables" not in doc:
++            raise InputError(f"{path}:{n}: nft output is not an object with 'nftables'")
++        objs = doc["nftables"]
++        if not isinstance(objs, list):
++            raise InputError(f"{path}:{n}: 'nftables' is {type(objs).__name__}, expected a list")
+         if not isinstance(label, str) or not label:
+             raise InputError(f"{path}:{n}: label missing")
+         if label in reads:
+@@ -68,13 +85,19 @@
+         if not (_finite(t0) and _finite(t1)):
+             raise InputError(f"{path}:{n}: read times not finite numbers ({t0!r}, {t1!r})")
+         values = {}
+-        for o in objs:
++        for i, o in enumerate(objs):
++            if not isinstance(o, dict):
++                raise InputError(f"{path}:{n}: nftables[{i}] is {type(o).__name__}, expected an object")
+             if "counter" not in o:
+-                continue
++                continue                                  # metainfo and other non-counter objects
+             c = o["counter"]
+-            name, pk = c.get("name"), c.get("packets")
+-            if not isinstance(name, str):
+-                raise InputError(f"{path}:{n}: counter without a name")
++            if not isinstance(c, dict):
++                raise InputError(f"{path}:{n}: nftables[{i}].counter is {type(c).__name__}, expected an object")
++            if "name" not in c or "packets" not in c:
++                raise InputError(f"{path}:{n}: nftables[{i}].counter lacks 'name' or 'packets'")
++            name, pk = c["name"], c["packets"]
++            if not isinstance(name, str) or not name:
++                raise InputError(f"{path}:{n}: nftables[{i}].counter name is not a non-empty string: {name!r}")
+             if not isinstance(pk, int) or isinstance(pk, bool) or pk < 0:
+                 raise InputError(f"{path}:{n}: counter {name} packets not a non-negative integer: {pk!r}")
+             if name in values:
+@@ -108,14 +131,42 @@
+     return out
+ 
+ 
++def check_classes(classes):
++    """06B-4D1R: None -> every frame-mapped class. Otherwise a NON-EMPTY list of distinct, known,
++    frame-mapped class names (a valid subset is allowed). Raises ValueError with the reason."""
++    if classes is None:
++        return list(L.COUNTER_CLASSES)
++    if isinstance(classes, str) or not isinstance(classes, (list, tuple)):
++        raise ValueError(f"classes must be a list of class names, got {type(classes).__name__}")
++    classes = list(classes)
++    if not classes:
++        raise ValueError("empty list of classes: nothing would be compared")
++    bad = [c for c in classes if not isinstance(c, str) or c not in L.COUNTER_CLASSES]
++    if bad:
++        raise ValueError(f"unknown or not frame-mapped class name(s): {bad!r}; allowed: {list(L.COUNTER_CLASSES)}")
++    dup = sorted({c for c in classes if classes.count(c) > 1})
++    if dup:
++        raise ValueError(f"duplicate class name(s): {dup}")
++    return classes
++
++
+ def evaluate(pcap, counters, tap_mac, before, after, classes=None, guard=counter_window.GUARD_S):
+     """Returns the result dict (never raises for bad input: those become verdict ERROR)."""
+-    classes = list(L.COUNTER_CLASSES) if classes is None else list(classes)
++    try:
++        classes = check_classes(classes)
++        class_error = None
++    except ValueError as e:
++        class_error = f"invalid argument: {e}"
++        classes = classes if isinstance(classes, (list, tuple)) else repr(classes)
+     res = {"input": {"pcap": pcap, "pcap_sha256": _sha256(pcap), "counters": counters,
+                      "counters_sha256": _sha256(counters), "tap_mac": tap_mac, "before": before, "after": after,
+                      "classes": classes, "guard_s": guard},
+            "assumption": ASSUMPTION, "verdict": "ERROR", "reasons": [], "per_class": {},
+            "frames_in_window": {}, "frames_outside_window": 0, "no_counter_frames": [], "not_compared": {}}
++    if class_error:
++        res["error"] = class_error
++        res["reasons"] = [class_error]
++        return res
+     try:
+         reads = load_reads(counters)
+         for lbl in (before, after):
+@@ -177,7 +228,8 @@
+         a = ap.parse_args(argv)
+     except SystemExit:
+         return EXIT["ERROR"]
+-    classes = None if a.classes is None else [c for c in a.classes.split(",") if c]
++    # 06B-4D1R: no silent filtering: "" -> [] and "a,,b" -> ["a", "", "b"], both rejected by check_classes
++    classes = None if a.classes is None else ([] if a.classes == "" else a.classes.split(","))
+     res = evaluate(a.pcap, a.counters, a.tap_mac, a.before, a.after, classes)
+     text = json.dumps(res, indent=1, sort_keys=True, ensure_ascii=False)
+     if a.out:
+--- base-06b4d1/selftest_l2eval.py	2026-10-08 05:02:35.330380011 +0000
++++ selftest_l2eval.py	2026-10-08 05:11:27.159393128 +0000
+@@ -247,6 +247,78 @@
+     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+         rc = E.main(["--pcap", pe])
+     t("C5 missing arguments -> exit 2", lambda: rc == 2)
++    # 06B-4D1R: --classes is never silently filtered
++    rc, j, _ = cli(std_recs(**STD_DELTA), "--classes", "")
++    t('C6 --classes "" -> exit 2, JSON written with the reason', lambda: rc == 2 and "empty list" in j["error"])
++    rc, j, _ = cli(std_recs(**STD_DELTA), "--classes", "arp_in_ok,,arp_out_ok")
++    t('C7 --classes "a,,b" (empty name) -> exit 2, not filtered', lambda: rc == 2 and "unknown" in j["error"])
++    rc, j, _ = cli(std_recs(**STD_DELTA), "--classes", "arp_in_ok,arp_in_ok")
++    t("C8 --classes with a duplicate -> exit 2", lambda: rc == 2 and "duplicate" in j["error"])
++    rc, j, _ = cli(std_recs(**STD_DELTA), "--classes", "arp_in_ok,arp_out_ok")
++    t("C9 --classes valid subset -> exit 0, only those classes compared",
++      lambda: rc == 0 and set(j["per_class"]) == {"arp_in_ok", "arp_out_ok"})
++
++
++# ------------------------------------------------------------------ N/J. 06B-4D1R: class list and JSON structure
++def sec_N(tmp):
++    fr = frames_std()
++
++    def arg_err(classes, needle):
++        r = run(tmp, "n", fr, std_recs(**STD_DELTA), classes=classes)
++        return (r["verdict"] == "ERROR" and r["per_class"] == {} and r["error"].startswith("invalid argument")
++                and needle in r["error"] and r["reasons"] == [r["error"]])
++    t("N1 classes=[] -> ERROR (nothing compared is never PASS)", lambda: arg_err([], "empty list"))
++    t("N2 duplicate class name -> ERROR", lambda: arg_err(["arp_in_ok", "arp_in_ok"], "duplicate"))
++    t("N3 empty class name -> ERROR", lambda: arg_err(["arp_in_ok", ""], "unknown"))
++    t("N4 unobservable class (arp_out_drop) -> ERROR before reading anything", lambda: arg_err(["arp_out_drop"], "unknown"))
++    t("N5 classes given as a string -> ERROR", lambda: arg_err("arp_in_ok", "must be a list"))
++    t("N6 non-string class name -> ERROR", lambda: arg_err([123], "unknown"))
++    t("N7 a valid subset (tuple) is still accepted",
++      lambda: (lambda r: r["verdict"] == "PASS" and set(r["per_class"]) == {"drop_public", "l2_bad_ethertype"})(
++          run(tmp, "n7", fr, std_recs(**STD_DELTA), classes=("drop_public", "l2_bad_ethertype"))))
++
++
++def sec_J(tmp):
++    fr = frames_std()
++    A = rec("A", A0, A1, BASE)
++    full = json.loads(raw(after(**STD_DELTA)))["nftables"]
++
++    def bline(rawval):
++        return {"label": "B", "t_start": B0, "t_end": B1, "raw": rawval if isinstance(rawval, str) else json.dumps(rawval)}
++    cases = [
++        ("J1 nftables=[{counter: null}]", [A, bline({"nftables": [{"counter": None}]})], "counter is NoneType"),
++        ("J2 nftables=null", [A, bline({"nftables": None})], "'nftables' is NoneType"),
++        ("J3 nftables=[{counter: []}]", [A, bline({"nftables": [{"counter": []}]})], "counter is list"),
++        ("J4 nft output is a list", [A, bline('["nftables"]')], "not an object with 'nftables'"),
++        ("J5 nft output without nftables", [A, bline({})], "not an object with 'nftables'"),
++        ("J6 a non-object element among valid counters (not skipped)", [A, bline({"nftables": ["x"] + full})],
++         "nftables[0] is str"),
++        ("J7 counter without packets", [A, bline({"nftables": [{"counter": {"name": "arp_in_ok"}}] + full[1:]})],
++         "lacks 'name' or 'packets'"),
++        ("J8 counter name not a string", [A, bline({"nftables": [{"counter": {"name": 7, "packets": 1}}]})],
++         "name is not a non-empty string"),
++        ("J12 counter name empty", [A, bline({"nftables": [{"counter": {"name": "", "packets": 1}}] + full})],
++         "name is not a non-empty string"),
++        ("J9 record line is a JSON list", [A, '["label", "t_start", "t_end", "raw"]'], "record is list"),
++        ("J10 record without raw", [A, {"label": "B", "t_start": B0, "t_end": B1}], "field 'raw' missing"),
++        ("J11 raw is an object, not text", [A, {"label": "B", "t_start": B0, "t_end": B1,
++                                                "raw": {"nftables": full}}], "expected the nft JSON text"),
++    ]
++    for name, recs, needle in cases:
++        t(f"{name} -> ERROR with reason (evaluate)",
++          lambda recs=recs, needle=needle: (lambda r: r["verdict"] == "ERROR" and r["per_class"] == {}
++              and r["error"].startswith("invalid measurement data") and needle in r["error"])(run(tmp, "j", fr, recs)))
++    # the same malformed snapshots through the real CLI: exit 2 and the JSON written with the error
++    p = pcapng(os.path.join(tmp, "j.pcapng"), fr)
++    for name, recs, needle in cases[:3]:
++        c = write_counters(os.path.join(tmp, "j-cli.jsonl"), recs)
++        out = os.path.join(tmp, "j-cli.json")
++        if os.path.exists(out):
++            os.remove(out)
++        with contextlib.redirect_stdout(io.StringIO()):
++            rc = E.main(["--pcap", p, "--counters", c, "--tap-mac", TAP, "--before", "A", "--after", "B", "--out", out])
++        t(f"{name.split()[0]}-CLI exit 2 and JSON written with the reason",
++          lambda rc=rc, out=out, needle=needle: rc == 2 and needle in json.load(open(out))["error"])
+ 
+ 
+ # ------------------------------------------------------------------ R. read-only replay of the saved 06B-4C run
+@@ -301,7 +373,8 @@
+         print(__doc__)
+         return 64
+     with tempfile.TemporaryDirectory(prefix="selftest-l2eval.") as tmp:
+-        secs = [("S", lambda: sec_S(tmp)), ("X", lambda: sec_X(tmp)), ("M", lambda: sec_M(tmp)), ("C", lambda: sec_C(tmp))]
++        secs = [("S", lambda: sec_S(tmp)), ("X", lambda: sec_X(tmp)), ("M", lambda: sec_M(tmp)), ("C", lambda: sec_C(tmp)),
++                ("N", lambda: sec_N(tmp)), ("J", lambda: sec_J(tmp))]
+         if reg:
+             secs.append(("R", lambda: sec_R(reg, jdir)))
+         for name, fn in secs:
+--- base-06b4d1/mutation_l2eval.py	2026-10-08 05:02:35.330380011 +0000
++++ mutation_l2eval.py	2026-10-08 05:11:27.160393125 +0000
+@@ -38,6 +38,32 @@
+      "X5 malformed TAP MAC -> ERROR (invalid argument)"),
+     ("V13", [('            raise InputError(f"{path}:{n}: counter {name} listed twice")', '            pass')],
+      "M16 a counter listed twice in one read -> ERROR"),
++    # ---- 06B-4D1R
++    ("W1", [('    if not classes:\n        raise ValueError("empty list', '    if False:\n        raise ValueError("empty list')],
++     "N1 classes=[] -> ERROR (nothing compared is never PASS)"),
++    ("W2", [('    if dup:\n        raise ValueError', '    if False:\n        raise ValueError')], "N2 duplicate class name -> ERROR"),
++    ("W3", [('    bad = [c for c in classes if not isinstance(c, str) or c not in L.COUNTER_CLASSES]', '    bad = []')],
++     "N4 unobservable class (arp_out_drop) -> ERROR before reading anything"),
++    ("W4", [('    if isinstance(classes, str) or not isinstance(classes, (list, tuple)):',
++             '    if not isinstance(classes, (list, tuple, str)):')], "N5 classes given as a string -> ERROR"),
++    ("W5", [('([] if a.classes == "" else a.classes.split(","))', '[c for c in a.classes.split(",") if c]')],
++     'C7 --classes "a,,b" (empty name) -> exit 2, not filtered'),
++    ("W6", [('            if not isinstance(c, dict):\n                raise InputError', '            if False:\n                raise InputError')],
++     "J1 nftables=[{counter: null}] -> ERROR with reason (evaluate)"),
++    ("W7", [('        if not isinstance(objs, list):\n            raise InputError', '        if False:\n            raise InputError')],
++     "J2 nftables=null -> ERROR with reason (evaluate)"),
++    ("W8", [('            if not isinstance(o, dict):\n                raise InputError', '            if not isinstance(o, dict):\n                continue\n                raise InputError')],
++     "J6 a non-object element among valid counters (not skipped) -> ERROR with reason (evaluate)"),
++    ("W9", [('            if "name" not in c or "packets" not in c:\n                raise InputError', '            if False:\n                raise InputError')],
++     "J7 counter without packets -> ERROR with reason (evaluate)"),
++    ("W10", [('        if not isinstance(raw, str):\n            raise InputError', '        if False:\n            raise InputError')],
++     "J11 raw is an object, not text -> ERROR with reason (evaluate)"),
++    ("W11", [('        if not isinstance(doc, dict) or "nftables" not in doc:', '        if "nftables" not in doc:')],
++     "J4 nft output is a list -> ERROR with reason (evaluate)"),
++    ("W12", [('        if not isinstance(rec, dict):\n            raise InputError', '        if False:\n            raise InputError')],
++     "J9 record line is a JSON list -> ERROR with reason (evaluate)"),
++    ("W13", [('            if not isinstance(name, str) or not name:', '            if not isinstance(name, str):')],
++     "J12 counter name empty -> ERROR with reason (evaluate)"),
+     ("X1", [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", [("import argparse\n", "import argparse(\n")], None),
+ ]

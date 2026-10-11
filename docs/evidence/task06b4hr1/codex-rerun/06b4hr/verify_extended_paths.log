@@ -1,0 +1,7 @@
+T14-A1: ĐẠT
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+Restore contradiction CLI exit: 0
+Required neighbour parsed binding: False
+Unstarted + capture error result: {'id': 'T14-A2', 'category': 'LOI_THUC_THI', 'verdict': 'CHƯA KIỂM CHỨNG (lỗi thực thi: guest state not readable before the case: reading route failed in the guest (rc 1))', 'ok': False, 'evidence_kind': 'live_control'}

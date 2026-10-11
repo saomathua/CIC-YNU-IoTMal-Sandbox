@@ -1,0 +1,5 @@
+echo @@B7; ls -l /usr/bin/curl; curl --version | head -1; echo @
+@E7 rc=$?
+@@B7
+-rwxr-xr-x    1 root     root        198044 Jun 22  2025 [1;32m/usr/bin/curl[m
+curl 8.12.1 (mips-openwrt-linux-gnu) libcurl/8.12.1 mbedTLS/3.6.3 nghttp2/1.63.0

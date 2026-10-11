@@ -1,0 +1,36 @@
+{"ts": 1791471046.3567476, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471046.3567476, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.3567476, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471046.3567476, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.5072105, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471046.5072105, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.5072105, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471046.5072105, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.6580987, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471046.6580987, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.6580987, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471046.6580987, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.808629, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471046.808629, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.808629, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471046.808629, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.9592278, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471046.9592278, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471046.9592278, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471046.9592278, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.109905, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471047.109905, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.109905, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471047.109905, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.2607481, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471047.2607481, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.2607481, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471047.2607481, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.413416, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471047.413416, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.413416, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471047.413416, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.5641816, "target": "mongo 172.18.0.2:27017", "ok": true, "detail": "connected"}
+{"ts": 1791471047.5641816, "target": "worker-eth0 192.168.60.2:8011", "ok": true, "detail": "HTTP 200"}
+{"ts": 1791471047.5641816, "target": "arp worker-eth0 192.168.60.2", "ok": true, "detail": {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": "02:42:c0:a8:3c:05"}}
+{"ts": 1791471047.5641816, "target": "manager 192.168.60.10:8011", "ok": true, "detail": "HTTP 200"}

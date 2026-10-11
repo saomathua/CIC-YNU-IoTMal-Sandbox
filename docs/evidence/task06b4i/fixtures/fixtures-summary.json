@@ -1,0 +1,117 @@
+{
+ "clean": {
+  "probe_matrix_exit": 0,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "DAT",
+   "T14-A3": "DAT_KIEM_QUY_TAC",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "PASS",
+  "run_script_mapping": "PASS",
+  "spec": "{}"
+ },
+ "restore-fail-A2": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "CHUA_KIEM_CHUNG",
+   "T14-A3": "CHUA_KIEM_CHUNG",
+   "T15-S1": "CHUA_KIEM_CHUNG"
+  },
+  "arp_harness_outcome": "FAIL: required confirmation not passed (ok=False): guest configuration restored after T14-A2 (re-read state equals the baseline); guest configuration restored after T14-A2 (re-read state equals the baseline)",
+  "run_script_mapping": "FAIL",
+  "spec": "{'guest': {'fail_cmds': ['ip route del 192.168.60.10/32 dev eth1']}}"
+ },
+ "marker-after-A2-ping": {
+  "probe_matrix_exit": 98,
+  "status": "CAPTURE LOST: after ARP guest command 'ping -c 1 -W 2 -s 1402 192.168.60.10': host capture lost: 12:00:00 capture ens33 pid 77 exited during the test",
+  "cases": {},
+  "arp_harness_outcome": "FAIL: required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status \"CAPTURE LOST: after ARP guest command 'ping -c 1 -W 2 -s 1402 192.168.60.10': host capture lost: 12:00:00 capture ens33 pid 77 exited during the test\"; arp-eval.json missing or unreadable; captures alive for the whole test (probes stopped)",
+  "run_script_mapping": "FAIL",
+  "spec": "{'events': [('-s 1402 192.168.60.10', 'marker')]}"
+ },
+ "leak-before-S1": {
+  "probe_matrix_exit": 99,
+  "status": "LEAK: before ARP guest command 'echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify': 1 signature packet(s) seen on host interfaces",
+  "cases": {},
+  "arp_harness_outcome": "FAIL: required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status \"LEAK: before ARP guest command 'echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify': 1 signature packet(s) seen on host interfaces\"; arp-eval.json missing or unreadable; NO probe packet seen on host interfaces (leak monitor)",
+  "run_script_mapping": "FAIL",
+  "spec": "{'nft_event': ('T15-S1 before', 'leak')}"
+ },
+ "fail-and-measure-A3": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "DAT",
+   "T14-A3": "FAIL",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "FAIL: arp_cases group exit 1; probe T14-A3 (arp, rule check) -> FAIL",
+  "run_script_mapping": "FAIL",
+  "spec": "{'neigh': {('T14-A3 after', 0): 'guest_mac_eth0'}, 'nft_fail': 'T14-A3 after'}"
+ },
+ "notstarted-A3-neigh-fail": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "DAT",
+   "T14-A3": "FAIL",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "FAIL: arp_cases group exit 1; probe T14-A3 (arp, rule check) -> FAIL",
+  "run_script_mapping": "FAIL",
+  "spec": "{'snap_fail': ('T14-A2 after', 2), 'neigh': {('T14-A2 after', 3): 'guest_mac_eth0'}}"
+ },
+ "ctl-no-arp": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "CHUA_KIEM_CHUNG",
+   "T14-A2": "DAT",
+   "T14-A3": "DAT_KIEM_QUY_TAC",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+  "run_script_mapping": "UNVERIFIED",
+  "spec": "{'ctl': 'no_arp'}"
+ },
+ "a2-manager-other-mac": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "CHUA_KIEM_CHUNG",
+   "T14-A3": "DAT_KIEM_QUY_TAC",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "UNVERIFIED: probe T14-A2 (arp, live control) -> CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+  "run_script_mapping": "UNVERIFIED",
+  "spec": "{'neigh': {('T14-A2 after', 1): 'manager_other_mac'}}"
+ },
+ "neigh-error-A2-after": {
+  "probe_matrix_exit": 1,
+  "status": "COMPLETED",
+  "cases": {
+   "T14-A1": "DAT",
+   "T14-A2": "LOI_PHEP_DO",
+   "T14-A3": "DAT_KIEM_QUY_TAC",
+   "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "arp_harness_outcome": "FAIL: required confirmation not passed (ok=False): worker neighbour table read (ip -j neigh show) before and after every ARP case; arp_cases group exit 2; worker neighbour table read (ip -j neigh show) before and after every ARP case; probe T14-A2 (arp, live control) -> LỖI PHÉP ĐO (worker neighbours: after: not readable: not JSON: the JSON object must be str, bytes or bytearray, not NoneType)",
+  "run_script_mapping": "FAIL",
+  "spec": "{'neigh': {('T14-A2 after', 0): 'error'}}"
+ },
+ "error-after-group": {
+  "probe_matrix_exit": 1,
+  "status": "ERROR: FileNotFoundError: [Errno 2] No such file or directory: '/home/dathq/projects/ct01-06b4i-work/fixtures-run/error-after-group/sys/tap0/address'",
+  "cases": {},
+  "arp_harness_outcome": "FAIL: required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status \"ERROR: FileNotFoundError: [Errno 2] No such file or directory: '/home/dathq/projects/ct01-06b4i-work/fixtures-run/error-after-group/sys/tap0/address'\"; arp-eval.json missing or unreadable; harness completed without error",
+  "run_script_mapping": "FAIL",
+  "spec": "{'events': [('ip link set dev eth1 up', 'tap0_gone')]}"
+ }
+}

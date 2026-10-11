@@ -1,0 +1,37 @@
+[OK ] H points to the 06B-4IR2 working copy — /home/dathq/projects/ct01-06b4ir2
+[OK ] expected image id pinned — sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[OK ] image name — sandbox-worker:latest
+[OK ] NAME set — ct01-06b3b-guest
+[OK ] CTL set — ct01-06b3b-ctl
+[OK ] MANAGER set — cic-ynu-iotmal-sandbox-sandbox-manager-1
+[OK ] GUEST_MAC set — 52:54:00:c7:00:02
+[OK ] LAN_DNS set — 192.168.177.2
+[OK ] REPO set — /home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+[OK ] harness-copy list: 29 files exist in H
+[OK ] read-only mounts: 13 sources exist in H — arp_cases.py->/harness/arp_cases.py, arp_harness.py->/harness/arp_harness.py, counter_window.py->/harness/counter_window.py, ctl_loop.py->/ctl_loop.py, guest_state.py->/harness/guest_state.py, icmp_cases.py->/harness/icmp_cases.py, icmp_harness.py->/harness/icmp_harness.py, l2eval.py->/harness/l2eval.py, l2frames.py->/harness/l2frames.py, pcapng_stats.py->/harness/pcapng_stats.py, probe_matrix.py->/harness/probe_matrix.py, sentinel/poller.py->/app/poller.py, signatures.py->/harness/signatures.py
+[OK ] self-tests run before docker exist — selftest_l2.py selftest_icmp.py selftest_icmp_wiring.py selftest_arp.py selftest_arp_wiring.py selftest.sh
+[OK ] exactly one probe_matrix call, CT01_SUITE=arp
+[OK ] ctl started with --arp-worker
+[OK ] CTL_MAC from docker inspect on sandboxnet; manager_mac and ctl_mac in CT01_TARGETS
+[OK ] outcome/run-check through arp_harness.py
+[OK ] sentinel/poller.py exists
+[OK ] host executable docker — /usr/bin/docker
+[OK ] host executable python3 — /usr/bin/python3
+[OK ] host executable tcpdump — /usr/bin/tcpdump
+[OK ] host executable nft — /usr/sbin/nft
+[OK ] host executable sysctl — /usr/sbin/sysctl
+[OK ] host executable ip — /usr/sbin/ip
+[OK ] host executable ss — /usr/bin/ss
+[OK ] host executable pgrep — /usr/bin/pgrep
+[OK ] host executable lsmod — /usr/sbin/lsmod
+[OK ] host executable journalctl — /usr/bin/journalctl
+[OK ] host executable timeout — /usr/bin/timeout
+[OK ] host executable git — /usr/bin/git
+[OK ] host executable sha256sum — /usr/bin/sha256sum
+[OK ] host executable diff — /usr/bin/diff
+[OK ] host executable awk — /usr/bin/awk
+[OK ] host executable mktemp — /usr/bin/mktemp
+[OK ] host executable tee — /usr/bin/tee
+[OK ] output dir absent (run script aborts if it exists)
+[OK ] repo docker-compose.yml present
+[OK ] worker files hashed by the run script exist in the working tree

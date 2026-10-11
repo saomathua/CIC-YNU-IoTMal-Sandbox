@@ -1,0 +1,23 @@
+# Keep secrets and runtime data out of the build context.
+# Configuration is supplied at runtime via environment variables (docker-compose.yml).
+.env
+.env.*
+!.env.example
+
+# Runtime data
+data/
+temp/
+
+# Extracted VM images (only the */image.zip archives are copied into the image)
+ARM/image/
+MIPS/image/
+MIPSEL/image/
+x86/image/
+
+# Python / IDE
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/

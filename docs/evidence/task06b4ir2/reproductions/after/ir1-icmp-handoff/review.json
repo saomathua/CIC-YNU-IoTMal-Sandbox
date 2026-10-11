@@ -1,0 +1,71 @@
+{
+  "version": "ir1",
+  "variant": "icmp-handoff",
+  "rc": 98,
+  "status": "CAPTURE LOST: before guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: 12:00:00 capture ens33 pid 77 exited during the test",
+  "outcome": "FAIL: required confirmation missing: capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status 'CAPTURE LOST: before guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w \\'HTTP=%{http_code}\\\\\\\\n\\' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: 12:00:00 capture ens33 pid 77 exited during the test'; arp-eval.json missing or unreadable; allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash; captures alive for the whole test (probes stopped)",
+  "cli": "FAIL: required confirmation missing: capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status 'CAPTURE LOST: before guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w \\'HTTP=%{http_code}\\\\\\\\n\\' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: 12:00:00 capture ens33 pid 77 exited during the test'; arp-eval.json missing or unreadable; allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash; captures alive for the whole test (probes stopped)",
+  "mapping": "FAIL",
+  "categories": {},
+  "ctl_audit": {
+    "rows": 27,
+    "duplicates": 0,
+    "missing_detail": 0,
+    "arp_payloads": [
+      {
+        "ip": "192.168.60.2",
+        "hw": "02:42:c0:a8:3c:02",
+        "flags": "0x2",
+        "device": "eth0",
+        "device_mac": "02:42:c0:a8:3c:05"
+      },
+      {
+        "ip": "192.168.60.2",
+        "hw": "02:42:c0:a8:3c:02",
+        "flags": "0x2",
+        "device": "eth0",
+        "device_mac": "02:42:c0:a8:3c:05"
+      }
+    ]
+  },
+  "commands": [
+    [
+      "run",
+      "ip addr"
+    ],
+    [
+      "run",
+      "ip route"
+    ],
+    [
+      "run",
+      "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done"
+    ],
+    [
+      "run",
+      "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done"
+    ],
+    [
+      "run",
+      "curl --version | head -1"
+    ],
+    [
+      "monitor",
+      "info network"
+    ]
+  ],
+  "case_results": [],
+  "cleanup": [
+    {
+      "arch": "ARM",
+      "test": "QEMU exit confirmed",
+      "ok": true,
+      "exitstatus": 0
+    },
+    {
+      "arch": "ARM",
+      "test": "fixture, marker and temporary guest disk removed",
+      "ok": true
+    }
+  ]
+}

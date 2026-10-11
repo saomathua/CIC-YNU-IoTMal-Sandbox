@@ -1,0 +1,153 @@
+
+===== 1. preparation (13:39:59)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image sandbox-worker:latest id=sha256:d0bf9277e7c485823ff5a3b8f5ead6c038ef03c5c9fc72fcd0040799403e6f42 expected=sha256:d0bf9277e7c485823ff5a3b8f5ead6c038ef03c5c9fc72fcd0040799403e6f42
+[PASS] image id equals full expected id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 4 hours ago
+mongo-db Up 19 minutes
+name=cic-ynu-iotmal-sandbox_sandboxnet id=1d86fe3e8bbe2bbf2d46b4d2d767c59a4b90ab2f6e87c20269137a241816e5d5 driver=bridge internal=false ipv6=false subnet=192.168.60.0/24 gw=192.168.60.1 containers=[]
+7308154ac0b73196b59f9f6f5abdb683180d9dc043d1cd02c50e69e313f69555  /home/dathq/projects/ct01-06b2ar/run-06b2ar.sh
+517be1541e1c0b812f014fa84d93406d54aef7e56e3d1a1979de331faf0eeb20  /home/dathq/projects/ct01-06b2ar/sentinel/server.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b2ar/sentinel/poller.py
+5a967a476726c09832b31c02be7c428fe042880e03ac9e9cd921533f784f483b  /home/dathq/projects/ct01-06b2ar/broken-guest.nft
+
+===== 2. valid start: ALLOW_VM_INTERNET=false (13:40:00)
+container id: 6d8fa4fb82895e3bd6fcef50d94b07b046c491a141b932052ba8338bc5984886
+state: running exit=0 restarts=0 pid=5084
+2026-10-06T13:40:00.429538681Z SYSCTL REPORT (before run.sh): net.ipv4.ip_forward=1
+2026-10-06T13:40:00.429576695Z SYSCTL REPORT (before run.sh): rp_filter [max] configured: all=2 default=2 tap0=None eth0=2 | effective: tap0=None eth0=2
+2026-10-06T13:40:00.429579079Z SYSCTL REPORT (before run.sh): arp_ignore [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T13:40:00.429580522Z SYSCTL REPORT (before run.sh): arp_announce [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T13:40:00.429581909Z SYSCTL REPORT (before run.sh): arp_accept [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T13:40:00.429583334Z SYSCTL REPORT (before run.sh): forwarding [dev] configured: all=1 default=1 tap0=None eth0=1 | effective: tap0=None eth0=1
+2026-10-06T13:40:00.496783797Z SYSCTL REPORT (after run.sh): net.ipv4.ip_forward=0
+2026-10-06T13:40:00.496809628Z SYSCTL REPORT (after run.sh): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+2026-10-06T13:40:00.496811410Z SYSCTL REPORT (after run.sh): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+2026-10-06T13:40:00.496812811Z SYSCTL REPORT (after run.sh): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+2026-10-06T13:40:00.496814224Z SYSCTL REPORT (after run.sh): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T13:40:00.496815622Z SYSCTL REPORT (after run.sh): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T13:40:00.556017143Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-06T13:40:00.573118696Z SENTINEL poller.py called (no real poller started)
+2026-10-06T13:40:00.573137312Z SENTINEL server.py called (no real server started)
+-- sentinel markers:
+total 8
+-rw-r--r-- 1 root root 34 Oct  6 13:40 poller-called
+-rw-r--r-- 1 root root 35 Oct  6 13:40 server-called
+2026-10-06T13:40:00.572791Z pid=1
+2026-10-06T13:40:00.572915Z pid=29
+[PASS] valid container running, 0 restarts
+[PASS] V0 passed before both sentinels were called
+v0=[datetime.datetime(2026, 10, 6, 13, 40, 0, 556017)] sentinels=[datetime.datetime(2026, 10, 6, 13, 40, 0, 572791), datetime.datetime(2026, 10, 6, 13, 40, 0, 572915)] ok=True
+[PASS] no ISOLATION FAIL in logs
+ISOLATION OK (06B-2AR recheck): ruleset,sysctl,link,neighbor,route
+verify exit=0
+[PASS] verify recheck exit 0
+SYSCTL REPORT (06B-2AR exec): net.ipv4.ip_forward=0
+SYSCTL REPORT (06B-2AR exec): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+SYSCTL REPORT (06B-2AR exec): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+SYSCTL REPORT (06B-2AR exec): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+SYSCTL REPORT (06B-2AR exec): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+SYSCTL REPORT (06B-2AR exec): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.all.arp_ignore=0
+net.ipv4.conf.all.arp_announce=0
+net.ipv4.conf.all.arp_accept=0
+net.ipv4.conf.all.forwarding=0
+net.ipv4.conf.default.rp_filter=2
+net.ipv4.conf.default.arp_ignore=0
+net.ipv4.conf.default.arp_announce=0
+net.ipv4.conf.default.arp_accept=0
+net.ipv4.conf.default.forwarding=0
+net.ipv4.conf.tap0.rp_filter=1
+net.ipv4.conf.tap0.arp_ignore=1
+net.ipv4.conf.tap0.arp_announce=2
+net.ipv4.conf.tap0.arp_accept=0
+net.ipv4.conf.tap0.forwarding=0
+net.ipv4.conf.eth0.rp_filter=2
+net.ipv4.conf.eth0.arp_ignore=0
+net.ipv4.conf.eth0.arp_announce=0
+net.ipv4.conf.eth0.arp_accept=0
+net.ipv4.conf.eth0.forwarding=0
+net/ipv4/ip_forward=0
+net/ipv6/conf/all/forwarding=0
+net/ipv6/conf/default/disable_ipv6=1
+net/ipv6/conf/tap0/disable_ipv6=1
+-- tables outside CT-01 (review only):
+table ip nat
+[PASS] normalized runtime ruleset identical to expected (working tree)
+517be1541e1c0b812f014fa84d93406d54aef7e56e3d1a1979de331faf0eeb20  /app/server.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /app/poller.py
+d0a22a19f9fe20b31ff627f30b55a851da0ca73462b2b8cb622ced0035ba23f9  /app/run.sh
+5892d2d74f97c446ffa0f72f3de06764148a79ff3b4e7b80f4d791662b7fdce4  /app/isolation/guest.nft
+0991fbdf89498c45853f076a3095acd2e8e6e33bdb8ecb43f6a23797156b54c8  /app/isolation/load.nft
+9fb32d7f7ec0e83d0440f7a9bce2e18021da6f9ee4557cfe26ac38eae8572b16  /app/isolation/expected-ruleset.json
+8c900ae5a936c07096e77a594c1e1e1776f809107e1c55db8787d277c9af5f1a  /app/isolation/verify.py
+9a8eb13892e2bb68d3b521ed436cb896d1398a98d8d6c1de7a9b98d12cfe434e  /app/isolation/constants.py
+[PASS] run.sh/isolation files in image equal working tree
+    PID    PPID COMMAND
+      1       0 python3 poller.py
+     28       1 /bin/bash run.sh
+     29      28 python3 server.py
+    155       0 ps -eo pid,ppid,args
+[PASS] no qemu/tshark in container
+[PASS] sentinels (not real server/poller) mounted
+network=cic-ynu-iotmal-sandbox_sandboxnet ip=192.168.60.2
+[PASS] eth0 on sandboxnet
+[PASS] tap0 has no master and no bridge exists
+netns: pid=5084 sandboxkey=/var/run/docker/netns/9681a34d3764 ns=net:[4026532740] host-ns=net:[4026531840]
+[PASS] no qemu-system on host
+
+===== 2b. teardown of valid container (13:40:09)
+[PASS] docker stop exit 0
+[PASS] docker rm exit 0
+[PASS] valid container removed
+[PASS] netns sandbox key gone
+[PASS] tap0 not present on host
+
+===== 3. refusal: ct01-06b2ar-allow-true (13:40:09)
+exit code: 1
+2026-10-06T13:40:09.737518943Z FATAL: ALLOW_VM_INTERNET=true is not supported; guest egress is not designed yet (CT-01).
+[PASS] ct01-06b2ar-allow-true: exit code exactly 1
+[PASS] ct01-06b2ar-allow-true: no sentinel marker
+[PASS] ct01-06b2ar-allow-true: 0 restarts
+[PASS] ct01-06b2ar-allow-true: no qemu-system on host
+[PASS] ct01-06b2ar-allow-true: container removed
+
+===== 3. refusal: ct01-06b2ar-broken-nft (13:40:09)
+exit code: 1
+2026-10-06T13:40:10.184770822Z SYSCTL REPORT (before run.sh): arp_accept [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T13:40:10.184772337Z SYSCTL REPORT (before run.sh): forwarding [dev] configured: all=1 default=1 tap0=None eth0=1 | effective: tap0=None eth0=1
+2026-10-06T13:40:10.204782528Z In file included from /app/isolation/load.nft:17:1-35:
+2026-10-06T13:40:10.204804488Z /app/isolation/guest.nft:91:24-24: Error: syntax error, unexpected '{', expecting string
+2026-10-06T13:40:10.204806548Z this_is_not_nft_syntax {
+2026-10-06T13:40:10.204808027Z                        ^
+[PASS] ct01-06b2ar-broken-nft: exit code exactly 1
+[PASS] ct01-06b2ar-broken-nft: no sentinel marker
+[PASS] ct01-06b2ar-broken-nft: 0 restarts
+[PASS] ct01-06b2ar-broken-nft: no qemu-system on host
+[PASS] ct01-06b2ar-broken-nft: container removed
+
+===== 4. host state after (13:40:10)
+unchanged: docker-networks.txt
+unchanged: docker-ps.txt
+unchanged: host-tap0.txt
+unchanged: ip6-route.txt
+unchanged: ip-addr.txt
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+unchanged: lsmod-net.txt
+unchanged: nft-ruleset-stateless.txt
+unchanged: proc-sys-net-bridge.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+[PASS] host sysctl unchanged
+[PASS] host nft ruleset unchanged
+[PASS] host IPv4 routes unchanged
+[PASS] all containers created by this run are removed
+created ids: 6d8fa4fb82895e3bd6fcef50d94b07b046c491a141b932052ba8338bc5984886 18880639ff69b7a37ced0753667bb992b1d1e4bdeba6c28abc6d75098ba4a207 1db9ae90da26d560967cb2dc074e68659c056e2dcfde75b38eb2ab8901492c3d
+
+===== result (13:40:12)
+ALL CHECKS PASSED

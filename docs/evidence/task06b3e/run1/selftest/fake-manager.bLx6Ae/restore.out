@@ -1,0 +1,1 @@
+manager after: state=created id=cid1 startedAt=T0 (before: created cid1 T0; started by this run: 0)

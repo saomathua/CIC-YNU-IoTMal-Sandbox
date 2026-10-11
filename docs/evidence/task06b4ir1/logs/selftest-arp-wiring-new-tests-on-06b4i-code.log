@@ -1,0 +1,172 @@
+[PASS] U1 ctl_window: OK before and after, no failure -> ok
+[PASS] U2 ctl_window: nothing after read B (yet) -> not ok
+[PASS] U3 ctl_window: OK records only outside the slack -> not ok
+[PASS] U4 ctl_window: one failure inside the span -> not ok, counted
+[PASS] U5 ctl_window: another target (prefix of it) never counts
+[PASS] U6 ctl_records: a malformed line raises (never skipped); ok must be a boolean
+[FAIL] U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC unknown -> not ok  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U9 control_a1: HTTP of ctl missing after the case -> not ok  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[PASS] U10 control_a2: clean -> ok; STALE/DELAY/PROBE bindings are usable
+[PASS] U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok
+[PASS] U12 control_a2: worker HTTP fails or raises / manager MAC missing / address differs / ctl HTTP missing -> not ok
+[PASS] U13 control_a2: the neighbour collector raising -> not ok, error kept
+[PASS] U14 make_control: waits until the ctl log can hold a record after the span, then judges A1/A2
+[PASS] U15 make_control: window unknown (a counter read failed) / ctl unreadable / a rule-check case -> not ok
+[PASS] U16 check_record: complete record -> no problem
+[PASS] U17 check_record: arch, interface, TAP MAC, fixture hash, planned cases, collector command, guard stop
+[PASS] U18 check_record: link before/after a restored case not HTTP 200 + fixture hash -> problem
+[PASS] U19 check_record: not an object / invalid TAP MAC -> problem, no exception
+[PASS] U20 evaluate: clean simulated record -> group complete, exit 0, requirements 4 + 4
+[PASS] U21 evaluate: arp_cases record problems are kept (prefixed) and block the group
+[PASS] U22 evaluate: a record that crashes evaluate_group never passes
+[PASS] U23 case_requirements: no baseline -> nothing; baseline, not restored -> restore only; restored -> both
+[PASS] U24 case_test_name: starts with 'probe '; CHƯA KIỂM CHỨNG stays undecided for run_outcome
+[PASS] U25 arch_outcome: unreadable inputs / malformed record -> FAIL
+[PASS] U26 run_check: missing/duplicate architecture, wrong arch, wrong cases -> problems; complete -> none
+[PASS] U27 CLI: usage error exit 2; --outcome prints FAIL for missing files and exits 0; --run-check exit 1
+[FAIL] U28 ctl_loop arp_entry: complete entry -> MAC, flags, device  (TypeError: arp_entry() takes from 1 to 2 positional arguments but 3 were given)
+[PASS] U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises
+[PASS] U30 ctl_loop: the ARP check is added only with --arp-worker, right after the worker HTTP check; any other extra argument stops the loop
+[FAIL] U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, reason kept  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U32 I2 control_a1: same endpoint MAC under another interface name -> ok (the name is not assumed)  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U33 I2 control_a1: ctl endpoint MAC unknown/invalid -> not ok, even with a perfect log  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok  (TypeError: control_a1() takes 7 positional arguments but 8 were given)
+[FAIL] U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)  (returned False)
+[FAIL] U36 I3 ctl_window HTTP: OK with detail None / 'HTTP 500' / '' / object -> not ok; 'HTTP 200' -> ok  (AttributeError: module 'arp_harness' has no attribute 'http_detail_check'. Did you mean: '_arp_detail_check'?)
+[FAIL] U37 I3 ctl_window: the same record twice (same target and ts) -> not ok, reported as duplicate, not removed  (AttributeError: module 'arp_harness' has no attribute 'http_detail_check'. Did you mean: '_arp_detail_check'?)
+[FAIL] U38 I3 ctl_window: a ts going back in file order -> not ok; independent valid reads (distinct ts) -> ok  (AttributeError: module 'arp_harness' has no attribute 'http_detail_check'. Did you mean: '_arp_detail_check'?)
+[FAIL] U39 I3 ctl_window: a failed record without a string detail -> problem (still not ok)  (AttributeError: module 'arp_harness' has no attribute 'http_detail_check'. Did you mean: '_arp_detail_check'?)
+[FAIL] U40 I3 duplicate check keeps the time rule: an old record (60 s before) never counts as 'after read B'  (AttributeError: module 'arp_harness' has no attribute 'http_detail_check'. Did you mean: '_arp_detail_check'?)
+[FAIL] U41 I3 control_a2: manager HTTP record without payload / 'HTTP 500' -> not ok  (returned False)
+SELFTEST-ERROR: scenario unit-console crashed: 4i/selftest_arp_wiring.py", line 1460, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/old4i/selftest_arp_wiring.py", line 1445, in main
+    return scenario_main(argv[1], argv[3])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/old4i/selftest_arp_wiring.py", line 617, in scenario_main
+    unit_console(d)
+  File "/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/old4i/selftest_arp_wiring.py", line 480, in unit_console
+    guard = pm.StartupGuard(TS())
+            ^^^^^^^^^^^^^^^
+AttributeError: module 'probe_matrix' has no attribute 'StartupGuard'
+[PASS] S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS
+[PASS] S2 clean: A1/A2 ĐẠT (live control), A3/S1 ĐẠT (kiểm quy tắc); labels and evidence kinds unchanged
+[PASS] S3 clean: every contract step of every case sent in order (arp_cases.contract_steps for eth1)
+[PASS] S4 clean: no IPv4 probe, no ICMP case, no listener, no arping/raw tool sent to the guest
+[PASS] S5 clean: guest commands = link, then per case snapshot .. contract .. restore re-reads .. link (5 links)
+[PASS] S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control
+[PASS] S7 clean: worker -> manager HTTP for the A2 control after read B of A2 (plus the two liveness calls)
+[PASS] S8 clean: live controls recorded with their evidence (A1: ctl ARP entry = worker eth0 MAC; A2: manager MAC on eth0); none for A3/S1
+[PASS] S9 clean: paths and parameters passed to the evaluator (tap0.pcapng, counters-raw.jsonl, TAP MAC, eth1)
+[PASS] S10 clean: group record JSON: arch, interface, TAP MAC, fixture hash, planned cases, collector command
+[PASS] S11 clean: arp-eval.json: group_exit 0, group complete, no record problem, case requirements = 4 restores + 4 links after
+[PASS] S12 clean: one result record per case, named 'probe <id> (arp, ...) -> <verdict>'
+[PASS] S13 imports in the fake container came only from the files run-06b4i.sh mounts
+[PASS] S14 clean: session-wide measurement still written separately, QEMU exit/capture/cleanup records ok
+[PASS] S15 missing-case: never PASS; outcome FAIL naming the record problem; script FAIL; group record check FAIL in result.json
+[PASS] S15 duplicate-case: never PASS; outcome FAIL naming the record problem; script FAIL; group record check FAIL in result.json
+[PASS] S16 service link before fails: no case command sent, every case CHƯA KIỂM CHỨNG, outcome FAIL
+[PASS] S17 service link after A1 with another hash: A1 CHƯA KIỂM CHỨNG, outcome FAIL (link record), later cases run
+[PASS] S18 collector fails (rc != 0) after A2: A2 LỖI PHÉP ĐO with the error kept, collector record FAIL, never PASS
+[PASS] S19 collector output not JSON before A1: A1 LỖI PHÉP ĐO, outcome FAIL
+[PASS] S20 collector raises an unexpected exception: recorded, A3 LỖI PHÉP ĐO, QEMU/cleanup done, outcome FAIL
+[PASS] S21 guest MAC on eth0 after A3 AND counter read error: A3 FAIL, measurement error kept beside the evidence
+[PASS] S22 guest state unreadable before A3: nothing sent for A3, not_started kept, LỖI THỰC THI, S1 still runs; outcome UNVERIFIED (no restore/link requirement for a case that changed nothing)
+[PASS] S23 not started + guest MAC on a worker neighbour after it: FAIL wins, not_started and the evidence kept
+[PASS] S24 setup fails in A1: trigger not sent, restore still done, A1 LỖI THỰC THI, later cases ĐẠT; UNVERIFIED
+[PASS] S25 console timeout on the A3 trigger: LỖI THỰC THI, restore done, S1 still runs; UNVERIFIED
+[PASS] S26 the simulated kernel sends nothing: every case KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT; UNVERIFIED
+[PASS] S27 counter read error on 'T14-A3 after': A3 LỖI PHÉP ĐO, outcome FAIL
+[PASS] S28 restore fails after A2: A3/S1 not run and none of their commands sent (contract), A2 CHƯA KIỂM CHỨNG (khôi phục)
+[PASS] S29 restore fails after A2: run outcome FAIL (restore confirmation), no service link after A2, script FAIL
+[PASS] S30 marker-after-A2-ping: exit 98, the command that tripped the guard is the LAST one sent (no restore, no link)
+[PASS] S31 marker-after-A2-ping: status names the cause, outcome FAIL, script FAIL, no evaluation
+[PASS] S32 marker-after-A2-ping: QEMU shut down and cleanup done after the stop; group record kept with the guard stop
+[PASS] S30 heartbeat-stale-after-A1-setup: exit 98, the command that tripped the guard is the LAST one sent (no restore, no link)
+[PASS] S31 heartbeat-stale-after-A1-setup: status names the cause, outcome FAIL, script FAIL, no evaluation
+[PASS] S32 heartbeat-stale-after-A1-setup: QEMU shut down and cleanup done after the stop; group record kept with the guard stop
+[PASS] S30 tshark-exit-after-S1-down: exit 98, the command that tripped the guard is the LAST one sent (no restore, no link)
+[PASS] S31 tshark-exit-after-S1-down: status names the cause, outcome FAIL, script FAIL, no evaluation
+[PASS] S32 tshark-exit-after-S1-down: QEMU shut down and cleanup done after the stop; group record kept with the guard stop
+[PASS] S30 leak-after-A3-ping: exit 99, the command that tripped the guard is the LAST one sent (no restore, no link)
+[PASS] S31 leak-after-A3-ping: status names the cause, outcome FAIL, script FAIL, no evaluation
+[PASS] S32 leak-after-A3-ping: QEMU shut down and cleanup done after the stop; group record kept with the guard stop
+[PASS] S33 alert written during 'T15-S1 before' (read A): S1 setup NOT sent, exit 99, leak record when=before
+[PASS] S34 alert file unreadable during 'T14-A2 before': never 'no alert'; A2 setup NOT sent; ERROR exit 1; FAIL
+[PASS] S35 capture lost during 'T14-A2 before': A2 setup NOT sent, exit 98, the restore reaches no guest (not restored), A3/S1 not run
+[PASS] S36 ctl-arp-wrong-mac: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 ctl-no-arp: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 ctl-worker-fail-in-A1: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 cfg-worker-ip-other: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 eth0-mac-missing: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 a2-manager-neigh-missing: T14-A2 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A1 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 a2-manager-other-mac: T14-A2 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A1 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 a2-worker-http-fail: T14-A2 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A1 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S36 cfg-no-manager-mac: T14-A2 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A1 still ĐẠT; UNVERIFIED, never PASS
+[PASS] S37 ctl-missing: ctl log not usable -> A1 and A2 CHƯA KIỂM CHỨNG, A3/S1 ĐẠT (kiểm quy tắc); UNVERIFIED
+[PASS] S37 ctl-malformed: ctl log not usable -> A1 and A2 CHƯA KIỂM CHỨNG, A3/S1 ĐẠT (kiểm quy tắc); UNVERIFIED
+[PASS] S38 tap0-drops: four cases ĐẠT, outcome still FAIL (drop statistics); script FAIL
+[PASS] S38 qemu-not-exiting: four cases ĐẠT, outcome still FAIL (QEMU exit confirmed); script FAIL
+[PASS] S38 cleanup-marker-left: four cases ĐẠT, outcome still FAIL (fixture, marker); script FAIL
+[PASS] S38 liveness-fails: four cases ĐẠT, outcome still FAIL (capture liveness); script FAIL
+[PASS] S39 tap0 capture unreadable: every case LỖI PHÉP ĐO, outcome FAIL
+[PASS] S40 an error after the group (tap0 address unreadable): ERROR exit 1, record kept, no evaluation, QEMU and cleanup done, FAIL
+[PASS] S41 control/collector callbacks fail (ctl log is a directory, worker HTTP refused, collector KeyError): every error recorded, no case ĐẠT through them, QEMU/cleanup done, FAIL
+[FAIL] S42 no scenario other than clean (and the same-endpoint control) passes  (returned False)
+[PASS] S43 function and CLI outcome agree in every scenario
+[FAIL] I1.1 boot-leak: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99  (returned False)
+[FAIL] I1.2 boot-leak: no topology command, no monitor call, no ARP command after the event, no 'guest booted' record; QEMU exit and cleanup done; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.1 boot-capture: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 98  (returned False)
+[FAIL] I1.2 boot-capture: no topology command, no monitor call, no ARP command after the event, no 'guest booted' record; QEMU exit and cleanup done; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.1 boot-leak-swallowed: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99  (returned False)
+[FAIL] I1.2 boot-leak-swallowed: no topology command, no monitor call, no ARP command after the event, no 'guest booted' record; QEMU exit and cleanup done; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.3 topology-leak: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 99  (returned False)
+[FAIL] I1.4 topology-leak: QEMU exit and cleanup done; no group record, no evaluation; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.3 topology-capture: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 98  (returned False)
+[FAIL] I1.4 topology-capture: QEMU exit and cleanup done; no group record, no evaluation; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.3 topology-heartbeat: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 98  (returned False)
+[FAIL] I1.4 topology-heartbeat: QEMU exit and cleanup done; no group record, no evaluation; outcome/CLI/script FAIL  (returned False)
+[FAIL] I1.5 topology-leak: leak record names the startup phase and the operation  (returned False)
+[FAIL] I1.6 monitor-leak: the event during `monitor info network` stops before the ARP group (no service link, no case command); exit 99  (returned False)
+[FAIL] I1.7 alert file unreadable during the topology gate: never 'no alert'; monitor not sent; ERROR exit 1; FAIL  (returned False)
+[FAIL] I1.8 shared path, ICMP suite: the same startup guard stops after `ip addr` (no ping, no link); exit 99  (returned False)
+[FAIL] I1.9 real Guest.monitor over the guarded console: an event after the first escape keystroke stops before `info network` is typed (inside one multi-keystroke function)  (returned False)
+[FAIL] I1.10 after the stop every later send raises without reaching the console, even once the alert is gone (latched)  (KeyError: 'after_stop')
+[FAIL] I1.11 clean console: real Guest.run goes through with checks; a disarmed guard does no check  (KeyError: 'clean_run')
+[FAIL] I1.12 clean: the startup guard changes no result: PASS, A1 ctl device eth0 bound by the endpoint MAC  (KeyError: 'ctl_devices')
+[FAIL] I2.1 a1-wrong-interface: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS (function, CLI, Bash)  (returned False)
+[FAIL] I2.1 a1-missing-interface: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS (function, CLI, Bash)  (returned False)
+[FAIL] I2.1 a1-two-devices: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS (function, CLI, Bash)  (returned False)
+[FAIL] I2.1 a1-entry-other-ip: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS (function, CLI, Bash)  (returned False)
+[FAIL] I2.1 cfg-no-ctl-mac: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS (function, CLI, Bash)  (returned False)
+[FAIL] I2.2 the same sandboxnet endpoint under another interface name (eth7) is accepted: PASS  (KeyError: 'ctl_devices')
+[FAIL] I3.1 duplicate-control: A1 and A2 controls not alive -> CHƯA KIỂM CHỨNG, reason kept; A3/S1 unchanged; never PASS  (returned False)
+[FAIL] I3.1 http-missing-detail: A1 and A2 controls not alive -> CHƯA KIỂM CHỨNG, reason kept; A3/S1 unchanged; never PASS  (returned False)
+[FAIL] I3.1 http-wrong-detail: A1 and A2 controls not alive -> CHƯA KIỂM CHỨNG, reason kept; A3/S1 unchanged; never PASS  (returned False)
+[FAIL] I3.1 ctl-extra-key: A1 and A2 controls not alive -> CHƯA KIỂM CHỨNG, reason kept; A3/S1 unchanged; never PASS  (returned False)
+[PASS] R1 the real ARP path records every required confirmation exactly once (static + per case)
+[PASS] R2 the real ARP path records no other non-info, non-case check outside the required list
+[PASS] R3 a required confirmation missing / twice / ok 'true' -> FAIL
+[PASS] R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL
+[PASS] R5 case_requirements missing in arp-eval.json -> FAIL
+[PASS] R6 group_exit 2 in arp-eval.json -> FAIL; evaluation of another architecture -> FAIL
+[PASS] R7 R1 through the wiring (perm-dynamic): record problem, group exit 2, arp_harness --outcome FAIL, script FAIL, record not modified
+[PASS] R7 R1 through the wiring (overlap): record problem, group exit 2, arp_harness --outcome FAIL, script FAIL, record not modified
+[PASS] R7 R1 through the wiring (after-perm): record problem, group exit 2, arp_harness --outcome FAIL, script FAIL, record not modified
+[PASS] R8 control: a valid dynamic neighbour change in the re-read state is not forced: still PASS through the wiring
+[PASS] W1 run-06b4i.sh: bash -n
+[FAIL] W2 H is the 06B-4IR1 working copy  (returned False)
+[PASS] W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)
+[PASS] W4 selftest_arp.py and selftest_arp_wiring.py (and the ICMP/L2 ones) run before any docker command and abort
+[PASS] W5 every module probe_matrix imports in arp mode is mounted read-only
+[PASS] W6 outcome per architecture and run-level check through arp_harness.py on arp-eval.json
+[PASS] W7 ctl started with --arp-worker; its ARP target is checked alive like the others
+[FAIL] W8 manager MAC and ctl sandboxnet endpoint MAC passed to the worker in CT01_TARGETS  (returned False)
+[FAIL] W12 ctl endpoint MAC from docker inspect of the ctl container on sandboxnet, after it is created (I2)  (returned False)
+[FAIL] W13 the inherited run-06b4f.sh header is marked historical (not a description of this script)  (returned False)
+[PASS] W9 everything else is run-06b4f.sh unchanged: only the listed lines were replaced, the rest only added
+[PASS] W10 run-06b4f.sh and run-06b3b.sh unchanged (hashes of the 06B-4HR2 manifest)
+[PASS] W11 the run script copies the ARP files (cases, harness, both self-tests) into harness-copy
+SELFTEST-ARP-WIRING: 109/159 passed

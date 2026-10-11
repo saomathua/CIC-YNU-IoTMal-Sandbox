@@ -1,0 +1,25 @@
+{
+ "schema": "ct01-flow-pins/2",
+ "image_id": "sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153",
+ "fixtures": {
+  "ARM": {
+   "file": "fixtures/busybox-ARM",
+   "sha256": "6a5345419891afe9102f1285c841e820c177795843df33fd5ad46fb105dbf6a5",
+   "size": 393257
+  },
+  "MIPS": {
+   "file": "fixtures/busybox-MIPS",
+   "sha256": "3b06c11b9675ab7813a8e0a7b5f67bacad1f711ee2560b29e4d618f6c3818488",
+   "size": 327717
+  }
+ },
+ "compose": {
+  "project": "cic-ynu-iotmal-sandbox",
+  "file": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docker-compose.yml",
+  "service": "sandbox-worker-1",
+  "expected_container_name": "cic-ynu-iotmal-sandbox-sandbox-worker-1-1",
+  "mongo_container": "mongo-db",
+  "manager_container": "cic-ynu-iotmal-sandbox-sandbox-manager-1",
+  "worker_ip": "192.168.60.2"
+ }
+}

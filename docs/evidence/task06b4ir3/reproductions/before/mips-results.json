@@ -1,0 +1,2397 @@
+{
+  "source_note": "4G ip_addr flags are real evidence; sysfs down and all simulated kernel transitions are fixture assumptions",
+  "matrix": [
+    {
+      "variant": "baseline-down-after-down-same-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [],
+        "restored": true,
+        "diffs": [],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "down",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": true,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-down-same-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route del 203.0.113.7/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -d 192.168.1.99",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": true,
+        "diffs": [],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "down",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": true,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 203.0.113.7/32 dev br-lan",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -d 192.168.1.99",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-down-changed-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": true,
+        "diffs": [],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "down",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": true,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-down-changed-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": true,
+        "diffs": [],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "down",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": true,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-up-same-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'up'"
+        ],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "up",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-up-same-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route del 203.0.113.7/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -d 192.168.1.99",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'up'"
+        ],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "up",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 203.0.113.7/32 dev br-lan",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -d 192.168.1.99",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-up-changed-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'up'"
+        ],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "up",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-up-changed-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'up'"
+        ],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "up",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-unknown-same-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'unknown'"
+        ],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "unknown",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-unknown-same-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route del 203.0.113.7/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -d 192.168.1.99",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'unknown'"
+        ],
+        "dynamic_changes": [],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "unknown",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {
+            "192.168.1.5 br-lan": [
+              "00:11:22:33:44:55",
+              2
+            ]
+          },
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 203.0.113.7/32 dev br-lan",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -d 192.168.1.99",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-unknown-changed-clean",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'unknown'"
+        ],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "unknown",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    },
+    {
+      "variant": "baseline-down-after-unknown-changed-dirty",
+      "ok": true,
+      "before": {
+        "mac": "52:54:00:c7:00:02",
+        "operstate": "down",
+        "addrs": [
+          "10.200.0.2/30",
+          "192.168.1.8/24"
+        ],
+        "routes": [
+          "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+          "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+          "default via 10.200.0.1 dev br-lan"
+        ],
+        "neigh_static": {
+          "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+        },
+        "neigh_dynamic": {
+          "192.168.1.5 br-lan": [
+            "00:11:22:33:44:55",
+            2
+          ]
+        },
+        "arp_notify": 2
+      },
+      "restore": {
+        "commands": [
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan down",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan address 52:54:00:c7:00:02",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "link",
+            "cmd": "ip link set dev br-lan up",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "addrs",
+            "cmd": "ip addr add 192.168.1.8/24 brd + dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "routes",
+            "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "neigh_static",
+            "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+            "rc": 0,
+            "out": ""
+          },
+          {
+            "step": "arp_notify",
+            "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+            "rc": 0,
+            "out": ""
+          }
+        ],
+        "restored": false,
+        "diffs": [
+          "operstate: 'down' -> 'unknown'"
+        ],
+        "dynamic_changes": [
+          "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+        ],
+        "error": null,
+        "after": {
+          "mac": "52:54:00:c7:00:02",
+          "operstate": "unknown",
+          "addrs": [
+            "10.200.0.2/30",
+            "192.168.1.8/24"
+          ],
+          "routes": [
+            "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+            "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+            "default via 10.200.0.1 dev br-lan"
+          ],
+          "neigh_static": {
+            "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+          },
+          "neigh_dynamic": {},
+          "arp_notify": 2
+        }
+      },
+      "external_admin_up": true,
+      "expected_restored": false,
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan address 52:54:00:c7:00:02",
+        "ip link set dev br-lan up",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr add 192.168.1.8/24 brd + dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "variant": "down",
+      "ok": true,
+      "active": [
+        "T14-A1",
+        "T14-A2",
+        "T14-A3",
+        "T15-S1"
+      ],
+      "read_labels": [
+        "T14-A1 before",
+        "T14-A1 after",
+        "T14-A2 before",
+        "T14-A2 after",
+        "T14-A3 before",
+        "T14-A3 after",
+        "T15-S1 before",
+        "T15-S1 after"
+      ],
+      "record": {
+        "iface": "br-lan",
+        "cases": [
+          {
+            "id": "T14-A1",
+            "iface": "br-lan",
+            "before": "T14-A1 before",
+            "after": "T14-A1 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "ip route add 192.168.60.2/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+                "rc": 1,
+                "out": "fixture no reply"
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "routes",
+                    "cmd": "ip route del 192.168.60.2/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": true,
+                "diffs": [],
+                "dynamic_changes": [],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "down",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {
+                    "192.168.1.5 br-lan": [
+                      "00:11:22:33:44:55",
+                      2
+                    ]
+                  },
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": {
+              "ok": true,
+              "detail": {
+                "fixture": "control"
+              }
+            },
+            "service_link_after": {
+              "ok": true,
+              "detail": {
+                "fixture": "HTTP/hash"
+              }
+            },
+            "not_run": null
+          },
+          {
+            "id": "T14-A2",
+            "iface": "br-lan",
+            "before": "T14-A2 before",
+            "after": "T14-A2 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "ip route add 192.168.60.10/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+                "rc": 1,
+                "out": "fixture no reply"
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "routes",
+                    "cmd": "ip route del 192.168.60.10/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": true,
+                "diffs": [],
+                "dynamic_changes": [],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "down",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {
+                    "192.168.1.5 br-lan": [
+                      "00:11:22:33:44:55",
+                      2
+                    ]
+                  },
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": {
+              "ok": true,
+              "detail": {
+                "fixture": "control"
+              }
+            },
+            "service_link_after": {
+              "ok": true,
+              "detail": {
+                "fixture": "HTTP/hash"
+              }
+            },
+            "not_run": null
+          },
+          {
+            "id": "T14-A3",
+            "iface": "br-lan",
+            "before": "T14-A3 before",
+            "after": "T14-A3 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "ip route add 10.200.0.6/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ping -c 1 -W 2 -s 1403 10.200.0.6",
+                "rc": 1,
+                "out": "fixture no reply"
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "routes",
+                    "cmd": "ip route del 10.200.0.6/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": true,
+                "diffs": [],
+                "dynamic_changes": [],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "down",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {
+                    "192.168.1.5 br-lan": [
+                      "00:11:22:33:44:55",
+                      2
+                    ]
+                  },
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": null,
+            "service_link_after": {
+              "ok": true,
+              "detail": {
+                "fixture": "HTTP/hash"
+              }
+            },
+            "not_run": null
+          },
+          {
+            "id": "T15-S1",
+            "iface": "br-lan",
+            "before": "T15-S1 before",
+            "after": "T15-S1 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "echo 1 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "setup",
+                "cmd": "ip addr add 10.200.0.1/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "setup",
+                "cmd": "ip addr add 192.168.60.10/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "setup",
+                "cmd": "ip addr add 192.168.60.1/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ip link set dev br-lan down",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ip link set dev br-lan up",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "addrs",
+                    "cmd": "ip addr del 10.200.0.1/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  },
+                  {
+                    "step": "addrs",
+                    "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  },
+                  {
+                    "step": "addrs",
+                    "cmd": "ip addr del 192.168.60.10/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  },
+                  {
+                    "step": "routes",
+                    "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  },
+                  {
+                    "step": "neigh_static",
+                    "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+                    "rc": 0,
+                    "out": ""
+                  },
+                  {
+                    "step": "arp_notify",
+                    "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": true,
+                "diffs": [],
+                "dynamic_changes": [
+                  "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+                ],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "down",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {},
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": null,
+            "service_link_after": {
+              "ok": true,
+              "detail": {
+                "fixture": "HTTP/hash"
+              }
+            },
+            "not_run": null
+          }
+        ],
+        "service_link_before": {
+          "ok": true,
+          "detail": {
+            "fixture": "HTTP/hash"
+          }
+        },
+        "stopped": null
+      },
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.60.2/32 dev br-lan",
+        "ping -c 1 -W 2 -s 1401 192.168.60.2",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 192.168.60.2/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.60.10/32 dev br-lan",
+        "ping -c 1 -W 2 -s 1402 192.168.60.10",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 192.168.60.10/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 10.200.0.6/32 dev br-lan",
+        "ping -c 1 -W 2 -s 1403 10.200.0.6",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 10.200.0.6/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 1 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "ip addr add 10.200.0.1/32 dev br-lan",
+        "ip addr add 192.168.60.10/32 dev br-lan",
+        "ip addr add 192.168.60.1/32 dev br-lan",
+        "ip link set dev br-lan down",
+        "ip link set dev br-lan up",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip addr del 10.200.0.1/32 dev br-lan",
+        "ip addr del 192.168.60.1/32 dev br-lan",
+        "ip addr del 192.168.60.10/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add default via 10.200.0.1 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ],
+      "external_admin_up": true
+    },
+    {
+      "variant": "up",
+      "ok": true,
+      "active": [
+        "T14-A1"
+      ],
+      "read_labels": [
+        "T14-A1 before",
+        "T14-A1 after"
+      ],
+      "record": {
+        "iface": "br-lan",
+        "cases": [
+          {
+            "id": "T14-A1",
+            "iface": "br-lan",
+            "before": "T14-A1 before",
+            "after": "T14-A1 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "ip route add 192.168.60.2/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+                "rc": 1,
+                "out": "fixture no reply"
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "routes",
+                    "cmd": "ip route del 192.168.60.2/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": false,
+                "diffs": [
+                  "operstate: 'down' -> 'up'"
+                ],
+                "dynamic_changes": [],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "up",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {
+                    "192.168.1.5 br-lan": [
+                      "00:11:22:33:44:55",
+                      2
+                    ]
+                  },
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": {
+              "ok": true,
+              "detail": {
+                "fixture": "control"
+              }
+            },
+            "service_link_after": null,
+            "not_run": null
+          },
+          {
+            "id": "T14-A2",
+            "iface": "br-lan",
+            "before": "T14-A2 before",
+            "after": "T14-A2 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          },
+          {
+            "id": "T14-A3",
+            "iface": "br-lan",
+            "before": "T14-A3 before",
+            "after": "T14-A3 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          },
+          {
+            "id": "T15-S1",
+            "iface": "br-lan",
+            "before": "T15-S1 before",
+            "after": "T15-S1 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          }
+        ],
+        "service_link_before": {
+          "ok": true,
+          "detail": {
+            "fixture": "HTTP/hash"
+          }
+        },
+        "stopped": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+      },
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.60.2/32 dev br-lan",
+        "ping -c 1 -W 2 -s 1401 192.168.60.2",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 192.168.60.2/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ],
+      "external_admin_up": true
+    },
+    {
+      "variant": "unknown",
+      "ok": true,
+      "active": [
+        "T14-A1"
+      ],
+      "read_labels": [
+        "T14-A1 before",
+        "T14-A1 after"
+      ],
+      "record": {
+        "iface": "br-lan",
+        "cases": [
+          {
+            "id": "T14-A1",
+            "iface": "br-lan",
+            "before": "T14-A1 before",
+            "after": "T14-A1 after",
+            "steps": [
+              {
+                "phase": "setup",
+                "cmd": "ip route add 192.168.60.2/32 dev br-lan",
+                "rc": 0,
+                "out": ""
+              },
+              {
+                "phase": "trigger",
+                "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+                "rc": 1,
+                "out": "fixture no reply"
+              },
+              {
+                "phase": "settle",
+                "cmd": "sleep 3",
+                "rc": 0,
+                "out": ""
+              }
+            ],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": {
+              "before": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 2
+              },
+              "restore": {
+                "commands": [
+                  {
+                    "step": "routes",
+                    "cmd": "ip route del 192.168.60.2/32 dev br-lan",
+                    "rc": 0,
+                    "out": ""
+                  }
+                ],
+                "restored": false,
+                "diffs": [
+                  "operstate: 'down' -> 'unknown'"
+                ],
+                "dynamic_changes": [],
+                "error": null,
+                "after": {
+                  "mac": "52:54:00:c7:00:02",
+                  "operstate": "unknown",
+                  "addrs": [
+                    "10.200.0.2/30",
+                    "192.168.1.8/24"
+                  ],
+                  "routes": [
+                    "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                    "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                    "default via 10.200.0.1 dev br-lan"
+                  ],
+                  "neigh_static": {
+                    "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                  },
+                  "neigh_dynamic": {
+                    "192.168.1.5 br-lan": [
+                      "00:11:22:33:44:55",
+                      2
+                    ]
+                  },
+                  "arp_notify": 2
+                }
+              }
+            },
+            "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+            "control": {
+              "ok": true,
+              "detail": {
+                "fixture": "control"
+              }
+            },
+            "service_link_after": null,
+            "not_run": null
+          },
+          {
+            "id": "T14-A2",
+            "iface": "br-lan",
+            "before": "T14-A2 before",
+            "after": "T14-A2 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          },
+          {
+            "id": "T14-A3",
+            "iface": "br-lan",
+            "before": "T14-A3 before",
+            "after": "T14-A3 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          },
+          {
+            "id": "T15-S1",
+            "iface": "br-lan",
+            "before": "T15-S1 before",
+            "after": "T15-S1 after",
+            "steps": [],
+            "exec_error": null,
+            "read_error": null,
+            "guest_state": null,
+            "neigh_before": null,
+            "neigh_after": null,
+            "control": null,
+            "service_link_after": null,
+            "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+          }
+        ],
+        "service_link_before": {
+          "ok": true,
+          "detail": {
+            "fixture": "HTTP/hash"
+          }
+        },
+        "stopped": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+      },
+      "commands": [
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route add 192.168.60.2/32 dev br-lan",
+        "ping -c 1 -W 2 -s 1401 192.168.60.2",
+        "sleep 3",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "ip route del 192.168.60.2/32 dev br-lan",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+        "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+      ],
+      "external_admin_up": true
+    }
+  ],
+  "admin_vs_operstate_blindspot": {
+    "baseline_admin_up": true,
+    "after_admin_up": false,
+    "baseline_operstate": "down",
+    "after_operstate": "down",
+    "diff": [],
+    "record": {
+      "iface": "br-lan",
+      "cases": [
+        {
+          "id": "T15-S1",
+          "iface": "br-lan",
+          "before": "T15-S1 before",
+          "after": "T15-S1 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "echo 1 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 10.200.0.1/32 dev br-lan",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.10/32 dev br-lan",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.1/32 dev br-lan",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev br-lan down",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev br-lan up",
+              "rc": 2,
+              "out": "fixture ip link up failure"
+            }
+          ],
+          "exec_error": "trigger 'ip link set dev br-lan up': rc 2 outside the contract",
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "down",
+              "addrs": [
+                "10.200.0.2/30",
+                "192.168.1.8/24"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                "default via 10.200.0.1 dev br-lan"
+              ],
+              "neigh_static": {
+                "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+              },
+              "neigh_dynamic": {
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 2
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 10.200.0.1/32 dev br-lan",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 192.168.60.1/32 dev br-lan",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 192.168.60.10/32 dev br-lan",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "routes",
+                  "cmd": "ip route add 10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "routes",
+                  "cmd": "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "routes",
+                  "cmd": "ip route add default via 10.200.0.1 dev br-lan",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "neigh_static",
+                  "cmd": "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "arp_notify",
+                  "cmd": "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [
+                "neigh_dynamic 192.168.1.5 dev br-lan: ('00:11:22:33:44:55', 2) -> None"
+              ],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "down",
+                "addrs": [
+                  "10.200.0.2/30",
+                  "192.168.1.8/24"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+                  "default via 10.200.0.1 dev br-lan"
+                ],
+                "neigh_static": {
+                  "10.200.0.1 br-lan": "7a:93:2a:f1:47:47"
+                },
+                "neigh_dynamic": {},
+                "arp_notify": 2
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": null,
+          "service_link_after": {
+            "ok": true,
+            "detail": {
+              "fixture": "link is stubbed, NOT actual liveness"
+            }
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": {
+          "fixture": "link is stubbed, NOT actual liveness"
+        }
+      },
+      "stopped": null
+    },
+    "commands": [
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "echo 1 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+      "ip addr add 10.200.0.1/32 dev br-lan",
+      "ip addr add 192.168.60.10/32 dev br-lan",
+      "ip addr add 192.168.60.1/32 dev br-lan",
+      "ip link set dev br-lan down",
+      "ip link set dev br-lan up",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "ip addr del 10.200.0.1/32 dev br-lan",
+      "ip addr del 192.168.60.1/32 dev br-lan",
+      "ip addr del 192.168.60.10/32 dev br-lan",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "ip route add 10.200.0.0/30 dev br-lan scope link src 10.200.0.2",
+      "ip route add 192.168.1.0/24 dev br-lan scope link src 192.168.1.8",
+      "ip route add default via 10.200.0.1 dev br-lan",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "arp -i br-lan -s 10.200.0.1 7a:93:2a:f1:47:47",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "echo 2 > /proc/sys/net/ipv4/conf/br-lan/arp_notify",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\"",
+      "echo '@@S mac'; cat /sys/class/net/br-lan/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/br-lan/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev br-lan; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/br-lan/arp_notify; echo \"@@RC $?\""
+    ],
+    "ok": true
+  },
+  "tests_passed": 16,
+  "tests_total": 16
+}

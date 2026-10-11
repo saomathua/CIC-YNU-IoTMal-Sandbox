@@ -1,0 +1,3 @@
+manager before: state=exited id=cid1 startedAt=T0
+
+compose up replaced the manager container (cid-new != cid1)

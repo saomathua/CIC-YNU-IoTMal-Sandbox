@@ -1,0 +1,28 @@
+08:43:11 [PASS] MIPS: host leak monitor running and empty before boot {}
+08:43:11 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+08:43:11 [PASS] MIPS: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+08:43:11 [PASS] MIPS: tshark capturing on tap0 {}
+08:43:35 [PASS] MIPS: guest booted and network configured {"qemu_pid": 284}
+08:43:37 [PASS] MIPS: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["pcnet.0", "nic", ["tap"]]], "probe_iface": "br-lan", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+08:43:37 [PASS] MIPS: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/usr/bin/wget", "/bin/ping", "missing:arping"]}
+08:43:37 [PASS] MIPS: info: ICMP suite (06B-4F): five reviewed cases, rule check only {"fixture_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "probe_iface": "br-lan", "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations", "tap_mac": "26:b3:9f:a4:8c:01"}
+08:43:37 [PASS] MIPS: capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791449017.1571105}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791449017.168694}}
+08:43:37 --- ICMP group: T12-B1, T12-B2, T12-B4, T13-I1, T13-I2 on br-lan
+08:43:37 [PASS] MIPS: allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "http_code": "200", "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0, "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a"}
+08:44:38 [PASS] MIPS: allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "http_code": "200", "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0, "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a"}
+08:44:38     ICMP group record: 5 case(s), sent 7 guest command(s)
+08:44:38 [PASS] MIPS: tap0 MAC unchanged during the ICMP group {"after": "26:b3:9f:a4:8c:01", "before": "26:b3:9f:a4:8c:01"}
+08:44:38 [PASS] MIPS: all five ICMP cases executed with captures alive {"executed": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "planned": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "skipped": null}
+08:44:38 [PASS] MIPS: capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791449078.1852956}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791449078.1927588}}
+08:44:38 [PASS] MIPS: QEMU exit confirmed {"exitstatus": 0}
+08:44:39 [PASS] MIPS: tap0 capture stopped cleanly {"returncode": 0}
+08:44:39 [PASS] MIPS: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 115}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 115}}}, "tshark_stderr_tail": "s.\nCapturing on 'tap0'\n ** (tshark:260) 08:43:11.400466 [Main MESSAGE] -- Capture started.\n ** (tshark:260) 08:43:11.400514 [Main MESSAGE] -- File: \"/harness-out/MIPS/tap0.pcapng\"\n115 packets captured", "verdict": "\u0110\u1ea0T"}
+08:44:39 [PASS] MIPS: fixture, marker and temporary guest disk removed {}
+08:44:39 == MIPS: SESSION-WIDE reconciliation (reported separately; changes no probe verdict and not the exit code): PASS
+08:44:39 [PASS] MIPS: ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash {"problems": []}
+08:44:39 [PASS] MIPS: probe T12-B1 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T12-B2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T12-B4 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T13-I1 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T13-I2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 == MIPS: status=COMPLETED; 24/24 checks passed

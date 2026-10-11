@@ -1,0 +1,97 @@
+== section D
+[PASS] D1 four cases as planned (T14 A1/A2/A3, T15 S1), expected arp_in_drop
+[PASS] D2 T14 sizes come from signatures.py (T14-A1..A3)
+[PASS] D3 T14 commands: on-link /32 route, one ping, settle
+[PASS] D4 T15-S1 commands: arp_notify=1, three /32 spoofed addresses, link down/up, settle
+[PASS] D5 D1: only ip / ping / sleep / echo-to-proc; no arping, no raw-packet tool, no forged reply
+[PASS] D6 live control only for A1/A2; A3, S1 rule check
+[PASS] D7 bad interface name refused
+[PASS] D8 a registry change changes the command (single source)
+[PASS] D9 T14 targets are outside 10.200.0.0/30 (on-link route needed; 10.200.0.3 is the broadcast, plan L2)
+== section N
+[PASS] N1 parse ip -j neigh
+[PASS] N2 unchanged -> no problem
+[PASS] N3 dynamic state change on eth0 is not a problem
+[PASS] N4 new entry on tap0 -> problem
+[PASS] N5 tap0 permanent entry lost -> problem
+[PASS] N6 manager entry on eth0 now carries the guest MAC -> problem
+[PASS] N7 watched IP changes its MAC on eth0 -> problem
+[PASS] N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem
+[PASS] N8 unreadable neighbour output -> NeighReadError (never 'unchanged')
+== section P
+[PASS] P1 T14-A1: clean fixture -> ĐẠT (live control)
+[PASS] P1 T14-A2: clean fixture -> ĐẠT (live control)
+[PASS] P1 T14-A3: clean fixture -> ĐẠT (kiểm quy tắc)
+[PASS] P1 T15-S1: clean fixture -> ĐẠT (kiểm quy tắc)
+[PASS] P2 clean with background (DHCP, MLD) reconciled -> still ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (opcode 2 (reply) instead of a request) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (hlen 8 (not hooked)) -> no probe frame, never ĐẠT
+[PASS] P4 a unicast probe to a MAC other than TAP_MAC (OTHERHOST): arp_not_hooked -> CHƯA KIỂM CHỨNG, not ĐẠT
+[PASS] P5 T15: gratuitous only for 10.200.0.2 (no spoofed address announced) -> KHÔNG TẠO ĐƯỢC GÓI
+[PASS] P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it
+[PASS] P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking
+[PASS] P8 counter read failed during execution -> LỖI PHÉP ĐO
+[PASS] P9 counter read 'after' missing -> LỖI PHÉP ĐO
+[PASS] P10 counter decreased -> LỖI PHÉP ĐO
+[PASS] P11 arp_out_drop missing in a read -> LỖI PHÉP ĐO (never 0)
+[PASS] P12 capture unreadable -> every case LỖI PHÉP ĐO
+[PASS] P13 neighbour table not readable -> LỖI PHÉP ĐO
+[PASS] P14 probe frame at the edge of read A -> CHƯA KIỂM CHỨNG (gói ở biên)
+[PASS] P15 probe frame at the edge of read B -> CHƯA KIỂM CHỨNG
+[PASS] P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames
+[PASS] P17 tool missing -> LỖI THỰC THI
+[PASS] P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)
+[PASS] P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT
+[PASS] P20 restore record missing -> CHƯA KIỂM CHỨNG
+[PASS] P21 case not run after an earlier restore failure -> CHƯA KIỂM CHỨNG (not run)
+[PASS] P22 service link after the case failed -> CHƯA KIỂM CHỨNG
+[PASS] P23 service link after missing -> CHƯA KIỂM CHỨNG
+[PASS] P24 service link before the group not ok (no 'skipped' marker) -> CHƯA KIỂM CHỨNG
+[PASS] P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)
+[PASS] P26 A2 live control missing -> CHƯA KIỂM CHỨNG
+[PASS] P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)
+[PASS] P28 worker ARP reply for the probed IP towards the guest -> FAIL
+[PASS] P29 probe ICMP packet seen (ARP was resolved) -> FAIL
+[PASS] P30 worker neighbour on tap0 changed -> FAIL
+[PASS] P31 manager entry on eth0 got the guest MAC -> FAIL
+[PASS] P32 counter delta lower than the probe frames -> FAIL
+[PASS] P33 a determined failure is reported even when the restore also failed
+[PASS] P34 a determined failure is reported even with an execution error
+[PASS] P35 worker ARP about a spoofed IP during T15 -> FAIL
+[PASS] P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame
+[PASS] P37 service link after with ok "true" (not the boolean) -> CHƯA KIỂM CHỨNG
+== section X
+[PASS] X1 run_group: order per case = state saved, setup, trigger, settle, restore; 4 cases, record is JSON
+[PASS] X2 every case restored, route/addresses/arp_notify back to the before-state
+[PASS] X3 T15 restore re-adds the default route lost by the link down; the flushed DYNAMIC neighbour is only reported
+[PASS] X4 service link checked before the group and after every case; neighbours before/after; control for A1/A2 only
+[PASS] X5 group record complete (each case once, reviewed commands)
+[PASS] X6 restore failure: the next case is not run (not_run), no service link after the failed case
+[PASS] X7 console timeout after 'link down': exec error recorded, read B taken, guest still restored (link up, addresses)
+[PASS] X8 setup failed: trigger not sent, exec error, still restored
+[PASS] X9 guest state unreadable: no command sent, exec error, nothing to restore, group not stopped
+[PASS] X10 service link before fails: no case run, group skipped
+[PASS] X11 worker neighbour read error recorded (never 'unchanged')
+[PASS] X12 control error -> control not ok (A1/A2)
+[PASS] X13 counter read failure recorded as read_error, case still restored
+[PASS] X18 link down failed (trigger): exec error, 'link up' not sent, still restored
+[PASS] X19 service link returning a truthy non-True value is not ok: group skipped
+[PASS] X14 record_problems: duplicate case
+[PASS] X15 record_problems: missing case
+[PASS] X16 record_problems: a guest command that is not the reviewed one
+[PASS] X17 record_problems: invalid structure
+== section E
+[PASS] E1 end to end clean: A1, A2 ĐẠT (live control), A3, S1 ĐẠT (kiểm quy tắc); exit 0
+[PASS] E2 end to end: probe frames = 3 per T14 case, 4 gratuitous for S1 (10.200.0.2 + 3 spoofed)
+[PASS] E3 end to end: kernel sends nothing -> all KHÔNG TẠO ĐƯỢC GÓI, exit 4 (never 0)
+[PASS] E4 end to end restore failure: S1 CHƯA KIỂM CHỨNG (khôi phục), A3 not run; record incomplete -> never exit 0
+[PASS] E5 end to end: manager neighbour gets the guest MAC during A2 -> A2 FAIL, exit 1
+== section C
+[PASS] C1 CLI clean -> exit 0, JSON written
+[PASS] C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass
+[PASS] C3 CLI: invalid record -> exit 2
+[PASS] C4 CLI: unreadable record -> exit 2
+[PASS] C5 CLI: missing arguments -> exit 2
+SELFTEST-ARP: 90/90 passed

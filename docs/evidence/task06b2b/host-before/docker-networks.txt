@@ -1,0 +1,5 @@
+bridge bridge
+cic-ynu-iotmal-sandbox_dbnet bridge
+cic-ynu-iotmal-sandbox_sandboxnet bridge
+host host
+none null

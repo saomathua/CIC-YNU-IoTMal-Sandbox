@@ -1,0 +1,8 @@
+run 1: SELFTEST-ICMP-WIRING: 92/92 passed
+run 2: SELFTEST-ICMP-WIRING: 92/92 passed
+run 3: SELFTEST-ICMP-WIRING: 92/92 passed
+run 4: SELFTEST-ICMP-WIRING: 92/92 passed
+run 5: SELFTEST-ICMP-WIRING: 92/92 passed
+run 6: SELFTEST-ICMP-WIRING: 92/92 passed
+24 clean scenarios run in parallel (load test), probe_matrix exit codes: 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+note: during development one run failed (marker-after-B4: 'heartbeat missing before boot'); cause was the TEST fixture (first heartbeat written by a thread after main() started). Fixed by writing the first heartbeat before main(); the harness behaviour (missing heartbeat -> CaptureLost) was correct.

@@ -1,0 +1,681 @@
+{
+ "status": "COMPLETED",
+ "results": [
+  {
+   "arch": "MIPS",
+   "test": "host leak monitor running and empty before boot",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "temporary listener 10.200.0.1:18080 answers locally",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: tshark version",
+   "ok": true,
+   "version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"
+  },
+  {
+   "arch": "MIPS",
+   "test": "tshark capturing on tap0",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest booted and network configured",
+   "ok": true,
+   "qemu_pid": 302
+  },
+  {
+   "arch": "MIPS",
+   "test": "topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface",
+   "ok": true,
+   "problems": [],
+   "entries": [
+    [
+     "pcnet.0",
+     "nic",
+     [
+      "tap"
+     ]
+    ]
+   ],
+   "probe_iface": "br-lan",
+   "probe_iface_mac": "52:54:00:c7:00:02"
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: guest network tools",
+   "ok": true,
+   "tools": [
+    "/usr/bin/nslookup",
+    "/usr/bin/nc",
+    "/usr/bin/wget",
+    "/bin/ping",
+    "missing:arping"
+   ]
+  },
+  {
+   "arch": "MIPS",
+   "test": "allowed service link before probes: GET get-task/T/file 200 + hash",
+   "ok": true,
+   "rc": 0,
+   "output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  },
+  {
+   "arch": "MIPS",
+   "test": "all planned probes executed with captures alive",
+   "ok": true,
+   "planned": 10,
+   "executed": 10
+  },
+  {
+   "arch": "MIPS",
+   "test": "allowed service link after probes: GET get-task/T/file 200 + hash",
+   "ok": true,
+   "rc": 0,
+   "output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  },
+  {
+   "arch": "MIPS",
+   "test": "QEMU exit confirmed",
+   "ok": true,
+   "exitstatus": 0
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 capture stopped cleanly",
+   "ok": true,
+   "returncode": 0
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
+   "ok": true,
+   "verdict": "\u0110\u1ea0T",
+   "reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets",
+   "stats": {
+    "interfaces": 1,
+    "epb": {
+     "0": 133
+    },
+    "isb": {
+     "0": {
+      "comment": "Counters provided by dumpcap",
+      "isb_ifrecv": 133,
+      "isb_ifdrop": 0
+     }
+    }
+   },
+   "tshark_stderr_tail": "s.\nCapturing on 'tap0'\n ** (tshark:278) 04:32:50.314585 [Main MESSAGE] -- Capture started.\n ** (tshark:278) 04:32:50.314685 [Main MESSAGE] -- File: \"/harness-out/MIPS/tap0.pcapng\"\n133 packets captured"
+  },
+  {
+   "arch": "MIPS",
+   "test": "temporary listener stopped",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "fixture, marker and temporary guest disk removed",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 pcap readable by tshark (exit 0)",
+   "ok": true,
+   "frames": 133
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe internet-tcp (tcp 1.1.1.1:443) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_public",
+   "counter": 8,
+   "pcap_certain": 8,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe lan-dns-udp (udp 192.168.177.2:53) -> CH\u01afA KI\u1ec2M CH\u1ee8NG (g\u00f3i \u1edf bi\u00ean c\u1eeda s\u1ed5 b\u1ed9 \u0111\u1ebfm)",
+   "ok": false,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "UNVERIFIED",
+   "mismatch": {
+    "drop_public": {
+     "delta": 5,
+     "certain": 4,
+     "with_edges": 6,
+     "status": "UNVERIFIED",
+     "edge_start_t": [],
+     "edge_end_t": [
+      1791434010.7872336,
+      1791434010.7881038
+     ]
+    }
+   },
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe lan-dns-tcp (tcp 192.168.177.2:53) -> CH\u01afA KI\u1ec2M CH\u1ee8NG (kh\u00f4ng c\u00f3 \u0111\u1ed1i ch\u1ee9ng s\u1ed1ng)",
+   "ok": false,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [
+    "control_alive_same_dst_proto_port"
+   ],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe ssh-host-192.168.60.1 (tcp 192.168.60.1:22) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe ssh-host-192.168.177.128 (tcp 192.168.177.128:22) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe manager (tcp 192.168.60.10:8011) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe mongodb (tcp 172.18.0.2:27017) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe worker-eth0 (tcp 192.168.60.2:8011) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_private",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe tap0-other-port-listener (tcp 10.200.0.1:18080) -> \u0110\u1ea0T",
+   "ok": true,
+   "probe_packets": 4,
+   "expected": "drop_worker_other",
+   "counter": 4,
+   "pcap_certain": 4,
+   "reconciliation": "PASS",
+   "mismatch": {},
+   "failed_checks": [],
+   "determined_failures": [],
+   "measurement_error": null
+  }
+ ],
+ "probes": [
+  {
+   "probe": "internet-tcp",
+   "dst": "1.1.1.1",
+   "proto": "tcp",
+   "port": 443,
+   "lport": 41000,
+   "qname": null,
+   "expected_class": "drop_public",
+   "t0": 1791433999.40825,
+   "t1": 1791434004.6054676,
+   "read_before": {
+    "t_start": 1791433999.40825,
+    "t_end": 1791433999.4136784
+   },
+   "read_after": {
+    "t_start": 1791434004.5916185,
+    "t_end": 1791434004.6054676
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791433999.350242,
+    "ok": true,
+    "detail": "connected"
+   },
+   "control_after": {
+    "ts": 1791434004.6057546,
+    "ok": true,
+    "detail": "connected"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "l2_bad_ethertype": 1,
+    "drop_spoof": 2,
+    "drop_public": 8
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "lan-dns-udp",
+   "dst": "192.168.177.2",
+   "proto": "udp",
+   "port": 53,
+   "lport": null,
+   "qname": "ct01-06b3b-probe-mips-1.example",
+   "expected_class": "drop_private",
+   "t0": 1791434004.6704135,
+   "t1": 1791434010.7895823,
+   "read_before": {
+    "t_start": 1791434004.6704135,
+    "t_end": 1791434004.6794832
+   },
+   "read_after": {
+    "t_start": 1791434010.7747977,
+    "t_end": 1791434010.7895823
+   },
+   "guest_rc": 1,
+   "guest_output": ";; connection timed out; no servers could be reached",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434004.6603472,
+    "ok": true,
+    "detail": "DNS response rcode=3"
+   },
+   "control_after": {
+    "ts": 1791434010.7899423,
+    "ok": true,
+    "detail": "DNS response rcode=3"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 2,
+    "drop_private": 4,
+    "drop_public": 5
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "lan-dns-tcp",
+   "dst": "192.168.177.2",
+   "proto": "tcp",
+   "port": 53,
+   "lport": 41002,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434012.853934,
+   "t1": 1791434018.0403419,
+   "read_before": {
+    "t_start": 1791434012.853934,
+    "t_end": 1791434012.8664615
+   },
+   "read_after": {
+    "t_start": 1791434018.0257456,
+    "t_end": 1791434018.0403419
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434010.796772,
+    "ok": false,
+    "detail": "ConnectionRefusedError(111, 'Connection refused')"
+   },
+   "control_after": {
+    "ts": 1791434018.0405712,
+    "ok": false,
+    "detail": "ConnectionRefusedError(111, 'Connection refused')"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 2,
+    "drop_private": 4,
+    "drop_public": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "ssh-host-192.168.60.1",
+   "dst": "192.168.60.1",
+   "proto": "tcp",
+   "port": 22,
+   "lport": 41003,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434020.1033425,
+   "t1": 1791434025.2486866,
+   "read_before": {
+    "t_start": 1791434020.1033425,
+    "t_end": 1791434020.1076345
+   },
+   "read_after": {
+    "t_start": 1791434025.2318668,
+    "t_end": 1791434025.2486866
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434020.0957472,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "control_after": {
+    "ts": 1791434025.2489786,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 1,
+    "drop_private": 4,
+    "drop_public": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "ssh-host-192.168.177.128",
+   "dst": "192.168.177.128",
+   "proto": "tcp",
+   "port": 22,
+   "lport": 41004,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434025.2686315,
+   "t1": 1791434030.3975682,
+   "read_before": {
+    "t_start": 1791434025.2686315,
+    "t_end": 1791434025.2739668
+   },
+   "read_after": {
+    "t_start": 1791434030.3862839,
+    "t_end": 1791434030.3975682
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434025.2611523,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "control_after": {
+    "ts": 1791434030.3983736,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 2,
+    "drop_private": 4,
+    "drop_public": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "ssh-host-172.18.0.1",
+   "dst": "172.18.0.1",
+   "proto": "tcp",
+   "port": 22,
+   "lport": 41005,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434030.4221358,
+   "t1": 1791434035.5621681,
+   "read_before": {
+    "t_start": 1791434030.4221358,
+    "t_end": 1791434030.4269507
+   },
+   "read_after": {
+    "t_start": 1791434035.554178,
+    "t_end": 1791434035.5621681
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434030.409778,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "control_after": {
+    "ts": 1791434035.562407,
+    "ok": true,
+    "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 2,
+    "drop_private": 4,
+    "drop_public": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "manager",
+   "dst": "192.168.60.10",
+   "proto": "tcp",
+   "port": 8011,
+   "lport": 41006,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434035.5771048,
+   "t1": 1791434040.7218463,
+   "read_before": {
+    "t_start": 1791434035.5771048,
+    "t_end": 1791434035.5847058
+   },
+   "read_after": {
+    "t_start": 1791434040.7102666,
+    "t_end": 1791434040.7218463
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434035.575578,
+    "ok": true,
+    "detail": "HTTP 200"
+   },
+   "control_after": {
+    "ts": 1791434040.7220988,
+    "ok": true,
+    "detail": "HTTP 200"
+   },
+   "remote_control": {
+    "ok_before": true,
+    "ok_after": true,
+    "fails_in_window": 0,
+    "ok": true
+   },
+   "counter_delta": {
+    "drop_spoof": 1,
+    "drop_private": 4,
+    "drop_public": 2
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "mongodb",
+   "dst": "172.18.0.2",
+   "proto": "tcp",
+   "port": 27017,
+   "lport": 41007,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434040.7244155,
+   "t1": 1791434045.8592508,
+   "read_before": {
+    "t_start": 1791434040.7244155,
+    "t_end": 1791434040.7306318
+   },
+   "read_after": {
+    "t_start": 1791434045.8521364,
+    "t_end": 1791434045.8592508
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": null,
+   "control_after": null,
+   "remote_control": {
+    "ok_before": true,
+    "ok_after": true,
+    "fails_in_window": 0,
+    "ok": true
+   },
+   "counter_delta": {
+    "arp_in_ok": 1,
+    "arp_out_ok": 1,
+    "drop_spoof": 2,
+    "drop_private": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "worker-eth0",
+   "dst": "192.168.60.2",
+   "proto": "tcp",
+   "port": 8011,
+   "lport": 41008,
+   "qname": null,
+   "expected_class": "drop_private",
+   "t0": 1791434045.859836,
+   "t1": 1791434051.013496,
+   "read_before": {
+    "t_start": 1791434045.859836,
+    "t_end": 1791434045.8659256
+   },
+   "read_after": {
+    "t_start": 1791434050.998218,
+    "t_end": 1791434051.013496
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": null,
+   "control_after": null,
+   "remote_control": {
+    "ok_before": true,
+    "ok_after": true,
+    "fails_in_window": 0,
+    "ok": true
+   },
+   "counter_delta": {
+    "drop_spoof": 2,
+    "drop_private": 4
+   },
+   "host_alert_lines": 0
+  },
+  {
+   "probe": "tap0-other-port-listener",
+   "dst": "10.200.0.1",
+   "proto": "tcp",
+   "port": 18080,
+   "lport": 41009,
+   "qname": null,
+   "expected_class": "drop_worker_other",
+   "t0": 1791434051.016073,
+   "t1": 1791434056.1594806,
+   "read_before": {
+    "t_start": 1791434051.016073,
+    "t_end": 1791434051.0242984
+   },
+   "read_after": {
+    "t_start": 1791434056.1511164,
+    "t_end": 1791434056.1594806
+   },
+   "guest_rc": 28,
+   "guest_output": "HTTP=000",
+   "guest_failed": true,
+   "control_before": {
+    "ts": 1791434051.0142355,
+    "ok": true,
+    "detail": "HTTP 200"
+   },
+   "control_after": {
+    "ts": 1791434056.1596744,
+    "ok": true,
+    "detail": "HTTP 200"
+   },
+   "remote_control": null,
+   "counter_delta": {
+    "drop_spoof": 1,
+    "drop_worker_other": 4,
+    "drop_public": 4
+   },
+   "host_alert_lines": 0
+  }
+ ]
+}

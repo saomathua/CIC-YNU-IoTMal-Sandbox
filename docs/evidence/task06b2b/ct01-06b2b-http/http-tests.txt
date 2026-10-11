@@ -1,0 +1,43 @@
+[PASS] fixture created {"data_dir": ["06b2b-other-0002", "06b2b-task-0001"], "fixture_sha256": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f", "magic": "3036422d"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task: nothing written {}
+[PASS] current_task set by isolation.current_task {"file": "/run/sandbox/current_task"}
+[PASS] GET get-task/T/file {"expected": 200, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] downloaded content hash {"expected": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f", "got": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f"}
+[PASS] POST update-task/T/strace {"expected": 200, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] received strace.log hash {"expected": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382", "got": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382"}
+[PASS] POST update-task/T/sar {"expected": 200, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] received sar.out hash {"expected": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e", "got": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-other-0002/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "POST", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "HEAD", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "PUT", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "POST", "path": "/api/v1/sandbox-worker/stop", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/submit-task/06b2b-other-0002", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/submit-task/new-06b2b-task", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/docs", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/openapi.json", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file/", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Forwarded-For": "192.168.60.2"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Forwarded-For": "192.168.60.2"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Forwarded-For": "127.0.0.1"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Forwarded-For": "127.0.0.1"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"Forwarded": "for=192.168.60.2"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"Forwarded": "for=192.168.60.2"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Real-IP": "127.0.0.1"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Real-IP": "127.0.0.1"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no stop file created {}
+[PASS] no task created by forbidden routes {"data_dir": ["06b2b-other-0002", "06b2b-task-0001"]}
+[PASS] other task not written {}
+[PASS] loopback peer healthcheck -> 200 {"expected": 200, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "127.0.0.1", "status": 200, "target": "127.0.0.1"}
+[PASS] eth0 peer healthcheck -> 200 {"expected": 200, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "192.168.60.2", "status": 200, "target": "192.168.60.2"}
+[PASS] non-guest + XFF 10.200.0.2 -> still 200 {"expected": 200, "headers": {"X-Forwarded-For": "10.200.0.2"}, "method": "GET", "path": "/healthcheck", "source": "127.0.0.1", "status": 200, "target": "127.0.0.1"}
+[PASS] current_task cleared {}
+[PASS] after clear: GET get-task/T/file -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] fixtures removed {"data_dir": []}
+== 42/42 passed

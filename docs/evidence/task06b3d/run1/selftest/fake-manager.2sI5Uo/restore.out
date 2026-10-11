@@ -1,0 +1,2 @@
+manager after: state=running id=cid1 startedAt=1791304924659297532 (before: running cid1 T0; started by this run: 0)
+manager was restarted during the test

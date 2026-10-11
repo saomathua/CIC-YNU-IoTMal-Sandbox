@@ -1,0 +1,1 @@
+2026-10-06T13:40:09.737518943Z FATAL: ALLOW_VM_INTERNET=true is not supported; guest egress is not designed yet (CT-01).

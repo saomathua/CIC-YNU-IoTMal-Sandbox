@@ -1,0 +1,1 @@
+16:12:31 capture p2 pid 71668 exited during the test

@@ -1,0 +1,17 @@
+d95083a36a1a150fffd1b8cc06b9a2bf80c86c06dab367804cdf779fe430918b  ./codex-reproductions-before-after.txt
+64dba754a5d31f1e9e89fe36f03a154caf7ca9ea3dd8f297912df256762b62ca  ./codex-rerun/06b4h/extra-stubs.json
+23775c71b0af9bd22493612c14d1a56f8d959b23c24059f5647cf7a3f60645b1  ./codex-rerun/06b4h/extra-stubs.log
+eb61b6c792fe3f6310d643e6cfef6d656b48a594b283ae3b9c29ea8d613de7ca  ./codex-rerun/06b4h/reproduce.log
+dd7ac0383b0f09fffd758760e13a44fb779ceaf8e5d4832eaa9649b6c58d3751  ./codex-rerun/06b4h/reproductions.json
+d2ad7c8460493d84cf77559cce463b04d5e317039b2f22b458508ebcf7711865  ./codex-rerun/06b4hr/extra-stubs.json
+ea506391e0ad739c9e46c07a9641daf75ae13e43a1b8c233eb9837a9acacfa9e  ./codex-rerun/06b4hr/extra-stubs.log
+0b68547d464ffbf9b77a669942179df203a5a10a1a4c5dcb1a2996d4571bebb8  ./codex-rerun/06b4hr/reproduce.log
+e9f5c3fd0944b6f8556b89f3842371249ad1af3133bc8f1ebaaf78f9b3ce6dcc  ./codex-rerun/06b4hr/reproductions.json
+f8225daf30ff2f7df0594803895f6b9a356aa2619527f472f64adca2cbb745c0  ./ct01-06b4hr-harness-vs-06b4h.diff
+da98c602af561ed0c69cc2b6bf1e0a0f93c03fe7b81659176b8a1c03d65a780e  ./harness-sha256.txt
+8c3c67de95f7254eafe3d7d2b003995899b0220e7b77c735e781e1e454ca5b39  ./logs/mutation-arp.txt
+0d2df4a72bdefc73844ac31bc7ce557dbd8a0ac541c001b2cdb7d908cb81f551  ./logs/selftest-arp.log
+e9ee778e1c8eb722dac4d9d06b27f5c1e862bbe967da9b0c5e8e1076701cc32e  ./logs/selftest-arp-new-tests-on-06b4h-code.log
+2b67a54f85ef2c33d3fb0df0466ed737138a2ab8c9cc32a831094edca5f25925  ./logs/selftest-arp-stability.txt
+41d6eed5ec0dfa39108ab2d06ce4a65ca38f9ae9d30dc4453f4e81242d7426f2  ./logs/selftest-l2eval.log
+91e7f4aaecb7d57e5a47b0b927ee804e8bf83e46944a575007f8885a9cd2a9ba  ./logs/selftest-l2.log

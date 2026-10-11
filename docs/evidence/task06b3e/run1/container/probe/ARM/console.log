@@ -1,0 +1,342 @@
+qemu-system-arm: warning: nic virtio-net-pci.0 has no peer
+[    0.000000] Booting Linux on physical CPU 0x0
+[    0.000000] Linux version 4.14.63 (buildbot@builds-03.infra.lede-project.org) (gcc version 7.3.0 (OpenWrt GCC 7.3.0 r7101-a63e38b)) #0 SMP Wed Aug 15 20:42:39 2018
+[    0.000000] CPU: ARMv7 Processor [412fc0f1] revision 1 (ARMv7), cr=10c5387d
+[    0.000000] CPU: div instructions available: patching division code
+[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, PIPT instruction cache
+[    0.000000] OF: fdt: Machine model: linux,dummy-virt
+[    0.000000] Memory policy: Data cache writealloc
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv0.2 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] random: get_random_bytes called from 0xc06009b8 with crng_init=0
+[    0.000000] percpu: Embedded 15 pages/cpu @c7ee4000 s30540 r8192 d22708 u61440
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 32512
+[    0.000000] Kernel command line: root=/dev/vda
+[    0.000000] PID hash table entries: 512 (order: -1, 2048 bytes)
+[    0.000000] Dentry cache hash table entries: 16384 (order: 4, 65536 bytes)
+[    0.000000] Inode-cache hash table entries: 8192 (order: 3, 32768 bytes)
+[    0.000000] Memory: 122304K/131072K available (4138K kernel code, 118K rwdata, 528K rodata, 1024K init, 216K bss, 8768K reserved, 0K cma-reserved)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+[    0.000000]     fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+[    0.000000]     vmalloc : 0xc8800000 - 0xff800000   ( 880 MB)
+[    0.000000]     lowmem  : 0xc0000000 - 0xc8000000   ( 128 MB)
+[    0.000000]     modules : 0xbf000000 - 0xc0000000   (  16 MB)
+[    0.000000]       .text : 0xc0008000 - 0xc050a8e4   (5131 kB)
+[    0.000000]       .init : 0xc0600000 - 0xc0700000   (1024 kB)
+[    0.000000]       .data : 0xc0700000 - 0xc071d880   ( 119 kB)
+[    0.000000]        .bss : 0xc07227b8 - 0xc07587fc   ( 217 kB)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] Hierarchical RCU implementation.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=4 to nr_cpu_ids=1.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1
+[    0.000000] NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16
+[    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000] arch_timer: cp15 timer(s) running at 62.50MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x1cd42e208c, max_idle_ns: 881590405314 ns
+[    0.000125] sched_clock: 56 bits at 62MHz, resolution 16ns, wraps every 4398046511096ns
+[    0.000200] Switching to timer-based delay loop, resolution 16ns
+[    0.001156] Calibrating delay loop (skipped), value calculated using timer frequency.. 125.00 BogoMIPS (lpj=625000)
+[    0.001276] pid_max: default: 32768 minimum: 301
+[    0.001943] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.001988] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.007326] CPU: Testing write buffer coherency: ok
+[    0.016051] /cpus/cpu@0 missing clock-frequency property
+[    0.016218] CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+[    0.023850] Setting up static identity map for 0x40100000 - 0x40100060
+[    0.024539] Hierarchical SRCU implementation.
+[    0.027832] smp: Bringing up secondary CPUs ...
+[    0.027916] smp: Brought up 1 node, 1 CPU
+[    0.027968] SMP: Total of 1 processors activated (125.00 BogoMIPS).
+[    0.028002] CPU: All CPU(s) started in SVC mode.
+[    0.037324] VFP support v0.3: implementor 41 architecture 4 part 30 variant f rev 0
+[    0.048011] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.053074] futex hash table entries: 256 (order: 2, 16384 bytes)
+[    0.073400] NET: Registered protocol family 16
+[    0.080169] DMA: preallocated 256 KiB pool for atomic coherent allocations
+[    0.082212] Serial: AMBA PL011 UART driver
+[    0.095209] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 54, base_baud = 0) is a PL011 rev1
+[    0.128857] console [ttyAMA0] enabled
+[    0.151082] SCSI subsystem initialized
+[    0.158461] clocksource: Switched to clocksource arch_sys_counter
+[    0.160653] NET: Registered protocol family 2
+[    0.165447] TCP established hash table entries: 1024 (order: 0, 4096 bytes)
+[    0.166135] TCP bind hash table entries: 1024 (order: 1, 8192 bytes)
+[    0.166664] TCP: Hash tables configured (established 1024 bind 1024)
+[    0.168431] UDP hash table entries: 256 (order: 1, 8192 bytes)
+[    0.168879] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes)
+[    0.170255] NET: Registered protocol family 1
+[    0.176651] No memory allocated for crashlog
+[    0.177396] workingset: timestamp_bits=30 max_order=15 bucket_order=0
+[    0.181429] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.181618] jffs2: version 2.2 (NAND) (SUMMARY) (LZMA) (RTIME) (CMODE_PRIORITY) (c) 2001-2006 Red Hat, Inc.
+[    0.189161] 9p: Installing v9fs 9p2000 file system support
+[    0.196729] io scheduler noop registered
+[    0.196905] io scheduler deadline registered (default)
+[    0.200245] pl061_gpio 9030000.pl061: PL061 GPIO chip @0x09030000 registered
+[    0.201005] OF: PCI: host bridge /pcie@10000000 ranges:
+[    0.201629] OF: PCI:    IO 0x3eff0000..0x3effffff -> 0x00000000
+[    0.202404] OF: PCI:   MEM 0x10000000..0x3efeffff -> 0x10000000
+[    0.202614] OF: PCI:   MEM 0x8000000000..0xffffffffff -> 0x8000000000
+[    0.203834] pci-host-generic 3f000000.pcie: ECAM at [mem 0x3f000000-0x3fffffff] for [bus 00-0f]
+[    0.204775] pci-host-generic 3f000000.pcie: PCI host bridge to bus 0000:00
+[    0.205282] pci_bus 0000:00: root bus resource [bus 00-0f]
+[    0.205755] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.206182] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    0.210178] PCI: bus0: Fast back to back transfers disabled
+[    0.211218] pci 0000:00:01.0: BAR 6: assigned [mem 0x10000000-0x1003ffff pref]
+[    0.211616] pci 0000:00:02.0: BAR 6: assigned [mem 0x10040000-0x1007ffff pref]
+[    0.212280] pci 0000:00:01.0: BAR 4: assigned [mem 0x10080000-0x10083fff 64bit pref]
+[    0.213048] pci 0000:00:02.0: BAR 4: assigned [mem 0x10084000-0x10087fff 64bit pref]
+[    0.213639] pci 0000:00:03.0: BAR 4: assigned [mem 0x10088000-0x1008bfff 64bit pref]
+[    0.214324] pci 0000:00:01.0: BAR 1: assigned [mem 0x1008c000-0x1008cfff]
+[    0.214825] pci 0000:00:02.0: BAR 1: assigned [mem 0x1008d000-0x1008dfff]
+[    0.215222] pci 0000:00:03.0: BAR 1: assigned [mem 0x1008e000-0x1008efff]
+[    0.215701] pci 0000:00:03.0: BAR 0: assigned [io  0x1000-0x103f]
+[    0.215908] pci 0000:00:01.0: BAR 0: assigned [io  0x1040-0x105f]
+[    0.216131] pci 0000:00:02.0: BAR 0: assigned [io  0x1060-0x107f]
+[    0.219895] virtio-pci 0000:00:01.0: enabling device (0100 -> 0103)
+[    0.223220] virtio-pci 0000:00:02.0: enabling device (0100 -> 0103)
+[    0.225582] virtio-pci 0000:00:03.0: enabling device (0100 -> 0103)
+[    0.228619] Serial: 8250/16550 driver, 16 ports, IRQ sharing enabled
+[    0.261137] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[    0.262012] Intel/Sharp Extended Query Table at 0x0031
+[    0.264039] Using buffer write method
+[    0.266528] 0.flash: Found 2 x16 devices at 0x0 in 32-bit bank. Manufacturer ID 0x000000 Chip ID 0x000000
+[    0.266935] Intel/Sharp Extended Query Table at 0x0031
+[    0.268831] Using buffer write method
+[    0.269036] Concatenating MTD devices:
+[    0.269150] (0): "0.flash"
+[    0.269234] (1): "0.flash"
+[    0.269398] into device "0.flash"
+[    0.279939] rtc-pl031 9010000.pl031: rtc core: registered pl031 as rtc0
+[    0.281138] NET: Registered protocol family 10
+[    0.293116] Segment Routing with IPv6
+[    0.293487] NET: Registered protocol family 17
+[    0.294490] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[    0.295710] 8021q: 802.1Q VLAN Support v1.8
+[    0.296617] 9pnet: Installing 9P2000 support
+[    0.297243] Registering SWP/SWPB emulation handler
+[    0.302020] rtc-pl031 9010000.pl031: setting system clock to 2026-10-07 05:33:37 UTC (1791351217)
+[    0.324060] EXT4-fs (vda): mounted filesystem without journal. Opts: (null)
+[    0.325072] VFS: Mounted root (ext4 filesystem) readonly on device 254:0.
+[    0.346909] Freeing unused kernel memory: 1024K
+[    0.481236] init: Console is alive
+[    0.545820] kmodloader: loading kernel modules from /etc/modules-boot.d/*
+[    0.549715] kmodloader: done loading kernel modules from /etc/modules-boot.d/*
+[    0.557132] init: - preinit -
+[    0.796580] random: jshn: uninitialized urandom read (4 bytes read)
+[    0.853495] random: jshn: uninitialized urandom read (4 bytes read)
+[    0.890489] random: jshn: uninitialized urandom read (4 bytes read)
+[    0.994064] 8021q: adding VLAN 0 to HW filter on device eth0
+Press the [f] key and hit [enter] to enter failsafe mode
+Press the [1], [2], [3] or [4] key and hit [enter] to select the debug level
+[    4.347915] mount_root: mounting /dev/root
+[    4.349721] EXT4-fs (vda): warning: mounting unchecked fs, running e2fsck is recommended
+[    4.508275] EXT4-fs (vda): re-mounted. Opts: (null)
+[    4.512336] urandom-seed: Seed file not found (/etc/urandom.seed)
+[    4.606042] procd: - early -
+[    5.222934] procd: - ubus -
+[    5.250300] urandom_read: 1 callbacks suppressed
+[    5.250537] random: ubusd: uninitialized urandom read (4 bytes read)
+[    5.290886] random: ubusd: uninitialized urandom read (4 bytes read)
+[    5.294515] random: ubusd: uninitialized urandom read (4 bytes read)
+[    5.300582] procd: - init -
+Please press Enter to activate this console.
+
+
+
+
+BusyBox v1.28.3 () built-in shell (ash)
+
+  _______                     ________        __
+ |       |.-----.-----.-----.|  |  |  |.----.|  |_
+ |   -   ||  _  |  -__|     ||  |  |  ||   _||   _|
+ |_______||   __|_____|__|__||________||__|  |____|
+          |__| W I R E L E S S   F R E E D O M
+ -----------------------------------------------------
+ OpenWrt 18.06.1, r7258-5eb055306f
+ -----------------------------------------------------
+[    5.687913] kmodloader: loading kernel modules from /etc/modules.d/*
+=== WARNING! =====================================
+There is no root password defined on this device!
+Use the "passwd" command to set up a new password
+in order to prevent unauthorized SSH logins.
+--------------------------------------------------
+root@(none):/# [    5.711610] ip6_tables: (C) 2000-2006 Netfilter Core Team
+[    5.731104] ip_tables: (C) 2000-2006 Netfilter Core Team
+[    5.746753] nf_conntrack version 0.5.0 (2048 buckets, 8192 max)
+[    5.815026] xt_time: kernel timezone is -0000
+[    5.823274] PPP generic driver version 2.4.2
+[    5.826986] NET: Registered protocol family 24
+[    5.831697] kmodloader: done loading kernel modules from /etc/modules.d/*
+[   12.013395] 8021q: adding VLAN 0 to HW filter on device eth0
+[   12.032964] br-lan: port 1(eth0) entered blocking state
+[   12.033152] br-lan: port 1(eth0) entered disabled state
+[   12.035119] device eth0 entered promiscuous mode
+[   12.068845] br-lan: port 1(eth0) entered blocking state
+[   12.069324] br-lan: port 1(eth0) entered forwarding state
+[   12.070690] IPv6: ADDRCONF(NETDEV_UP): br-lan: link is not ready
+[   12.219182] 8021q: adding VLAN 0 to HW filter on device eth1
+[   13.058844] IPv6: ADDRCONF(NETDEV_CHANGE): br-lan: link becomes ready
+ip addr add 10.200.0.2/30 brd + dev eth1
+ip addr add 10.200.0.2/30 brd + dev eth1
+root@OpenWrt:/# route add default gw 10.200.0.1 dev eth1
+route add default gw 10.200.0.1 dev eth1
+root@OpenWrt:/# echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+root@OpenWrt:/# echo @@B1; ip addr; echo @@E1 rc=$?
+echo @@B1; ip addr; echo @@E1 rc=$?
+@@B1
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br-lan state UP qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000
+    link/ether 52:54:00:c7:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 10.200.0.2/30 brd 10.200.0.3 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fec7:2/64 scope link tentative 
+       valid_lft forever preferred_lft forever
+4: br-lan: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP qlen 1000
+    link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.1/24 brd 192.168.1.255 scope global br-lan
+       valid_lft forever preferred_lft forever
+    inet6 fd1c:848b:7b0f::1/60 scope global tentative 
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fe12:3456/64 scope link tentative 
+       valid_lft forever preferred_lft forever
+@@E1 rc=0
+root@OpenWrt:/# echo @@B2; ip route; echo @@E2 rc=$?
+echo @@B2; ip route; echo @@E2 rc=$?
+@@B2
+default via 10.200.0.1 dev eth1 
+10.200.0.0/30 dev eth1 scope link  src 10.200.0.2 
+192.168.1.0/24 dev br-lan scope link  src 192.168.1.1 
+@@E2 rc=0
+root@OpenWrt:/# echo @@B3; for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done; echo @@E3 rc=$?
+echo @@B3; for i in /sys/class/net/*; do echo $(basename $i) $(c
+at $i/address); done; echo @@E3 rc=$?
+@@B3
+br-lan 52:54:00:12:34:56
+eth0 52:54:00:12:34:56
+eth1 52:54:00:c7:00:02
+lo 00:00:00:00:00:00
+@@E3 rc=0
+root@OpenWrt:/# echo @@B4; for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done; echo @@E4 rc=$?
+echo @@B4; for c in nslookup nc wget ping arping; do command -v 
+$c || echo missing:$c; done; echo @@E4 rc=$?
+@@B4
+/usr/bin/nslookup
+/usr/bin/nc
+/bin/wget
+/bin/ping
+missing:arping
+@@E4 rc=0
+root@OpenWrt:/# echo @@B5; curl --version | head -1; echo @@E5 rc=$?
+echo @@B5; curl --version | head -1; echo @@E5 rc=$?
+@@B5
+curl 7.60.0 (arm-openwrt-linux-gnu) libcurl/7.60.0 mbedTLS/2.16.8
+@@E5 rc=0
+root@OpenWrt:/# cQEMU 6.2.0 monitor - type 'help' for more information
+(qemu) info network
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+virtio-net-pci.0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:12:34:56
+virtio-net-pci.1: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02
+ \ net1: index=0,type=tap,ifname=tap0,script=no,downscript=no
+(qemu) c
+
+
+root@OpenWrt:/# echo @@B6; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out; echo @@E6 rc=$?
+echo @@B6; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\n' 
+http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha25
+6sum /tmp/r.out; echo @@E6 rc=$?
+@@B6
+HTTP=200
+602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out
+@@E6 rc=0
+root@OpenWrt:/# echo @@B7; curl -s -o /dev/null --local-port 41000 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://1.1.1.1:443/ct01-06b3b-internet-tcp; echo @@E7 rc=$?
+echo @@B7; curl -s -o /dev/null --local-port 41000 --connect-tim
+eout 4 -m 5 -w 'HTTP=%{http_code}\n' http://1.1.1.1:443/ct01-06b3b-internet-tcp;
+ echo @@E7 rc=$?
+@@B7
+HTTP=000
+@@E7 rc=28
+root@OpenWrt:/# echo @@B8; nslookup ct01-06b3b-probe-arm-1.example 192.168.177.2; echo @@E8 rc=$?
+echo @@B8; nslookup ct01-06b3b-probe-arm-1.example 192.168.177.2
+; echo @@E8 rc=$?
+@@B8
+;; connection timed out; no servers could be reached
+
+@@E8 rc=1
+root@OpenWrt:/# echo @@B9; curl -s -o /dev/null --local-port 41002 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.177.2:53/ct01-06b3b-lan-dns-tcp; echo @@E9 rc=$?
+echo @@B9; curl -s -o /dev/null --local-port 41002 --connect-tim
+eout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.177.2:53/ct01-06b3b-lan-dns-
+tcp; echo @@E9 rc=$?
+@@B9
+HTTP=000
+@@E9 rc=28
+root@OpenWrt:/# echo @@B10; curl -s -o /dev/null --local-port 41003 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.1:22/ct01-06b3b-ssh-host-192.168.60.1; echo @@E10 rc=$?
+echo @@B10; curl -s -o /dev/null --local-port 41003 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.1:22/ct01-06b3b-ssh-host
+-192.168.60.1; echo @@E10 rc=$?
+@@B10
+HTTP=000
+@@E10 rc=28
+root@OpenWrt:/# echo @@B11; curl -s -o /dev/null --local-port 41004 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.177.128:22/ct01-06b3b-ssh-host-192.168.177.128; echo @@E11 rc=$?
+echo @@B11; curl -s -o /dev/null --local-port 41004 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.177.128:22/ct01-06b3b-ssh-h
+ost-192.168.177.128; echo @@E11 rc=$?
+@@B11
+HTTP=000
+@@E11 rc=28
+root@OpenWrt:/# echo @@B12; curl -s -o /dev/null --local-port 41005 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://172.18.0.1:22/ct01-06b3b-ssh-host-172.18.0.1; echo @@E12 rc=$?
+echo @@B12; curl -s -o /dev/null --local-port 41005 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://172.18.0.1:22/ct01-06b3b-ssh-host-1
+72.18.0.1; echo @@E12 rc=$?
+@@B12
+HTTP=000
+@@E12 rc=28
+root@OpenWrt:/# echo @@B13; curl -s -o /dev/null --local-port 41006 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.10:8011/ct01-06b3b-manager; echo @@E13 rc=$?
+echo @@B13; curl -s -o /dev/null --local-port 41006 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.10:8011/ct01-06b3b-manag
+er; echo @@E13 rc=$?
+@@B13
+HTTP=000
+@@E13 rc=28
+root@OpenWrt:/# echo @@B14; curl -s -o /dev/null --local-port 41007 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://172.18.0.2:27017/ct01-06b3b-mongodb; echo @@E14 rc=$?
+echo @@B14; curl -s -o /dev/null --local-port 41007 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://172.18.0.2:27017/ct01-06b3b-mongodb
+; echo @@E14 rc=$?
+@@B14
+HTTP=000
+@@E14 rc=28
+root@OpenWrt:/# echo @@B15; curl -s -o /dev/null --local-port 41008 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.2:8011/ct01-06b3b-worker-eth0; echo @@E15 rc=$?
+echo @@B15; curl -s -o /dev/null --local-port 41008 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://192.168.60.2:8011/ct01-06b3b-worker
+-eth0; echo @@E15 rc=$?
+@@B15
+HTTP=000
+@@E15 rc=28
+root@OpenWrt:/# echo @@B16; curl -s -o /dev/null --local-port 41009 --connect-timeout 4 -m 5 -w 'HTTP=%{http_code}\n' http://10.200.0.1:18080/ct01-06b3b-tap0-other-port-listener; echo @@E16 rc=$?
+echo @@B16; curl -s -o /dev/null --local-port 41009 --connect-ti
+meout 4 -m 5 -w 'HTTP=%{http_code}\n' http://10.200.0.1:18080/ct01-06b3b-tap0-ot
+her-port-listener; echo @@E16 rc=$?
+@@B16
+HTTP=000
+@@E16 rc=28
+root@OpenWrt:/# echo @@B17; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out; echo @@E17 rc=$?
+echo @@B17; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\n'
+ http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha2
+56sum /tmp/r.out; echo @@E17 rc=$?
+@@B17
+HTTP=200
+602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out
+@@E17 rc=0
+root@OpenWrt:/# 

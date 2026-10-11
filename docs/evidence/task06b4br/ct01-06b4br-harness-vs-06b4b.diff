@@ -1,0 +1,547 @@
+--- base-06b4b/run-06b3b.sh	2026-10-08 02:12:56.934891903 +0000
++++ run-06b3b.sh	2026-10-08 03:24:25.478931477 +0000
+@@ -381,8 +381,9 @@
+     python3 "$H/sigscan_l2.py" "$CAPD/$f.pcap" --manager-mac "$MANAGER_MAC" > "$OUT/hostcap/sigscan-l2-$f.txt" 2>&1; rc=$?
+     echo "$f sigscan_l2 (rc=$rc): $(tr '\n' ' ' < "$OUT/hostcap/sigscan-l2-$f.txt")" | tee -a "$OUT/hostcap/summary.txt"
+     check "$f.pcap: sigscan_l2 read OK (exit 0)" test $rc -eq 0
++    # 06B-4BR: frames whose signature headers were cut (snaplen) or not decodable are a failed check, never 0
+     for k in guest_mac spoof_mac guest_net_ip arp_guest_sha arp_spoof_sha arp_guest_net arp_spoof_spa_manager \
+-             ipv6_guest spoof_src_ip probe_port icmp_size probe_qname; do
++             ipv6_guest spoof_src_ip probe_port icmp_size probe_qname unscannable_truncated unscannable_undecoded; do
+         check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-l2-$f.txt"
+     done
+ done
+--- base-06b4b/l2frames.py	2026-10-08 02:17:11.638548317 +0000
++++ l2frames.py	2026-10-08 03:23:20.224165212 +0000
+@@ -70,6 +70,14 @@
+ 
+ def read_frames(path):
+     """[(t, bytes)] for every packet of a pcap/pcapng file with Ethernet link type."""
++    return [(t, raw) for t, raw, _orig in read_records(path)]
++
++
++def read_records(path):
++    """[(t, captured bytes, original length on the wire)]. 06B-4BR: the original length is kept so that
++    a frame cut by the capture's snaplen (captured < original) is told apart from a damaged file
++    (captured > original, or a record/block running past the end: FrameReadError) and from a packet
++    that is malformed on the wire (complete capture whose headers do not add up)."""
+     try:
+         data = open(path, "rb").read()
+     except OSError as e:
+@@ -99,10 +107,12 @@
+     while i < len(data):
+         if i + 16 > len(data):
+             raise FrameReadError(f"{path}: truncated record header at offset {i}")
+-        sec, frac, incl, _orig = struct.unpack_from(e + "IIII", data, i)
++        sec, frac, incl, orig = struct.unpack_from(e + "IIII", data, i)
++        if incl > orig:
++            raise FrameReadError(f"{path}: captured length {incl} > original length {orig} at offset {i}")
+         if i + 16 + incl > len(data):
+             raise FrameReadError(f"{path}: truncated packet at offset {i}")
+-        out.append((sec + frac / (1e9 if nano else 1e6), data[i + 16:i + 16 + incl]))
++        out.append((sec + frac / (1e9 if nano else 1e6), data[i + 16:i + 16 + incl], orig))
+         i += 16 + incl
+     return out
+ 
+@@ -143,7 +153,9 @@
+         elif btype == 6:                                 # enhanced packet
+             if len(body) < 20:
+                 raise FrameReadError(f"{path}: truncated EPB at offset {i}")
+-            ifid, hi, lo, cap, _orig = struct.unpack_from(e + "IIIII", body, 0)
++            ifid, hi, lo, cap, orig = struct.unpack_from(e + "IIIII", body, 0)
++            if cap > orig:
++                raise FrameReadError(f"{path}: EPB captured length {cap} > original length {orig} at offset {i}")
+             if ifid >= len(ifaces):
+                 raise FrameReadError(f"{path}: EPB for undefined interface {ifid} at offset {i}")
+             linktype, div = ifaces[ifid]
+@@ -153,7 +165,7 @@
+                 raise FrameReadError(f"{path}: EPB captured length beyond block at offset {i}")
+             units = (hi << 32) | lo
+             # integer split first: a float cannot hold 1.79e18 ns exactly (error would be ~0.2 us)
+-            out.append((units // div + (units % div) / div, body[20:20 + cap]))
++            out.append((units // div + (units % div) / div, body[20:20 + cap], orig))
+         elif btype == 3:                                 # simple packet: no timestamp
+             raise FrameReadError(f"{path}: simple packet block without timestamp at offset {i}")
+         i += blen
+@@ -170,61 +182,92 @@
+     return s == 0xFFFF
+ 
+ 
+-def decode(t, raw):
+-    """One frame -> dict. Never raises for malformed content: problems are recorded in `err`."""
+-    f = {"t": t, "len": len(raw), "err": None}
++def decode(t, raw, orig_len=None):
++    """One frame -> dict. Never raises for malformed content: problems are recorded in `err`/`why`.
++    06B-4BR: header fields are parsed whenever the header BYTES are present (`hdr_ok`), independently of
++    validity. `valid` stays strict (complete on the wire AND in the capture, correct checksum/lengths):
++    the tap0 classifier uses `valid`; the host-side scanner uses `hdr_ok` and reports what it could not
++    see. `truncated` is True only when the capture holds fewer bytes than the original frame (snaplen)."""
++    orig = len(raw) if orig_len is None else orig_len
++    f = {"t": t, "len": len(raw), "caplen": len(raw), "orig_len": orig, "truncated": orig > len(raw), "err": None}
+     if len(raw) < 14:
+-        f.update(dst=None, src=None, etype=None, err="frame shorter than an Ethernet header")
++        f.update(dst=None, src=None, etype=None,
++                 err="Ethernet header cut by snaplen" if f["truncated"] else "frame shorter than an Ethernet header")
+         return f
+     f["dst"], f["src"] = _mac(raw[0:6]), _mac(raw[6:12])
+     et = struct.unpack_from("!H", raw, 12)[0]
+     f["etype"] = et
+     p = raw[14:]
++    wire = orig - 14                     # bytes after the Ethernet header on the wire
+     if et == ETH_ARP:
+         if len(p) < 8:
+-            f["arp"] = {"short": True, "len": len(p)}
++            f["arp"] = {"short": True, "len": len(p), "cut": wire >= 8}
+             return f
+         htype, ptype, hlen, plen, op = struct.unpack_from("!HHBBH", p, 0)
+-        a = {"htype": htype, "ptype": ptype, "hlen": hlen, "plen": plen, "op": op, "len": len(p), "short": False}
++        a = {"htype": htype, "ptype": ptype, "hlen": hlen, "plen": plen, "op": op, "len": len(p), "short": False,
++             "cut": len(p) < ARP_HDR_LEN <= wire}
+         if hlen == 6 and plen == 4 and len(p) >= ARP_HDR_LEN:
+             a.update(sha=_mac(p[8:14]), spa=str(ipaddress.IPv4Address(p[14:18])),
+                      tha=_mac(p[18:24]), tpa=str(ipaddress.IPv4Address(p[24:28])))
+         f["arp"] = a
+     elif et == ETH_IPV4:
+-        ip = {"valid": False}
++        ip = {"valid": False, "hdr_ok": False}
+         f["ip"] = ip
+         if len(p) < 20:
+-            ip["why"] = "shorter than an IPv4 header"
++            ip["why"] = "IPv4 header cut by snaplen" if wire >= 20 else "shorter than an IPv4 header"
++            ip["hdr_cut"] = wire >= 20
+             return f
+         ver, ihl = p[0] >> 4, (p[0] & 0x0F) * 4
+-        tot = struct.unpack_from("!H", p, 2)[0]
+-        if ver != 4 or ihl < 20 or len(p) < ihl:
++        if ver != 4 or ihl < 20:
+             ip["why"] = f"bad version/IHL ({ver}, {ihl})"
+             return f
+-        if tot < ihl or tot > len(p):
+-            ip["why"] = f"bad total length {tot} (payload {len(p)})"
+-            return f
+-        if not _csum_ok(p[:ihl]):
+-            ip["why"] = "bad header checksum"
++        if len(p) < ihl:
++            ip["why"] = "IPv4 options cut by snaplen" if wire >= ihl else "IPv4 header longer than the frame"
++            ip["hdr_cut"] = wire >= ihl
+             return f
++        tot = struct.unpack_from("!H", p, 2)[0]
+         fragoff = struct.unpack_from("!H", p, 6)[0] & 0x1FFF
+-        ip.update(valid=True, src=str(ipaddress.IPv4Address(p[12:16])), dst=str(ipaddress.IPv4Address(p[16:20])),
+-                  proto=p[9], tot_len=tot, frag_offset=fragoff, sport=None, dport=None)
+-        l4 = p[ihl:tot]
+-        if fragoff == 0 and p[9] in (6, 17) and len(l4) >= 4:
+-            ip["sport"], ip["dport"] = struct.unpack_from("!HH", l4, 0)
++        csum_ok = _csum_ok(p[:ihl])
++        ip.update(hdr_ok=True, src=str(ipaddress.IPv4Address(p[12:16])), dst=str(ipaddress.IPv4Address(p[16:20])),
++                  proto=p[9], tot_len=tot, frag_offset=fragoff, sport=None, dport=None, csum_ok=csum_ok,
++                  payload_complete=tot <= len(p))
++        l4 = p[ihl:min(tot, len(p))] if tot >= ihl else b""
++        if fragoff == 0 and p[9] in (6, 17):
++            if len(l4) >= 4:
++                ip["sport"], ip["dport"] = struct.unpack_from("!HH", l4, 0)
++            else:
++                ip["ports_missing"] = True
++                ip["ports_cut"] = tot >= ihl + 4 and wire >= ihl + 4
+         ip["payload"] = bytes(l4)
++        if tot < ihl:
++            ip["why"] = f"bad total length {tot} < header {ihl}"
++        elif tot > wire:
++            ip["why"] = f"total length {tot} beyond the frame on the wire ({wire})"
++        elif tot > len(p):
++            ip["why"] = f"payload cut by snaplen (total length {tot}, captured {len(p)})"
++        elif not csum_ok:
++            ip["why"] = "bad header checksum"
++        else:
++            ip["valid"] = True
+     elif et == ETH_IPV6:
+-        v6 = {"valid": False}
++        v6 = {"valid": False, "hdr_ok": False}
+         f["ip6"] = v6
+         if len(p) < 40 or p[0] >> 4 != 6:
+-            v6["why"] = "shorter than an IPv6 header or version != 6"
++            cut = len(p) < 40 <= wire
++            v6["why"] = "IPv6 header cut by snaplen" if cut else "shorter than an IPv6 header or version != 6"
++            v6["hdr_cut"] = cut
+             return f
+         plen, nh = struct.unpack_from("!HB", p, 4)
+-        v6.update(valid=True, plen=plen, nh=nh, src=str(ipaddress.IPv6Address(p[8:24])),
+-                  dst=str(ipaddress.IPv6Address(p[24:40])), icmp6_type=None)
++        v6.update(hdr_ok=True, plen=plen, nh=nh, src=str(ipaddress.IPv6Address(p[8:24])),
++                  dst=str(ipaddress.IPv6Address(p[24:40])), icmp6_type=None, payload_complete=40 + plen <= len(p))
+         if nh == 58 and len(p) >= 41:
+             v6["icmp6_type"] = p[40]
++        if 40 + plen > wire:
++            v6["why"] = "payload length beyond the frame on the wire"
++        elif 40 + plen > len(p):
++            v6["why"] = "payload cut by snaplen"
++        else:
++            v6["valid"] = True
+     elif et in ETH_VLAN:
+         f["vlan"] = struct.unpack_from("!H", p, 0)[0] & 0x0FFF if len(p) >= 2 else None
+     return f
+@@ -260,6 +303,8 @@
+     if src in spoof:
+         return "guest_spoof_mac", "l2_bad_mac", f"source MAC {src} is the chosen spoof MAC"
+     if src == tap_mac:
++        if f.get("truncated"):
++            return "worker", "unmapped", "frame cut by snaplen: worker frame not verifiable"
+         return ("worker",) + _classify_worker(f)
+     if src != guest:
+         return "unknown_src", "unmapped", f"source MAC {src} is neither the guest, a chosen spoof MAC nor TAP_MAC"
+@@ -269,6 +314,10 @@
+     if et not in (ETH_IPV4, ETH_ARP):
+         why = "IPv6" if et == ETH_IPV6 else f"ethertype {et:#06x}"
+         return "guest", "l2_bad_ethertype", why
++    # 06B-4BR: tap0 is captured in full; a frame cut by snaplen cannot be checked against the ARP/IPv4
++    # rules (lengths, checksum, fields): never guessed, never counted under a counter class.
++    if f.get("truncated"):
++        return "guest", "unmapped", "frame cut by snaplen: ARP/IPv4 checks not verifiable"
+     if et == ETH_ARP:
+         return ("guest",) + _classify_arp_in(f, tap_mac)
+     return ("guest",) + _classify_ip_in(f, tap_mac)
+@@ -330,8 +379,8 @@
+ def classified_frames(path, tap_mac, spoof_macs=S.SPOOF_MACS):
+     """Read + decode + classify a capture file. Raises FrameReadError on any read problem."""
+     out = []
+-    for t, raw in read_frames(path):
+-        f = decode(t, raw)
++    for t, raw, orig in read_records(path):
++        f = decode(t, raw, orig)
+         d, cls, why = classify(f, tap_mac, spoof_macs)
+         f.update(direction=d, cls=cls, reason=why)
+         out.append(f)
+--- base-06b4b/sigscan_l2.py	2026-10-08 02:12:15.421548903 +0000
++++ sigscan_l2.py	2026-10-08 03:23:43.212080807 +0000
+@@ -20,7 +20,15 @@
+     probe_port             TCP/UDP src or dst port = one of the exact new probe ports (all below the
+                            ephemeral range, see signatures.py)
+     icmp_size              ICMPv4 total length / ICMPv6 payload length of a probe size
+-    probe_qname            bytes "ct01-06b4-" anywhere in the frame
++    probe_qname            bytes "ct01-06b4-" anywhere in the captured frame
++    truncated_frames       frames cut by the capture's snaplen (information, not a signature)
++    unscannable_truncated  a signature-bearing header (Ethernet, ARP, IPv4/IPv6, TCP/UDP ports, or the
++                           payload of DNS) is missing because the capture cut the frame
++    unscannable_undecoded  the same header is missing or unusable on the wire (malformed), or the frame
++                           is an encapsulation the scanner does not decode (VLAN)
++06B-4BR: signatures are read from every header that was captured in full; a frame cut by snaplen is
++scanned as far as its headers go (e.g. an ICMP size from the IPv4 total length), and what could not be
++seen is counted, never reported as 0.
+ """
+ import ipaddress
+ import sys
+@@ -29,7 +37,13 @@
+ import signatures as S
+ 
+ KEYS = ("frames", "guest_mac", "spoof_mac", "guest_net_ip", "arp_guest_sha", "arp_spoof_sha", "arp_guest_net",
+-        "arp_spoof_spa_manager", "ipv6_guest", "spoof_src_ip", "probe_port", "icmp_size", "probe_qname")
++        "arp_spoof_spa_manager", "ipv6_guest", "spoof_src_ip", "probe_port", "icmp_size", "probe_qname",
++        "truncated_frames", "unscannable_truncated", "unscannable_undecoded")
++# truncated_frames is information (ens33 is captured with a snaplen); every other key must be 0 on a host
++# capture. A frame whose signature-bearing header is missing is never counted as "no signature": it is
++# counted as unscannable_truncated (cut by the capture's snaplen) or unscannable_undecoded (malformed on
++# the wire, or an encapsulation the scanner does not decode, e.g. VLAN).
++DNS_PORT = 53
+ 
+ 
+ def scan(path, manager_mac):
+@@ -42,34 +56,58 @@
+     c = {k: 0 for k in KEYS}
+     if manager_mac is None:
+         c["arp_spoof_spa_manager"] = "skipped"
+-    for t, raw in L.read_frames(path):
+-        f = L.decode(t, raw)
++
++    def blind(cut):
++        c["unscannable_truncated" if cut else "unscannable_undecoded"] += 1
++
++    for t, raw, orig in L.read_records(path):
++        f = L.decode(t, raw, orig)
+         c["frames"] += 1
++        c["truncated_frames"] += f["truncated"]
++        if f.get("etype") is None:                        # not even an Ethernet header
++            blind(f["truncated"])
++            continue
+         macs = {f.get("src"), f.get("dst")}
+         c["guest_mac"] += guest in macs
+         c["spoof_mac"] += bool(macs & spoof)
+         ip, a, v6 = f.get("ip"), f.get("arp"), f.get("ip6")
+-        if ip and ip.get("valid"):
+-            src, dst = ipaddress.IPv4Address(ip["src"]), ipaddress.IPv4Address(ip["dst"])
+-            c["guest_net_ip"] += src in net or dst in net
+-            probe_port = ip["sport"] in ports or ip["dport"] in ports
+-            probe_icmp = ip["proto"] == 1 and ip["tot_len"] in lens4
+-            c["probe_port"] += probe_port
+-            c["icmp_size"] += probe_icmp
+-            c["spoof_src_ip"] += (ip["src"] in own_spoof
+-                                  or (ip["src"] in S.SPOOF_SRC_SHARED and (ip["sport"] in ports or probe_icmp)))
+-        if a and "sha" in a:
+-            c["arp_guest_sha"] += a["sha"] == guest
+-            c["arp_spoof_sha"] += a["sha"] in spoof
+-            c["arp_guest_net"] += ipaddress.IPv4Address(a["spa"]) in net or ipaddress.IPv4Address(a["tpa"]) in net
+-            if manager_mac is not None:
+-                c["arp_spoof_spa_manager"] += a["spa"] == "192.168.60.10" and a["sha"] != manager_mac
+-        if f.get("etype") == L.ETH_IPV6:
++        et = f["etype"]
++        if et == L.ETH_IPV4:
++            if not ip.get("hdr_ok"):
++                blind(ip.get("hdr_cut", False))
++            else:
++                # header present: use it even if the payload was cut by snaplen or the packet is malformed
++                src, dst = ipaddress.IPv4Address(ip["src"]), ipaddress.IPv4Address(ip["dst"])
++                c["guest_net_ip"] += src in net or dst in net
++                probe_port = ip["sport"] in ports or ip["dport"] in ports
++                probe_icmp = ip["proto"] == 1 and ip["tot_len"] in lens4
++                c["probe_port"] += probe_port
++                c["icmp_size"] += probe_icmp
++                c["spoof_src_ip"] += (ip["src"] in own_spoof
++                                      or (ip["src"] in S.SPOOF_SRC_SHARED and (ip["sport"] in ports or probe_icmp)))
++                if ip.get("ports_missing"):
++                    blind(ip.get("ports_cut", False))     # TCP/UDP ports not visible
++                elif (DNS_PORT in (ip["sport"], ip["dport"]) and not ip["payload_complete"]):
++                    blind(True)                           # DNS name may lie beyond the snaplen
++        elif et == L.ETH_ARP:
++            if "sha" in a:
++                c["arp_guest_sha"] += a["sha"] == guest
++                c["arp_spoof_sha"] += a["sha"] in spoof
++                c["arp_guest_net"] += ipaddress.IPv4Address(a["spa"]) in net or ipaddress.IPv4Address(a["tpa"]) in net
++                if manager_mac is not None:
++                    c["arp_spoof_spa_manager"] += a["spa"] == "192.168.60.10" and a["sha"] != manager_mac
++            else:
++                blind(a.get("cut", False))
++        elif et == L.ETH_IPV6:
+             hit = f.get("src") == guest or f.get("src") in spoof
+-            if v6 and v6.get("valid"):
++            if v6.get("hdr_ok"):
+                 hit = hit or S.GUEST_LL6 in (v6["src"], v6["dst"])
+                 c["icmp_size"] += v6["nh"] == 58 and v6["plen"] in lens6
++            else:
++                blind(v6.get("hdr_cut", False))
+             c["ipv6_guest"] += hit
++        elif et in L.ETH_VLAN:
++            blind(False)                                  # inner frame not decoded
+         c["probe_qname"] += qn in raw
+     return c
+ 
+--- base-06b4b/selftest_l2.py	2026-10-08 02:19:32.280800822 +0000
++++ selftest_l2.py	2026-10-08 03:24:25.479931474 +0000
+@@ -123,10 +123,12 @@
+ def write_pcap(path, frames, linktype=1, endian="<", nano=False):
+     magic = 0xA1B23C4D if nano else 0xA1B2C3D4
+     out = struct.pack(endian + "IHHiIII", magic, 2, 4, 0, 0, 262144, linktype)
+-    for ts, fr in frames:
++    for rec in frames:
++        ts, fr = rec[0], rec[1]
++        orig = rec[2] if len(rec) > 2 else len(fr)       # 06B-4BR: original length (> captured = snaplen cut)
+         sec = int(ts)
+         frac = round((ts - sec) * (1e9 if nano else 1e6))
+-        out += struct.pack(endian + "IIII", sec, frac, len(fr), len(fr)) + fr
++        out += struct.pack(endian + "IIII", sec, frac, len(fr), orig) + fr
+     open(path, "wb").write(out)
+ 
+ 
+@@ -147,8 +149,9 @@
+     return _blk(1, body, e)
+ 
+ 
+-def epb(ts_units, frame, ifid=0, e="<"):
+-    return _blk(6, struct.pack(e + "IIIII", ifid, ts_units >> 32, ts_units & 0xFFFFFFFF, len(frame), len(frame))
++def epb(ts_units, frame, ifid=0, e="<", orig=None):
++    orig = len(frame) if orig is None else orig
++    return _blk(6, struct.pack(e + "IIIII", ifid, ts_units >> 32, ts_units & 0xFFFFFFFF, len(frame), orig)
+                 + frame, e)
+ 
+ 
+@@ -627,7 +630,8 @@
+            eth(OTHER, OTHER, 0x0800, ipv4("192.168.177.128", "224.0.0.1", 1, icmp(1202)))]     # icmp_size
+     want = {"frames": 8, "guest_mac": 1, "spoof_mac": 1, "guest_net_ip": 2, "arp_guest_sha": 1, "arp_spoof_sha": 1,
+             "arp_guest_net": 2, "arp_spoof_spa_manager": 1, "ipv6_guest": 1, "spoof_src_ip": 2, "probe_port": 2,
+-            "icmp_size": 2, "probe_qname": 1}
++            "icmp_size": 2, "probe_qname": 1, "truncated_frames": 0, "unscannable_truncated": 0,
++            "unscannable_undecoded": 0}
+     neg = [eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.3", "192.168.60.10", 6, tcp(42172, 8011))),
+            eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.3", 6, tcp(8011, 40000))),
+            eth(OTHER, OTHER, 0x0806, arp(2, MANAGER_MAC, "192.168.60.10", OTHER, "192.168.60.2")),
+@@ -669,6 +673,109 @@
+     return True
+ 
+ 
++# ------------------------------------------------------------------ K. snaplen cut vs damaged file vs malformed packet (06B-4BR)
++HOST_MAC, GW_MAC, HOST_IP = "00:0c:29:42:ad:4c", "00:50:56:e0:00:01", "192.168.177.128"
++
++
++def nat(l3):
++    """A frame as it leaves ens33 after NAT: host MAC/IP, nothing of the guest left."""
++    return eth(GW_MAC, HOST_MAC, 0x0800, l3)
++
++
++def sec_K(tmp):
++    def one(name, frame, cap=None, orig=None, ng=False):
++        path = os.path.join(tmp, "k-" + name + (".pcapng" if ng else ".pcap"))
++        data = frame if cap is None else frame[:cap]
++        o = len(frame) if orig is None else orig
++        if ng:
++            open(path, "wb").write(shb() + idb() + epb(10**6 * 100, data, orig=o))
++        else:
++            write_pcap(path, [(100.0, data, o)])
++        return path
++
++    def sc(path):
++        return SL.scan(path, MANAGER_MAC)
++    icmp_nat = nat(ipv4(HOST_IP, "1.1.1.1", 1, icmp(1705)))
++    tcp_nat = nat(ipv4(HOST_IP, "1.1.1.1", 6, tcp(31174, 443) + b"\x17" * 1400))
++    udp_nat = nat(ipv4(HOST_IP, "1.1.1.1", 17, udp(31020, 9999, b"x" * 1400)))
++    dns_nat = nat(ipv4(HOST_IP, "8.8.8.8", 17, udp(40000, 53, b"\0" * 12 + b"\x0bct01-06b4-t12-arm-3" + b"\0" * 600)))
++    v6 = eth(OTHER, OTHER, 0x86DD, ipv6("fe80::1", "ff02::1", 58, icmp6(1301)))
++    # reviewer's case: ICMP payload 1705 after NAT, full vs. cut to 512 bytes with the original length kept
++    full, cut = sc(one("icmp-full", icmp_nat)), sc(one("icmp-512", icmp_nat, 512))
++    t("K1 NATed ICMP 1705 B, full capture -> icmp_size 1", lambda: full["icmp_size"] == 1 and full["truncated_frames"] == 0)
++    t("K2 NATed ICMP 1705 B cut at 512 (orig kept) -> icmp_size 1 from the IPv4 header",
++      lambda: cut["icmp_size"] == 1 and cut["truncated_frames"] == 1 and cut["unscannable_truncated"] == 0)
++    ng = sc(one("icmp-512", icmp_nat, 512, ng=True))
++    t("K3 same cut in pcapng (EPB original length) -> icmp_size 1, truncated_frames 1",
++      lambda: ng["icmp_size"] == 1 and ng["truncated_frames"] == 1)
++    for nm, fr in (("tcp", tcp_nat), ("udp", udp_nat)):
++        a, b = sc(one(nm + "-full", fr)), sc(one(nm + "-512", fr, 512))
++        t(f"K4 NATed {nm.upper()} probe port, full and cut at 512 -> probe_port 1 both",
++          lambda a=a, b=b: a["probe_port"] == 1 and b["probe_port"] == 1 and b["unscannable_truncated"] == 0)
++    d1, d2 = sc(one("dns-full", dns_nat)), sc(one("dns-cut", dns_nat, 14 + 20 + 8 + 5))
++    t("K5 DNS name found when captured in full", lambda: d1["probe_qname"] == 1 and d1["unscannable_truncated"] == 0)
++    t("K6 DNS payload cut before the name -> unscannable_truncated 1, not a silent 0",
++      lambda: d2["probe_qname"] == 0 and d2["unscannable_truncated"] == 1)
++    h = sc(one("ip-hdr-cut", icmp_nat, 14 + 6))
++    t("K7 IPv4 header cut by snaplen -> unscannable_truncated 1, no signature claimed",
++      lambda: h["unscannable_truncated"] == 1 and h["icmp_size"] == 0 and h["truncated_frames"] == 1)
++    pc = sc(one("ports-cut", tcp_nat, 14 + 20 + 2))
++    t("K8 TCP ports cut by snaplen -> unscannable_truncated 1", lambda: pc["unscannable_truncated"] == 1)
++    e = sc(one("eth-cut", icmp_nat, 10))
++    t("K9 Ethernet header cut by snaplen -> unscannable_truncated 1", lambda: e["unscannable_truncated"] == 1)
++    ar = sc(one("arp-cut", F_arp_ok(), 14 + 20))
++    t("K10 ARP cut below 28 bytes -> unscannable_truncated 1, guest MAC still seen",
++      lambda: ar["unscannable_truncated"] == 1 and ar["guest_mac"] == 1 and ar["arp_guest_sha"] == 0)
++    v = sc(one("v6-cut", v6, 14 + 40 + 10))
++    t("K11 ICMPv6 1301 cut by snaplen -> icmp_size 1 from the IPv6 header", lambda: v["icmp_size"] == 1 and v["unscannable_truncated"] == 0)
++    v2 = sc(one("v6-hdr-cut", v6, 14 + 30))
++    t("K12 IPv6 header cut by snaplen -> unscannable_truncated 1", lambda: v2["unscannable_truncated"] == 1)
++    # malformed on the wire (complete capture): header still read, but the frame is not "cut"
++    mal = nat(ipv4(HOST_IP, "1.1.1.1", 1, icmp(100), tot=1733))
++    m = sc(one("malformed", mal))
++    fm = L.decode(1.0, mal)
++    t("K13 malformed (total length beyond the wire frame): header read, not counted as truncated",
++      lambda: m["icmp_size"] == 1 and m["truncated_frames"] == 0 and fm["ip"]["hdr_ok"] and not fm["ip"]["valid"]
++      and "on the wire" in fm["ip"]["why"])
++    m2 = sc(one("malformed-short", nat(ipv4(HOST_IP, "1.1.1.1", 1, b""))[:14 + 12]))
++    t("K14 IPv4 header shorter than 20 B on the wire -> unscannable_undecoded 1",
++      lambda: m2["unscannable_undecoded"] == 1 and m2["unscannable_truncated"] == 0)
++    vl = sc(one("vlan", eth(OTHER, OTHER, 0x8100, b"\x00\x05\x08\x00" + b"\0" * 40)))
++    t("K15 VLAN frame -> unscannable_undecoded 1", lambda: vl["unscannable_undecoded"] == 1)
++    # damaged files: read errors, never 0
++    bad = os.path.join(tmp, "k-incl-gt-orig.pcap")
++    write_pcap(bad, [(1.0, icmp_nat, 100)])
++    t("K16 pcap record with captured > original length -> read error",
++      lambda: raises(L.FrameReadError, lambda: SL.scan(bad, MANAGER_MAC)))
++    badng = os.path.join(tmp, "k-cap-gt-orig.pcapng")
++    open(badng, "wb").write(shb() + idb() + epb(10**8, icmp_nat, orig=100))
++    t("K17 pcapng EPB with captured > original length -> read error",
++      lambda: raises(L.FrameReadError, lambda: SL.scan(badng, MANAGER_MAC)))
++    cutfile = os.path.join(tmp, "k-file-cut.pcap")
++    open(cutfile, "wb").write(open(one("icmp-512b", icmp_nat, 512), "rb").read()[:-40])
++    t("K18 file cut inside a record (damaged, not snaplen) -> read error",
++      lambda: raises(L.FrameReadError, lambda: SL.scan(cutfile, MANAGER_MAC)))
++    # tap0 classifier stays strict
++    g_ip = F_ip(l4=tcp(31000, 443) + b"\0" * 600)
++
++    def cl(frame, cap):
++        return L.classify(L.decode(1.0, frame[:cap], len(frame)), TAP)
++    t("K19 tap0: guest IPv4 cut by snaplen -> unmapped (not drop_public)",
++      lambda: cl(g_ip, 100)[1] == "unmapped" and L.classify(L.decode(1.0, g_ip), TAP)[1] == "drop_public")
++    t("K20 tap0: guest ARP cut by snaplen -> unmapped", lambda: cl(F_arp_ok() + b"\0" * 18, 50)[1] == "unmapped")
++    t("K21 tap0: spoofed-MAC frame cut by snaplen is still l2_bad_mac (L2 decision)",
++      lambda: cl(eth(TAP, SPOOF, 0x0800, ipv4("10.200.0.2", "1.1.1.1", 6, tcp(1, 2) + b"\0" * 100)), 40)[1] == "l2_bad_mac")
++    t("K22 tap0: worker frame cut by snaplen -> unmapped",
++      lambda: cl(eth(GUEST, TAP, 0x0800, ipv4("10.200.0.1", "10.200.0.2", 6, tcp(8011, 4000) + b"\0" * 100)), 40)[1] == "unmapped")
++    rd_a, rd_b = rd(100.0, 100.01, drop_public=0), rd(110.0, 110.01, drop_public=0)
++    fr = [{"t": 105.0, "cls": cl(g_ip, 100)[1], "reason": "cut"}]
++    t("K23 tap0: a snaplen-cut guest frame inside the window -> UNVERIFIED",
++      lambda: L.reconcile_l2(fr, rd_a, rd_b, ("drop_public",))["verdict"] == "UNVERIFIED")
++    t("K24 decode: payload cut by snaplen keeps header, valid False, payload_complete False",
++      lambda: (lambda f: f["truncated"] and f["ip"]["hdr_ok"] and not f["ip"]["valid"]
++               and not f["ip"]["payload_complete"] and "snaplen" in f["ip"]["why"])(L.decode(1.0, icmp_nat[:512], len(icmp_nat))))
++
++
+ # ------------------------------------------------------------------ I. run-06b3b.sh (06B-4B changes, static)
+ def sec_I():
+     s = open(os.path.join(HERE, "run-06b3b.sh")).read()
+@@ -682,8 +789,8 @@
+       lambda: re.search(r'tcpdump -Z root -l -n -e -i "\$VETH" "\$SIG_ALERT_ETH"', s) is not None)
+     t("I5 no hard-coded alert filter left", lambda: '-i any "net 10.200.0.0/30"' not in s)
+     m = re.search(r"for k in (guest_mac[^;]*); do", s.replace("\\\n", " "))
+-    t("I6 run script checks every sigscan_l2 key except frames",
+-      lambda: m is not None and m.group(1).split() == [k for k in SL.KEYS if k != "frames"])
++    t("I6 run script checks every sigscan_l2 key except frames and truncated_frames (information)",
++      lambda: m is not None and m.group(1).split() == [k for k in SL.KEYS if k not in ("frames", "truncated_frames")])
+     t("I7 harness path is the 06B-4B copy", lambda: "\nH=/home/dathq/projects/ct01-06b4b\n" in s)
+     t("I8 new modules are copied into the run evidence",
+       lambda: all(f'"$H/{f}"' in s for f in ("signatures.py", "l2frames.py", "guest_state.py", "sigscan_l2.py")))
+@@ -787,7 +894,7 @@
+         return 64
+     with tempfile.TemporaryDirectory(prefix="selftest-l2.") as tmp:
+         for name, fn in (("A", lambda: sec_A(tmp)), ("B", lambda: sec_B(tmp)), ("D", sec_D), ("E", sec_E),
+-                         ("F", sec_F), ("G", sec_G), ("H", lambda: sec_H(tmp)), ("I", sec_I)) + \
++                         ("F", sec_F), ("G", sec_G), ("H", lambda: sec_H(tmp)), ("K", lambda: sec_K(tmp)), ("I", sec_I)) + \
+                 ((("R", lambda: sec_R(reg)),) if reg else ()):
+             print(f"== section {name}")
+             try:
+--- base-06b4b/mutation_l2.py	2026-10-08 02:19:32.280800822 +0000
++++ mutation_l2.py	2026-10-08 03:24:50.257847258 +0000
+@@ -69,7 +69,7 @@
+     ("LE1", "l2frames.py", [('ETH_VLAN = (0x8100, 0x88A8)', 'ETH_VLAN = (0x8100, 0x88A8, 0x86DD)')],
+      "D8 IPv6 from guest -> l2_bad_ethertype (IPv6 recognised)"),
+     ("LE2", "l2frames.py", [('ETH_VLAN = (0x8100, 0x88A8)', 'ETH_VLAN = ()')], "D11 VLAN-tagged -> unmapped (not claimed)"),
+-    ("LI1", "l2frames.py", [('        if not _csum_ok(p[:ihl]):', '        if False:')],
++    ("LI1", "l2frames.py", [('        elif not csum_ok:', '        elif False:')],   # 06B-4BR: line moved
+      "D39 IPv4 bad header checksum -> ip_not_hooked"),
+     ("LI2", "l2frames.py", [('    if not _hooked_l2_dst(f["dst"], tap_mac):\n        return "ip_not_hooked"',
+                              '    if False:\n        return "ip_not_hooked"')],
+@@ -150,10 +150,40 @@
+     ("RS2", "run-06b3b.sh", [('-i any "$SIG_ALERT_ANY"', '-i any "net 10.200.0.0/30"')],
+      "I3 alert on any uses the registry filter"),
+     ("RS3", "run-06b3b.sh", [('             ipv6_guest spoof_src_ip', '             spoof_src_ip')],
+-     "I6 run script checks every sigscan_l2 key except frames"),
++     "I6 run script checks every sigscan_l2 key except frames and truncated_frames (information)"),
+     ("RS4", "run-06b3b.sh", [('for f in veth bridge ens33 alert alert_eth; do\n    check "tcpdump $f: exit 0 on stop"',
+                               'for f in veth bridge ens33 alert; do\n    check "tcpdump $f: exit 0 on stop"')],
+      "I11 both alerts are listed as captures that must exit 0"),
++    # ---- 06B-4BR: snaplen cut vs damaged file vs malformed packet
++    ("TR1", "sigscan_l2.py", [('            if not ip.get("hdr_ok"):', '            if not ip.get("valid"):')],
++     "K2 NATed ICMP 1705 B cut at 512 (orig kept) -> icmp_size 1 from the IPv4 header"),
++    ("TR2", "sigscan_l2.py", [('            if not ip.get("hdr_ok"):\n                blind(ip.get("hdr_cut", False))',
++                               '            if not ip.get("hdr_ok"):\n                pass')],
++     "K7 IPv4 header cut by snaplen -> unscannable_truncated 1, no signature claimed"),
++    ("TR3", "sigscan_l2.py", [('                elif (DNS_PORT in (ip["sport"], ip["dport"]) and not ip["payload_complete"]):',
++                               '                elif False:')],
++     "K6 DNS payload cut before the name -> unscannable_truncated 1, not a silent 0"),
++    ("TR4", "l2frames.py", [('    if f.get("truncated"):\n        return "guest", "unmapped"', '    if False:\n        return "guest", "unmapped"')],
++     "K19 tap0: guest IPv4 cut by snaplen -> unmapped (not drop_public)"),
++    ("TR5", "l2frames.py", [('        if incl > orig:', '        if False:')],
++     "K16 pcap record with captured > original length -> read error"),
++    ("TR6", "l2frames.py", [('            if cap > orig:', '            if False:')],
++     "K17 pcapng EPB with captured > original length -> read error"),
++    ("TR7", "l2frames.py", [('body[20:20 + cap], orig))', 'body[20:20 + cap], cap))')],
++     "K3 same cut in pcapng (EPB original length) -> icmp_size 1, truncated_frames 1"),
++    ("TR8", "sigscan_l2.py", [('                    blind(ip.get("ports_cut", False))', '                    pass')],
++     "K8 TCP ports cut by snaplen -> unscannable_truncated 1"),
++    ("TR9", "l2frames.py", [('            ip["hdr_cut"] = wire >= 20', '            ip["hdr_cut"] = True')],
++     "K14 IPv4 header shorter than 20 B on the wire -> unscannable_undecoded 1"),
++    ("TR10", "run-06b3b.sh", [(' probe_qname unscannable_truncated unscannable_undecoded; do', ' probe_qname; do')],
++     "I6 run script checks every sigscan_l2 key except frames and truncated_frames (information)"),
++    ("TR11", "l2frames.py", [('        if f.get("truncated"):\n            return "worker", "unmapped"',
++                              '        if False:\n            return "worker", "unmapped"')],
++     "K22 tap0: worker frame cut by snaplen -> unmapped"),
++    ("TR12", "l2frames.py", [('        elif tot > wire:', '        elif tot > wire + 65536:')],
++     "K13 malformed (total length beyond the wire frame): header read, not counted as truncated"),
++    ("TR13", "sigscan_l2.py", [('            blind(f["truncated"])', '            blind(False)')],
++     "K9 Ethernet header cut by snaplen -> unscannable_truncated 1"),
+     # ---- controls
+     ("X1", "l2frames.py", [("THIS TEXT DOES NOT EXIST IN THE FILE", "x")], None),
+     ("X2", "l2frames.py", [("import struct\n", "import struct(\n")], None),

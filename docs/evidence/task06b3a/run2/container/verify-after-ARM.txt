@@ -1,0 +1,1 @@
+ISOLATION OK (06B-3A after ARM): ruleset,sysctl,link,neighbor,route

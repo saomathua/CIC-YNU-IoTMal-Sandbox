@@ -1,0 +1,332 @@
+{
+ "status": "COMPLETED",
+ "results": [
+  {
+   "arch": "ARM",
+   "test": "host leak monitor running and empty before boot",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "info: tshark version",
+   "ok": true,
+   "version": "TShark (Wireshark) 3.6.2 (fake)"
+  },
+  {
+   "arch": "ARM",
+   "test": "tshark capturing on tap0",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "guest booted and network configured",
+   "ok": true,
+   "qemu_pid": 4242
+  },
+  {
+   "arch": "ARM",
+   "test": "topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface",
+   "ok": true,
+   "problems": [],
+   "entries": [
+    [
+     "net0",
+     "nic",
+     [
+      "tap"
+     ]
+    ]
+   ],
+   "probe_iface": "eth1",
+   "probe_iface_mac": "52:54:00:c7:00:02"
+  },
+  {
+   "arch": "ARM",
+   "test": "info: guest network tools",
+   "ok": true,
+   "tools": [
+    "/bin/nslookup",
+    "/bin/nc",
+    "/bin/wget",
+    "/bin/ping",
+    "missing:arping"
+   ]
+  },
+  {
+   "arch": "ARM",
+   "test": "info: ARP suite (06B-4I): T14-A1/A2 live control, T14-A3/T15-S1 rule check",
+   "ok": true,
+   "tap_mac": "7a:93:2a:f1:47:47",
+   "probe_iface": "eth1",
+   "fixture_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "worker_eth0_mac": "02:42:c0:a8:3c:02",
+   "neigh_command": [
+    "ip",
+    "-j",
+    "neigh",
+    "show"
+   ],
+   "service_link_role": "guest-worker service link: precondition before the group and after every restored case, NOT a live control for the ARP targets"
+  },
+  {
+   "arch": "ARM",
+   "test": "capture liveness traffic from the worker before the ARP group (host captures; not a control for the ARP destinations)",
+   "ok": true,
+   "lan_dns_udp": {
+    "ts": 1791463541.6185527,
+    "ok": true,
+    "detail": "DNS response rcode=0 (fake)"
+   },
+   "manager_http": {
+    "ts": 1791463541.618562,
+    "ok": true,
+    "detail": "HTTP 200 (fake)"
+   }
+  },
+  {
+   "arch": "ARM",
+   "test": "allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out"
+  },
+  {
+   "arch": "ARM",
+   "test": "allowed service link after T14-A1 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out"
+  },
+  {
+   "arch": "ARM",
+   "test": "allowed service link after T14-A2 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out"
+  },
+  {
+   "arch": "ARM",
+   "test": "allowed service link after T14-A3 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out"
+  },
+  {
+   "arch": "ARM",
+   "test": "allowed service link after T15-S1 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out"
+  },
+  {
+   "arch": "ARM",
+   "test": "guest configuration restored after T14-A1 (re-read state equals the baseline)",
+   "ok": true,
+   "diffs": [],
+   "error": null,
+   "restore_commands": 1
+  },
+  {
+   "arch": "ARM",
+   "test": "guest configuration restored after T14-A2 (re-read state equals the baseline)",
+   "ok": true,
+   "diffs": [],
+   "error": null,
+   "restore_commands": 1
+  },
+  {
+   "arch": "ARM",
+   "test": "guest configuration restored after T14-A3 (re-read state equals the baseline)",
+   "ok": true,
+   "diffs": [],
+   "error": null,
+   "restore_commands": 1
+  },
+  {
+   "arch": "ARM",
+   "test": "guest configuration restored after T15-S1 (re-read state equals the baseline)",
+   "ok": true,
+   "diffs": [],
+   "error": null,
+   "restore_commands": 5
+  },
+  {
+   "arch": "ARM",
+   "test": "worker neighbour table read (ip -j neigh show) before and after every ARP case",
+   "ok": true,
+   "cases": [
+    "T14-A1",
+    "T14-A2",
+    "T14-A3",
+    "T15-S1"
+   ],
+   "errors": {}
+  },
+  {
+   "arch": "ARM",
+   "test": "tap0 MAC unchanged during the ARP group",
+   "ok": true,
+   "before": "7a:93:2a:f1:47:47",
+   "after": "7a:93:2a:f1:47:47"
+  },
+  {
+   "arch": "ARM",
+   "test": "all four ARP cases recorded exactly once with captures alive",
+   "ok": true,
+   "planned": [
+    "T14-A1",
+    "T14-A2",
+    "T14-A3",
+    "T15-S1"
+   ],
+   "recorded": [
+    "T14-A1",
+    "T14-A2",
+    "T14-A3",
+    "T15-S1"
+   ],
+   "not_run": [],
+   "skipped": null
+  },
+  {
+   "arch": "ARM",
+   "test": "capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations)",
+   "ok": true,
+   "lan_dns_udp": {
+    "ts": 1791463549.1706824,
+    "ok": true,
+    "detail": "DNS response rcode=0 (fake)"
+   },
+   "manager_http": {
+    "ts": 1791463549.1706905,
+    "ok": true,
+    "detail": "HTTP 200 (fake)"
+   }
+  },
+  {
+   "arch": "ARM",
+   "test": "QEMU exit confirmed",
+   "ok": true,
+   "exitstatus": 0
+  },
+  {
+   "arch": "ARM",
+   "test": "tap0 capture stopped cleanly",
+   "ok": true,
+   "returncode": 0
+  },
+  {
+   "arch": "ARM",
+   "test": "tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
+   "ok": true,
+   "verdict": "\u0110\u1ea0T",
+   "reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets",
+   "stats": {
+    "interfaces": 1,
+    "epb": {
+     "0": 13
+    },
+    "isb": {
+     "0": {
+      "isb_ifrecv": 13,
+      "isb_ifdrop": 0
+     }
+    }
+   },
+   "tshark_stderr_tail": ""
+  },
+  {
+   "arch": "ARM",
+   "test": "fixture, marker and temporary guest disk removed",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash",
+   "ok": true,
+   "problems": [],
+   "group_exit": 0
+  },
+  {
+   "arch": "ARM",
+   "test": "probe T14-A1 (arp, live control) -> \u0110\u1ea0T",
+   "ok": true,
+   "category": "DAT",
+   "evidence_kind": "live_control",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "failure_evidence": [],
+   "measurement_errors": [],
+   "execution_problems": [],
+   "not_started": false,
+   "not_run": false,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "ARM",
+   "test": "probe T14-A2 (arp, live control) -> \u0110\u1ea0T",
+   "ok": true,
+   "category": "DAT",
+   "evidence_kind": "live_control",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "failure_evidence": [],
+   "measurement_errors": [],
+   "execution_problems": [],
+   "not_started": false,
+   "not_run": false,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "ARM",
+   "test": "probe T14-A3 (arp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "failure_evidence": [],
+   "measurement_errors": [],
+   "execution_problems": [],
+   "not_started": false,
+   "not_run": false,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "ARM",
+   "test": "probe T15-S1 (arp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 4,
+   "probe_frames_certain": 4,
+   "failure_evidence": [],
+   "measurement_errors": [],
+   "execution_problems": [],
+   "not_started": false,
+   "not_run": false,
+   "reconciliation": "PASS"
+  }
+ ],
+ "probes": []
+}

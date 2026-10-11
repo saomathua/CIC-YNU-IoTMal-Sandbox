@@ -1,0 +1,7 @@
+echo @@B5; for i in /sys/class/net/*; do echo $(basename $i) $(c
+at $i/address); done; echo @@E5 rc=$?
+@@B5
+br-lan 52:54:00:12:34:56
+eth0 52:54:00:12:34:56
+eth1 52:54:00:c7:00:02
+lo 00:00:00:00:00:00

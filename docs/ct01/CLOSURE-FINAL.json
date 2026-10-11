@@ -1,0 +1,1900 @@
+{
+ "status": "ĐẠT — hoàn tất theo phạm vi nghiệm thu đã duyệt; reviewer chốt 2026-10-11",
+ "acceptance": {
+  "review_md_sha256": "6da3f67bb3bb94649ce67429369bd21cc65ca69de663f5f7623ca914dd47914d",
+  "review_zip_sha256": "7a9ee8d7ef219faccf57dab4b8ffd69027ebf862034a2d50942beeebc85e6b6f",
+  "scope_decision_sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+  "user_quote_verbatim": "chấp nhận phạm vi",
+  "scope_mapping_is_reviewer_interpretation": true
+ },
+ "rows": [
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT về mạng (3G internet-tcp ARM+MIPS); FAIL 06B-3D giữ lịch sử",
+   "scope": "tcp 1.1.1.1:443, đối chứng cùng IP/giao thức/cổng sống; TCP443 là phép thử của T05a, không phải T05b",
+   "reviews": [
+    "REV-matrix",
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    },
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T05a"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ARM+MIPS (ca T05-DNS-8888: UDP DNS 8.8.8.8:53 + đối chứng sống cùng IP/giao thức/cổng; pcap B1: UDP, ARM 8 / MIPS 48 khung)",
+   "scope": "UDP DNS 8.8.8.8:53. Không phải TCP443 (đó là T05a). Guard 20 ms không đo",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    },
+    {
+     "path": "ct01-b1-r13n11-t1617r4-results.zip",
+     "arch": "ARM+MIPS",
+     "what": "B1 R13N11 results package",
+     "exists": true,
+     "sha256": "c423d9fd7591a61961df55931b32cd225a99335af48392fd48afb09009dc2863",
+     "bytes": 67710755
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T05b"
+  },
+  {
+   "cls": "coverage",
+   "label": "CHƯA KIỂM — bổ sung, không là gate",
+   "scope": "ICMP công cộng không có trong ma trận thiết kế",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T05c"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT TCP53 (UDP53 phủ bổ sung) ARM+MIPS",
+   "scope": "192.168.177.2:53 tcp/udp; đối chứng TCP connect/DNS từ W cùng IP/giao thức/cổng",
+   "reviews": [
+    "REV-matrix"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    }
+   },
+   "id": "T06a"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ARM+MIPS (T06-ICMP-LANDNS + đối chứng ICMP cùng IP)",
+   "scope": "ICMP 192.168.177.2",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T06b"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT kiểm quy tắc (D6) ARM+MIPS (T06-TCP-LAN2)",
+   "scope": "TCP LAN2; không listener sống/đối chứng sống",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T06c"
+  },
+  {
+   "cls": "mandatory (phạm vi mạng đã chốt)",
+   "label": "ĐẠT về mạng: ARM 3/3 + MIPS 2/3 trực tiếp + ssh-host-192.168.60.1 MIPS dẫn xuất H0 (3G UNVERIFIED giữ lịch sử); log ssh bổ sung KHÔNG đo",
+   "scope": "tcp 192.168.60.1:22 / 192.168.177.128:22 / 172.18.0.1:22; đối chứng tương ứng. Phạm vi mạng do người dùng chấp nhận 13:32:02+07 (\"chấp nhận phạm vi\")",
+   "reviews": [
+    "REV-matrix",
+    "SCOPE-DECISION",
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    },
+    "SCOPE-DECISION": {
+     "path": "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json",
+     "exists": true,
+     "sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+     "bytes": 852
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T07"
+  },
+  {
+   "cls": "mandatory (phạm vi mạng đã chốt)",
+   "label": "ĐẠT về mạng ARM+MIPS; log manager bổ sung KHÔNG đo",
+   "scope": "tcp 192.168.60.10:8011; đối chứng worker health/ctl",
+   "reviews": [
+    "REV-matrix",
+    "SCOPE-DECISION",
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    },
+    "SCOPE-DECISION": {
+     "path": "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json",
+     "exists": true,
+     "sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+     "bytes": 852
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T08"
+  },
+  {
+   "cls": "mandatory (phạm vi mạng đã chốt)",
+   "label": "ĐẠT cách ly TCP27017 ARM+MIPS với control TCP connect từ dbnet; KHÔNG claim M /status hay mongosh ping",
+   "scope": "tcp 172.18.0.2:27017",
+   "reviews": [
+    "REV-matrix",
+    "SCOPE-DECISION",
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    },
+    "SCOPE-DECISION": {
+     "path": "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json",
+     "exists": true,
+     "sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+     "bytes": 852
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T09"
+  },
+  {
+   "cls": "mandatory (phạm vi mạng đã chốt)",
+   "label": "ĐẠT tổng hợp: network proof 3G (ARM+MIPS) + T19 chứng minh nguồn M→worker 200 ở lượt riêng; T19 KHÔNG là control đồng thời của probe guest cũ",
+   "scope": "tcp 192.168.60.2:8011",
+   "reviews": [
+    "REV-matrix",
+    "SCOPE-DECISION",
+    "REV-FINAL",
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    },
+    {
+     "path": "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256",
+     "arch": "ARM+MIPS",
+     "what": "T19 manager→worker 200 (nguồn M)",
+     "exists": true,
+     "sha256": "172051249fa4a02bb7451af7f768e1702ad73a867bc0e4b640383744db476b7b",
+     "bytes": 13850
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    },
+    "SCOPE-DECISION": {
+     "path": "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json",
+     "exists": true,
+     "sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+     "bytes": 852
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    },
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "T10"
+  },
+  {
+   "cls": "extra probe (không thay T11b/c)",
+   "label": "ĐẠT listener 10.200.0.1:18080 ARM+MIPS",
+   "scope": "tcp 10.200.0.1:18080 listener tạm đối chứng",
+   "reviews": [
+    "REV-matrix"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3G summary",
+     "exists": true,
+     "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+     "bytes": 21179
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+     "arch": "ARM",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+     "bytes": 25918
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+     "arch": "MIPS",
+     "what": "3G matrix",
+     "exists": true,
+     "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+     "bytes": 26357
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3B summary",
+     "exists": true,
+     "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+     "bytes": 18084
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    }
+   },
+   "id": "T11a"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT kiểm quy tắc (D6) ARM+MIPS (TCP22, TCP80)",
+   "scope": "tcp 10.200.0.1:22/80; không đối chứng sống",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T11b"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT kiểm quy tắc (D6) ARM+MIPS (ICMP→10.200.0.1)",
+   "scope": "ICMP 10.200.0.1",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T11c"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT kiểm quy tắc B1/B2/B4 ARM+MIPS; host capture OPEN (received−captured=8) vẫn mở, không là bằng chứng host hoàn chỉnh",
+   "scope": "ICMP echo tới 255.255.255.255 / 224.0.0.1 / 10.200.0.3; delta = số khung pcap",
+   "reviews": [
+    "REV-matrix"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/ARM/icmp-eval.json",
+     "arch": "ARM",
+     "what": "06B-4G ICMP evaluator",
+     "exists": true,
+     "sha256": "93641b6232c5809bdfec1677b8f60c7f3701e1eb5e1bbeb1b095b4a8852dd078",
+     "bytes": 16190
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/MIPS/icmp-eval.json",
+     "arch": "MIPS",
+     "what": "06B-4G ICMP evaluator",
+     "exists": true,
+     "sha256": "b0858052b381aaf4ab3f468ae677aa146865f0ce7967422eb4e503cdc07677b9",
+     "bytes": 15953
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-4G summary",
+     "exists": true,
+     "sha256": "3c0ae22e076b4ede942ce6ad2377bad6535adf1995ddbfd9bca26cda51bee80b",
+     "bytes": 15756
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    }
+   },
+   "id": "T12"
+  },
+  {
+   "cls": "coverage",
+   "label": "CHƯA KIỂM — bổ sung, không là gate",
+   "scope": "UDP53 → 224.0.0.251",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T12-B3"
+  },
+  {
+   "cls": "mandatory",
+   "label": "Giữ nhãn gốc 4G: I2 ĐẠT cả hai; I1 MIPS ĐẠT; I1 ARM UNVERIFIED (lịch sử), đối chiếu dẫn xuất H0 PASS ghi riêng",
+   "scope": "ICMPv6 NS/echo tới fe80; host capture OPEN giữ",
+   "reviews": [
+    "REV-matrix"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/ARM/icmp-eval.json",
+     "arch": "ARM",
+     "what": "06B-4G ICMP evaluator",
+     "exists": true,
+     "sha256": "93641b6232c5809bdfec1677b8f60c7f3701e1eb5e1bbeb1b095b4a8852dd078",
+     "bytes": 16190
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/MIPS/icmp-eval.json",
+     "arch": "MIPS",
+     "what": "06B-4G ICMP evaluator",
+     "exists": true,
+     "sha256": "b0858052b381aaf4ab3f468ae677aa146865f0ce7967422eb4e503cdc07677b9",
+     "bytes": 15953
+    }
+   ],
+   "review_files": {
+    "REV-matrix": {
+     "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+     "bytes": 15158
+    }
+   },
+   "id": "T13"
+  },
+  {
+   "cls": "coverage",
+   "label": "CHƯA KIỂM — bổ sung, không là gate",
+   "scope": "curl6/NS EUI-64",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T13-I3"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT A1/A2/A3 ARM+MIPS (A1/A2 đối chứng sống; A3 kiểm quy tắc)",
+   "scope": "ARP request kernel guest",
+   "reviews": [
+    "REV-R10"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/ARM/arp-eval.json",
+     "arch": "ARM",
+     "what": "R10 ARP evaluator",
+     "exists": true,
+     "sha256": "8fc76d7c28a30bf71e92bdf907e5a6ec0ebfd2dc55680ea69c6e9ec7d081096d",
+     "bytes": 16224
+    },
+    {
+     "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/MIPS/arp-eval.json",
+     "arch": "MIPS",
+     "what": "R10 ARP evaluator",
+     "exists": true,
+     "sha256": "83904201d3215c0d745351aa0dc44517fb294d14d621a9013e836bca6c85c538",
+     "bytes": 15386
+    },
+    {
+     "path": "ct01-arp-yhwff6_v-independent-review/outputs/ANALYSIS.json",
+     "arch": "ARM+MIPS",
+     "what": "reviewer analysis",
+     "exists": true,
+     "sha256": "9625aa0d00ba53fe34390759fa2f8f1315e3c2d7dec11d86415511419cff6a16",
+     "bytes": 76236
+    }
+   ],
+   "review_files": {
+    "REV-R10": {
+     "path": "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "f847a818fd1f93f7ecaf8321309056c965bebd72f350e977f809c6af0f2b3707",
+     "bytes": 12343
+    }
+   },
+   "id": "T14"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT S1 (kiểm quy tắc) ARM+MIPS",
+   "scope": "gratuitous ARP request; neighbor trước/sau",
+   "reviews": [
+    "REV-R10"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/ARM/arp-eval.json",
+     "arch": "ARM",
+     "what": "R10 ARP evaluator",
+     "exists": true,
+     "sha256": "8fc76d7c28a30bf71e92bdf907e5a6ec0ebfd2dc55680ea69c6e9ec7d081096d",
+     "bytes": 16224
+    },
+    {
+     "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/MIPS/arp-eval.json",
+     "arch": "MIPS",
+     "what": "R10 ARP evaluator",
+     "exists": true,
+     "sha256": "83904201d3215c0d745351aa0dc44517fb294d14d621a9013e836bca6c85c538",
+     "bytes": 15386
+    }
+   ],
+   "review_files": {
+    "REV-R10": {
+     "path": "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "f847a818fd1f93f7ecaf8321309056c965bebd72f350e977f809c6af0f2b3707",
+     "bytes": 12343
+    }
+   },
+   "id": "T15-1"
+  },
+  {
+   "cls": "postponed",
+   "label": "HOÃN ĐÃ DUYỆT (D1)",
+   "scope": "reply giả/htype/hlen/plen tùy ý",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T15-2"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT T16-M1 ARM (6 khung) + MIPS (3 khung); restore True (R7, reviewer chấp nhận)",
+   "scope": "MAC giả 52:54:00:de:ad:01, service link tới 10.200.0.1:8011; TAP_MAC giả hoãn (D5)",
+   "reviews": [
+    "REV-T17R7",
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/spoof-eval.json",
+     "arch": "ARM",
+     "what": "R7 spoof evaluator",
+     "exists": true,
+     "sha256": "2fc5216c812effbf936bae4f7f91481930c76a58c5107b5de606d7fde8a30b98",
+     "bytes": 25503
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/spoof-eval.json",
+     "arch": "MIPS",
+     "what": "R7 spoof evaluator",
+     "exists": true,
+     "sha256": "98c712b8ec7d5883f4aded6d52a05d04635cb4bc0ba791e102c6c4cff10b920d",
+     "bytes": 25127
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/tap0.pcapng",
+     "arch": "ARM",
+     "what": "R7 tap0 pcap",
+     "exists": true,
+     "sha256": "4d6fcfceda1e518a2fc559062b63d6c2682def39605dff750570b2679ef438c4",
+     "bytes": 35264
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/tap0.pcapng",
+     "arch": "MIPS",
+     "what": "R7 tap0 pcap",
+     "exists": true,
+     "sha256": "0234c250593a719ba9a8eb2d7ec9b3565413147add764601ee9d8615388f8c47",
+     "bytes": 34272
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/APPROVAL-RECORD.json",
+     "arch": "ARM+MIPS",
+     "what": "R7 approval (verbatim user quote)",
+     "exists": true,
+     "sha256": "190993c17797d48a2662ddc96a106ffab1a7670289ba5848c95066febb0c230f",
+     "bytes": 2621
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/launch-receipt.json",
+     "arch": "ARM+MIPS",
+     "what": "R7 launch receipt",
+     "exists": true,
+     "sha256": "9b6da47a21c8f08e5df740b7e0b85398b44a7569a92ceedd647460eb4fa134fe",
+     "bytes": 4758
+    }
+   ],
+   "review_files": {
+    "REV-T17R7": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-t17r7-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "b977ea0b8625829798d3835af7f8a6b6de0d1dae094636b20d7dd6d5592347f9",
+     "bytes": 31586
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T16"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT P1 (mandatory) + P2/P4/P5 (coverage) ARM+MIPS với nguồn giả trên dây (R7); `.5/32` là biến thể của `.3`; R6 ARM P1/P4 KHONG_TAO_DUOC_GOI và R4 FAILED giữ lịch sử",
+   "scope": "P1 10.200.0.5→10.200.0.1:8011; P2 192.168.60.10→10.200.0.1:8011; P4 10.200.0.5→1.1.1.1:443; P5 ICMP 192.168.60.10→192.168.60.1; P3 hoãn; không chứng nhận `.3`",
+   "reviews": [
+    "REV-T17R7",
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/spoof-eval.json",
+     "arch": "ARM",
+     "what": "R7 spoof evaluator",
+     "exists": true,
+     "sha256": "2fc5216c812effbf936bae4f7f91481930c76a58c5107b5de606d7fde8a30b98",
+     "bytes": 25503
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/spoof-eval.json",
+     "arch": "MIPS",
+     "what": "R7 spoof evaluator",
+     "exists": true,
+     "sha256": "98c712b8ec7d5883f4aded6d52a05d04635cb4bc0ba791e102c6c4cff10b920d",
+     "bytes": 25127
+    },
+    {
+     "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/hostcap/drain-result.json",
+     "arch": "ARM+MIPS",
+     "what": "R7 drain PASS",
+     "exists": true,
+     "sha256": "598187fb4c88b48c3791fdeef97fdc29c19622ee451930becf9b41834e6cef92",
+     "bytes": 41936
+    },
+    {
+     "path": "ct01-t1617-r6-run-prep/run/ct01-arp-evidence-export.1hqd8d7n/stage/harness/out/container/probe/ARM/spoof-eval.json",
+     "arch": "ARM",
+     "what": "R6 (P1/P4 KHONG_TAO_DUOC_GOI, lịch sử)",
+     "exists": true,
+     "sha256": "b3db2db69f237b067ed7a4bcf94f9d1b581530b9527802829df5956ed7aaa7d7",
+     "bytes": 25668
+    }
+   ],
+   "review_files": {
+    "REV-T17R7": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-t17r7-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "b977ea0b8625829798d3835af7f8a6b6de0d1dae094636b20d7dd6d5592347f9",
+     "bytes": 31586
+    },
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T17"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ARM+MIPS: poller thật nhận tác vụ, PROCESSING→COMPLETED",
+   "scope": "fixture busybox vô hại, worker ct01-flow-worker",
+   "reviews": [
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256",
+     "arch": "ARM+MIPS",
+     "what": "flow success #3 run manifest",
+     "exists": true,
+     "sha256": "172051249fa4a02bb7451af7f768e1702ad73a867bc0e4b640383744db476b7b",
+     "bytes": 13850
+    },
+    {
+     "path": "ct01-flow-and-t17r5-package.zip",
+     "arch": "ARM+MIPS",
+     "what": "flow package",
+     "exists": true,
+     "sha256": "e2a176460f5edb0221ec7147cac449000233783004878d6b6d61d3893b92f20e",
+     "bytes": 34869014
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "T18"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT: container manager → worker 192.168.60.2:8011/healthcheck 200 (worker rảnh)",
+   "scope": "không nói về worker bận",
+   "reviews": [
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256",
+     "arch": "ARM+MIPS",
+     "what": "flow success #3 run manifest",
+     "exists": true,
+     "sha256": "172051249fa4a02bb7451af7f768e1702ad73a867bc0e4b640383744db476b7b",
+     "bytes": 13850
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "T19"
+  },
+  {
+   "cls": "mandatory",
+   "label": "core N4/N5 ĐẠT lookup; N1–N3 coverage ĐẠT (N2-TCP22 banner sống; còn lại kiểm quy tắc)",
+   "scope": "N4/N5 chỉ tra route; N6 không chạy",
+   "reviews": [
+    "REV-B1-R13N11+T1617R4"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+     "arch": "ARM",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+     "bytes": 37098
+    },
+    {
+     "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+     "arch": "MIPS",
+     "what": "B1 R13N11 evaluator verdicts",
+     "exists": true,
+     "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+     "bytes": 37273
+    }
+   ],
+   "review_files": {
+    "REV-B1-R13N11+T1617R4": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+     "exists": true,
+     "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+     "bytes": 26717
+    }
+   },
+   "id": "T20"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT invariant bắt buộc trong lượt R10 đã review (không là toàn host bất biến; lsmod đổi không là gate). Compose thật đã chạy ở F5/T21b R3 (lượt riêng, scope riêng); câu 'Compose chưa từng chạy' là lịch sử R10",
+   "scope": "host trước/sau; harness R10 dùng container privileged riêng",
+   "reviews": [
+    "REV-R10",
+    "REV-FLOW-R6"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/export-result.json",
+     "arch": "ARM+MIPS",
+     "what": "R10 export",
+     "exists": true,
+     "sha256": "b102baa83ae359fe247a26cfb2bf3d50e3ce254b0c294c11e242c69369edbf0e",
+     "bytes": 54960
+    },
+    {
+     "path": "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md",
+     "arch": "ARM+MIPS",
+     "what": "R10 review",
+     "exists": true,
+     "sha256": "f847a818fd1f93f7ecaf8321309056c965bebd72f350e977f809c6af0f2b3707",
+     "bytes": 12343
+    },
+    {
+     "path": "ct01-flow-r3-f5-run-20261011T041311Z/MANIFEST-SHA256",
+     "arch": "worker Compose",
+     "what": "F5 R3 (Compose service thật; lượt riêng)",
+     "exists": true,
+     "sha256": "2afdce1628d44f78c10e30833c4332abe4dce77e28c3fa5e2fbafadcbc24e6b9",
+     "bytes": 13740
+    }
+   ],
+   "review_files": {
+    "REV-R10": {
+     "path": "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md",
+     "exists": true,
+     "sha256": "f847a818fd1f93f7ecaf8321309056c965bebd72f350e977f809c6af0f2b3707",
+     "bytes": 12343
+    },
+    "REV-FLOW-R6": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-r6-independent-review.zip",
+     "exists": true,
+     "sha256": "279a56eaf65bd33e4c46e210382ef13a989d13aecccfbfe7ba345496163a66c4",
+     "bytes": 32113
+    }
+   },
+   "id": "T21a"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT T21B_TWO_SIDED_HELD (15/15) trong cửa sổ startup/restart worker rảnh của lượt F5 R4; R2 NOT_MET giữ lịch sử",
+   "scope": "một phiên SSH, ngưỡng 3 s; không mọi phiên, không T21a. Thu hồi sudo là thông tin operator",
+   "reviews": [
+    "REV-FINAL"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-t21b-r3-final.zip",
+     "arch": "n/a (phiên SSH)",
+     "what": "T21b R3 final package",
+     "exists": true,
+     "sha256": "ed08f5d881c13870aab313e00df2359a58e071eaf098b1ce5c5a49e1623e7516",
+     "bytes": 128056
+    },
+    {
+     "path": "t21b-client-t21b-r3-20261011a.log",
+     "arch": "n/a",
+     "what": "client log gốc",
+     "exists": true,
+     "sha256": "aa0cdedd3918a62149d284e805c3144dde738c07dfa81ae8f8fe8b576a134fdf",
+     "bytes": 43304
+    },
+    {
+     "path": "ct01-t21b-run-t21b-r3-20261011a/heartbeat-t21b-r3-20261011a.log",
+     "arch": "n/a",
+     "what": "server heartbeat log",
+     "exists": true,
+     "sha256": "3584c6804646f048d945aa108bebccc965aaa3d12c9a3aae2f40749212672108",
+     "bytes": 30130
+    },
+    {
+     "path": "ct01-flow-r4-f5-run-20261011T060519Z/MANIFEST-SHA256",
+     "arch": "worker Compose",
+     "what": "lane F5 R4",
+     "exists": true,
+     "sha256": "eab2dc07e694c534582719ad429cab2b3921a22e477942f55e97e3e63514e252",
+     "bytes": 13740
+    }
+   ],
+   "review_files": {
+    "REV-FINAL": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+     "exists": true,
+     "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+     "bytes": 30737
+    }
+   },
+   "id": "T21b"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT nhánh syntax ở V0 (guest.nft lỗi → exit 1)",
+   "scope": "không mở thành mọi nhánh V0",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar-summary.md",
+     "arch": "worker image",
+     "what": "06B-2AR summary",
+     "exists": true,
+     "sha256": "20b55a6a1145e02be0cf4e98335e033e17bdbc9c84c5e519b902dc9e10c41e28",
+     "bytes": 8118
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar/run.log",
+     "arch": "worker image",
+     "what": "06B-2AR run.log",
+     "exists": true,
+     "sha256": "cacc7cb5680c5474351d20a3de4c97944268507277154179c6b4a528696cedd8",
+     "bytes": 8985
+    }
+   ],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "F1a"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT theo PATH-resolution (nft không resolve qua PATH hạn chế; exit 127)",
+   "scope": "không chứng minh image thiếu binary; manager /status không đo",
+   "reviews": [
+    "REV-V0-R6"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-v0-runtime-r6-run-20261010T165222Z/verdicts.json",
+     "arch": "worker image",
+     "what": "V0 R6 verdicts",
+     "exists": true,
+     "sha256": "568d5c52247ddc156230c61d77fc547fa075720112d1c99f832df183f2736ede",
+     "bytes": 29769
+    },
+    {
+     "path": "ct01-v0-runtime-r6-run-20261010T165222Z/EXPORT-RECEIPT.json",
+     "arch": "worker image",
+     "what": "V0 R6 receipt",
+     "exists": true,
+     "sha256": "4147722c3621f7aad08c43dd8e357e5edf1b12bacc6b8f03a775ca6cb619dec1",
+     "bytes": 1188
+    },
+    {
+     "path": "ct01-v0-runtime-final-evidence.zip",
+     "arch": "worker image",
+     "what": "V0 final evidence",
+     "exists": true,
+     "sha256": "556b7a088dd6dee83f7f2dfd835364258f23532b2aa2d0907ee5ee17b098e511",
+     "bytes": 536567
+    }
+   ],
+   "review_files": {
+    "REV-V0-R6": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-v0-r6-independent-review.zip",
+     "exists": true,
+     "sha256": "a76e57fe621e2761d0b75ef371fb58da724c4cd52b592f9b58f5a00a981ba732",
+     "bytes": 9504
+    }
+   },
+   "id": "F1b"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ở V0 (ALLOW_VM_INTERNET=true → exit 1)",
+   "scope": "raw FATAL + exit 1",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar-summary.md",
+     "arch": "worker image",
+     "what": "06B-2AR summary",
+     "exists": true,
+     "sha256": "20b55a6a1145e02be0cf4e98335e033e17bdbc9c84c5e519b902dc9e10c41e28",
+     "bytes": 8118
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar/run.log",
+     "arch": "worker image",
+     "what": "06B-2AR run.log",
+     "exists": true,
+     "sha256": "cacc7cb5680c5474351d20a3de4c97944268507277154179c6b4a528696cedd8",
+     "bytes": 8985
+    }
+   ],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "F2"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ARM (xóa bảng khi worker rảnh → FAILED lý do V1, không QEMU)",
+   "scope": "một loại fault; MIPS/biến thể chưa đo",
+   "reviews": [
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r1-f3-run-20261011T031907Z/MANIFEST-SHA256",
+     "arch": "ARM",
+     "what": "flow F3 run manifest",
+     "exists": true,
+     "sha256": "b51c70640392be56ab855d2dca9f72384b6b93d75bde05a76c2a0c9b037868f2",
+     "bytes": 11848
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "F3"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT ARM (xóa khi phase 1 → V2, phase 2 không bắt đầu)",
+   "scope": "như F3",
+   "reviews": [
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r1-f4-run-20261011T031923Z/MANIFEST-SHA256",
+     "arch": "ARM",
+     "what": "flow F4 run manifest",
+     "exists": true,
+     "sha256": "cfb6e32436a53454f59bcc0a26f2841bad11f2775e714fc02deb90529db54b0e",
+     "bytes": 11935
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "F4"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT startup/restart worker Compose rảnh (A14: sandbox mới, V0×2); R2 53/54 giữ lịch sử",
+   "scope": "không chứng minh tác vụ đang chạy sống qua restart",
+   "reviews": [
+    "REV-FLOW-R6"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r3-f5-run-20261011T041311Z/MANIFEST-SHA256",
+     "arch": "worker Compose",
+     "what": "F5 R3 run manifest",
+     "exists": true,
+     "sha256": "2afdce1628d44f78c10e30833c4332abe4dce77e28c3fa5e2fbafadcbc24e6b9",
+     "bytes": 13740
+    },
+    {
+     "path": "ct01-flow-r3-f5-run-20261011T041311Z.export-receipt.json",
+     "arch": "worker Compose",
+     "what": "F5 R3 receipt",
+     "exists": true,
+     "sha256": "b3c89cc0be749daf4f221e37bd6f77e566b2017541d0f35c69541a3e89070356",
+     "bytes": 806
+    },
+    {
+     "path": "ct01-flow-r2-f5-run-20261011T040725Z/MANIFEST-SHA256",
+     "arch": "worker Compose",
+     "what": "F5 R2 (53/54, lịch sử)",
+     "exists": true,
+     "sha256": "c5fc6c693381961e0784b80a5f6663dc30463d1bd6cac848a2ee821d55027b2c",
+     "bytes": 13740
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-R6": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-r6-independent-review.zip",
+     "exists": true,
+     "sha256": "279a56eaf65bd33e4c46e210382ef13a989d13aecccfbfe7ba345496163a66c4",
+     "bytes": 32113
+    }
+   },
+   "id": "F5"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT runtime (V0 từ chối khác biệt cấu trúc, exit 1, không sentinel)",
+   "scope": "V0, không V1",
+   "reviews": [
+    "REV-V0-R6"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-v0-runtime-r6-run-20261010T165222Z/f6-v0-diff.json",
+     "arch": "worker image",
+     "what": "V0 R6 F6 diff",
+     "exists": true,
+     "sha256": "017b50293293ca8c240c04bcb33f3c76be7090953a741ed9ab5105f3256143fc",
+     "bytes": 1217
+    },
+    {
+     "path": "ct01-v0-runtime-r6-run-20261010T165222Z/verdicts.json",
+     "arch": "worker image",
+     "what": "V0 R6 verdicts",
+     "exists": true,
+     "sha256": "568d5c52247ddc156230c61d77fc547fa075720112d1c99f832df183f2736ede",
+     "bytes": 29769
+    }
+   ],
+   "review_files": {
+    "REV-V0-R6": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-v0-r6-independent-review.zip",
+     "exists": true,
+     "sha256": "a76e57fe621e2761d0b75ef371fb58da724c4cd52b592f9b58f5a00a981ba732",
+     "bytes": 9504
+    }
+   },
+   "id": "F6"
+  },
+  {
+   "cls": "mandatory",
+   "label": "ĐẠT riêng download/upload qua guest ARM/MIPS (3A, 37/37)",
+   "scope": "không đồng nghĩa đã qua poller/phase1/phase2 thật",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3a-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3A summary",
+     "exists": true,
+     "sha256": "280a7af45fc61ec99dde38d422fc812b1f5f58e9aa7acb200821a2fd4938f042",
+     "bytes": 9399
+    }
+   ],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T01/T02-harness"
+  },
+  {
+   "cls": "mandatory (scope tổng hợp đã chấp nhận)",
+   "label": "Giữ scope tổng hợp hai cấp evidence (peer TCP mô phỏng nguồn 2B + route từ guest 3A)",
+   "scope": "T04 là ba route allowlist khi không current_task; không từng route từ cả hai guest",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3a-summary.md",
+     "arch": "ARM+MIPS",
+     "what": "06B-3A summary",
+     "exists": true,
+     "sha256": "280a7af45fc61ec99dde38d422fc812b1f5f58e9aa7acb200821a2fd4938f042",
+     "bytes": 9399
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2b-summary.md",
+     "arch": "worker",
+     "what": "06B-2B summary",
+     "exists": true,
+     "sha256": "4b4c843104475d1635f9f14f8f0019849540ab75c408fc0accb918b4db9c8fd4",
+     "bytes": 7369
+    },
+    {
+     "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2br-summary.md",
+     "arch": "worker",
+     "what": "06B-2BR summary",
+     "exists": true,
+     "sha256": "8ab763b384a90ec184f2f90ea480537bb96961a04f5c211e38ce4c05f41204a6",
+     "bytes": 5123
+    }
+   ],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "T03/T04"
+  },
+  {
+   "cls": "mandatory",
+   "label": "T01/T02-runtime ĐẠT ARM+MIPS; A7/A11/A15 chỉ checkpoint verifier rc 0 trong worker (không claim timing guard 20 ms)",
+   "scope": "không hash strace/sar riêng trong guest trước upload; fixture vô hại",
+   "reviews": [
+    "REV-FLOW-T17R5"
+   ],
+   "evidence": [
+    {
+     "path": "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256",
+     "arch": "ARM+MIPS",
+     "what": "flow success #3 run manifest",
+     "exists": true,
+     "sha256": "172051249fa4a02bb7451af7f768e1702ad73a867bc0e4b640383744db476b7b",
+     "bytes": 13850
+    },
+    {
+     "path": "ct01-flow-and-t17r5-package.zip",
+     "arch": "ARM+MIPS",
+     "what": "flow package",
+     "exists": true,
+     "sha256": "e2a176460f5edb0221ec7147cac449000233783004878d6b6d61d3893b92f20e",
+     "bytes": 34869014
+    }
+   ],
+   "review_files": {
+    "REV-FLOW-T17R5": {
+     "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+     "exists": true,
+     "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+     "bytes": 32523
+    }
+   },
+   "id": "T01/T02-runtime; A7/A11/A15"
+  },
+  {
+   "cls": "postponed",
+   "label": "HOÃN — không mở scope (P3, TAP_MAC giả, N6, v.v.)",
+   "scope": "giữ đúng quyết định",
+   "reviews": [
+    "MATRIX-CORRECTED"
+   ],
+   "evidence": [],
+   "review_files": {
+    "MATRIX-CORRECTED": {
+     "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+     "exists": true,
+     "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+     "bytes": 22847
+    }
+   },
+   "id": "D1/D3/D4/D5 + ngoài06B"
+  }
+ ],
+ "index": {
+  "files": {
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g-summary.md",
+    "exists": true,
+    "sha256": "fd3e4d892dc34599ca9bf36856fa7520ee7604aaeb6bc348e1dc77931724931f",
+    "bytes": 21179
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/ARM/matrix.json",
+    "exists": true,
+    "sha256": "26f030a666bd1ddf723462e93482cd5a7eda256f2edc51413713a89e46871b54",
+    "bytes": 25918
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/container/probe/MIPS/matrix.json",
+    "exists": true,
+    "sha256": "2e21b88d1e8acae8f374f1a744602d75dbec175a2cc9061ce341cc229ce0757b",
+    "bytes": 26357
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b-summary.md",
+    "exists": true,
+    "sha256": "f7004f2ccfcfccabb1033cb4cfd05d68ac26f30a7c2b144c7669df9ed35f733f",
+    "bytes": 18084
+   },
+   "ct01-acceptance-matrix-independent-review/outputs/REPORT.md": {
+    "path": "ct01-acceptance-matrix-independent-review/outputs/REPORT.md",
+    "exists": true,
+    "sha256": "fed1c94b2d4132c2161eb683feba18a41f5f38fd7ee0fddb2699b7ccc44b59f3",
+    "bytes": 15158
+   },
+   "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json": {
+    "path": "ct01-acceptance-matrix-corrected/MATRIX-CORRECTED.json",
+    "exists": true,
+    "sha256": "21324e66f9417caa284e70f11e860957c5733d996a729c01c0bbeffa78975118",
+    "bytes": 22847
+   },
+   "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json": {
+    "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/ARM/b1-eval.json",
+    "exists": true,
+    "sha256": "f8cb05935744322fbcb48bd2a35bc40f9732e666647111acdb299153a55b3014",
+    "bytes": 37098
+   },
+   "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json": {
+    "path": "ct01-b1probes-r13n11-ops-run-prep2/run/ct01-arp-evidence-export.kyjjou3b/stage/harness/out/container/probe/MIPS/b1-eval.json",
+    "exists": true,
+    "sha256": "7bcc8d40a32511785b789fac4e2c59c1b1b83f73a333c6d6bf1b2ada857afc3a",
+    "bytes": 37273
+   },
+   "ct01-b1-r13n11-t1617r4-results.zip": {
+    "path": "ct01-b1-r13n11-t1617r4-results.zip",
+    "exists": true,
+    "sha256": "c423d9fd7591a61961df55931b32cd225a99335af48392fd48afb09009dc2863",
+    "bytes": 67710755
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-b1-r13n11-t1617r4-independent-review.zip",
+    "exists": true,
+    "sha256": "594f8d38c510f16d78caab7cdf702d8b8fe9fab3efff4022f23faa90e357bcc8",
+    "bytes": 26717
+   },
+   "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json": {
+    "path": "ct01-final-review/ct01-r7-t21b-final-independent-review/SCOPE-DECISION.json",
+    "exists": true,
+    "sha256": "9e537e4a32e02cbea35ad8f7585996bca1cb4d94dfd93b08c0b660fa80a9e13d",
+    "bytes": 852
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-r7-t21b-final-independent-review__1_.zip",
+    "exists": true,
+    "sha256": "44fb328d792ca88fdaec48ee4622a927763777f1187bc1a8fe527b1735824669",
+    "bytes": 30737
+   },
+   "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r1-success-run-20261011T031502Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "172051249fa4a02bb7451af7f768e1702ad73a867bc0e4b640383744db476b7b",
+    "bytes": 13850
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-t17r5-independent-review.zip",
+    "exists": true,
+    "sha256": "69fd0e76fe1a115780ec04efe865a4f09a3f94b5250c0030b7aff4068c7413b1",
+    "bytes": 32523
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/ARM/icmp-eval.json": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/ARM/icmp-eval.json",
+    "exists": true,
+    "sha256": "93641b6232c5809bdfec1677b8f60c7f3701e1eb5e1bbeb1b095b4a8852dd078",
+    "bytes": 16190
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/MIPS/icmp-eval.json": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/container/probe/MIPS/icmp-eval.json",
+    "exists": true,
+    "sha256": "b0858052b381aaf4ab3f468ae677aa146865f0ce7967422eb4e503cdc07677b9",
+    "bytes": 15953
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g-summary.md",
+    "exists": true,
+    "sha256": "3c0ae22e076b4ede942ce6ad2377bad6535adf1995ddbfd9bca26cda51bee80b",
+    "bytes": 15756
+   },
+   "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/ARM/arp-eval.json": {
+    "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/ARM/arp-eval.json",
+    "exists": true,
+    "sha256": "8fc76d7c28a30bf71e92bdf907e5a6ec0ebfd2dc55680ea69c6e9ec7d081096d",
+    "bytes": 16224
+   },
+   "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/MIPS/arp-eval.json": {
+    "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/stage/harness/out/container/probe/MIPS/arp-eval.json",
+    "exists": true,
+    "sha256": "83904201d3215c0d745351aa0dc44517fb294d14d621a9013e836bca6c85c538",
+    "bytes": 15386
+   },
+   "ct01-arp-yhwff6_v-independent-review/outputs/ANALYSIS.json": {
+    "path": "ct01-arp-yhwff6_v-independent-review/outputs/ANALYSIS.json",
+    "exists": true,
+    "sha256": "9625aa0d00ba53fe34390759fa2f8f1315e3c2d7dec11d86415511419cff6a16",
+    "bytes": 76236
+   },
+   "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md": {
+    "path": "ct01-arp-yhwff6_v-independent-review/outputs/REPORT.md",
+    "exists": true,
+    "sha256": "f847a818fd1f93f7ecaf8321309056c965bebd72f350e977f809c6af0f2b3707",
+    "bytes": 12343
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/spoof-eval.json": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/spoof-eval.json",
+    "exists": true,
+    "sha256": "2fc5216c812effbf936bae4f7f91481930c76a58c5107b5de606d7fde8a30b98",
+    "bytes": 25503
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/spoof-eval.json": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/spoof-eval.json",
+    "exists": true,
+    "sha256": "98c712b8ec7d5883f4aded6d52a05d04635cb4bc0ba791e102c6c4cff10b920d",
+    "bytes": 25127
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/tap0.pcapng": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/ARM/tap0.pcapng",
+    "exists": true,
+    "sha256": "4d6fcfceda1e518a2fc559062b63d6c2682def39605dff750570b2679ef438c4",
+    "bytes": 35264
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/tap0.pcapng": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/container/probe/MIPS/tap0.pcapng",
+    "exists": true,
+    "sha256": "0234c250593a719ba9a8eb2d7ec9b3565413147add764601ee9d8615388f8c47",
+    "bytes": 34272
+   },
+   "ct01-t1617-r7-run-prep/APPROVAL-RECORD.json": {
+    "path": "ct01-t1617-r7-run-prep/APPROVAL-RECORD.json",
+    "exists": true,
+    "sha256": "190993c17797d48a2662ddc96a106ffab1a7670289ba5848c95066febb0c230f",
+    "bytes": 2621
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/launch-receipt.json": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/launch-receipt.json",
+    "exists": true,
+    "sha256": "9b6da47a21c8f08e5df740b7e0b85398b44a7569a92ceedd647460eb4fa134fe",
+    "bytes": 4758
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-t17r7-independent-review__1_.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-t17r7-independent-review__1_.zip",
+    "exists": true,
+    "sha256": "b977ea0b8625829798d3835af7f8a6b6de0d1dae094636b20d7dd6d5592347f9",
+    "bytes": 31586
+   },
+   "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/hostcap/drain-result.json": {
+    "path": "ct01-t1617-r7-run-prep/run/ct01-arp-evidence-export.wnpsy472/stage/harness/out/hostcap/drain-result.json",
+    "exists": true,
+    "sha256": "598187fb4c88b48c3791fdeef97fdc29c19622ee451930becf9b41834e6cef92",
+    "bytes": 41936
+   },
+   "ct01-t1617-r6-run-prep/run/ct01-arp-evidence-export.1hqd8d7n/stage/harness/out/container/probe/ARM/spoof-eval.json": {
+    "path": "ct01-t1617-r6-run-prep/run/ct01-arp-evidence-export.1hqd8d7n/stage/harness/out/container/probe/ARM/spoof-eval.json",
+    "exists": true,
+    "sha256": "b3db2db69f237b067ed7a4bcf94f9d1b581530b9527802829df5956ed7aaa7d7",
+    "bytes": 25668
+   },
+   "ct01-flow-and-t17r5-package.zip": {
+    "path": "ct01-flow-and-t17r5-package.zip",
+    "exists": true,
+    "sha256": "e2a176460f5edb0221ec7147cac449000233783004878d6b6d61d3893b92f20e",
+    "bytes": 34869014
+   },
+   "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/export-result.json": {
+    "path": "ct01-arp-b1b2r10-run-prep/run/ct01-arp-evidence-export.yhwff6_v/export-result.json",
+    "exists": true,
+    "sha256": "b102baa83ae359fe247a26cfb2bf3d50e3ce254b0c294c11e242c69369edbf0e",
+    "bytes": 54960
+   },
+   "ct01-flow-r3-f5-run-20261011T041311Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r3-f5-run-20261011T041311Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "2afdce1628d44f78c10e30833c4332abe4dce77e28c3fa5e2fbafadcbc24e6b9",
+    "bytes": 13740
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-r6-independent-review.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-flow-r6-independent-review.zip",
+    "exists": true,
+    "sha256": "279a56eaf65bd33e4c46e210382ef13a989d13aecccfbfe7ba345496163a66c4",
+    "bytes": 32113
+   },
+   "ct01-t21b-r3-final.zip": {
+    "path": "ct01-t21b-r3-final.zip",
+    "exists": true,
+    "sha256": "ed08f5d881c13870aab313e00df2359a58e071eaf098b1ce5c5a49e1623e7516",
+    "bytes": 128056
+   },
+   "t21b-client-t21b-r3-20261011a.log": {
+    "path": "t21b-client-t21b-r3-20261011a.log",
+    "exists": true,
+    "sha256": "aa0cdedd3918a62149d284e805c3144dde738c07dfa81ae8f8fe8b576a134fdf",
+    "bytes": 43304
+   },
+   "ct01-t21b-run-t21b-r3-20261011a/heartbeat-t21b-r3-20261011a.log": {
+    "path": "ct01-t21b-run-t21b-r3-20261011a/heartbeat-t21b-r3-20261011a.log",
+    "exists": true,
+    "sha256": "3584c6804646f048d945aa108bebccc965aaa3d12c9a3aae2f40749212672108",
+    "bytes": 30130
+   },
+   "ct01-flow-r4-f5-run-20261011T060519Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r4-f5-run-20261011T060519Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "eab2dc07e694c534582719ad429cab2b3921a22e477942f55e97e3e63514e252",
+    "bytes": 13740
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar-summary.md",
+    "exists": true,
+    "sha256": "20b55a6a1145e02be0cf4e98335e033e17bdbc9c84c5e519b902dc9e10c41e28",
+    "bytes": 8118
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar/run.log": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2ar/run.log",
+    "exists": true,
+    "sha256": "cacc7cb5680c5474351d20a3de4c97944268507277154179c6b4a528696cedd8",
+    "bytes": 8985
+   },
+   "ct01-v0-runtime-r6-run-20261010T165222Z/verdicts.json": {
+    "path": "ct01-v0-runtime-r6-run-20261010T165222Z/verdicts.json",
+    "exists": true,
+    "sha256": "568d5c52247ddc156230c61d77fc547fa075720112d1c99f832df183f2736ede",
+    "bytes": 29769
+   },
+   "ct01-v0-runtime-r6-run-20261010T165222Z/EXPORT-RECEIPT.json": {
+    "path": "ct01-v0-runtime-r6-run-20261010T165222Z/EXPORT-RECEIPT.json",
+    "exists": true,
+    "sha256": "4147722c3621f7aad08c43dd8e357e5edf1b12bacc6b8f03a775ca6cb619dec1",
+    "bytes": 1188
+   },
+   "ct01-v0-runtime-final-evidence.zip": {
+    "path": "ct01-v0-runtime-final-evidence.zip",
+    "exists": true,
+    "sha256": "556b7a088dd6dee83f7f2dfd835364258f23532b2aa2d0907ee5ee17b098e511",
+    "bytes": 536567
+   },
+   "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-v0-r6-independent-review.zip": {
+    "path": "/home/dathq/.claude/uploads/local_7deed7fc-e514-4498-ad85-35d2850fb846/ct01-v0-r6-independent-review.zip",
+    "exists": true,
+    "sha256": "a76e57fe621e2761d0b75ef371fb58da724c4cd52b592f9b58f5a00a981ba732",
+    "bytes": 9504
+   },
+   "ct01-flow-r1-f3-run-20261011T031907Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r1-f3-run-20261011T031907Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "b51c70640392be56ab855d2dca9f72384b6b93d75bde05a76c2a0c9b037868f2",
+    "bytes": 11848
+   },
+   "ct01-flow-r1-f4-run-20261011T031923Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r1-f4-run-20261011T031923Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "cfb6e32436a53454f59bcc0a26f2841bad11f2775e714fc02deb90529db54b0e",
+    "bytes": 11935
+   },
+   "ct01-flow-r3-f5-run-20261011T041311Z.export-receipt.json": {
+    "path": "ct01-flow-r3-f5-run-20261011T041311Z.export-receipt.json",
+    "exists": true,
+    "sha256": "b3c89cc0be749daf4f221e37bd6f77e566b2017541d0f35c69541a3e89070356",
+    "bytes": 806
+   },
+   "ct01-flow-r2-f5-run-20261011T040725Z/MANIFEST-SHA256": {
+    "path": "ct01-flow-r2-f5-run-20261011T040725Z/MANIFEST-SHA256",
+    "exists": true,
+    "sha256": "c5fc6c693381961e0784b80a5f6663dc30463d1bd6cac848a2ee821d55027b2c",
+    "bytes": 13740
+   },
+   "ct01-v0-runtime-r6-run-20261010T165222Z/f6-v0-diff.json": {
+    "path": "ct01-v0-runtime-r6-run-20261010T165222Z/f6-v0-diff.json",
+    "exists": true,
+    "sha256": "017b50293293ca8c240c04bcb33f3c76be7090953a741ed9ab5105f3256143fc",
+    "bytes": 1217
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3a-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3a-summary.md",
+    "exists": true,
+    "sha256": "280a7af45fc61ec99dde38d422fc812b1f5f58e9aa7acb200821a2fd4938f042",
+    "bytes": 9399
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2b-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2b-summary.md",
+    "exists": true,
+    "sha256": "4b4c843104475d1635f9f14f8f0019849540ab75c408fc0accb918b4db9c8fd4",
+    "bytes": 7369
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2br-summary.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b2br-summary.md",
+    "exists": true,
+    "sha256": "8ab763b384a90ec184f2f90ea480537bb96961a04f5c211e38ce4c05f41204a6",
+    "bytes": 5123
+   },
+   "ct01-acceptance-matrix-independent-review/outputs/MATRIX-CONFIRMED.json": {
+    "path": "ct01-acceptance-matrix-independent-review/outputs/MATRIX-CONFIRMED.json",
+    "exists": true,
+    "sha256": "0dad299ca0f762bbb28ff11a70b5da11ca28d7c4789a103f9ce547c6f6d7d693",
+    "bytes": 19587
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/network-isolation-design.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/network-isolation-design.md",
+    "exists": true,
+    "sha256": "4a2ed3a09f3f8ac3b6480505d932de2b71a2f1fec386ceb964410dedb36f3dd2",
+    "bytes": 45796
+   },
+   "CIC-YNU-IoTMal-Sandbox/docs/ct01-remaining-tests-plan.md": {
+    "path": "CIC-YNU-IoTMal-Sandbox/docs/ct01-remaining-tests-plan.md",
+    "exists": true,
+    "sha256": "56502eaa0f1568c77be658696668a7cb5cd6625a6586cec132b409bd97fb9d8c",
+    "bytes": 57240
+   }
+  },
+  "rows": 38,
+  "files_checked": 55,
+  "missing": [],
+  "mandatory_rows_without_existing_evidence": [],
+  "classes": {
+   "mandatory": 32,
+   "coverage": 3,
+   "postponed": 2,
+   "extra": 1
+  }
+ }
+}

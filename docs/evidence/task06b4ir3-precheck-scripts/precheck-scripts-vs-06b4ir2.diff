@@ -1,0 +1,1006 @@
+diff -ruN ct01-06b4ir2-precheck-script/collector.py ct01-06b4ir3-precheck/collector.py
+--- ct01-06b4ir2-precheck-script/collector.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4ir3-precheck/collector.py	2026-10-09 02:00:42.783944199 +0000
+@@ -0,0 +1,218 @@
++#!/usr/bin/python3
++"""06B-4IR3 precheck COLLECTOR (PC-2, PC-4) — read only. Prepared and tested offline; NOT run by Claude.
++
++It collects; it never concludes. evaluate_precheck.py (run later as a normal user, offline) turns the collected data
++into PASS / FAIL / UNKNOWN items. "Collector finished" or "output written" is NOT a passed precheck.
++
++Run only through the trusted procedure in RUN-PROCEDURE.md: root copies THIS file into a fresh root-owned mkdtemp
++directory, checks its SHA-256 there, and runs that copy with a fixed minimal environment:
++    /usr/bin/python3 -I -B <root-owned copy>/collector.py <root-owned, empty, mode 0700 output directory>
++
++What it does (nothing else):
++  * docker: version, info (selected fields), image id of sandbox-worker:latest, `ps -a` (one listing used for every
++    presence decision), compose networks sandboxnet/dbnet resolved by label (exactly one each, else not inspected),
++    inspect of those networks, of the manager and of mongo-db (selected fields; never Config.Env), and — only if the
++    manager is ALREADY running according to a successful inspect — `docker exec` of read-only commands in it;
++  * host: pgrep for qemu/capture processes, `nft -s list ruleset`, `aa-status`.
++  * It starts/stops/creates nothing, pulls/builds nothing, changes no network or ruleset, sends nothing to a guest.
++
++Every read keeps argv, rc, stdout and stderr (files) and a status: OK | NONZERO (rc not accepted for that read) |
++EXEC_ERROR | TIMEOUT | SKIPPED (with the reason). A failed read is never turned into "absent" / "not running".
++Exit code: 0 = every REQUIRED read has status OK (data complete; still not a verdict); 3 = at least one required read
++did not succeed (data incomplete); 2 = refused before collecting (not root, output directory unsafe, executable
++untrusted).
++"""
++import json
++import os
++import stat
++import subprocess
++import sys
++import time
++
++EXPECTED_IMAGE_ID = "sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153"
++IMAGE = "sandbox-worker:latest"
++MANAGER = "cic-ynu-iotmal-sandbox-sandbox-manager-1"
++MONGO = "mongo-db"
++HARNESS_CONTAINERS = ("ct01-06b3b-guest", "ct01-06b3b-ctl")
++NETWORK_LABELS = {"sandboxnet": "com.docker.compose.network=sandboxnet", "dbnet": "com.docker.compose.network=dbnet"}
++BINS = {"docker": "/usr/bin/docker", "pgrep": "/usr/bin/pgrep", "nft": "/usr/sbin/nft", "aa-status": "/usr/sbin/aa-status"}
++ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C", "LC_ALL": "C"}   # nothing inherited
++TIMEOUT_S = 60
++SCHEMA = "ct01-precheck-collector/1"
++
++
++class Refused(Exception):
++    """Collection refused before any read (exit 2)."""
++
++
++# ------------------------------------------------------------------ output directory (PC-4)
++def prepare_outdir(path, owner_uid=0):
++    """Open the output directory WITHOUT following a symlink and check it is a real, empty directory owned by
++    owner_uid with no group/other permission. Returns its fd; every file is then created relative to that fd."""
++    try:
++        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
++    except OSError as e:
++        raise Refused(f"output directory {path!r} not openable as a real directory (symlink?): {e}")
++    st = os.fstat(fd)
++    problems = []
++    if st.st_uid != owner_uid:
++        problems.append(f"owned by uid {st.st_uid}, expected {owner_uid}")
++    if stat.S_IMODE(st.st_mode) & 0o077:
++        problems.append(f"mode {stat.S_IMODE(st.st_mode):o} gives group/other access (expected 0700)")
++    if os.listdir(fd):
++        problems.append("not empty")
++    if problems:
++        os.close(fd)
++        raise Refused(f"output directory {path!r} unsafe: {'; '.join(problems)}")
++    return fd
++
++
++def write_new(dfd, name, data):
++    """Create a NEW file in the output directory (O_EXCL | O_NOFOLLOW, mode 0600): an existing name or a planted
++    symlink makes it fail instead of writing elsewhere."""
++    if "/" in name or name in (".", ".."):
++        raise ValueError(f"bad output name {name!r}")
++    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=dfd)
++    with os.fdopen(fd, "wb") as f:
++        f.write(data if isinstance(data, bytes) else data.encode())
++
++
++def trusted_bins(bins=BINS, owner_uid=0):
++    """Every executable used: an absolute path to a regular file owned by owner_uid, not group/other-writable, in a
++    directory with the same properties. -> list of problems (empty = trusted)."""
++    p = []
++    for name, path in bins.items():
++        if not os.path.isabs(path):
++            p.append(f"{name}: {path!r} is not absolute")
++            continue
++        for target in (path, os.path.dirname(path)):
++            try:
++                st = os.stat(target)          # the binary itself may be a root-owned symlink (e.g. /usr/sbin/nft)
++            except OSError as e:
++                p.append(f"{name}: {target}: {e}")
++                break
++            if st.st_uid != owner_uid or st.st_mode & 0o022:
++                p.append(f"{name}: {target} owned by uid {st.st_uid} with mode {stat.S_IMODE(st.st_mode):o}")
++        else:
++            if not stat.S_ISREG(os.stat(path).st_mode):
++                p.append(f"{name}: {path} is not a regular file")
++    return p
++
++
++# ------------------------------------------------------------------ reads
++def subprocess_runner(argv):
++    """-> (rc, stdout bytes, stderr bytes, error) with the fixed environment; never a shell."""
++    try:
++        r = subprocess.run(argv, env=dict(ENV), stdin=subprocess.DEVNULL, capture_output=True, timeout=TIMEOUT_S)
++        return r.returncode, r.stdout, r.stderr, None
++    except subprocess.TimeoutExpired as e:
++        return None, e.stdout or b"", e.stderr or b"", "TIMEOUT"
++    except OSError as e:
++        return None, b"", b"", f"EXEC_ERROR: {type(e).__name__}: {e}"
++
++
++class Collector:
++    def __init__(self, dfd, runner, bins=BINS):
++        self.dfd, self.runner, self.bins, self.reads, self.n = dfd, runner, bins, [], 0
++
++    def read(self, name, argv, required=True, ok_rcs=(0,)):
++        self.n += 1
++        rc, out, err, error = self.runner(argv)
++        status = "OK" if error is None and rc in ok_rcs else (error.split(":")[0] if error else "NONZERO")
++        base = f"{self.n:02d}-{name}"
++        write_new(self.dfd, base + ".stdout", out)
++        write_new(self.dfd, base + ".stderr", err)
++        r = {"name": name, "argv": argv, "required": required, "rc": rc, "status": status, "error": error,
++             "ok_rcs": list(ok_rcs), "stdout_file": base + ".stdout", "stderr_file": base + ".stderr",
++             "stdout": out.decode(errors="replace")}
++        self.reads.append(r)
++        return r
++
++    def skip(self, name, reason, required=True):
++        r = {"name": name, "argv": None, "required": required, "rc": None, "status": "SKIPPED", "error": reason,
++             "stdout": ""}
++        self.reads.append(r)
++        return r
++
++
++def collect(dfd, runner, bins=BINS, clock=time.time):
++    c = Collector(dfd, runner, bins)
++    d = bins["docker"]
++    t0 = clock()
++    c.read("docker-version", [d, "version", "--format", "client={{.Client.Version}} server={{.Server.Version}} api={{.Server.APIVersion}}"])
++    c.read("docker-info", [d, "info", "--format", "driver={{.Driver}} cgroup={{.CgroupDriver}}/{{.CgroupVersion}} "
++                           "kernel={{.KernelVersion}} os={{.OperatingSystem}} running={{.ContainersRunning}}"])
++    c.read("image-id", [d, "image", "inspect", "--format", "{{.Id}}", IMAGE])
++    ps = c.read("ps-all", [d, "ps", "-a", "--no-trunc", "--format", "{{.Names}}\t{{.State}}\t{{.Image}}\t{{.ID}}"])
++    nets = {}
++    for net, label in NETWORK_LABELS.items():
++        r = c.read(f"network-ls-{net}", [d, "network", "ls", "--no-trunc", "--filter", f"label={label}",
++                                          "--format", "{{.ID}}\t{{.Name}}"])
++        names = [l.split("\t") for l in r["stdout"].splitlines() if l.strip()]
++        if r["status"] != "OK":
++            c.skip(f"network-inspect-{net}", f"network list for {net} not read ({r['status']})")
++        elif len(names) != 1:
++            c.skip(f"network-inspect-{net}", f"{len(names)} networks carry {label}: exactly one required")
++        else:
++            nets[net] = names[0][-1]
++            c.read(f"network-inspect-{net}", [d, "network", "inspect", "--format",
++                                               "{{.Id}}\t{{.Name}}\t{{.Driver}}\t{{.Internal}}\t{{json .IPAM.Config}}\t"
++                                               "{{json .Containers}}", names[0][0]])
++    for who, name in (("manager", MANAGER), ("mongo", MONGO)):
++        c.read(f"inspect-{who}", [d, "inspect", "--type", "container", "--format",
++                                  "{{.State.Status}}\t{{.Id}}\t{{.RestartCount}}\t{{.State.StartedAt}}\t"
++                                  "{{json .NetworkSettings.Networks}}", name])
++    m = next(r for r in c.reads if r["name"] == "inspect-manager")
++    running = m["status"] == "OK" and m["stdout"].split("\t", 1)[0].strip() == "running"
++    exec_cmds = (("manager-ip-version", ["sh", "-c", "command -v ip && ip -V"]),
++                 ("manager-ip-j-neigh", ["ip", "-j", "neigh", "show"]),
++                 ("manager-proc-net-arp", ["cat", "/proc/net/arp"]),
++                 ("manager-sys-class-net", ["sh", "-c", 'for i in /sys/class/net/*; do echo "$(basename $i) '
++                                                         '$(cat $i/address) $(cat $i/operstate)"; done']))
++    for name, cmd in exec_cmds:
++        if running:
++            c.read(name, [d, "exec", MANAGER] + cmd, required=False)
++        else:
++            c.skip(name, "manager not running according to a successful inspect" if m["status"] == "OK"
++                   else f"manager state unknown (inspect {m['status']}): no exec", required=False)
++    c.read("pgrep-qemu", [bins["pgrep"], "-a", "qemu-system"], ok_rcs=(0, 1))       # 1 = no process
++    c.read("pgrep-capture", [bins["pgrep"], "-a", "tcpdump|tshark|dumpcap"], ok_rcs=(0, 1))
++    c.read("nft-ruleset", [bins["nft"], "-s", "list", "ruleset"])
++    c.read("aa-status", [bins["aa-status"]])
++    complete = all(r["status"] == "OK" for r in c.reads if r["required"])
++    meta = {"schema": SCHEMA, "t_start": t0, "t_end": clock(), "expected_image_id": EXPECTED_IMAGE_ID,
++            "image": IMAGE, "manager": MANAGER, "mongo": MONGO, "harness_containers": list(HARNESS_CONTAINERS),
++            "networks_resolved": nets, "bins": bins, "env": ENV, "data_complete": complete,
++            "note": "collector output, NOT a precheck verdict: run evaluate_precheck.py"}
++    write_new(dfd, "reads.json", json.dumps({"meta": meta, "reads": c.reads}, indent=1, ensure_ascii=False))
++    return 0 if complete else 3
++
++
++def main(argv):
++    if len(argv) != 1:
++        print("usage: collector.py <root-owned empty 0700 output directory>", file=sys.stderr)
++        return 2
++    try:
++        if os.geteuid() != 0:
++            raise Refused("must run as root (Docker daemon, nft, aa-status)")
++        bad = trusted_bins()
++        if bad:
++            raise Refused("untrusted executable(s): " + "; ".join(bad))
++        dfd = prepare_outdir(argv[0])
++    except Refused as e:
++        print(f"REFUSED: {e}", file=sys.stderr)
++        return 2
++    rc = collect(dfd, subprocess_runner)
++    # readable by the user afterwards (no secret is collected); changed through the fd, never through a path
++    for name in os.listdir(dfd):
++        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dfd)
++        os.fchmod(fd, 0o644)
++        os.close(fd)
++    os.fchmod(dfd, 0o755)
++    print(f"collector finished, exit {rc} ({'data complete' if rc == 0 else 'DATA INCOMPLETE'}); this is NOT a "
++          "precheck verdict: run evaluate_precheck.py on the copied output")
++    return rc
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+diff -ruN ct01-06b4ir2-precheck-script/evaluate_precheck.py ct01-06b4ir3-precheck/evaluate_precheck.py
+--- ct01-06b4ir2-precheck-script/evaluate_precheck.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4ir3-precheck/evaluate_precheck.py	2026-10-09 02:00:42.783944199 +0000
+@@ -0,0 +1,196 @@
++#!/usr/bin/env python3
++"""06B-4IR3 precheck EVALUATOR (PC-2) — offline, as a normal user, on a COPY of the collector output.
++
++    python3 -I -B evaluate_precheck.py <collector output dir> <result.json> [--harness DIR] [--ruleset-ref FILE]
++
++Each item is PASS, FAIL or UNKNOWN (data missing, read error, ambiguous) with its reasons and the raw values it used.
++A read that failed is UNKNOWN, never "absent" / "not running" / "ok". Exit code: 0 = every required item PASS;
++1 = at least one required item FAIL; 2 = no FAIL but at least one required item UNKNOWN (incomplete precheck);
++3 = the collector output itself is unusable (missing/malformed reads.json or wrong schema).
++"""
++import ipaddress
++import json
++import os
++import re
++import sys
++
++SCHEMA = "ct01-precheck-collector/1"
++EXPECTED_IMAGE_ID = "sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153"
++SANDBOXNET = ("192.168.60.0/24", "192.168.60.1")      # 06B-4G targets-env + host ip addr (br-1d86fe3e8bbe)
++MANAGER_IP = "192.168.60.10"                          # address the ARP cases use for T14-A2
++HARNESS_CONTAINERS = ("ct01-06b3b-guest", "ct01-06b3b-ctl")
++DEFAULT_HARNESS = "/home/dathq/projects/ct01-06b4ir3"
++DEFAULT_RULESET_REF = ("/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/host-after/"
++                       "nft-ruleset-stateless.txt")
++
++
++def item(items, title, status, required=True, **detail):
++    assert status in ("PASS", "FAIL", "UNKNOWN", "INFO")
++    items.append({"item": title, "status": status, "required": required, **detail})
++
++
++def evaluate(reads_doc, ruleset_ref_text, endpoint_mac_problem, parse_neigh_full):
++    items = []
++    meta, reads = reads_doc.get("meta", {}), {r["name"]: r for r in reads_doc.get("reads", [])}
++
++    def get(name):
++        r = reads.get(name)
++        if r is None:
++            return None, f"read {name!r} missing in the collector output"
++        if r.get("status") != "OK":
++            return None, f"read {name!r} status {r.get('status')} (rc {r.get('rc')}, {r.get('error')})"
++        return r.get("stdout", ""), None
++
++    item(items, "collector: every required read OK (data complete)",
++         "PASS" if meta.get("data_complete") is True else "UNKNOWN",
++         failed=[{"name": r["name"], "status": r.get("status"), "rc": r.get("rc"), "error": r.get("error")}
++                 for r in reads.values() if r.get("required") and r.get("status") != "OK"])
++    out, err = get("docker-version")
++    m = re.search(r"server=(\S+)", out or "")
++    item(items, "docker server readable", "PASS" if m and m.group(1) else "UNKNOWN", raw=out, reason=err)
++    out, err = get("image-id")
++    item(items, "image sandbox-worker:latest has the reviewed id",
++         "UNKNOWN" if err else ("PASS" if out.strip() == EXPECTED_IMAGE_ID else "FAIL"),
++         observed=None if err else out.strip(), expected=EXPECTED_IMAGE_ID, reason=err)
++    out, err = get("ps-all")
++    rows = [l.split("\t") for l in (out or "").splitlines() if l.strip()]
++    names = {r[0]: r for r in rows if r}
++    if err:
++        for c in HARNESS_CONTAINERS:
++            item(items, f"harness container {c} absent", "UNKNOWN", reason=err)
++    else:
++        for c in HARNESS_CONTAINERS:
++            item(items, f"harness container {c} absent", "FAIL" if c in names else "PASS",
++                 observed="PRESENT" if c in names else "ABSENT")
++    # networks: exactly one each (collector skips the inspect otherwise)
++    for net in ("sandboxnet", "dbnet"):
++        out, err = get(f"network-inspect-{net}")
++        if err:
++            item(items, f"network {net}: exactly one, inspected", "UNKNOWN", reason=err)
++            continue
++        f = out.rstrip("\n").split("\t")
++        try:
++            ipam = json.loads(f[4]) or []
++            ctrs = json.loads(f[5]) or {}
++        except (IndexError, ValueError) as e:
++            item(items, f"network {net}: exactly one, inspected", "UNKNOWN", reason=f"inspect output not parsed: {e}")
++            continue
++        detail = {"network": f[1], "driver": f[2], "internal": f[3], "ipam": ipam,
++                  "endpoints": {v.get("Name"): {"ip": v.get("IPv4Address"), "mac": v.get("MacAddress")}
++                                for v in ctrs.values()}}
++        if net == "sandboxnet":
++            ok = any(c.get("Subnet") == SANDBOXNET[0] and c.get("Gateway") == SANDBOXNET[1] for c in ipam)
++            item(items, "network sandboxnet: exactly one, subnet 192.168.60.0/24 gateway 192.168.60.1",
++                 "PASS" if ok else "FAIL", **detail)
++        else:
++            item(items, "network dbnet: exactly one, inspected", "PASS", **detail)
++    # manager / mongo
++    for who, label in (("manager", "manager"), ("mongo", "mongo-db")):
++        out, err = get(f"inspect-{who}")
++        if err:
++            present = None if get("ps-all")[1] else (("cic-ynu-iotmal-sandbox-sandbox-manager-1" if who == "manager"
++                                                    else "mongo-db") in names)
++            st = "FAIL" if present is False else "UNKNOWN"
++            item(items, f"{label}: present, state readable", st, reason=err,
++                 ps_all_presence={None: "UNKNOWN", True: "PRESENT", False: "ABSENT"}[present])
++            continue
++        f = out.rstrip("\n").split("\t")
++        state = f[0].strip()
++        try:
++            nets = json.loads(f[4]) if len(f) > 4 else {}
++        except ValueError:
++            nets = None
++        if who == "manager":
++            if state not in ("running", "exited"):
++                item(items, "manager: state running or exited (the run script handles both)", "FAIL", state=state)
++                continue
++            item(items, "manager: state running or exited (the run script handles both)", "PASS", state=state,
++                 restarts=f[2] if len(f) > 2 else None)
++            sb = None
++            for n, s in (nets or {}).items():
++                if n.endswith("_sandboxnet"):
++                    sb = s
++            if state == "running":
++                mac = (sb or {}).get("MacAddress")
++                p = endpoint_mac_problem((mac or "").lower()) if sb else "no sandboxnet endpoint"
++                item(items, "manager (running): sandboxnet IP 192.168.60.10 and a usable endpoint MAC",
++                     "PASS" if sb and sb.get("IPAddress") == MANAGER_IP and not p else "FAIL",
++                     ip=(sb or {}).get("IPAddress"), mac=mac, mac_problem=p)
++            else:
++                item(items, "manager (exited): sandboxnet MAC/IP not available while stopped; read by the run script "
++                     "after it starts the manager", "INFO", required=False, networks=nets)
++        else:
++            db = next((s for n, s in (nets or {}).items() if n.endswith("_dbnet")), None)
++            item(items, "mongo-db: running with an address on dbnet",
++                 "PASS" if state == "running" and db and db.get("IPAddress") else "FAIL",
++                 state=state, ip=(db or {}).get("IPAddress"))
++    for name, label in (("pgrep-qemu", "no qemu-system process on the host"),
++                        ("pgrep-capture", "no tcpdump/tshark/dumpcap process on the host")):
++        r = reads.get(name)
++        if r is None or r.get("status") != "OK":
++            item(items, label, "UNKNOWN", reason=f"read {name} {None if r is None else r.get('status')}")
++        else:
++            item(items, label, "PASS" if r.get("rc") == 1 else "FAIL", rc=r.get("rc"), raw=r.get("stdout"))
++    out, err = get("nft-ruleset")
++    if err or ruleset_ref_text is None:
++        item(items, "nft ruleset identical to 06B-4G host-after", "UNKNOWN",
++             reason=err or "reference ruleset not readable")
++    else:
++        item(items, "nft ruleset identical to 06B-4G host-after", "PASS" if out == ruleset_ref_text else "FAIL",
++             lines=len(out.splitlines()), ref_lines=len(ruleset_ref_text.splitlines()))
++    out, err = get("aa-status")
++    item(items, "AppArmor status readable (tool setup, recorded apart from CT-01)", "UNKNOWN" if err else "PASS",
++         tcpdump_listed=None if err else ("tcpdump" in out), reason=err)
++    # informational: manager reads with the harness parsers (manager is NOT the worker/ctl: no worker conclusion)
++    out, err = get("manager-ip-j-neigh")
++    if out is not None:
++        try:
++            rows_, probs, unknown = parse_neigh_full(out)
++            item(items, "manager ip -j neigh parsed by arp_cases.parse_neigh_full (informational; manager image, "
++                 "not the worker image)", "INFO", required=False, rows=len(rows_), problems=probs,
++                 states=sorted({s for r in rows_ for s in r["states"]}))
++        except Exception as e:                                   # noqa: BLE001
++            item(items, "manager ip -j neigh parsed", "INFO", required=False, error=f"{type(e).__name__}: {e}")
++    req = [i for i in items if i["required"]]
++    verdict = "FAIL" if any(i["status"] == "FAIL" for i in req) else \
++        "UNKNOWN" if any(i["status"] == "UNKNOWN" for i in req) else "PASS"
++    return {"verdict": verdict, "items": items,
++            "note": "precheck of the host/Docker state only; worker/ctl netns, image iproute2, guest operstate are "
++                    "read only during an approved run"}
++
++
++def main(argv):
++    harness = argv[argv.index("--harness") + 1] if "--harness" in argv else DEFAULT_HARNESS
++    ref = argv[argv.index("--ruleset-ref") + 1] if "--ruleset-ref" in argv else DEFAULT_RULESET_REF
++    pos = [a for i, a in enumerate(argv) if not a.startswith("--") and (i == 0 or not argv[i - 1].startswith("--"))]
++    if len(pos) != 2:
++        print(__doc__, file=sys.stderr)
++        return 3
++    src, dst = pos
++    try:
++        doc = json.load(open(os.path.join(src, "reads.json")))
++        if doc.get("meta", {}).get("schema") != SCHEMA or not isinstance(doc.get("reads"), list):
++            raise ValueError(f"schema {doc.get('meta', {}).get('schema')!r} != {SCHEMA!r}")
++    except (OSError, ValueError, AttributeError) as e:
++        json.dump({"verdict": "UNUSABLE", "error": f"{type(e).__name__}: {e}"}, open(dst, "w"), indent=1)
++        print(f"UNUSABLE collector output: {e}")
++        return 3
++    sys.path.insert(0, harness)
++    import arp_cases
++    import arp_harness
++    try:
++        ref_text = open(ref).read()
++    except OSError:
++        ref_text = None
++    res = evaluate(doc, ref_text, arp_harness.endpoint_mac_problem, arp_cases.parse_neigh_full)
++    res.update(collector_output=os.path.abspath(src), harness=harness, ruleset_ref=ref)
++    with open(dst, "w") as f:
++        json.dump(res, f, indent=1, ensure_ascii=False)
++    for i in res["items"]:
++        print(f"[{i['status']}] {i['item']}" + ("" if i["required"] else " (not required)"))
++    print(f"PRECHECK VERDICT: {res['verdict']}")
++    return {"PASS": 0, "FAIL": 1, "UNKNOWN": 2}[res["verdict"]]
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+diff -ruN ct01-06b4ir2-precheck-script/mutation_precheck.py ct01-06b4ir3-precheck/mutation_precheck.py
+--- ct01-06b4ir2-precheck-script/mutation_precheck.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4ir3-precheck/mutation_precheck.py	2026-10-09 02:00:42.783944199 +0000
+@@ -0,0 +1,96 @@
++#!/usr/bin/env python3
++"""06B-4IR3 — targeted mutation test of the precheck collector/evaluator/root snippet (PC-2, PC-4), offline.
++Each mutant runs selftest_precheck.py on a mktemp copy; every replacement must occur exactly once (else INVALID).
++A mutant counts only if the TARGET test fails (DETECTED); ERROR/timeout never count as detected.
++    python3 -I -B mutation_precheck.py
++"""
++import hashlib, os, shutil, subprocess, sys, tempfile
++HERE = os.path.dirname(os.path.abspath(__file__))
++FILES = ("collector.py", "evaluate_precheck.py", "RUN-PROCEDURE.md", "selftest_precheck.py")
++CO, EVL, RP = "collector.py", "evaluate_precheck.py", "RUN-PROCEDURE.md"
++C5 = ("C5 permission-denied: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec "
++      "skipped as 'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented")
++M = [
++    ("P1", EVL, [('            item(items, f"harness container {c} absent", "UNKNOWN", reason=err)',
++                  '            item(items, f"harness container {c} absent", "PASS", reason=err)')], C5),
++    ("P2", CO, [('        status = "OK" if error is None and rc in ok_rcs else', '        status = "OK" if True else')], C5),
++    ("P3", CO, [('os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)', 'os.O_RDONLY | os.O_DIRECTORY)')],
++     "O1b symlink to an EMPTY directory with the right owner/mode -> still refused (only O_NOFOLLOW stops it)"),
++    ("P4", CO, [('os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600', 'os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600')],
++     "O4 a symlink planted under an output name -> creation fails (O_EXCL|O_NOFOLLOW), target untouched"),
++    ("P5", CO, [('r = subprocess.run(argv, env=dict(ENV),', 'r = subprocess.run(argv, env=None,')],
++     "O7 subprocess environment is exactly the fixed minimal one (nothing inherited)"),
++    ("P6", EVL, [('"PASS" if out.strip() == EXPECTED_IMAGE_ID else "FAIL"', '"PASS"')],
++     "C6 image id differs from the reviewed one -> FAIL (compared automatically), evaluator exit 1 path"),
++    ("P7", CO, [('        elif len(names) != 1:', '        elif len(names) < 1:')],
++     "C8 network-ambiguous: network not inspected (SKIPPED, reason kept), collector exit 3, evaluator UNKNOWN"),
++    ("P8", CO, [('    running = m["status"] == "OK" and', '    running = True or')],
++     "C4 manager exited -> no docker exec at all (SKIPPED with the reason)"),
++    ("P9", RP, [('if ! echo "$HASH  $T/collector.py" | /usr/bin/sha256sum -c --quiet - ; then',
++                 'if false; then')],
++     "L2 snippet with a wrong hash (file swapped/changed): nothing run, the copy removed, exit 1"),
++    ("P10", CO, [('ok_rcs=(0, 1))       # 1 = no process', 'ok_rcs=(0, 1, 2))       # 1 = no process')],
++     "C14 pgrep-error: pgrep rc 1 = none, rc 0 = present (FAIL), other rc = read error (UNKNOWN), never 'none'"),
++    ("P11", EVL, [('"UNKNOWN" if any(i["status"] == "UNKNOWN" for i in req) else "PASS"', '"PASS"')],
++     "E3 evaluator CLI exit 2 on missing/failed reads"),
++    ("P12", CO, [('    complete = all(r["status"] == "OK" for r in c.reads if r["required"])', '    complete = True')],
++     "C15 nft read error -> UNKNOWN + collector exit 3"),
++    ("X1", CO, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
++    ("X2", "selftest_precheck.py", [("import json\n", "import json(\n")], None),
++]
++EXPECT = {"X1": "INVALID", "X2": "ERROR"}
++
++
++def suite(d):
++    try:
++        p = subprocess.run([sys.executable, "-I", "-B", os.path.join(d, "selftest_precheck.py")], capture_output=True,
++                           text=True, timeout=300, cwd=d)
++    except subprocess.TimeoutExpired:
++        return None, "timeout"
++    res = {l[7:].split("  (")[0]: l.startswith("[PASS]") for l in p.stdout.splitlines() if l[:7] in ("[PASS] ", "[FAIL] ")}
++    if not any(l.startswith("SELFTEST-PRECHECK:") for l in p.stdout.splitlines()):
++        return None, (p.stderr or p.stdout).strip().splitlines()[-1:]
++    return res, None
++
++
++def main():
++    h0 = {f: hashlib.sha256(open(os.path.join(HERE, f), "rb").read()).hexdigest() for f in FILES}
++    good = bad = 0
++    with tempfile.TemporaryDirectory(prefix="mutation-precheck.") as tmp:
++        def copy():
++            d = tempfile.mkdtemp(dir=tmp)
++            for f in FILES:
++                shutil.copy2(os.path.join(HERE, f), d)
++            return d
++        base, err = suite(copy())
++        if base is None or not all(base.values()):
++            print("BASELINE FAILED", err)
++            return 2
++        print(f"baseline: {len(base)}/{len(base)} tests pass")
++        for mid, fname, reps, target in M:
++            if target is not None and target not in base:
++                print(f"BAD {mid} BAD-TARGET {target!r}"); bad += 1; continue
++            d = copy(); src = open(os.path.join(d, fname)).read(); klass = None
++            for old, new in reps:
++                if src.count(old) != 1:
++                    klass = "INVALID"; break
++                src = src.replace(old, new)
++            failed = []
++            if klass is None:
++                open(os.path.join(d, fname), "w").write(src)
++                res, err = suite(d)
++                if res is None:
++                    klass = "ERROR"
++                else:
++                    failed = sorted(k for k, v in res.items() if not v)
++                    klass = "DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"
++            ok = klass == EXPECT.get(mid, "DETECTED")
++            good += ok; bad += not ok
++            print(f"{'OK ' if ok else 'BAD'} {mid:4s} {klass:18s} target={target!r}" + ("" if ok else f" failed={failed[:4]}"))
++    same = h0 == {f: hashlib.sha256(open(os.path.join(HERE, f), "rb").read()).hexdigest() for f in FILES}
++    print(f"MUTATION-PRECHECK: {good} OK, {bad} not as expected; files {'unchanged' if same else 'CHANGED'}")
++    return 0 if bad == 0 and same else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN ct01-06b4ir2-precheck-script/precheck-06b4ir2-docker-readonly.sh ct01-06b4ir3-precheck/precheck-06b4ir2-docker-readonly.sh
+--- ct01-06b4ir2-precheck-script/precheck-06b4ir2-docker-readonly.sh	2026-10-09 02:00:42.781944175 +0000
++++ ct01-06b4ir3-precheck/precheck-06b4ir2-docker-readonly.sh	1970-01-01 00:00:00.000000000 +0000
+@@ -1,58 +0,0 @@
+-#!/bin/bash
+-# 06B-4IR2 precheck, Docker part — READ ONLY. Prepared, NOT run by Claude (no docker access without sudo).
+-#   sudo bash /home/dathq/projects/ct01-06b4ir2-precheck/precheck-06b4ir2-docker-readonly.sh
+-# Starts/stops/creates nothing, pulls/builds nothing, changes no network/ruleset, sends nothing to a guest.
+-# Prints no environment variable, .env or Config.Env: only explicit inspect fields (templates below).
+-# docker exec is used ONLY for the manager, ONLY if it is already running, ONLY for read-only commands
+-# (command -v ip; ip -V; ip -j neigh show; cat /proc/net/arp; /sys/class/net/*/address,operstate).
+-# The worker test container and ctl container do not exist outside a run (the run script creates them), so their
+-# netns/interfaces/MACs cannot be read here; they are NOT created for this precheck.
+-set -u
+-D=/home/dathq/projects/ct01-06b4ir2-precheck/docker-readonly
+-SANDBOXNET_LABEL=sandboxnet; DBNET_LABEL=dbnet
+-MANAGER=cic-ynu-iotmal-sandbox-sandbox-manager-1
+-[ "$(id -u)" = 0 ] || { echo "run with sudo"; exit 2; }
+-[ -e "$D" ] && { echo "ABORT: $D exists (keep it)"; exit 2; }
+-mkdir -p "$D"
+-SN=$(docker network ls --filter label=com.docker.compose.network=$SANDBOXNET_LABEL --format '{{.Name}}')
+-DN=$(docker network ls --filter label=com.docker.compose.network=$DBNET_LABEL --format '{{.Name}}')
+-{
+-    echo "== time"; date -u +%FT%TZ
+-    echo "== docker version"; docker version --format 'client={{.Client.Version}} server={{.Server.Version}} api={{.Server.APIVersion}}'
+-    echo "== docker info (selected fields)"
+-    docker info --format 'driver={{.Driver}} cgroup={{.CgroupDriver}}/{{.CgroupVersion}} kernel={{.KernelVersion}} os={{.OperatingSystem}} containers={{.Containers}} running={{.ContainersRunning}} images={{.Images}}'
+-    echo "== image (expected sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153)"
+-    docker image inspect -f 'id={{.Id}} created={{.Created}} tags={{.RepoTags}} arch={{.Architecture}}' sandbox-worker:latest
+-    echo "== containers"; docker ps -a --format '{{.Names}} {{.Image}} {{.Status}}'
+-    echo "== harness containers (must not exist)"
+-    for c in ct01-06b3b-guest ct01-06b3b-ctl; do docker inspect "$c" >/dev/null 2>&1 && echo "PRESENT: $c" || echo "absent: $c"; done
+-    echo "== networks"; echo "sandboxnet=$SN dbnet=$DN"
+-    for n in "$SN" "$DN"; do
+-        [ -n "$n" ] || { echo "network missing"; continue; }
+-        docker network inspect -f 'name={{.Name}} id={{.Id}} driver={{.Driver}} internal={{.Internal}} subnets={{range .IPAM.Config}}{{.Subnet}} gw={{.Gateway}} {{end}}' "$n"
+-        echo "bridge=br-$(docker network inspect -f '{{.Id}}' "$n" | cut -c1-12)"
+-        docker network inspect -f '{{range $id, $c := .Containers}}endpoint {{$c.Name}} ip={{$c.IPv4Address}} mac={{$c.MacAddress}}{{"\n"}}{{end}}' "$n"
+-    done
+-    echo "== manager"
+-    docker inspect -f 'state={{.State.Status}} id={{.Id}} restarts={{.RestartCount}} started={{.State.StartedAt}}' "$MANAGER"
+-    docker inspect -f '{{range $n, $s := .NetworkSettings.Networks}}net={{$n}} ip={{$s.IPAddress}} mac={{$s.MacAddress}}{{"\n"}}{{end}}' "$MANAGER"
+-    echo "== mongo-db"
+-    docker inspect -f 'state={{.State.Status}} {{range $n, $s := .NetworkSettings.Networks}}net={{$n}} ip={{$s.IPAddress}} mac={{$s.MacAddress}} {{end}}' mongo-db
+-    echo "== processes"; pgrep -a qemu-system || echo "no qemu-system"; pgrep -a 'tcpdump|tshark|dumpcap' || echo "no capture processes"
+-} 2>&1 | tee "$D/docker-readonly.txt"
+-if [ "$(docker inspect -f '{{.State.Status}}' "$MANAGER" 2>/dev/null)" = running ]; then
+-    {
+-        echo "== manager (already running): read-only commands"
+-        docker exec "$MANAGER" sh -c 'command -v ip || echo "no ip"; ip -V 2>&1 || true'
+-        echo "-- ip -j neigh show"; docker exec "$MANAGER" ip -j neigh show 2>&1; echo "rc=$?"
+-        echo "-- /proc/net/arp"; docker exec "$MANAGER" cat /proc/net/arp 2>&1
+-        echo "-- /sys/class/net"; docker exec "$MANAGER" sh -c 'for i in /sys/class/net/*; do echo "$(basename $i) $(cat $i/address) $(cat $i/operstate)"; done' 2>&1
+-    } > "$D/manager-readonly.txt" 2>&1
+-else
+-    echo "manager not running: no docker exec (it is NOT started for this precheck)" > "$D/manager-readonly.txt"
+-fi
+-nft -s list ruleset > "$D/nft-ruleset-stateless.txt" 2>&1
+-aa-status > "$D/aa-status.txt" 2>&1
+-sha256sum "$D"/* > "$D/SHA256SUMS"
+-chown -R "${SUDO_UID:-0}:${SUDO_GID:-0}" "$D"
+-echo "precheck written to $D"
+diff -ruN ct01-06b4ir2-precheck-script/RUN-PROCEDURE.md ct01-06b4ir3-precheck/RUN-PROCEDURE.md
+--- ct01-06b4ir2-precheck-script/RUN-PROCEDURE.md	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4ir3-precheck/RUN-PROCEDURE.md	2026-10-09 02:00:42.784944211 +0000
+@@ -0,0 +1,73 @@
++# Quy trình chạy precheck root 06B-4IR3 (PC-4) — để reviewer xét, **chưa thực hiện**
++
++Chỉ chạy khi reviewer và người điều phối đã chốt **hash** của `collector.py` dưới đây. Không chạy trực tiếp script nằm trong thư mục user.
++
++## 1. Người dùng (không root): kiểm hash bản được review
++
++```
++sha256sum /home/dathq/projects/ct01-06b4ir3-precheck/collector.py
++```
++
++Giá trị phải đúng `HASH` được chốt; hash của bản bàn giao nằm trong `SHA256SUMS` của evidence.
++
++## 2. Root: sao chép vào thư mục root, kiểm hash trên **bản sao**, chạy bản sao
++
++Đoạn giữa hai dấu `BEGIN`/`END` dưới đây là đoạn mà người dùng gõ (hoặc dán) vào `sudo /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin /bin/sh -c '…'`. Thay `<HASH>` bằng hash đã chốt. `env -i` xóa mọi biến môi trường, nên `BASE`/`SRC`/`HASH`/`PY` chỉ có giá trị mặc định ghi trong đoạn. Các biến này chỉ dùng cho test offline trong cây toy.
++
++```sh
++# --- BEGIN ROOT SNIPPET ---
++set -eu
++umask 077
++BASE=${BASE:-/var/tmp}
++SRC=${SRC:-/home/dathq/projects/ct01-06b4ir3-precheck/collector.py}
++HASH=${HASH:-<HASH>}
++T=$(/usr/bin/mktemp -d "$BASE/ct01-precheck.XXXXXXXX")
++/bin/cp -- "$SRC" "$T/collector.py"
++if ! echo "$HASH  $T/collector.py" | /usr/bin/sha256sum -c --quiet - ; then /bin/rm -f -- "$T/collector.py"; echo "HASH MISMATCH: nothing was run"; exit 1; fi
++/bin/mkdir -m 0700 -- "$T/out"
++rc=0; ${PY:-/usr/bin/python3} -I -B "$T/collector.py" "$T/out" || rc=$?
++echo "collector exit $rc; output in $T/out (root-owned; collector exit 0 = data complete, NOT a verdict)"
++# --- END ROOT SNIPPET ---
++```
++
++**Vì sao an toàn hơn bản 06B-4IR2:**
++
++- **Thư mục output** do root tạo nguyên tử: `mktemp -d` trong `/var/tmp` (sticky), mode 0700, không có kiểm-rồi-tạo, không đi qua cây user.
++- **Collector:**
++  - mở thư mục bằng `O_NOFOLLOW|O_DIRECTORY`;
++  - kiểm chủ sở hữu root, mode 0700, thư mục rỗng;
++  - tạo mọi file bằng `O_CREAT|O_EXCL|O_NOFOLLOW` qua fd thư mục (`dir_fd`);
++  - không redirection, không `tee`, không `chown -R`.
++- **Script user chỉ được đọc đúng một lần** (`cp`). Bản sao root được kiểm hash **trước khi** chạy. Nếu file user bị thay giữa chừng, kể cả bằng symlink, hash sẽ lệch: bản sao bị xóa, không có gì được chạy.
++- **Executable và PATH:**
++  - mọi executable được gọi bằng đường dẫn tuyệt đối: `/usr/bin/docker`, `/usr/bin/pgrep`, `/usr/sbin/nft`, `/usr/sbin/aa-status`, `/usr/bin/python3`;
++  - collector kiểm chúng thuộc root và không nhóm/người khác ghi được, kể cả thư mục chứa; không đạt thì từ chối (exit 2);
++  - môi trường con chỉ có `PATH=/usr/sbin:/usr/bin:/sbin:/bin`, `LANG=C`, `LC_ALL=C`;
++  - lệnh `sudo` dùng `env -i`.
++- Không file nào được `source`.
++
++## 3. Người dùng: sao output ra và đánh giá offline
++
++```
++sudo /usr/bin/tar -C <T> -cf - out | tar -xf - -C /home/dathq/projects/ct01-06b4ir3-precheck/run1/
++python3 -I -B /home/dathq/projects/ct01-06b4ir3-precheck/evaluate_precheck.py /home/dathq/projects/ct01-06b4ir3-precheck/run1/out /home/dathq/projects/ct01-06b4ir3-precheck/run1/precheck-result.json
++```
++
++`tar` phía root chỉ **đọc** thư mục root và ghi ra stdout; việc giải nén chạy với quyền user. Root không ghi vào cây user.
++
++**Exit code của evaluator:**
++
++| Exit | Ý nghĩa |
++|---|---|
++| 0 | Mọi mục bắt buộc PASS |
++| 1 | Có mục FAIL |
++| 2 | Không FAIL nhưng có mục UNKNOWN (precheck chưa đủ) |
++| 3 | Output collector không dùng được |
++
++Chỉ exit 0 mới là precheck đạt. Kết quả đó vẫn **không** cấp phép chạy guest.
++
++## 4. Không làm trong quy trình này
++
++Không start/stop/create container; không pull/build image; không đổi mạng/ruleset; không QEMU/guest; không probe mạng; không in env/`Config.Env`; không đọc bí mật.
++
++Collector chỉ `docker exec` vào manager khi một inspect **thành công** cho biết manager **đang chạy sẵn**, và chỉ chạy các lệnh đọc: `ip -V`, `ip -j neigh show`, `/proc/net/arp`, `/sys/class/net`.
+diff -ruN ct01-06b4ir2-precheck-script/selftest_precheck.py ct01-06b4ir3-precheck/selftest_precheck.py
+--- ct01-06b4ir2-precheck-script/selftest_precheck.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4ir3-precheck/selftest_precheck.py	2026-10-09 02:00:42.784944211 +0000
+@@ -0,0 +1,341 @@
++#!/usr/bin/env python3
++"""06B-4IR3 — offline tests of the precheck collector/evaluator (PC-2) and of the output/launch path (PC-4).
++No root, no Docker, no system target: every docker/pgrep/nft/aa-status call goes through a fake runner; the output
++tests run in a toy tree owned by the current user; the root snippet runs with BASE in the toy tree and a stub PY.
++
++    python3 -I -B selftest_precheck.py [--json FILE]
++"""
++import json
++import os
++import re
++import shutil
++import stat
++import subprocess
++import sys
++import tempfile
++import traceback
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import collector as C          # noqa: E402
++import evaluate_precheck as EV  # noqa: E402
++sys.path.insert(0, "/home/dathq/projects/ct01-06b4ir3")
++import arp_cases as A          # noqa: E402
++import arp_harness as AH       # noqa: E402
++
++RESULTS = {}
++REF = "table inet fixture {\n}\n"
++SB_INSPECT = ('n1\tcic-ynu-iotmal-sandbox_sandboxnet\tbridge\tfalse\t[{"Subnet":"192.168.60.0/24","Gateway":"192.168.60.1"}]'
++              '\t{}\n')
++DB_INSPECT = 'n2\tcic-ynu-iotmal-sandbox_dbnet\tbridge\tfalse\t[{"Subnet":"172.18.0.0/16","Gateway":"172.18.0.1"}]\t{}\n'
++
++
++def t(name, fn):
++    if name in RESULTS:
++        raise SystemExit(f"duplicate test name {name}")
++    try:
++        ok, why = bool(fn()), ""
++    except Exception:
++        ok, why = False, traceback.format_exc(limit=3).strip().splitlines()[-1]
++    RESULTS[name] = ok
++    print(f"[{'PASS' if ok else 'FAIL'}] {name}" + (f"  ({why or 'returned False'})" if not ok else ""))
++
++
++def raises(exc, fn):
++    try:
++        fn()
++    except exc:
++        return True
++    return False
++
++
++def fake_runner(spec):
++    """spec: overrides keyed by read name prefix -> (rc, stdout, stderr, error). Default = clean environment with the
++    manager exited and mongo running."""
++    calls = []
++
++    def answer(argv):
++        calls.append(argv)
++        j = " ".join(argv)
++        def pick(key, default):
++            return spec.get(key, default)
++        if argv[0] == C.BINS["docker"]:
++            if spec.get("docker_all"):
++                return spec["docker_all"]
++            if argv[1] == "version":
++                return pick("version", (0, b"client=29.8.2 server=29.8.2 api=1.51\n", b"", None))
++            if argv[1] == "info":
++                return pick("info", (0, b"driver=overlay2 cgroup=systemd/2 kernel=6.8.0 os=Ubuntu running=1\n", b"", None))
++            if argv[1:3] == ["image", "inspect"]:
++                return pick("image", (0, (C.EXPECTED_IMAGE_ID + "\n").encode(), b"", None))
++            if argv[1:3] == ["ps", "-a"]:
++                return pick("ps", (0, b"cic-ynu-iotmal-sandbox-sandbox-manager-1\texited\tx\tid1\nmongo-db\trunning\tmongo\tid2\n",
++                                   b"", None))
++            if argv[1:3] == ["network", "ls"]:
++                net = "sandboxnet" if "sandboxnet" in j else "dbnet"
++                return pick(f"ls-{net}", (0, f"n{1 if net == 'sandboxnet' else 2}\tcic-ynu-iotmal-sandbox_{net}\n".encode(),
++                                          b"", None))
++            if argv[1:3] == ["network", "inspect"]:
++                return pick("inspect-sb" if argv[-1] == "n1" else "inspect-db",
++                            (0, (SB_INSPECT if argv[-1] == "n1" else DB_INSPECT).encode(), b"", None))
++            if argv[1] == "inspect":
++                if argv[-1] == C.MANAGER:
++                    return pick("manager", (0, b'exited\tid1\t0\t2026-10-08T08:42:17Z\t{"cic-ynu-iotmal-sandbox_sandboxnet":'
++                                           b'{"IPAddress":"","MacAddress":""}}\n', b"", None))
++                return pick("mongo", (0, b'running\tid2\t0\tx\t{"cic-ynu-iotmal-sandbox_dbnet":{"IPAddress":"172.18.0.2",'
++                                         b'"MacAddress":"92:95:79:0b:84:90"}}\n', b"", None))
++            if argv[1] == "exec":
++                return pick("exec", (0, b'[{"dst":"192.168.60.2","dev":"eth0","lladdr":"92:95:79:0b:84:91","state":["STALE"]}]\n',
++                                     b"", None))
++        if argv[0] == C.BINS["pgrep"]:
++            return pick("pgrep", (1, b"", b"", None))
++        if argv[0] == C.BINS["nft"]:
++            return pick("nft", (0, REF.encode(), b"", None))
++        if argv[0] == C.BINS["aa-status"]:
++            return pick("aa", (0, b"apparmor module is loaded.\n   tcpdump\n", b"", None))
++        return None, b"", b"", f"EXEC_ERROR: unexpected {argv}"
++    answer.calls = calls
++    return answer
++
++
++def run(tmp, name, spec, ref=REF):
++    d = os.path.join(tmp, name)
++    os.mkdir(d, 0o700)
++    fd = C.prepare_outdir(d, owner_uid=os.geteuid())
++    runner = fake_runner(spec)
++    rc = C.collect(fd, runner)
++    os.close(fd)
++    doc = json.load(open(os.path.join(d, "reads.json")))
++    res = EV.evaluate(doc, ref, AH.endpoint_mac_problem, A.parse_neigh_full)
++    st = {i["item"]: i for i in res["items"]}
++    return {"rc": rc, "doc": doc, "res": res, "items": st, "calls": runner.calls, "dir": d,
++            "reads": {r["name"]: r for r in doc["reads"]}}
++
++
++def find(x, prefix):
++    return next(v for k, v in x["items"].items() if k.startswith(prefix))
++
++
++PERM = (1, b"", b"permission denied while trying to connect to the docker API at unix:///var/run/docker.sock\n", None)
++DAEMON = (1, b"", b"Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n", None)
++
++
++def sec_C(tmp):
++    x = run(tmp, "clean", {})
++    t("C1 clean environment (manager exited, mongo running): collector exit 0, evaluator PASS",
++      lambda: x["rc"] == 0 and x["res"]["verdict"] == "PASS")
++    t("C2 every read keeps argv, rc, status and stdout/stderr files", lambda: all(
++        r["status"] == "SKIPPED" or (r["argv"] and "rc" in r and os.path.exists(os.path.join(x["dir"], r["stdout_file"]))
++                                     and os.path.exists(os.path.join(x["dir"], r["stderr_file"]))) for r in x["doc"]["reads"]))
++    t("C3 no docker verb other than version/info/image inspect/ps/network ls+inspect/inspect/exec; no Config.Env",
++      lambda: all(c[1] in ("version", "info", "image", "ps", "network", "inspect", "exec") for c in x["calls"]
++                  if c[0] == C.BINS["docker"]) and not any("Env" in " ".join(c) for c in x["calls"]))
++    t("C4 manager exited -> no docker exec at all (SKIPPED with the reason)",
++      lambda: not any(c[1] == "exec" for c in x["calls"] if c[0] == C.BINS["docker"])
++      and x["reads"]["manager-ip-j-neigh"]["status"] == "SKIPPED"
++      and "not running according to a successful inspect" in x["reads"]["manager-ip-j-neigh"]["error"])
++    for n, spec in (("permission-denied", {"docker_all": PERM}), ("daemon-down", {"docker_all": DAEMON})):
++        x = run(tmp, n, spec)
++        t(f"C5 {n}: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec skipped as "
++          "'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented",
++          lambda x=x: all(find(x, f"harness container {c}")["status"] == "UNKNOWN" for c in C.HARNESS_CONTAINERS)
++          and find(x, "manager:")["status"] == "UNKNOWN" and "state unknown" in x["reads"]["manager-ip-j-neigh"]["error"]
++          and x["rc"] == 3 and x["res"]["verdict"] == "UNKNOWN"
++          and x["reads"]["ps-all"]["status"] == "NONZERO" and b"denied" in open(os.path.join(
++              x["dir"], x["reads"]["ps-all"]["stderr_file"]), "rb").read() + b"denied" * (n == "daemon-down"))
++    x = run(tmp, "image-mismatch", {"image": (0, b"sha256:" + b"0" * 64 + b"\n", b"", None)})
++    t("C6 image id differs from the reviewed one -> FAIL (compared automatically), evaluator exit 1 path",
++      lambda: find(x, "image sandbox-worker")["status"] == "FAIL" and x["res"]["verdict"] == "FAIL")
++    x = run(tmp, "harness-present", {"ps": (0, b"ct01-06b3b-ctl\texited\tx\ti\ncic-ynu-iotmal-sandbox-sandbox-manager-1\texited\tx\t"
++                                             b"i1\nmongo-db\trunning\tm\ti2\n", b"", None)})
++    t("C7 a harness container left over -> FAIL (PRESENT from the successful listing)",
++      lambda: find(x, "harness container ct01-06b3b-ctl")["status"] == "FAIL"
++      and find(x, "harness container ct01-06b3b-guest")["status"] == "PASS")
++    for n, out in (("network-missing", b""), ("network-ambiguous", b"n1\ta_sandboxnet\nn3\tb_sandboxnet\n")):
++        x = run(tmp, n, {"ls-sandboxnet": (0, out, b"", None)})
++        t(f"C8 {n}: network not inspected (SKIPPED, reason kept), collector exit 3, evaluator UNKNOWN",
++          lambda x=x: x["reads"]["network-inspect-sandboxnet"]["status"] == "SKIPPED" and x["rc"] == 3
++          and find(x, "network sandboxnet")["status"] == "UNKNOWN" and x["res"]["verdict"] == "UNKNOWN")
++    x = run(tmp, "subnet-other", {"inspect-sb": (0, SB_INSPECT.replace("192.168.60.", "192.168.61.").encode(), b"", None)})
++    t("C9 sandboxnet with another subnet -> FAIL", lambda: find(x, "network sandboxnet")["status"] == "FAIL")
++    run_ok = (0, b'running\tid1\t0\tx\t{"cic-ynu-iotmal-sandbox_sandboxnet":{"IPAddress":"192.168.60.10",'
++                 b'"MacAddress":"8a:d3:09:b5:72:af"}}\n', b"", None)
++    x = run(tmp, "manager-running", {"manager": run_ok})
++    t("C10 manager running: read-only exec commands only (ip -V, ip -j neigh, /proc/net/arp, /sys/class/net), MAC "
++      "usable -> PASS; neighbour JSON parsed (informational)",
++      lambda: [c[3:] for c in x["calls"] if c[0] == C.BINS["docker"] and c[1] == "exec"]
++      == [["sh", "-c", "command -v ip && ip -V"], ["ip", "-j", "neigh", "show"], ["cat", "/proc/net/arp"],
++          ["sh", "-c", 'for i in /sys/class/net/*; do echo "$(basename $i) $(cat $i/address) $(cat $i/operstate)"; done']]
++      and find(x, "manager (running)")["status"] == "PASS" and x["res"]["verdict"] == "PASS")
++    x = run(tmp, "manager-zero-mac", {"manager": (0, run_ok[1].replace(b"8a:d3:09:b5:72:af", b"00:00:00:00:00:00"), b"", None)})
++    t("C11 manager running with an all-zero MAC -> FAIL (endpoint MAC unusable)",
++      lambda: find(x, "manager (running)")["status"] == "FAIL")
++    x = run(tmp, "manager-absent", {"manager": (1, b"", b"Error: No such object: cic-ynu-iotmal-sandbox-sandbox-manager-1\n", None),
++                                     "ps": (0, b"mongo-db\trunning\tm\ti2\n", b"", None)})
++    t("C12 manager inspect fails AND the successful listing has no manager -> FAIL 'ABSENT'",
++      lambda: find(x, "manager:")["status"] == "FAIL" and find(x, "manager:")["ps_all_presence"] == "ABSENT")
++    x = run(tmp, "manager-inspect-error", {"manager": PERM})
++    t("C13 manager inspect fails but the listing shows it -> UNKNOWN (not 'not running')",
++      lambda: find(x, "manager:")["status"] == "UNKNOWN" and find(x, "manager:")["ps_all_presence"] == "PRESENT")
++    for n, sp, want in (("pgrep-found", (0, b"123 qemu-system-arm\n", b"", None), "FAIL"),
++                        ("pgrep-error", (2, b"", b"pgrep: bad\n", None), "UNKNOWN")):
++        x = run(tmp, n, {"pgrep": sp})
++        t(f"C14 {n}: pgrep rc 1 = none, rc 0 = present (FAIL), other rc = read error (UNKNOWN), never 'none'",
++          lambda x=x, want=want: find(x, "no qemu-system")["status"] == want)
++    x = run(tmp, "nft-error", {"nft": (1, b"", b"Operation not permitted (you must be root)\n", None)})
++    t("C15 nft read error -> UNKNOWN + collector exit 3", lambda: find(x, "nft ruleset")["status"] == "UNKNOWN" and x["rc"] == 3)
++    x = run(tmp, "nft-differs", {"nft": (0, b"table inet other {\n}\n", b"", None)})
++    t("C16 nft ruleset differs from the 06B-4G reference -> FAIL", lambda: find(x, "nft ruleset")["status"] == "FAIL")
++    x = run(tmp, "exec-error", {"aa": (None, b"", b"", "EXEC_ERROR: FileNotFoundError: x")})
++    t("C17 an executable that cannot run -> status EXEC_ERROR kept, UNKNOWN", lambda: x["reads"]["aa-status"]["status"] == "EXEC_ERROR"
++      and find(x, "AppArmor")["status"] == "UNKNOWN")
++    x = run(tmp, "timeout", {"version": (None, b"", b"", "TIMEOUT")})
++    t("C18 a read that times out -> status TIMEOUT kept, UNKNOWN", lambda: x["reads"]["docker-version"]["status"] == "TIMEOUT"
++      and find(x, "docker server")["status"] == "UNKNOWN")
++    t("C19 collector never states a verdict: its meta says 'NOT a precheck verdict' and the code has no PASS output",
++      lambda: "NOT a precheck verdict" in x["doc"]["meta"]["note"] and "PASS" not in open(os.path.join(HERE, "collector.py")).read()
++      .split("def main", 1)[1])
++
++
++def sec_E(tmp):
++    def cli(src):
++        dst = os.path.join(tmp, "res-%d.json" % len(os.listdir(tmp)))
++        p = subprocess.run([sys.executable, "-I", "-B", os.path.join(HERE, "evaluate_precheck.py"), src, dst,
++                            "--ruleset-ref", os.path.join(tmp, "ref.txt")], capture_output=True, text=True)
++        return p.returncode, json.load(open(dst))
++    open(os.path.join(tmp, "ref.txt"), "w").write(REF)
++    t("E1 evaluator CLI exit 0 only for a complete PASS", lambda: cli(os.path.join(tmp, "clean"))[0] == 0)
++    t("E2 evaluator CLI exit 1 on a FAIL", lambda: cli(os.path.join(tmp, "image-mismatch"))[0] == 1)
++    t("E3 evaluator CLI exit 2 on missing/failed reads", lambda: cli(os.path.join(tmp, "permission-denied"))[0] == 2)
++    os.mkdir(os.path.join(tmp, "empty"))
++    t("E4 collector output without reads.json -> UNUSABLE, exit 3", lambda: cli(os.path.join(tmp, "empty")) == (3, cli(os.path.join(tmp, "empty"))[1])
++      and cli(os.path.join(tmp, "empty"))[1]["verdict"] == "UNUSABLE")
++
++
++def sec_O(tmp):
++    base = os.path.join(tmp, "toy")
++    os.mkdir(base)
++    me = os.geteuid()
++    d = os.path.join(base, "out-link")
++    victim = os.path.join(base, "victim")
++    os.mkdir(victim, 0o700)
++    open(os.path.join(victim, "reads.json"), "w").write("victim-original\n")
++    os.symlink(victim, d)
++    t("O1 output path that is a symlink -> refused (O_NOFOLLOW), nothing written to the target",
++      lambda: raises(C.Refused, lambda: C.prepare_outdir(d, me)) and open(os.path.join(victim, "reads.json")).read()
++      == "victim-original\n")
++    ev = os.path.join(base, "empty-victim")
++    os.mkdir(ev, 0o700)
++    d2 = os.path.join(base, "out-link-empty")
++    os.symlink(ev, d2)
++    t("O1b symlink to an EMPTY directory with the right owner/mode -> still refused (only O_NOFOLLOW stops it)",
++      lambda: raises(C.Refused, lambda: C.prepare_outdir(d2, me)) and os.listdir(ev) == [])
++    for n, mode, owner, content in (("mode-0755", 0o755, me, False), ("not-empty", 0o700, me, True),
++                                    ("other-owner", 0o700, me + 1, False)):
++        p = os.path.join(base, n)
++        os.mkdir(p, mode)
++        os.chmod(p, mode)
++        if content:
++            open(os.path.join(p, "x"), "w").close()
++        t(f"O2 output directory {n} -> refused", lambda p=p, owner=owner: raises(C.Refused, lambda: C.prepare_outdir(p, owner)))
++    # race of the 06B-4IR2 review: the path is replaced by a symlink AFTER the check; writes follow the fd, not the path
++    p = os.path.join(base, "race")
++    os.mkdir(p, 0o700)
++    fd = C.prepare_outdir(p, me)
++    os.rename(p, p + ".orig")
++    os.symlink(victim, p)
++    C.collect(fd, fake_runner({}))
++    os.close(fd)
++    t("O3 output path swapped for a symlink after the check: every file lands in the checked directory, the symlink "
++      "target is untouched",
++      lambda: os.path.exists(os.path.join(p + ".orig", "reads.json"))
++      and open(os.path.join(victim, "reads.json")).read() == "victim-original\n" and len(os.listdir(victim)) == 1)
++    q = os.path.join(base, "planted")
++    os.mkdir(q, 0o700)
++    fd = C.prepare_outdir(q, me)
++    os.symlink(os.path.join(victim, "reads.json"), os.path.join(q, "reads.json"))
++    t("O4 a symlink planted under an output name -> creation fails (O_EXCL|O_NOFOLLOW), target untouched",
++      lambda: raises(OSError, lambda: C.write_new(fd, "reads.json", "x")) and open(os.path.join(victim, "reads.json")).read()
++      == "victim-original\n")
++    os.close(fd)
++    b = os.path.join(base, "bin")
++    os.mkdir(b, 0o755)
++    good, gw = os.path.join(b, "good"), os.path.join(b, "groupw")
++    for f, m in ((good, 0o755), (gw, 0o775)):
++        open(f, "w").write("#!/bin/sh\n")
++        os.chmod(f, m)
++    t("O5 trusted_bins: owner/mode checked for the file and its directory; group-writable or foreign-owned refused; "
++      "relative path refused",
++      lambda: C.trusted_bins({"g": good}, me) == [] and C.trusted_bins({"w": gw}, me) and C.trusted_bins({"g": good}, me + 1)
++      and C.trusted_bins({"r": "docker"}, me))
++    t("O6 the real pinned executables on this host pass trusted_bins (root-owned, not group/other-writable)",
++      lambda: C.trusted_bins() == [])
++    os.environ["CT01_SECRET_LIKE"] = "should-not-leak"
++    rc, out, err, e = C.subprocess_runner(["/usr/bin/env"])     # prints exactly the environment it receives
++    t("O7 subprocess environment is exactly the fixed minimal one (nothing inherited)",
++      lambda: rc == 0 and sorted(l.split("=")[0] for l in out.decode().splitlines() if "=" in l) == sorted(C.ENV)
++      and b"should-not-leak" not in out)
++    p = subprocess.run([sys.executable, "-I", "-B", os.path.join(HERE, "collector.py"), os.path.join(base, "clean-x")],
++                       capture_output=True, text=True)
++    t("O8 collector main as a normal user -> REFUSED, exit 2 (needs root), nothing collected",
++      lambda: p.returncode == 2 and "REFUSED" in p.stderr and not os.path.exists(os.path.join(base, "clean-x")))
++
++
++def sec_L(tmp):
++    """The root snippet of RUN-PROCEDURE.md, run as the current user with BASE in the toy tree and a stub PY."""
++    doc = open(os.path.join(HERE, "RUN-PROCEDURE.md")).read()
++    snip = doc.split("# --- BEGIN ROOT SNIPPET ---", 1)[1].split("# --- END ROOT SNIPPET ---", 1)[0]
++    base = os.path.join(tmp, "launch")
++    os.mkdir(base)
++    stub = os.path.join(base, "py-stub")
++    open(stub, "w").write('#!/bin/sh\necho "STUB-RAN $*" >> "$(dirname "$0")/ran.log"\nexit 0\n')
++    os.chmod(stub, 0o755)
++    good = C.sha256_file(os.path.join(HERE, "collector.py")) if hasattr(C, "sha256_file") else \
++        subprocess.run(["sha256sum", os.path.join(HERE, "collector.py")], capture_output=True, text=True).stdout.split()[0]
++
++    def go(h):
++        env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "BASE": base, "PY": stub, "HASH": h,
++               "SRC": os.path.join(HERE, "collector.py")}
++        return subprocess.run(["/bin/sh", "-c", snip], env=env, capture_output=True, text=True)
++    p = go(good)
++    tdirs = [x for x in os.listdir(base) if x.startswith("ct01-precheck.")]
++    t("L1 snippet with the right hash: fresh mktemp dir (0700), copy checked, `out` 0700, the COPY is run",
++      lambda: p.returncode == 0 and len(tdirs) == 1 and "STUB-RAN" in open(os.path.join(base, "ran.log")).read()
++      and os.path.join(base, tdirs[0], "collector.py") in open(os.path.join(base, "ran.log")).read()
++      and stat.S_IMODE(os.stat(os.path.join(base, tdirs[0])).st_mode) == 0o700
++      and stat.S_IMODE(os.stat(os.path.join(base, tdirs[0], "out")).st_mode) == 0o700)
++    if os.path.exists(os.path.join(base, "ran.log")):
++        os.remove(os.path.join(base, "ran.log"))
++    before = set(os.listdir(base))
++    p = go("0" * 64)
++    new = [x for x in os.listdir(base) if x.startswith("ct01-precheck.") and x not in before]
++    t("L2 snippet with a wrong hash (file swapped/changed): nothing run, the copy removed, exit 1",
++      lambda: p.returncode == 1 and "HASH MISMATCH" in p.stdout and not os.path.exists(os.path.join(base, "ran.log"))
++      and len(new) == 1 and os.listdir(os.path.join(base, new[0])) == [])
++    unquoted = re.sub(r'"[^"]*"', '""', snip)                 # command words only, not text inside strings
++    words = re.findall(r"(?:^|[|;]|\$\(|\bif !|\|\|)\s*([^\s;|()]+)", unquoted, re.M)
++    t("L3 snippet: absolute executables only, no source, no tee, no chown, no redirection into the user tree",
++      lambda: not re.search(r"\b(source|tee|chown)\b|(^|\s)\.\s", snip) and ">" not in snip.replace("<HASH>", "")
++      and all(w.startswith(("/", "$", "#")) or "=" in w or w in ("set", "umask", "if", "echo", "then", "fi", "exit", "!")
++              for w in words))
++
++
++def main(argv):
++    jf = argv[argv.index("--json") + 1] if "--json" in argv else None
++    with tempfile.TemporaryDirectory(prefix="selftest-precheck.") as tmp:
++        for name, fn in (("C", sec_C), ("E", sec_E), ("O", sec_O), ("L", sec_L)):
++            print(f"== section {name}")
++            try:
++                fn(tmp)
++            except Exception:
++                t(f"{name}-INFRA section crashed", lambda: False)
++                traceback.print_exc()
++    n = sum(RESULTS.values())
++    if jf:
++        json.dump(RESULTS, open(jf, "w"), indent=1)
++    print(f"SELFTEST-PRECHECK: {n}/{len(RESULTS)} passed")
++    return 0 if n == len(RESULTS) else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))

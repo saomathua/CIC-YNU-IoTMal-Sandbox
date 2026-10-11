@@ -1,0 +1,134 @@
+
+===== 1. preparation (14:02:23)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image sandbox-worker:latest id=sha256:d0bf9277e7c485823ff5a3b8f5ead6c038ef03c5c9fc72fcd0040799403e6f42 expected=sha256:d0bf9277e7c485823ff5a3b8f5ead6c038ef03c5c9fc72fcd0040799403e6f42
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 4 hours ago
+mongo-db Up 41 minutes
+name=cic-ynu-iotmal-sandbox_sandboxnet id=1d86fe3e8bbe2bbf2d46b4d2d767c59a4b90ab2f6e87c20269137a241816e5d5 driver=bridge subnet=192.168.60.0/24 gw=192.168.60.1 containers=[]
+418097ffcf5b0ba2634463759fdf3ea0cd02caac082298e45f1241312f601f67  /home/dathq/projects/ct01-06b2b/run-06b2b.sh
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b2b/sentinel/poller.py
+c34cf278d244ab4a75ccd9f62aa812efc350cb8b868018943623e985d2f3ea32  /home/dathq/projects/ct01-06b2b/http_tests.py
+
+===== 2. startup: real run.sh + real server.py, poller sentinel (14:02:23)
+container id: e0c582a54bdce20423859eb48d542b256777adb3deca36a3bb047001f3ca7219
+[PASS] server ready: healthcheck 200 from 127.0.0.1 (after 2s)
+state: running exit=0 restarts=0
+[PASS] container running, 0 restarts
+2026-10-06T14:02:24.311383073Z SYSCTL REPORT (after run.sh): net.ipv4.ip_forward=0
+2026-10-06T14:02:24.311427563Z SYSCTL REPORT (after run.sh): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+2026-10-06T14:02:24.311431562Z SYSCTL REPORT (after run.sh): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+2026-10-06T14:02:24.311434187Z SYSCTL REPORT (after run.sh): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+2026-10-06T14:02:24.311436845Z SYSCTL REPORT (after run.sh): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:02:24.311439214Z SYSCTL REPORT (after run.sh): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:02:24.369097650Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-06T14:02:24.384516224Z SENTINEL poller.py called (no real poller started)
+2026-10-06T14:02:24.750179075Z INFO:     Started server process [35]
+2026-10-06T14:02:24.750346628Z INFO:     Application startup complete.
+2026-10-06T14:02:24.750618080Z INFO:     Uvicorn running on http://0.0.0.0:8011 (Press CTRL+C to quit)
+[PASS] V0 passed before real server started and before poller sentinel
+v0=[datetime.datetime(2026, 10, 6, 14, 2, 24, 369097)] server_started=[datetime.datetime(2026, 10, 6, 14, 2, 24, 750179)] poller_sentinel=[datetime.datetime(2026, 10, 6, 14, 2, 24, 384194)] ok=True
+[PASS] server.py started exactly once (no crash loop)
+    PID    PPID COMMAND
+      1       0 python3 poller.py
+     34       1 /bin/bash run.sh
+     35      34 python3 server.py
+     42       0 ps -eo pid,ppid,args
+[PASS] real server.py process running
+[PASS] poller is the sentinel (PID 1)
+[PASS] no qemu/tshark in container
+[PASS] no qemu-system on host
+[PASS] server/router/isolation/run.sh code in image equals working tree
+[PASS] verify before simulation exit 0
+eth0 ip: 192.168.60.2
+
+===== 3. HTTP allowlist tests (guest source simulated on lo — middleware only, not tap0) (14:02:25)
+[PASS] simulation address 10.200.0.2/32 present on lo
+verify during simulation (informational) exit=0
+ISOLATION OK (06B-2B during simulation (informational)): ruleset,sysctl,link,neighbor,route
+[PASS] fixture created {"data_dir": ["06b2b-other-0002", "06b2b-task-0001"], "fixture_sha256": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f", "magic": "3036422d"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no current_task: nothing written {}
+[PASS] current_task set by isolation.current_task {"file": "/run/sandbox/current_task"}
+[PASS] GET get-task/T/file {"expected": 200, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] downloaded content hash {"expected": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f", "got": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f"}
+[PASS] POST update-task/T/strace {"expected": 200, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] received strace.log hash {"expected": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382", "got": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382"}
+[PASS] POST update-task/T/sar {"expected": 200, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 200, "target": "10.200.0.1"}
+[PASS] received sar.out hash {"expected": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e", "got": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/update-task/06b2b-other-0002/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "POST", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "HEAD", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "PUT", "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "POST", "path": "/api/v1/sandbox-worker/stop", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/submit-task/06b2b-other-0002", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {"Content-Type": "multipart/form-data; boundary=06b2bboundary"}, "method": "POST", "path": "/api/v1/sandbox-worker/submit-task/new-06b2b-task", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/docs", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/openapi.json", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest forbidden -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file/", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Forwarded-For": "192.168.60.2"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Forwarded-For": "192.168.60.2"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Forwarded-For": "127.0.0.1"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Forwarded-For": "127.0.0.1"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"Forwarded": "for=192.168.60.2"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"Forwarded": "for=192.168.60.2"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> still 403 {"expected": 403, "headers": {"X-Real-IP": "127.0.0.1"}, "method": "GET", "path": "/healthcheck", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] guest + forwarding header -> other task still 403 {"expected": 403, "headers": {"X-Real-IP": "127.0.0.1"}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] no stop file created {}
+[PASS] no task created by forbidden routes {"data_dir": ["06b2b-other-0002", "06b2b-task-0001"]}
+[PASS] other task not written {}
+[PASS] loopback peer healthcheck -> 200 {"expected": 200, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "127.0.0.1", "status": 200, "target": "127.0.0.1"}
+[PASS] eth0 peer healthcheck -> 200 {"expected": 200, "headers": {}, "method": "GET", "path": "/healthcheck", "source": "192.168.60.2", "status": 200, "target": "192.168.60.2"}
+[PASS] non-guest + XFF 10.200.0.2 -> still 200 {"expected": 200, "headers": {"X-Forwarded-For": "10.200.0.2"}, "method": "GET", "path": "/healthcheck", "source": "127.0.0.1", "status": 200, "target": "127.0.0.1"}
+[PASS] current_task cleared {}
+[PASS] after clear: GET get-task/T/file -> 403 {"expected": 403, "headers": {}, "method": "GET", "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file", "source": "10.200.0.2", "status": 403, "target": "10.200.0.1"}
+[PASS] fixtures removed {"data_dir": []}
+== 42/42 passed
+[PASS] all HTTP/API checks passed (http_tests.py exit 0)
+[PASS] server logged guest denials from 10.200.0.2
+
+===== 4. remove simulation address, full verify (14:02:26)
+[PASS] no 10.200.0.2 address left on any interface
+[PASS] no current_task marker, no fixtures, no stop file left
+[PASS] full verify after removing simulation exit 0
+ISOLATION OK (06B-2B after simulation): ruleset,sysctl,link,neighbor,route
+[PASS] normalized runtime ruleset identical to expected
+SYSCTL REPORT (06B-2B end): net.ipv4.ip_forward=0
+SYSCTL REPORT (06B-2B end): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+SYSCTL REPORT (06B-2B end): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+SYSCTL REPORT (06B-2B end): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+SYSCTL REPORT (06B-2B end): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+SYSCTL REPORT (06B-2B end): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+
+===== 5. teardown (14:02:26)
+[PASS] docker stop exit 0
+[PASS] docker rm exit 0
+[PASS] test container removed
+[PASS] no qemu-system on host
+unchanged: docker-networks.txt
+unchanged: docker-ps.txt
+unchanged: host-tap0.txt
+unchanged: ip6-route.txt
+unchanged: ip-addr.txt
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+unchanged: lsmod-net.txt
+unchanged: nft-ruleset-stateless.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+[PASS] host sysctl unchanged
+[PASS] host nft ruleset unchanged
+[PASS] host IPv4 routes unchanged
+[PASS] host listening ports unchanged
+created ids: e0c582a54bdce20423859eb48d542b256777adb3deca36a3bb047001f3ca7219
+
+===== result (14:02:28)
+ALL CHECKS PASSED

@@ -1,0 +1,3 @@
+Additional fixture checks: 19 schema results: {'reproductions.json': 57, 'extra-stubs.json': 9, 'extended-review.json': 172}
+Selected saved network snapshots: 12
+Scope: 28 unchanged; ['arp_cases.py', 'mutation_arp.py', 'selftest_arp.py'] changed

@@ -1,0 +1,49 @@
+14:40:04 [PASS] MIPS: fresh guest image extracted {"rootfs_sha256": "694fd1b8e3b34a879f56c9de6499d5220484c105534bd1e763157fc8fad6b445", "zip": "./MIPS/image.zip"}
+14:40:04 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+14:40:05 [PASS] MIPS: tshark capturing on tap0 {}
+14:40:05 spawning: qemu-system-mips -M malta -kernel /tmp/g-MIPS/image/vmlinux -hda /tmp/g-MIPS/image/root.ext4 -append "root=/dev/sda" -nographic -no-reboot -device pcnet,netdev=net0,mac=52:54:00:c7:00:02 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+14:40:16 [PASS] MIPS: guest booted to shell {"qemu_pid": 218, "seconds": 11.8}
+14:40:29 [PASS] MIPS: guest network configured by Analysis._configure_network {}
+14:40:31 info network:
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+pcnet.0: index=0,type=nic,model=pcnet,macaddr=52:54:00:c7:00:02
+ \ net0: index=0,type=tap,ifname=tap0,script=no,downscript=no
+
+14:40:31 [PASS] MIPS: QEMU info network: only tap0 backend, no user/slirp/socket {"backends": ["nic", "tap"], "problems": []}
+14:40:31 [PASS] MIPS: guest has 10.200.0.2/30 on br-lan {}
+14:40:31 [PASS] MIPS: guest default route via 10.200.0.1 on br-lan {}
+14:40:31 [PASS] MIPS: a guest NIC carries the pinned MAC 52:54:00:c7:00:02 {"all_macs": {"br-lan": "52:54:00:c7:00:02", "eth0": "52:54:00:c7:00:02", "hwsim0": "12:00:00:00:00:00", "lo": "00:00:00:00:00:00"}, "interfaces": ["br-lan", "eth0"]}
+14:40:31 [PASS] MIPS: harmless dummy upload file created in guest {}
+14:40:31 [PASS] MIPS: no current_task: GET get-task/06b3a-mips-task/file -> 403 {"status": 403}
+14:40:31 [PASS] MIPS: no current_task: POST update-task/06b3a-mips-task/strace -> 403 {"status": 403}
+14:40:32 [PASS] MIPS: no current_task: POST update-task/06b3a-mips-task/sar -> 403 {"status": 403}
+14:40:32 [PASS] MIPS: no current_task: nothing written {}
+14:40:32 group '1-no-current-task' counter delta: {'sandbox_guest_l2.l2_bad_ethertype': 4, 'sandbox_guest.allow_svc': 21, 'sandbox_guest.allow_out_svc': 15}
+14:40:32 [PASS] MIPS: GET get-task/T/file -> 200 {"status": 200}
+14:40:32 [PASS] MIPS: downloaded file hash (computed in guest) == fixture {"expected": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38", "guest": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38"}
+14:40:33 group '2-download' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 5}
+14:40:33 [PASS] MIPS: POST update-task/T/strace -> 200 {"status": 200}
+14:40:33 [PASS] MIPS: received strace.log hash == payload {"expected": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c", "got": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c"}
+14:40:33 [PASS] MIPS: POST update-task/T/sar -> 200 {"status": 200}
+14:40:33 [PASS] MIPS: received sar.out hash == payload {"expected": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57", "got": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57"}
+14:40:34 group '3-upload' counter delta: {'sandbox_guest.allow_svc': 14, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 10}
+14:40:34 [PASS] MIPS: forbidden: GET /healthcheck -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: POST /stop -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: GET other task file -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: POST other task strace -> 403 {"status": 403}
+14:40:35 group '4-forbidden' counter delta: {'sandbox_guest.allow_svc': 28, 'sandbox_guest.allow_out_svc': 20}
+14:40:35 [PASS] MIPS: no stop file created {}
+14:40:35 [PASS] MIPS: no task created / other task not written {"data_dir": ["06b3a-mips-other", "06b3a-mips-task"]}
+14:40:35 [PASS] MIPS: after clearing current_task: GET get-task/T/file -> 403 {"status": 403}
+14:40:35 group '5-after-clear' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 5}
+14:40:36 [PASS] MIPS: QEMU exit confirmed (shutdown_qemu) {"exitstatus": 0, "signalstatus": null}
+14:40:36 [PASS] MIPS: tshark capture stopped {"returncode": 0}
+14:40:36 [PASS] MIPS: fixtures, marker and temporary guest disk removed {}
+14:40:36 [PASS] MIPS: capture: guest frames seen on tap0 {"frames_from_guest": 93}
+14:40:36 [PASS] MIPS: group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 21, "pcap": 21}
+14:40:36 [PASS] MIPS: group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:36 [PASS] MIPS: group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 14, "pcap": 14}
+14:40:37 [PASS] MIPS: group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 28, "pcap": 28}
+14:40:37 [PASS] MIPS: group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:37 [PASS] MIPS: info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A) {"count": 8}
+14:40:37 == MIPS: status=COMPLETED; 37/37 checks passed

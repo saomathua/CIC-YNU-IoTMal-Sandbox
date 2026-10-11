@@ -1,0 +1,5 @@
+    PID    PPID COMMAND
+      1       0 python3 poller.py
+     25       1 /bin/bash run.sh
+     26      25 python3 server.py
+    137       0 ps -eo pid,ppid,args

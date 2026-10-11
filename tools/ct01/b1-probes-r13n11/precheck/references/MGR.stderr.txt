@@ -1,0 +1,3 @@
+# Warning: table ip nat is managed by iptables-nft, do not touch!
+# Warning: table ip filter is managed by iptables-nft, do not touch!
+# Warning: table ip6 nat is managed by iptables-nft, do not touch!

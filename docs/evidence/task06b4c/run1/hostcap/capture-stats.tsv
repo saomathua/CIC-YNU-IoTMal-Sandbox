@@ -1,0 +1,6 @@
+capture	captured	received_by_filter	dropped_by_kernel
+veth	4072	4072	0
+bridge	7960	7960	0
+ens33	589	589	0
+alert	0	0	0
+alert_eth	0	0	0

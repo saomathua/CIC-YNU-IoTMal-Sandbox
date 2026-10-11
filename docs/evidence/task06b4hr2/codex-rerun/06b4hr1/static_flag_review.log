@@ -1,0 +1,5 @@
+T14-A1: ĐẠT
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+Incorrect dynamic bucket -> exit0; correct static bucket with missing after -> exit2

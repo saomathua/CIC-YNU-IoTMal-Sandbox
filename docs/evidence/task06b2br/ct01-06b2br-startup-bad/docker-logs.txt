@@ -1,0 +1,13 @@
+2026-10-06T14:19:25.397678142Z SYSCTL REPORT (before run.sh): net.ipv4.ip_forward=1
+2026-10-06T14:19:25.397722912Z SYSCTL REPORT (before run.sh): rp_filter [max] configured: all=2 default=2 tap0=None eth0=2 | effective: tap0=None eth0=2
+2026-10-06T14:19:25.397725715Z SYSCTL REPORT (before run.sh): arp_ignore [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:19:25.397727357Z SYSCTL REPORT (before run.sh): arp_announce [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:19:25.397728853Z SYSCTL REPORT (before run.sh): arp_accept [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:19:25.397730342Z SYSCTL REPORT (before run.sh): forwarding [dev] configured: all=1 default=1 tap0=None eth0=1 | effective: tap0=None eth0=1
+2026-10-06T14:19:25.454018568Z SYSCTL REPORT (after run.sh): net.ipv4.ip_forward=0
+2026-10-06T14:19:25.454044788Z SYSCTL REPORT (after run.sh): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+2026-10-06T14:19:25.454047120Z SYSCTL REPORT (after run.sh): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+2026-10-06T14:19:25.454048732Z SYSCTL REPORT (after run.sh): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+2026-10-06T14:19:25.454050300Z SYSCTL REPORT (after run.sh): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:19:25.454051811Z SYSCTL REPORT (after run.sh): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:19:25.523167462Z ISOLATION FAIL (V0 startup): link: address 10.200.0.2/32 on lo is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)

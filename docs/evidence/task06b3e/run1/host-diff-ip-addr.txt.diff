@@ -1,0 +1,10 @@
+--- /home/dathq/projects/ct01-06b3c/out/host-before/ip-addr.txt	2026-10-07 05:33:22.906472638 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/ip-addr.txt	2026-10-07 05:36:21.998645809 +0000
+@@ -1,6 +1,6 @@
+ lo               UNKNOWN        127.0.0.1/8 ::1/128 
+ ens33            UP             192.168.177.128/24 metric 100 fe80::20c:29ff:fe42:ad4c/64 
+ br-09fed07bbb6b  UP             172.18.0.1/16 fe80::2c11:92ff:fe11:d0ed/64 
+-br-1d86fe3e8bbe  DOWN           192.168.60.1/24 
++br-1d86fe3e8bbe  DOWN           192.168.60.1/24 fe80::74f6:e0ff:feb4:bf8c/64 
+ docker0          DOWN           172.17.0.1/16 
+ veth84e5da2@if2  UP             fe80::ab:dcff:fe3b:4761/64 

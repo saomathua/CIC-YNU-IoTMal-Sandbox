@@ -1,0 +1,4 @@
+manager container was replaced (cid2 != cid1): not stopped
+manager after: state=running id=cid2 startedAt=1791389554770563091 (before: exited cid1 T0; started by this run: 1)
+manager state differs
+manager container differs

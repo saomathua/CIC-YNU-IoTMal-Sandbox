@@ -1,0 +1,14 @@
+[
+ {
+  "name": "pcnet.0",
+  "type": "nic",
+  "raw": "index=0,type=nic,model=pcnet,macaddr=52:54:00:c7:00:02",
+  "peers": [
+   {
+    "name": "net0",
+    "type": "tap",
+    "raw": "index=0,type=tap,ifname=tap0,script=no,downscript=no"
+   }
+  ]
+ }
+]

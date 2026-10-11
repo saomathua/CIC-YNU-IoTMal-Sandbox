@@ -1,0 +1,6 @@
+manager before: state=exited id=494ae3d2e2eb startedAt=2026-10-07T05:33:23.352264041Z
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+manager started by this run (same container): will be stopped again
+manager: running ip=192.168.60.10
+manager after: state=exited id=494ae3d2e2eb startedAt=2026-10-07T16:12:39.645814307Z (before: exited 494ae3d2e2eb 2026-10-07T05:33:23.352264041Z; started by this run: 1)

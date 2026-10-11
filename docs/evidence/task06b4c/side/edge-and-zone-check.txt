@@ -1,0 +1,27 @@
+== ARM
+  internet-tcp: 3 probe frames, all in certain zone: True; first +0.153 s after A.end, last 1.889 s before B.start; verdict ĐẠT
+  lan-dns-udp: 4 probe frames, all in certain zone: True; first +0.070 s after A.end, last 3.512 s before B.start; verdict ĐẠT
+  lan-dns-tcp: 3 probe frames, all in certain zone: True; first +0.108 s after A.end, last 1.929 s before B.start; verdict CHƯA KIỂM CHỨNG (không có đối chứng sống)
+  ssh-host-192.168.60.1: 3 probe frames, all in certain zone: True; first +0.108 s after A.end, last 1.865 s before B.start; verdict ĐẠT
+  ssh-host-192.168.177.128: 3 probe frames, all in certain zone: True; first +0.105 s after A.end, last 1.897 s before B.start; verdict ĐẠT
+  ssh-host-172.18.0.1: 3 probe frames, all in certain zone: True; first +0.104 s after A.end, last 1.918 s before B.start; verdict ĐẠT
+  manager: 3 probe frames, all in certain zone: True; first +0.114 s after A.end, last 1.891 s before B.start; verdict ĐẠT
+  mongodb: 3 probe frames, all in certain zone: True; first +0.106 s after A.end, last 1.918 s before B.start; verdict ĐẠT
+  worker-eth0: 3 probe frames, all in certain zone: True; first +0.109 s after A.end, last 1.847 s before B.start; verdict ĐẠT
+  tap0-other-port-listener: 3 probe frames, all in certain zone: True; first +0.113 s after A.end, last 1.866 s before B.start; verdict ĐẠT
+== MIPS
+  internet-tcp: 4 probe frames, all in certain zone: True; first +0.187 s after A.end, last 1.855 s before B.start; verdict ĐẠT
+  lan-dns-udp: 4 probe frames, all in certain zone: True; first +0.078 s after A.end, last 3.511 s before B.start; verdict CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+    EDGE drop_public (edge_end_t) t=1791434010.7872336; B=[1791434010.774798, 1791434010.789582]: -12.4 ms before B.start; delta=5 certain=4 with_edges=6
+      frame: 1791434010.787233 IP 10.200.0.2.55745 > 8.8.8.8.53: 42267+ A? 2.openwrt.pool.ntp.org. (40)
+    EDGE drop_public (edge_end_t) t=1791434010.7881038; B=[1791434010.774798, 1791434010.789582]: -13.3 ms before B.start; delta=5 certain=4 with_edges=6
+      frame: 1791434010.788103 IP 10.200.0.2.55745 > 8.8.8.8.53: 50577+ AAAA? 2.openwrt.pool.ntp.org. (40)
+    previous probe internet-tcp: read B ended 1791434004.605468; its delta of the edge class: {'drop_public': 8} (observation only)
+  lan-dns-tcp: 4 probe frames, all in certain zone: True; first +0.133 s after A.end, last 1.930 s before B.start; verdict CHƯA KIỂM CHỨNG (không có đối chứng sống)
+  ssh-host-192.168.60.1: 4 probe frames, all in certain zone: True; first +0.111 s after A.end, last 1.856 s before B.start; verdict ĐẠT
+  ssh-host-192.168.177.128: 4 probe frames, all in certain zone: True; first +0.108 s after A.end, last 1.890 s before B.start; verdict ĐẠT
+  ssh-host-172.18.0.1: 4 probe frames, all in certain zone: True; first +0.108 s after A.end, last 1.859 s before B.start; verdict ĐẠT
+  manager: 4 probe frames, all in certain zone: True; first +0.120 s after A.end, last 1.894 s before B.start; verdict ĐẠT
+  mongodb: 4 probe frames, all in certain zone: True; first +0.102 s after A.end, last 1.917 s before B.start; verdict ĐẠT
+  worker-eth0: 4 probe frames, all in certain zone: True; first +0.110 s after A.end, last 1.863 s before B.start; verdict ĐẠT
+  tap0-other-port-listener: 4 probe frames, all in certain zone: True; first +0.109 s after A.end, last 1.896 s before B.start; verdict ĐẠT

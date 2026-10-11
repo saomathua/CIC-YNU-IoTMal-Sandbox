@@ -1,0 +1,1 @@
+16:42:02 capture z pid 72687 exited during the test

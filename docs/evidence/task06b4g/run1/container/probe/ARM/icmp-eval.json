@@ -1,0 +1,763 @@
+{
+ "arch": "ARM",
+ "assumption": "guard covers the delay from capture timestamp to nft counter hit; NOT measured",
+ "cases": [
+  {
+   "category": "DAT_KIEM_QUY_TAC",
+   "checks": {
+    "no_reply_to_guest": true,
+    "probe_packets_hit_expected_counter": true
+   },
+   "command": "ping -c 3 -s 1201 -w 5 255.255.255.255",
+   "evidence_kind": "rule_check",
+   "exec": {
+    "output_tail": "PING 255.255.255.255 (255.255.255.255): 1201 data bytes\n\n--- 255.255.255.255 ping statistics ---\n5 packets transmitted, 0 packets received, 100% packet loss\n",
+    "rc": 1
+   },
+   "id": "T12-B1",
+   "ok": true,
+   "probe_frame_classes": [
+    "drop_bcast_mcast"
+   ],
+   "probe_frames": 5,
+   "probe_frames_certain": 5,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 5,
+      "delta": 5,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 5,
+      "lo": 5,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 4,
+      "delta": 4,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 4,
+      "lo": 4,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 2,
+      "delta": 2,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 2,
+      "lo": 2,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 2,
+      "delta": 2,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 2,
+      "lo": 2,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "replies_to_guest": 0,
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  },
+  {
+   "category": "DAT_KIEM_QUY_TAC",
+   "checks": {
+    "no_reply_to_guest": true,
+    "probe_packets_hit_expected_counter": true
+   },
+   "command": "ping -c 3 -s 1202 -w 5 224.0.0.1",
+   "evidence_kind": "rule_check",
+   "exec": {
+    "output_tail": "PING 224.0.0.1 (224.0.0.1): 1202 data bytes\n\n--- 224.0.0.1 ping statistics ---\n5 packets transmitted, 0 packets received, 100% packet loss\n",
+    "rc": 1
+   },
+   "id": "T12-B2",
+   "ok": true,
+   "probe_frame_classes": [
+    "drop_bcast_mcast"
+   ],
+   "probe_frames": 5,
+   "probe_frames_certain": 5,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 5,
+      "delta": 5,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 5,
+      "lo": 5,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 2,
+      "delta": 2,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 2,
+      "lo": 2,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 3,
+      "delta": 3,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 3,
+      "lo": 3,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "replies_to_guest": 0,
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  },
+  {
+   "category": "DAT_KIEM_QUY_TAC",
+   "checks": {
+    "no_reply_to_guest": true,
+    "probe_packets_hit_expected_counter": true
+   },
+   "command": "ping -c 3 -s 1204 -w 5 10.200.0.3",
+   "evidence_kind": "rule_check",
+   "exec": {
+    "output_tail": "PING 10.200.0.3 (10.200.0.3): 1204 data bytes\n\n--- 10.200.0.3 ping statistics ---\n5 packets transmitted, 0 packets received, 100% packet loss\n",
+    "rc": 1
+   },
+   "id": "T12-B4",
+   "ok": true,
+   "probe_frame_classes": [
+    "drop_private"
+   ],
+   "probe_frames": 5,
+   "probe_frames_certain": 5,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 5,
+      "delta": 5,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 5,
+      "lo": 5,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 1,
+      "delta": 1,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 1,
+      "lo": 1,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 1,
+      "delta": 1,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 1,
+      "lo": 1,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "replies_to_guest": 0,
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  },
+  {
+   "category": "CHUA_KIEM_CHUNG",
+   "checks": {
+    "no_reply_to_guest": true,
+    "probe_packets_hit_expected_counter": true
+   },
+   "command": "ping6 -c 3 -s 1301 -w 5 -I eth1 ff02::1",
+   "evidence_kind": "rule_check",
+   "exec": {
+    "output_tail": "c7:2: seq=0 ttl=64 time=3.545 ms\n1309 bytes from fe80::5054:ff:fec7:2: seq=1 ttl=64 time=9.397 ms\n1309 bytes from fe80::5054:ff:fec7:2: seq=2 ttl=64 time=9.454 ms\n\n--- ff02::1 ping statistics ---\n3 packets transmitted, 3 packets received, 0% packet loss\nround-trip min/avg/max = 3.545/7.465/9.454 ms\n",
+    "rc": 0
+   },
+   "id": "T13-I1",
+   "ok": false,
+   "probe_frame_classes": [
+    "l2_bad_ethertype"
+   ],
+   "probe_frames": 3,
+   "probe_frames_certain": 2,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 1,
+      "delta": 1,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 1,
+      "lo": 1,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 2,
+      "delta": 3,
+      "edge_end": [
+       1791448983.5747602
+      ],
+      "edge_start": [],
+      "hi": 3,
+      "lo": 2,
+      "status": "UNVERIFIED"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "UNVERIFIED"
+   },
+   "replies_to_guest": 0,
+   "verdict": "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)"
+  },
+  {
+   "category": "DAT_KIEM_QUY_TAC",
+   "checks": {
+    "no_reply_to_guest": true,
+    "probe_packets_hit_expected_counter": true
+   },
+   "command": "ping6 -c 3 -s 1302 -w 5 -I eth1 fe80::24b3:9fff:fea4:8c01",
+   "evidence_kind": "rule_check",
+   "exec": {
+    "output_tail": "PING fe80::24b3:9fff:fea4:8c01 (fe80::24b3:9fff:fea4:8c01): 1302 data bytes\n\n--- fe80::24b3:9fff:fea4:8c01 ping statistics ---\n5 packets transmitted, 0 packets received, 100% packet loss\n",
+    "rc": 1
+   },
+   "id": "T13-I2",
+   "ok": true,
+   "probe_frame_classes": [
+    "l2_bad_ethertype"
+   ],
+   "probe_frames": 4,
+   "probe_frames_certain": 4,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 2,
+      "delta": 2,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 2,
+      "lo": 2,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 4,
+      "delta": 4,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 4,
+      "lo": 4,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "replies_to_guest": 0,
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  }
+ ],
+ "evidence_kind": "rule_check",
+ "group_complete": true,
+ "guard_s": 0.02,
+ "record_problems": [],
+ "service_link_after": {
+  "detail": {
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "http_code": "200",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out",
+   "rc": 0,
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f"
+  },
+  "ok": true
+ },
+ "service_link_before": {
+  "detail": {
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "http_code": "200",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out",
+   "rc": 0,
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f"
+  },
+  "ok": true
+ },
+ "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations"
+}

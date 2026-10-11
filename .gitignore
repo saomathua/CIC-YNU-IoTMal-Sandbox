@@ -1,12 +1,17 @@
-# Environment
+# Environment (real values must never be committed; only *.env.example is tracked)
 .env
+.env.*
+!.env.example
 
 # Individual service compose files (top-level docker-compose.yml is the deployment config)
 sandbox-manager/docker-compose.yml
 sandbox-worker/docker-compose.yml
 
-# Runtime data
+# Runtime data (MongoDB, manager uploads/output)
 data/
+
+# Malware samples — never commit
+malware/
 
 # Python
 __pycache__/

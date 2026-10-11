@@ -1,0 +1,9 @@
+netns before stop: pid=2574 sandboxkey=/var/run/docker/netns/37350c981a8a ns=net:[4026532740] host-ns=net:[4026531840]
+-r--r--r-- 1 root root 0 Oct  6 13:25 /var/run/docker/netns/37350c981a8a
+after stop: status=exited exit=0 sandboxkey=""
+after rm:
+ls: cannot access '/var/run/docker/netns/37350c981a8a': No such file or directory
+sandbox key file gone
+pid 2574 gone
+container removed
+Device "tap0" does not exist.

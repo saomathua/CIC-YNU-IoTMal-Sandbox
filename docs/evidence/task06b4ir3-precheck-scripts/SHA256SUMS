@@ -1,0 +1,7 @@
+6604fbda18cb26f56e6b531c55d0e2bd64209ae1540a989ccc47363d663f1a2d  ./collector.py
+1c7463282c0c71bcd2c53d3362e3d265d1a11e10137b30feae9ecf8d54e71678  ./evaluate_precheck.py
+1558d465272db3a005486f3dbbe9b1464db1ae32500206320bf6c49722b7c594  ./mutation_precheck.py
+b160afd22c8908e06165d5fed41059f58400f145fedb7925f05ea119a5b82fee  ./precheck-scripts-sha256.txt
+6e5d7f99b366b41caf6d1045b2e2f52f90d40ebb71988e3a8d9627aee3ee6ff6  ./precheck-scripts-vs-06b4ir2.diff
+d390068f60ac9dc93f6f859d1eee9ea164afc0623ef81eed81a71efc30ffcf04  ./RUN-PROCEDURE.md
+67ee9c8fbbfa6bdfde8fb123ade59749c1638b20ec6556a6d989568f93a6be44  ./selftest_precheck.py

@@ -1,0 +1,6 @@
+06B-3FR1 reproduction: PermissionError on every /proc/<pid>/comm (simulated; real /proc listed read-only)
+06B-3FR  qemu_pids() -> []   (error swallowed: looks like 'no QEMU')
+06B-3FR1 qemu_pids() raised ProcessScanError: cannot read /proc/1/comm: PermissionError: [Errno 13] Permission denied: '/proc/1/comm'
+06B-3FR1 record_qemu_scan('after_exit') -> pids=None, error='ProcessScanError: cannot read /proc/1/comm: PermissionError: [Errno 13] Permission denied:'
+session verdict with the 06B-3FR scan result : PASS
+session verdict with the 06B-3FR1 scan result: ERROR

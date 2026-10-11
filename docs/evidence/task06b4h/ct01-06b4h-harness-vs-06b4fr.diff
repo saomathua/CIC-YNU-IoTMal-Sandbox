@@ -1,0 +1,1216 @@
+diff -ruN -x __pycache__ -x out ct01-06b4fr/arp_cases.py ct01-06b4h/arp_cases.py
+--- ct01-06b4fr/arp_cases.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4h/arp_cases.py	2026-10-08 09:17:46.132792007 +0000
+@@ -0,0 +1,482 @@
++#!/usr/bin/env python3
++"""06B-4H — T14/T15 ARP cases (prepared OFFLINE; not executed, not wired into a run script).
++
++Scope (plan docs/ct01-remaining-tests-plan.md T14, T15 level 1; reviewer decisions D1, D2, D6):
++    T14-A1  ARP request for 192.168.60.2 (worker eth0)   expected arp_in_drop   live control (ARP on sandboxnet)
++    T14-A2  ARP request for 192.168.60.10 (manager)      expected arp_in_drop   live control (ARP on sandboxnet)
++    T14-A3  ARP request for 10.200.0.6 (no host)         expected arp_in_drop   rule check
++            made by the GUEST KERNEL: an on-link /32 route + one ping (sizes from signatures.py); the guest
++            has no arping, and no ICMP is ever sent because the ARP never resolves.
++    T15-S1  gratuitous ARP from the GUEST KERNEL (arp_notify=1, secondary /32 addresses 10.200.0.1,
++            192.168.60.10, 192.168.60.1, link down/up)   expected arp_in_drop   rule check + worker neighbour check
++NOT covered (D1): forged ARP replies, gratuitous replies, wrong htype/hlen/plen; no tool is added, no raw packet.
++
++Layers (all injectable for offline tests):
++  build_cases()                         case definitions (commands built from the case, sizes from signatures.py)
++  run_group(runner, read_counters, service_link, worker_neigh, control, cases, iface)
++        service link before the group -> per case: worker neighbours (before) -> guest_state.GuestChange
++        [state saved] -> read A -> setup -> trigger -> settle -> read B -> [state restored, ALSO after an
++        error] -> worker neighbours (after) -> live control (A1/A2) -> service link after the case.
++        A failed restore stops the group: the remaining cases are not run.
++  evaluate_group(pcap, counters_file, tap_mac, record)
++        reviewed l2frames.classified_frames / reconcile_l2 / probe_verdict_l2 and l2eval.load_reads.
++
++ĐẠT only with: the right probe frames (ARP fields), the expected counter (all compared classes reconciled),
++service link before AND after the case, a successful restore, unchanged worker neighbours, and (A1/A2) a live
++control. No probe frame -> CHƯA KIỂM CHỨNG (never evidence of blocking). Precedence FAIL > LỖI PHÉP ĐO >
++CHƯA KIỂM CHỨNG > ĐẠT; guard 20 ms (unmeasured assumption).
++"""
++import argparse
++import collections
++import ipaddress
++import json
++import re
++import sys
++
++import counter_window
++import guest_state as GS
++import l2eval
++import l2frames as L
++import signatures as S
++
++GUARD_S = counter_window.GUARD_S
++SETTLE_S = 3            # after the trigger: kernel ARP retries (mcast_solicit 3 x 1 s [GĐ G7]) end before read B
++PING_WAIT_S = 2         # busybox ping -W
++CASE_IDS = ("T14-A1", "T14-A2", "T14-A3", "T15-S1")
++T15_SPOOF_IPS = ("10.200.0.1", "192.168.60.10", "192.168.60.1")
++CATEGORIES = ("DAT", "DAT_KIEM_QUY_TAC", "FAIL", "LOI_PHEP_DO", "LOI_THUC_THI", "KHONG_TAO_DUOC_GOI",
++              "CHUA_KIEM_CHUNG")
++NOT_RUN = "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
++
++
++def _iface_ok(iface):
++    if not isinstance(iface, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,15}", iface):
++        raise ValueError(f"bad interface name {iface!r}")
++    return iface
++
++
++def build_cases():
++    return [
++        {"id": "T14-A1", "kind": "t14", "dst": "192.168.60.2", "size": S.ICMP4_SIZES["T14-A1"],
++         "expected": "arp_in_drop", "control_kind": "live"},
++        {"id": "T14-A2", "kind": "t14", "dst": "192.168.60.10", "size": S.ICMP4_SIZES["T14-A2"],
++         "expected": "arp_in_drop", "control_kind": "live"},
++        {"id": "T14-A3", "kind": "t14", "dst": "10.200.0.6", "size": S.ICMP4_SIZES["T14-A3"],
++         "expected": "arp_in_drop", "control_kind": "rule_check"},
++        {"id": "T15-S1", "kind": "t15", "spoof": list(T15_SPOOF_IPS), "expected": "arp_in_drop",
++         "control_kind": "rule_check"},
++    ]
++
++
++def commands(case, iface):
++    """-> {"setup": [...], "trigger": [...], "settle": [...]}: the exact busybox commands, nothing else."""
++    _iface_ok(iface)
++    if case["kind"] == "t14":
++        dst = str(ipaddress.IPv4Address(case["dst"]))
++        return {"setup": [f"ip route add {dst}/32 dev {iface}"],
++                "trigger": [f"ping -c 1 -W {PING_WAIT_S} -s {int(case['size'])} {dst}"],
++                "settle": [f"sleep {SETTLE_S}"]}
++    if case["kind"] == "t15":
++        ips = [str(ipaddress.IPv4Address(a)) for a in case["spoof"]]
++        return {"setup": [f"echo 1 > /proc/sys/net/ipv4/conf/{iface}/arp_notify"]
++                + [f"ip addr add {a}/32 dev {iface}" for a in ips],
++                "trigger": [f"ip link set dev {iface} down", f"ip link set dev {iface} up"],
++                "settle": [f"sleep {SETTLE_S}"]}
++    raise ValueError(f"unknown case kind {case.get('kind')!r}")
++
++
++# ------------------------------------------------------------------ worker neighbours (read in the worker)
++class NeighReadError(Exception):
++    """The worker neighbour table could not be read/parsed: never treated as 'unchanged'."""
++
++
++def parse_neigh(text):
++    """`ip -j neigh show` (worker netns) -> {(dst, dev): {"lladdr": mac or None, "permanent": bool}}."""
++    try:
++        rows = json.loads(text)
++    except (TypeError, ValueError) as e:
++        raise NeighReadError(f"not JSON: {e}") from e
++    if not isinstance(rows, list):
++        raise NeighReadError("not a JSON list")
++    out = {}
++    for r in rows:
++        if not isinstance(r, dict) or not isinstance(r.get("dst"), str) or not isinstance(r.get("dev"), str):
++            raise NeighReadError(f"bad entry {r!r}")
++        state = r.get("state", [])
++        if not isinstance(state, list):
++            raise NeighReadError(f"bad state in {r!r}")
++        mac = r.get("lladdr")
++        out[(r["dst"], r["dev"])] = {"lladdr": mac.lower() if isinstance(mac, str) else None,
++                                     "permanent": "PERMANENT" in state}
++    return out
++
++
++def neigh_problems(before, after, watch_ips):
++    """Worker neighbour changes that the probe must not cause. Dynamic state changes are not compared.
++    - tap0: exactly the same entries (dst, lladdr, permanent) before and after; 10.200.0.2 PERMANENT, guest MAC;
++    - no entry on any device other than tap0 carries the guest MAC;
++    - an entry for a watched IP (probe target / spoofed IP) that existed before keeps its lladdr."""
++    guest = L._norm_mac(S.GUEST_MAC)
++    p = []
++    tb = {k: v for k, v in before.items() if k[1] == "tap0"}
++    ta = {k: v for k, v in after.items() if k[1] == "tap0"}
++    if tb != ta:
++        p.append(f"tap0 neighbours changed: {sorted(tb.items())} -> {sorted(ta.items())}")
++    if ta.get((S.GUEST_IP, "tap0")) != {"lladdr": guest, "permanent": True}:
++        p.append(f"tap0 neighbour {S.GUEST_IP} is not PERMANENT {guest}: {ta.get((S.GUEST_IP, 'tap0'))}")
++    for (dst, dev), v in sorted(after.items()):
++        if dev != "tap0" and v["lladdr"] == guest:
++            p.append(f"neighbour {dst} dev {dev} has the guest MAC")
++    for (dst, dev), v in sorted(after.items()):
++        if dst in watch_ips and (dst, dev) in before and before[(dst, dev)]["lladdr"] and v["lladdr"] \
++                and before[(dst, dev)]["lladdr"] != v["lladdr"]:
++            p.append(f"neighbour {dst} dev {dev}: lladdr {before[(dst, dev)]['lladdr']} -> {v['lladdr']}")
++    return p
++
++
++def watch_ips(case):
++    return [case["dst"]] if case["kind"] == "t14" else list(case["spoof"])
++
++
++# ------------------------------------------------------------------ execution (prepared, not run here)
++def _call(fn, *a):
++    try:
++        return fn(*a), None
++    except Exception as e:                                       # noqa: BLE001
++        return None, f"{type(e).__name__}: {e}"
++
++
++def _link(service_link):
++    try:
++        ok, detail = service_link()
++    except Exception as e:                                       # noqa: BLE001
++        ok, detail = False, f"{type(e).__name__}: {e}"
++    return {"ok": ok is True, "detail": detail}
++
++
++def _run_steps(runner, cmds, r, timeout):
++    """setup -> trigger -> settle; a failed setup/settle step or a missing tool stops the case (error)."""
++    for phase in ("setup", "trigger", "settle"):
++        for cmd in cmds[phase]:
++            try:
++                rc, out = runner.run(cmd, timeout=timeout)
++            except Exception as e:                               # noqa: BLE001
++                r["steps"].append({"phase": phase, "cmd": cmd, "rc": None, "out": ""})
++                r["exec_error"] = f"{phase} {cmd!r}: {type(e).__name__}: {e}"
++                return
++            out = out or ""
++            r["steps"].append({"phase": phase, "cmd": cmd, "rc": rc, "out": out[-300:]})
++            if rc == 127 or "not found" in out:
++                r["exec_error"] = f"{phase} {cmd!r}: tool missing in the guest"
++                return
++            # a ping without reply is the EXPECTED outcome (rc 1); every other step must succeed
++            if phase != "trigger" and rc != 0:
++                r["exec_error"] = f"{phase} {cmd!r}: rc {rc}"
++                return
++            if phase == "trigger" and cmd.startswith("ip link") and rc != 0:
++                r["exec_error"] = f"trigger {cmd!r}: rc {rc}"
++                return
++
++
++def run_group(runner, read_counters, service_link, worker_neigh, control, cases, iface, timeout=60):
++    """runner.run(cmd, timeout) -> (rc, text); read_counters(label); service_link() -> (ok, detail);
++    worker_neigh() -> `ip -j neigh show` text of the worker netns; control(case) -> (ok, detail) for live-control
++    cases. Returns the group record. Never raises: every failure is recorded."""
++    _iface_ok(iface)
++    rec = {"iface": iface, "cases": [], "service_link_before": _link(service_link), "stopped": None}
++    if not rec["service_link_before"]["ok"]:
++        rec["skipped"] = "service link before the group failed: no case was run"
++        return rec
++    for c in cases:
++        r = {"id": c["id"], "before": f"{c['id']} before", "after": f"{c['id']} after", "steps": [],
++             "exec_error": None, "read_error": None, "guest_state": None, "neigh_before": None, "neigh_after": None,
++             "control": None, "service_link_after": None, "not_run": None}
++        if rec["stopped"]:
++            r["not_run"] = rec["stopped"]
++            rec["cases"].append(r)
++            continue
++        try:
++            cmds = commands(c, iface)
++        except ValueError as e:
++            r["exec_error"] = f"commands not built: {e}"
++            rec["cases"].append(r)
++            continue
++        r["neigh_before"], err = _call(worker_neigh)
++        if err:
++            r["neigh_before_error"] = err
++        gc = GS.GuestChange(runner, iface)
++        try:
++            with gc:
++                _, e1 = _call(read_counters, r["before"])
++                _run_steps(runner, cmds, r, timeout)
++                _, e2 = _call(read_counters, r["after"])
++                errs = [f"read {lbl!r}: {e}" for lbl, e in ((r["before"], e1), (r["after"], e2)) if e]
++                r["read_error"] = "; ".join(errs) or None
++        except GS.StateReadError as e:      # before-state unreadable: nothing changed, nothing to restore
++            r["exec_error"] = r["exec_error"] or f"guest state not readable before the case: {e}"
++        except Exception as e:                                   # noqa: BLE001
++            r["exec_error"] = r["exec_error"] or f"{type(e).__name__}: {e}"
++        r["guest_state"] = {"before": _jsonable(gc.rec["before"]), "restore": _jsonable(gc.rec["restore"])}
++        restored = bool(gc.rec["restore"] and gc.rec["restore"].get("restored") is True)
++        if gc.rec["before"] is not None and not restored:
++            rec["stopped"] = NOT_RUN
++        r["neigh_after"], err = _call(worker_neigh)
++        if err:
++            r["neigh_after_error"] = err
++        if c["control_kind"] == "live":
++            res, err = _call(control, c)
++            r["control"] = {"ok": False, "detail": err} if err else {"ok": bool(res and res[0] is True),
++                                                                      "detail": res and res[1]}
++        if restored:
++            r["service_link_after"] = _link(service_link)
++        rec["cases"].append(r)
++    return rec
++
++
++def _jsonable(x):
++    """guest_state uses tuple keys for neighbours; the record is JSON."""
++    if isinstance(x, dict):
++        return {(" ".join(k) if isinstance(k, tuple) else k): _jsonable(v) for k, v in x.items()}
++    if isinstance(x, (list, tuple)):
++        return [_jsonable(v) for v in x]
++    return x
++
++
++# ------------------------------------------------------------------ evaluation
++def _arp(f):
++    a = f.get("arp") or {}
++    return None if a.get("short") or "spa" not in a else a
++
++
++def is_probe_frame(f, case):
++    """Guest ARP frames of this case, identified by their ARP fields (never by the counter class)."""
++    if f.get("direction") != "guest" or f.get("etype") != L.ETH_ARP:
++        return False
++    a = _arp(f)
++    if a is None or a.get("sha") != L._norm_mac(S.GUEST_MAC):
++        return False
++    if case["kind"] == "t14":
++        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]
++    return a["spa"] == a["tpa"] and a["spa"] in (S.GUEST_IP,) + tuple(case["spoof"])   # gratuitous
++
++
++def determined_problems(window, case):
++    """Frames that prove a failure for this case (independent of counters)."""
++    p = []
++    for f in window:
++        a = _arp(f) if f.get("etype") == L.ETH_ARP else None
++        if f.get("direction") == "worker" and a:
++            ips = {a.get("spa"), a.get("tpa")}
++            if case["kind"] == "t14" and a.get("spa") == case["dst"]:
++                p.append(f"ARP reply/announcement for {case['dst']} towards the guest at t={f['t']:.6f}")
++            if case["kind"] == "t15" and ips & set(case["spoof"]):
++                p.append(f"worker ARP about a spoofed IP {sorted(ips & set(case['spoof']))} at t={f['t']:.6f}")
++        if case["kind"] == "t14" and f.get("direction") == "guest":
++            ip = f.get("ip") or {}
++            if ip.get("hdr_ok") and ip.get("dst") == case["dst"] and ip.get("proto") == 1 \
++                    and ip.get("tot_len") == case["size"] + 28:
++                p.append(f"probe IPv4 packet to {case['dst']} sent at t={f['t']:.6f}: the ARP was resolved")
++    return p
++
++
++def _result(cid, category, text, **kw):
++    assert category in CATEGORIES
++    out = {"id": cid, "category": category, "verdict": text, "ok": category in ("DAT", "DAT_KIEM_QUY_TAC")}
++    out.update(kw)
++    return out
++
++
++def link_ok(state):
++    return isinstance(state, dict) and state.get("ok") is True
++
++
++def evaluate_case(frames, reads, case, crec, link_before_ok, guard=GUARD_S):
++    cid = case["id"]
++    kind = case["control_kind"]
++    ek = {"evidence_kind": "rule_check" if kind == "rule_check" else "live_control"}
++    if crec.get("not_run"):
++        return _result(cid, "CHUA_KIEM_CHUNG", crec["not_run"], **ek)
++    if crec.get("exec_error") and not (crec.get("guest_state") or {}).get("before"):
++        # the case never started (state unreadable / commands not built): nothing was sent, nothing measured
++        return _result(cid, "LOI_THUC_THI", f"CHƯA KIỂM CHỨNG (lỗi thực thi: {crec['exec_error']})", **ek)
++    if crec.get("read_error"):
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({crec['read_error']})", **ek)
++    missing = [lbl for lbl in (crec.get("before"), crec.get("after")) if lbl not in reads]
++    if missing:
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO (counter read(s) {missing} not found)", **ek)
++    ra, rb = reads[crec["before"]], reads[crec["after"]]
++    recon = L.reconcile_l2(frames, ra, rb, l2eval.check_classes(None), guard)
++    if recon["verdict"] == "ERROR":
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({recon.get('error')})", reconciliation=recon, **ek)
++    out_drop, err = L.strict_delta(ra, rb, ["arp_out_drop"])
++    if err:
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})", **ek)
++    window = [f for f in frames if counter_window.zone(f["t"], ra, rb, guard) != "outside"]
++    probe = [f for f in window if is_probe_frame(f, case)]
++    certain = [f for f in probe if counter_window.zone(f["t"], ra, rb, guard) == "certain"]
++    counted = [f for f in certain if f["cls"] in L.COUNTER_CLASSES]
++    problems = determined_problems(window, case)
++    # worker neighbours: unreadable -> measurement error; changed -> determined failure
++    try:
++        nb, na = parse_neigh(crec.get("neigh_before")), parse_neigh(crec.get("neigh_after"))
++        nprob = neigh_problems(nb, na, watch_ips(case))
++        nerr = None
++    except NeighReadError as e:
++        nprob, nerr = [], f"worker neighbours not readable: {e}"
++    checks = {"probe_packets_hit_expected_counter": all(f["cls"] == case["expected"] for f in counted),
++              "no_frame_proving_failure": not problems,
++              "worker_neighbours_unchanged": not nprob}
++    detail = {"probe_frames": len(probe), "probe_frames_certain": len(certain),
++              "probe_frame_classes": sorted({f["cls"] for f in probe}), "checks": checks,
++              "failure_evidence": problems + nprob, "arp_out_drop_delta": out_drop["arp_out_drop"],
++              "reconciliation": {k: recon.get(k) for k in ("verdict", "per_class", "no_counter_frames", "guard_s")},
++              "steps": crec.get("steps"), "restore": ((crec.get("guest_state") or {}).get("restore") or {}).get("restored"),
++              **ek}
++    # 1. determined failures win
++    if recon["verdict"] == "FAIL" or not all(checks.values()):
++        why = [k for k, v in checks.items() if not v] + (["counter_reconciliation"] if recon["verdict"] == "FAIL" else [])
++        return _result(cid, "FAIL", "FAIL", failed=why, **detail)
++    if nerr:
++        return _result(cid, "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({nerr})", **detail)
++    # 2. the guest could not run the probe
++    if crec.get("exec_error"):
++        return _result(cid, "LOI_THUC_THI", f"CHƯA KIỂM CHỨNG (lỗi thực thi: {crec['exec_error']})", **detail)
++    # 3. no probe frame (or, T15, no gratuitous frame for some spoofed IP): never evidence of blocking
++    if not probe:
++        return _result(cid, "KHONG_TAO_DUOC_GOI", "CHƯA KIỂM CHỨNG (không tạo được khung ARP probe; không phải "
++                       "bằng chứng chặn)", **detail)
++    if case["kind"] == "t15":
++        seen = {(f.get("arp") or {}).get("spa") for f in probe}
++        lack = [a for a in case["spoof"] if a not in seen]
++        if lack:
++            return _result(cid, "KHONG_TAO_DUOC_GOI", f"CHƯA KIỂM CHỨNG (không có gratuitous ARP cho {lack})", **detail)
++    # 4. the reviewed verdict function
++    pv = {"probe_packets_in_tap0_pcap": True, **checks}
++    if kind == "live":
++        ctl = crec.get("control")
++        text, ok = L.probe_verdict_l2(pv, recon, case["expected"], "live", control_alive=link_ok(ctl))
++    else:
++        text, ok = L.probe_verdict_l2(pv, recon, case["expected"], "rule_check")
++    if text == "FAIL":
++        return _result(cid, "FAIL", "FAIL", failed=["probe_verdict"], **detail)
++    if not ok:
++        return _result(cid, "CHUA_KIEM_CHUNG", text, **detail)
++    # 5. conditions that only prevent judging
++    if out_drop["arp_out_drop"] != 0:
++        return _result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG (arp_out_drop tăng {out_drop['arp_out_drop']}: "
++                       "worker đã định gửi ARP tới guest; khung không quan sát được trên tap0)", **detail)
++    if detail["restore"] is not True:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được)", **detail)
++    if not link_before_ok:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (liên kết dịch vụ trước nhóm thử thiếu, không đạt "
++                       "hoặc không hợp lệ)", **detail)
++    if not link_ok(crec.get("service_link_after")):
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (liên kết dịch vụ sau ca thử không đạt)", **detail)
++    return _result(cid, "DAT" if kind == "live" else "DAT_KIEM_QUY_TAC", text, **detail)
++
++
++def record_problems(record):
++    """Structure/completeness of a group record: every case exactly once, labels and commands as built."""
++    if not isinstance(record, dict) or not isinstance(record.get("cases"), list) \
++            or not all(isinstance(c, dict) for c in record["cases"]):
++        return ["group record must be an object whose 'cases' is a list of objects"]
++    p = []
++    n = collections.Counter(c.get("id") for c in record["cases"])
++    if record.get("skipped"):
++        p.append(f"group skipped: {record['skipped']}")
++    else:
++        p += [f"case missing: {cid}" for cid in CASE_IDS if n[cid] == 0]
++    p += [f"case recorded more than once: {cid}" for cid, k in sorted(n.items(), key=str) if k > 1]
++    p += [f"unknown case id: {cid!r}" for cid in n if cid not in CASE_IDS]
++    defs = {c["id"]: c for c in build_cases()}
++    for c in record["cases"]:
++        d = defs.get(c.get("id"))
++        if d is None or c.get("not_run"):
++            continue
++        if c.get("before") != f"{d['id']} before" or c.get("after") != f"{d['id']} after":
++            p.append(f"{d['id']}: counter read labels differ from the reviewed ones")
++        try:
++            want = [x for ph in ("setup", "trigger", "settle") for x in commands(d, record.get("iface"))[ph]]
++        except ValueError as e:
++            p.append(f"{d['id']}: {e}")
++            continue
++        got = [s.get("cmd") for s in c.get("steps") or [] if isinstance(s, dict)]
++        if got != want[:len(got)]:
++            p.append(f"{d['id']}: guest commands {got} are not the reviewed ones")
++    return p
++
++
++def evaluate_group(pcap, counters_file, tap_mac, record, guard=GUARD_S):
++    """-> {"cases": [...], "record_problems": [...], ...}. Never concludes for an invalid/incomplete record."""
++    probs = record_problems(record)
++    out = {"guard_s": guard, "assumption": l2eval.ASSUMPTION, "record_problems": probs, "cases": []}
++    if probs and "group record must be" in probs[0]:
++        return out
++    out["service_link_before"] = record.get("service_link_before")
++    cases = {c["id"]: c for c in build_cases()}
++    if record.get("skipped"):
++        out["cases"] = [_result(cid, "CHUA_KIEM_CHUNG", f"CHƯA KIỂM CHỨNG ({record['skipped']})") for cid in CASE_IDS]
++        return out
++    try:
++        frames = L.classified_frames(pcap, tap_mac)
++        reads = l2eval.load_reads(counters_file)
++        err = None
++    except L.FrameReadError as e:
++        err = f"capture read error: {e}"
++    except l2eval.InputError as e:
++        err = f"invalid measurement data: {e}"
++    except ValueError as e:
++        err = f"invalid argument: {e}"
++    if err:
++        out["cases"] = [_result(str(c.get("id")), "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})") for c in record["cases"]]
++        return out
++    lb = link_ok(record.get("service_link_before"))
++    for crec in record["cases"]:
++        if crec.get("id") not in cases:
++            out["cases"].append(_result(str(crec.get("id")), "LOI_PHEP_DO", "LỖI PHÉP ĐO (unknown case id)"))
++            continue
++        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, lb, guard))
++    return out
++
++
++def group_exit(result):
++    """LỖI PHÉP ĐO 2 > FAIL 1 > not judged 4 > ĐẠT 0; an incomplete/invalid record is never 0."""
++    cats = {c["category"] for c in result["cases"]}
++    if "FAIL" in cats:
++        return 1
++    if not result["cases"] or "LOI_PHEP_DO" in cats:
++        return 2
++    if result.get("record_problems"):
++        return 2
++    return 4 if cats - {"DAT", "DAT_KIEM_QUY_TAC"} else 0
++
++
++def main(argv):
++    ap = argparse.ArgumentParser(description="evaluate a recorded T14/T15 ARP group (offline)")
++    for a in ("--pcap", "--counters", "--tap-mac", "--record"):
++        ap.add_argument(a, required=True)
++    ap.add_argument("--out")
++    try:
++        a = ap.parse_args(argv)
++    except SystemExit:
++        return 2
++    try:
++        res = evaluate_group(a.pcap, a.counters, a.tap_mac, json.load(open(a.record)))
++    except (OSError, ValueError) as e:
++        res = {"error": f"{type(e).__name__}: {e}", "cases": [], "record_problems": []}
++    if a.out:
++        with open(a.out, "w") as f:
++            json.dump(res, f, indent=1, sort_keys=True, ensure_ascii=False)
++            f.write("\n")
++    for c in res["cases"]:
++        print(f"{c['id']}: {c['verdict']}")
++    for p in res.get("record_problems", []):
++        print(f"RECORD: {p}")
++    if res.get("error"):
++        print(f"ERROR: {res['error']}")
++        return 2
++    return group_exit(res)
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+diff -ruN -x __pycache__ -x out ct01-06b4fr/mutation_arp.py ct01-06b4h/mutation_arp.py
+--- ct01-06b4fr/mutation_arp.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4h/mutation_arp.py	2026-10-08 09:23:01.021807625 +0000
+@@ -0,0 +1,154 @@
++#!/usr/bin/env python3
++"""06B-4H — mutation test of arp_cases.py (offline). Each mutant runs selftest_arp.py in its own mktemp copy;
++every replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID /
++ERROR as in mutation_icmp.py. Baseline must pass; harness hash checked before/after.
++    python3 mutation_arp.py
++"""
++import concurrent.futures
++import glob
++import hashlib
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++FILES = sorted(os.path.basename(p) for p in glob.glob(os.path.join(HERE, "*.py")) + glob.glob(os.path.join(HERE, "*.sh")))
++AC = "arp_cases.py"
++M = [
++    # probe identification
++    ("A1", AC, [('    if a is None or a.get("sha") != L._norm_mac(S.GUEST_MAC):', '    if a is None:')],
++     "P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT"),
++    ("A2", AC, [('        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]',
++                 '        return a["op"] == 1 and a["spa"] == S.GUEST_IP')],
++     "P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT"),
++    ("A3", AC, [('        return a["op"] == 1 and a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]',
++                 '        return a["spa"] == S.GUEST_IP and a["tpa"] == case["dst"]')],
++     "P3 T14-A1 wrong ARP field (opcode 2 (reply) instead of a request) -> no probe frame, never ĐẠT"),
++    ("A4", AC, [('    return a["spa"] == a["tpa"] and a["spa"] in', '    return a["spa"] in')],
++     "P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame"),
++    # verdict conditions
++    ("A5", AC, [('        if lack:\n            return _result', '        if False:\n            return _result')],
++     "P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it"),
++    ("A6", AC, [('    if not probe:\n        return _result', '    if False:\n        return _result')],
++     "P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking"),
++    ("A7", AC, [('    if crec.get("exec_error"):\n        return _result(cid, "LOI_THUC_THI"',
++                 '    if False:\n        return _result(cid, "LOI_THUC_THI"')],
++     "P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames"),
++    ("A8", AC, [('    if detail["restore"] is not True:', '    if False:')],
++     "P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT"),
++    ("A9", AC, [('    if not link_ok(crec.get("service_link_after")):', '    if False:')],
++     "P22 service link after the case failed -> CHƯA KIỂM CHỨNG"),
++    ("A10", AC, [('    return isinstance(state, dict) and state.get("ok") is True',
++                  '    return isinstance(state, dict) and bool(state.get("ok"))')],
++     "P37 service link after with ok \"true\" (not the boolean) -> CHƯA KIỂM CHỨNG"),
++    ("A11", AC, [('    if out_drop["arp_out_drop"] != 0:', '    if False:')],
++     "P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)"),
++    ("A12", AC, [('    if nerr:\n        return _result', '    if False:\n        return _result')],
++     "P13 neighbour table not readable -> LỖI PHÉP ĐO"),
++    ("A13", AC, [('    if crec.get("exec_error") and not (crec.get("guest_state") or {}).get("before"):', '    if False:')],
++     "P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)"),
++    ("A14", AC, [('control_alive=link_ok(ctl))', 'control_alive=True)')],
++     "P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)"),
++    # determined failures
++    ("A15", AC, [('            if case["kind"] == "t14" and a.get("spa") == case["dst"]:', '            if False:')],
++     "P28 worker ARP reply for the probed IP towards the guest -> FAIL"),
++    ("A16", AC, [('                    and ip.get("tot_len") == case["size"] + 28:', '                    and False:')],
++     "P29 probe ICMP packet seen (ARP was resolved) -> FAIL"),
++    ("A17", AC, [('            if case["kind"] == "t15" and ips & set(case["spoof"]):', '            if False:')],
++     "P35 worker ARP about a spoofed IP during T15 -> FAIL"),
++    # worker neighbours
++    ("A18", AC, [('    if tb != ta:', '    if False:')], "N4 new entry on tap0 -> problem"),
++    ("A19", AC, [('        if dev != "tap0" and v["lladdr"] == guest:', '        if False:')],
++     "N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem"),
++    ("A20", AC, [('                and before[(dst, dev)]["lladdr"] != v["lladdr"]:', '                and False:')],
++     "N7 watched IP changes its MAC on eth0 -> problem"),
++    ("A21", AC, [('        raise NeighReadError("not a JSON list")', '        rows = []')],
++     "N8 unreadable neighbour output -> NeighReadError (never 'unchanged')"),
++    # execution
++    ("A22", AC, [('            rec["stopped"] = NOT_RUN', '            pass')],
++     "X6 restore failure: the next case is not run (not_run), no service link after the failed case"),
++    ("A23", AC, [('            if phase != "trigger" and rc != 0:', '            if False:')],
++     "X8 setup failed: trigger not sent, exec error, still restored"),
++    ("A24", AC, [('            if phase == "trigger" and cmd.startswith("ip link") and rc != 0:', '            if False:')],
++     "X18 link down failed (trigger): exec error, 'link up' not sent, still restored"),
++    ("A25", AC, [('    return {"ok": ok is True, "detail": detail}', '    return {"ok": bool(ok), "detail": detail}')],
++     "X19 service link returning a truthy non-True value is not ok: group skipped"),
++    # record completeness
++    ("A26", AC, [('        p += [f"case missing: {cid}" for cid in CASE_IDS if n[cid] == 0]', '        pass')],
++     "X15 record_problems: missing case"),
++    ("A27", AC, [('    if result.get("record_problems"):\n        return 2', '    if False:\n        return 2')],
++     "C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass"),
++    ("A28", AC, [('        if got != want[:len(got)]:', '        if False:')],
++     "X16 record_problems: a guest command that is not the reviewed one"),
++    ("A29", AC, [('"trigger": [f"ping -c 1 -W {PING_WAIT_S} -s {int(case[\'size\'])} {dst}"]',
++                  '"trigger": [f"ping -c 1 -W {PING_WAIT_S} -s 1401 {dst}"]')],
++     "D8 a registry change changes the command (single source)"),
++    ("X1", AC, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
++    ("X2", "selftest_arp.py", [("import contextlib\n", "import contextlib(\n")], None),
++]
++EXPECT = {"X1": "INVALID", "X2": "ERROR"}
++
++
++def sha(d):
++    return {f: hashlib.sha256(open(os.path.join(d, f), "rb").read()).hexdigest() for f in FILES}
++
++
++def suite(d):
++    p = subprocess.run([sys.executable, os.path.join(d, "selftest_arp.py")], capture_output=True, text=True,
++                       timeout=600, cwd=d)
++    res = {}
++    for l in p.stdout.splitlines():
++        if l.startswith("[PASS] ") or l.startswith("[FAIL] "):
++            res[l[7:].split("  (")[0]] = l.startswith("[PASS]")
++    if not any(l.startswith("SELFTEST-ARP:") for l in p.stdout.splitlines()):
++        return None, (p.stderr or p.stdout).strip().splitlines()[-1:]
++    return res, None
++
++
++def main():
++    h0 = sha(HERE)
++    with tempfile.TemporaryDirectory(prefix="mutation-arp.") as tmp:
++        def copy():
++            d = tempfile.mkdtemp(dir=tmp)
++            for f in FILES:
++                shutil.copy2(os.path.join(HERE, f), d)
++            return d
++        base, err = suite(copy())
++        if base is None or not all(base.values()):
++            print("BASELINE FAILED", err or [k for k, v in base.items() if not v])
++            return 2
++        print(f"baseline: {len(base)}/{len(base)} tests pass")
++
++        def one(entry):
++            mid, fname, reps, target = entry
++            if target is not None and target not in base:
++                return mid, "BAD-TARGET", target, [], None
++            d = copy()
++            src = open(os.path.join(d, fname)).read()
++            for old, new in reps:
++                if src.count(old) != 1:
++                    return mid, "INVALID", target, [], None
++                src = src.replace(old, new)
++            open(os.path.join(d, fname), "w").write(src)
++            res, err = suite(d)
++            if res is None:
++                return mid, "ERROR", target, [], err
++            failed = sorted(k for k, v in res.items() if not v)
++            return mid, ("DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED"), target, failed, None
++        good = bad = 0
++        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
++            for mid, klass, target, failed, err in ex.map(one, M):
++                ok = klass == EXPECT.get(mid, "DETECTED")
++                good += ok
++                bad += not ok
++                print(f"{'OK ' if ok else 'BAD'} {mid:4s} {klass:18s} target={target!r}"
++                      + ("" if klass in ("DETECTED", "INVALID", "MISSED") else f" failed={failed[:5]} {err or ''}"))
++    same = sha(HERE) == h0
++    print(f"MUTATION-ARP: {good} OK, {bad} not as expected; harness {'unchanged' if same else 'CHANGED'}")
++    return 0 if bad == 0 and same else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN -x __pycache__ -x out ct01-06b4fr/selftest_arp.py ct01-06b4h/selftest_arp.py
+--- ct01-06b4fr/selftest_arp.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4h/selftest_arp.py	2026-10-08 09:23:01.020807628 +0000
+@@ -0,0 +1,568 @@
++#!/usr/bin/env python3
++"""06B-4H — offline tests of arp_cases.py (T14 A1/A2/A3, T15 S1) on SYNTHETIC captures/counter files and a
++SIMULATED guest (selftest_l2.FakeGuest, extended with ping/sleep and frame emission). Sends nothing.
++
++    python3 selftest_arp.py [--json FILE]
++
++Sections:
++  D  definitions and commands (sizes from signatures.py; only ip/ping/sleep/echo; no arping, no raw tool)
++  N  worker neighbour parsing and comparison
++  P  evaluate_group on fixtures: clean A1/A2/A3/S1; wrong ARP fields; no frame; measurement errors; edge frame;
++     execution error; restore failure; service link; live control; determined failures
++  X  run_group with the simulated guest: order, restore also after an error, a failed restore stops the group,
++     state read error, service link before/after, control, record completeness
++  E  end to end: run_group on the simulated guest that emits frames + counters, then evaluate_group
++  C  CLI
++"""
++import contextlib
++import copy
++import io
++import json
++import os
++import re
++import sys
++import tempfile
++import time
++import traceback
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import arp_cases as A          # noqa: E402
++import guest_state as GS       # noqa: E402
++import l2frames as L           # noqa: E402
++import signatures as S         # noqa: E402
++import selftest_l2 as B        # noqa: E402  (frame builders, FakeGuest)
++import selftest_l2eval as V    # noqa: E402  (counter-file builders)
++
++RESULTS = {}
++TAP, GUEST = B.TAP, B.GUEST
++CASES = {c["id"]: c for c in A.build_cases()}
++IF = "eth1"
++BC = "ff:ff:ff:ff:ff:ff"
++ZERO = "00:00:00:00:00:00"
++MANAGER_MAC = "8a:d3:09:b5:72:af"
++
++
++def t(name, fn):
++    if name in RESULTS:
++        raise SystemExit(f"duplicate test name {name}")
++    try:
++        ok, why = bool(fn()), ""
++    except Exception:
++        ok, why = False, traceback.format_exc(limit=3).strip().splitlines()[-1]
++    if not ok and not why:
++        why = "returned False"
++    RESULTS[name] = ok
++    print(f"[{'PASS' if ok else 'FAIL'}] {name}" + (f"  ({why})" if why else ""))
++
++
++def raises(exc, fn):
++    try:
++        fn()
++    except exc:
++        return True
++    return False
++
++
++# ------------------------------------------------------------------ frames
++def req(tpa, sha=GUEST, spa=S.GUEST_IP, dmac=BC, **kw):
++    return B.eth(dmac, GUEST, 0x0806, B.arp(1, sha, spa, ZERO, tpa, **kw))
++
++
++def grat(ip, op=1):
++    return B.eth(BC, GUEST, 0x0806, B.arp(op, GUEST, ip, ZERO, ip))
++
++
++def worker_arp(spa, tpa=S.GUEST_IP, op=2):
++    return B.eth(GUEST, TAP, 0x0806, B.arp(op, TAP, spa, GUEST, tpa))
++
++
++def icmp_to(dst, size):
++    return B.eth(TAP, GUEST, 0x0800, B.ipv4(S.GUEST_IP, dst, 1, B.icmp(size)))
++
++
++def dhcp():
++    return B.eth(BC, GUEST, 0x0800, B.ipv4("0.0.0.0", "255.255.255.255", 17, B.udp(68, 67)))
++
++
++def mld():
++    return B.eth("33:33:00:00:00:16", GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, "ff02::16", 58, B.icmp6(20, typ=143)))
++
++
++def probe_frames(cid, n=3):
++    c = CASES[cid]
++    if c["kind"] == "t14":
++        return [req(c["dst"])] * n
++    return [grat(ip) for ip in (S.GUEST_IP,) + tuple(c["spoof"])]
++
++
++# ------------------------------------------------------------------ worker neighbours
++def neigh_json(extra=(), tap_entry=True, guest_mac=GUEST):
++    rows = []
++    if tap_entry:
++        rows.append({"dst": S.GUEST_IP, "dev": "tap0", "lladdr": guest_mac, "state": ["PERMANENT"]})
++    rows += [{"dst": "192.168.60.10", "dev": "eth0", "lladdr": MANAGER_MAC, "state": ["REACHABLE"]},
++             {"dst": "192.168.60.1", "dev": "eth0", "lladdr": "fe:69:25:9f:7e:e9", "state": ["STALE"]}]
++    rows += list(extra)
++    return json.dumps(rows)
++
++
++NEIGH = neigh_json()
++
++
++# ------------------------------------------------------------------ scenario builder
++def crec_for(cid, **over):
++    c = CASES[cid]
++    steps = [{"phase": ph, "cmd": cmd, "rc": (1 if ph == "trigger" and cmd.startswith("ping") else 0), "out": ""}
++             for ph in ("setup", "trigger", "settle") for cmd in A.commands(c, IF)[ph]]
++    r = {"id": cid, "before": f"{cid} before", "after": f"{cid} after", "steps": steps, "exec_error": None,
++         "read_error": None, "guest_state": {"before": {"mac": GUEST}, "restore": {"restored": True}},
++         "neigh_before": NEIGH, "neigh_after": NEIGH,
++         "control": {"ok": True, "detail": "ARP resolved on sandboxnet"} if c["control_kind"] == "live" else None,
++         "service_link_after": {"ok": True, "detail": "HTTP 200 + hash"}, "not_run": None}
++    r.update(over)
++    return r
++
++
++def scenario(tmp, name, specs, link_before=True, counters_override=None, skip_ids=()):
++    """specs: [(case id, [(dt, frame), ...], crec overrides, {counter: extra increment})]. Window of case i:
++    A=[t0, t0+0.01], B=[t0+10, t0+10.01], t0 = 100 + 20 i. Counters follow the l2frames class of each frame
++    inside [A.t_start, B.t_end] (frames hit the ruleset), plus the extra increments."""
++    values = dict(V.BASE)
++    recs, frames, cases = [], [], []
++    for i, (cid, fr, over, extra) in enumerate(specs):
++        t0 = 100.0 + 20 * i
++        recs.append(V.rec(f"{cid} before", t0, t0 + 0.01, values))
++        values = dict(values)
++        for dt, f in fr:
++            frames.append((t0 + dt, f))
++            cls = L.classify(L.decode(t0 + dt, f), TAP)[1]
++            if cls in values and 0 <= dt <= 10.01:
++                values[cls] += 1
++        for k, n in (extra or {}).items():
++            values[k] += n
++        recs.append(V.rec(f"{cid} after", t0 + 10, t0 + 10.01, values))
++        cases.append(crec_for(cid, **(over or {})))
++    pc = V.pcapng(os.path.join(tmp, name + ".pcapng"), frames)
++    cf = V.write_counters(os.path.join(tmp, name + ".jsonl"), counters_override if counters_override is not None else recs)
++    record = {"iface": IF, "cases": cases, "service_link_before": {"ok": link_before, "detail": "x"}, "stopped": None}
++    return pc, cf, record
++
++
++def spaced(frames, start=1.0, step=0.5):
++    return [(start + step * k, f) for k, f in enumerate(frames)]
++
++
++def one(tmp, name, cid, frames, over=None, extra=None, **kw):
++    pc, cf, rec = scenario(tmp, name, [(cid, frames, over, extra)], **kw)
++    rec_cases = rec["cases"]
++    res = A.evaluate_case(L.classified_frames(pc, TAP), __import__("l2eval").load_reads(cf), CASES[cid], rec_cases[0],
++                          A.link_ok(rec["service_link_before"]))
++    return res
++
++
++# ------------------------------------------------------------------ D
++def sec_D():
++    t("D1 four cases as planned (T14 A1/A2/A3, T15 S1), expected arp_in_drop",
++      lambda: [c["id"] for c in A.build_cases()] == list(A.CASE_IDS) and {c["expected"] for c in A.build_cases()} == {"arp_in_drop"})
++    t("D2 T14 sizes come from signatures.py (T14-A1..A3)",
++      lambda: all(CASES[c]["size"] == S.ICMP4_SIZES[c] for c in ("T14-A1", "T14-A2", "T14-A3")))
++    t("D3 T14 commands: on-link /32 route, one ping, settle",
++      lambda: A.commands(CASES["T14-A1"], IF) == {"setup": ["ip route add 192.168.60.2/32 dev eth1"],
++                                                 "trigger": ["ping -c 1 -W 2 -s 1401 192.168.60.2"],
++                                                 "settle": [f"sleep {A.SETTLE_S}"]})
++    t("D4 T15-S1 commands: arp_notify=1, three /32 spoofed addresses, link down/up, settle",
++      lambda: A.commands(CASES["T15-S1"], IF) == {
++          "setup": ["echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify", "ip addr add 10.200.0.1/32 dev eth1",
++                    "ip addr add 192.168.60.10/32 dev eth1", "ip addr add 192.168.60.1/32 dev eth1"],
++          "trigger": ["ip link set dev eth1 down", "ip link set dev eth1 up"], "settle": [f"sleep {A.SETTLE_S}"]})
++    allc = [x for c in A.build_cases() for ph in A.commands(c, IF).values() for x in ph]
++    t("D5 D1: only ip / ping / sleep / echo-to-proc; no arping, no raw-packet tool, no forged reply",
++      lambda: all(re.match(r"(ip |ping |sleep |echo 1 > /proc/sys/net/ipv4/conf/)", x) for x in allc)
++      and not any(w in x for x in allc for w in ("arping", "nc ", "python", "-U", "-A")))
++    t("D6 live control only for A1/A2; A3, S1 rule check",
++      lambda: [c["control_kind"] for c in A.build_cases()] == ["live", "live", "rule_check", "rule_check"])
++    t("D7 bad interface name refused", lambda: raises(ValueError, lambda: A.commands(CASES["T14-A1"], "eth1; reboot")))
++    t("D8 a registry change changes the command (single source)",
++      lambda: _with(S.ICMP4_SIZES, "T14-A1", 1499, lambda: " -s 1499 " in A.commands(A.build_cases()[0], IF)["trigger"][0]))
++    t("D9 T14 targets are outside 10.200.0.0/30 (on-link route needed; 10.200.0.3 is the broadcast, plan L2)",
++      lambda: all(not __import__("ipaddress").ip_address(CASES[c]["dst"]) in __import__("ipaddress").ip_network(S.GUEST_NET)
++                  or CASES[c]["dst"] == "10.200.0.6" for c in ("T14-A1", "T14-A2", "T14-A3"))
++      and "10.200.0.3" not in [CASES[c]["dst"] for c in ("T14-A1", "T14-A2", "T14-A3")])
++
++
++def _with(d, k, v, fn):
++    old = d[k]
++    d[k] = v
++    try:
++        return fn()
++    finally:
++        d[k] = old
++
++
++# ------------------------------------------------------------------ N
++def sec_N():
++    b = A.parse_neigh(NEIGH)
++    t("N1 parse ip -j neigh", lambda: b[(S.GUEST_IP, "tap0")] == {"lladdr": GUEST, "permanent": True})
++    t("N2 unchanged -> no problem", lambda: A.neigh_problems(b, A.parse_neigh(NEIGH), ["192.168.60.10"]) == [])
++    t("N3 dynamic state change on eth0 is not a problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace("REACHABLE", "STALE")), ["192.168.60.10"]) == [])
++    t("N4 new entry on tap0 -> problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json([{"dst": "192.168.60.10", "dev": "tap0", "lladdr": GUEST,
++                                                              "state": ["STALE"]}])), []) != [])
++    t("N5 tap0 permanent entry lost -> problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json(tap_entry=False)), []) != [])
++    t("N6 manager entry on eth0 now carries the guest MAC -> problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace(MANAGER_MAC, GUEST)), ["192.168.60.10"]) != [])
++    t("N7 watched IP changes its MAC on eth0 -> problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(NEIGH.replace(MANAGER_MAC, "02:00:00:00:00:99")), ["192.168.60.10"]) != [])
++    t("N9 a NEW, unwatched eth0 entry carrying the guest MAC -> problem",
++      lambda: A.neigh_problems(b, A.parse_neigh(neigh_json([{"dst": "192.168.60.99", "dev": "eth0", "lladdr": GUEST,
++                                                              "state": ["STALE"]}])), ["192.168.60.10"]) != [])
++    t("N8 unreadable neighbour output -> NeighReadError (never 'unchanged')",
++      lambda: all(raises(A.NeighReadError, lambda x=x: A.parse_neigh(x)) for x in (None, "", "{}", "[1]", "not json",
++                                                                                 '[{"dst": "x"}]')))
++
++
++# ------------------------------------------------------------------ P
++def sec_P(tmp):
++    for cid in A.CASE_IDS:
++        t(f"P1 {cid}: clean fixture -> " + ("ĐẠT (live control)" if CASES[cid]["control_kind"] == "live" else "ĐẠT (kiểm quy tắc)"),
++          lambda cid=cid: (lambda r: r["category"] == ("DAT" if CASES[cid]["control_kind"] == "live" else "DAT_KIEM_QUY_TAC")
++                           and r["verdict"] == ("ĐẠT" if CASES[cid]["control_kind"] == "live" else "ĐẠT (kiểm quy tắc)")
++                           and r["probe_frames"] == len(probe_frames(cid)))(
++              one(tmp, f"p1-{cid}", cid, spaced(probe_frames(cid)))))
++    t("P2 clean with background (DHCP, MLD) reconciled -> still ĐẠT",
++      lambda: one(tmp, "p2", "T15-S1", spaced(probe_frames("T15-S1") + [dhcp(), mld(), mld()]))["category"] == "DAT_KIEM_QUY_TAC")
++    # wrong ARP fields: never a probe frame
++    for n, fr in (("sender MAC field not the guest", req("192.168.60.2", sha="02:00:00:00:00:77")),
++                  ("other target IP", req("192.168.60.3")),
++                  ("opcode 2 (reply) instead of a request", B.eth(BC, GUEST, 0x0806, B.arp(2, GUEST, S.GUEST_IP, ZERO, "192.168.60.2"))),
++                  ("hlen 8 (not hooked)", req("192.168.60.2", hlen=8))):
++        t(f"P3 T14-A1 wrong ARP field ({n}) -> no probe frame, never ĐẠT",
++          lambda fr=fr: (lambda r: r["category"] in ("KHONG_TAO_DUOC_GOI", "CHUA_KIEM_CHUNG") and r["probe_frames"] == 0)(
++              one(tmp, "p3-" + re.sub(r"\W", "", n), "T14-A1", spaced([fr] * 3))))
++    t("P4 a unicast probe to a MAC other than TAP_MAC (OTHERHOST): arp_not_hooked -> CHƯA KIỂM CHỨNG, not ĐẠT",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "khung không có bộ đếm" in r["verdict"])(
++          one(tmp, "p4", "T14-A1", spaced([req("192.168.60.2", dmac="02:00:00:00:00:88")] + [req("192.168.60.2")] * 2))))
++    t("P5 T15: gratuitous only for 10.200.0.2 (no spoofed address announced) -> KHÔNG TẠO ĐƯỢC GÓI",
++      lambda: one(tmp, "p5", "T15-S1", spaced([grat(S.GUEST_IP)]))["category"] == "KHONG_TAO_DUOC_GOI")
++    t("P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and "192.168.60.1" in r["verdict"])(
++          one(tmp, "p6", "T15-S1", spaced([grat(S.GUEST_IP), grat("10.200.0.1"), grat("192.168.60.10")]))))
++    t("P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and "không phải bằng chứng chặn" in r["verdict"])(
++          one(tmp, "p7", "T14-A3", [])))
++    # measurement errors
++    t("P8 counter read failed during execution -> LỖI PHÉP ĐO",
++      lambda: one(tmp, "p8", "T14-A1", spaced(probe_frames("T14-A1")), over={"read_error": "read 'T14-A1 after': rc 1"})["category"] == "LOI_PHEP_DO")
++    t("P9 counter read 'after' missing -> LỖI PHÉP ĐO",
++      lambda: (lambda pc, cf, rec: A.evaluate_group(pc, cf, TAP, rec)["cases"][0]["category"] == "LOI_PHEP_DO")(
++          *scenario(tmp, "p9", [("T14-A1", spaced(probe_frames("T14-A1")), None, None)],
++                    counters_override=[V.rec("T14-A1 before", 100, 100.01, V.BASE)])))
++    t("P10 counter decreased -> LỖI PHÉP ĐO",
++      lambda: (lambda pc, cf, rec: A.evaluate_group(pc, cf, TAP, rec)["cases"][0]["category"] == "LOI_PHEP_DO")(
++          *scenario(tmp, "p10", [("T14-A1", [], None, None)],
++                    counters_override=[V.rec("T14-A1 before", 100, 100.01, V.after(arp_in_drop=3)),
++                                       V.rec("T14-A1 after", 110, 110.01, V.BASE)])))
++    t("P11 arp_out_drop missing in a read -> LỖI PHÉP ĐO (never 0)",
++      lambda: (lambda pc, cf, rec: A.evaluate_group(pc, cf, TAP, rec)["cases"][0]["category"] == "LOI_PHEP_DO")(
++          *scenario(tmp, "p11", [("T14-A1", spaced(probe_frames("T14-A1")), None, None)],
++                    counters_override=[V.rec("T14-A1 before", 100, 100.01, {k: v for k, v in V.BASE.items() if k != "arp_out_drop"}),
++                                       V.rec("T14-A1 after", 110, 110.01, {**{k: v for k, v in V.BASE.items() if k != "arp_out_drop"},
++                                                                           "arp_in_drop": 3})])))
++    t("P12 capture unreadable -> every case LỖI PHÉP ĐO",
++      lambda: (lambda pc, cf, rec: {c["category"] for c in A.evaluate_group(pc + ".missing", cf, TAP, rec)["cases"]} == {"LOI_PHEP_DO"})(
++          *scenario(tmp, "p12", [("T14-A1", [], None, None), ("T14-A2", [], None, None)])))
++    t("P13 neighbour table not readable -> LỖI PHÉP ĐO",
++      lambda: one(tmp, "p13", "T14-A1", spaced(probe_frames("T14-A1")), over={"neigh_after": None})["category"] == "LOI_PHEP_DO")
++    # edge frame
++    t("P14 probe frame at the edge of read A -> CHƯA KIỂM CHỨNG (gói ở biên)",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "biên" in r["verdict"])(
++          one(tmp, "p14", "T14-A1", [(0.005, req("192.168.60.2")), (1.0, req("192.168.60.2")), (2.0, req("192.168.60.2"))])))
++    t("P15 probe frame at the edge of read B -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p15", "T14-A1", [(1.0, req("192.168.60.2")), (9.995, req("192.168.60.2"))])["category"] == "CHUA_KIEM_CHUNG")
++    # execution errors
++    t("P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames",
++      lambda: one(tmp, "p16", "T14-A1", spaced(probe_frames("T14-A1")),
++                  over={"exec_error": "setup 'ip route add ...': rc 2"})["category"] == "LOI_THUC_THI")
++    t("P17 tool missing -> LỖI THỰC THI",
++      lambda: one(tmp, "p17", "T14-A2", [], over={"exec_error": "trigger: tool missing in the guest"})["category"] == "LOI_THUC_THI")
++    t("P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)",
++      lambda: (lambda pc, cf, rec: A.evaluate_group(pc, cf, TAP, rec)["cases"][0]["category"] == "LOI_THUC_THI")(
++          *scenario(tmp, "p18", [("T14-A1", [], {"exec_error": "guest state not readable", "guest_state":
++                                                 {"before": None, "restore": None}, "steps": []}, None)],
++                    counters_override=[V.rec("session before boot", 50, 50.01, V.BASE)])))
++    # restore
++    t("P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "khôi phục" in r["verdict"])(
++          one(tmp, "p19", "T15-S1", spaced(probe_frames("T15-S1")),
++              over={"guest_state": {"before": {"mac": GUEST}, "restore": {"restored": False}}})))
++    t("P20 restore record missing -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p20", "T14-A1", spaced(probe_frames("T14-A1")),
++                  over={"guest_state": {"before": {"mac": GUEST}, "restore": None}})["category"] == "CHUA_KIEM_CHUNG")
++    t("P21 case not run after an earlier restore failure -> CHƯA KIỂM CHỨNG (not run)",
++      lambda: "không chạy" in one(tmp, "p21", "T14-A2", [], over={"not_run": A.NOT_RUN})["verdict"])
++    # service link and control
++    t("P22 service link after the case failed -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p22", "T14-A3", spaced(probe_frames("T14-A3")),
++                  over={"service_link_after": {"ok": False, "detail": "HTTP=000"}})["category"] == "CHUA_KIEM_CHUNG")
++    t("P23 service link after missing -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p23", "T14-A3", spaced(probe_frames("T14-A3")), over={"service_link_after": None})["category"] == "CHUA_KIEM_CHUNG")
++    t("P24 service link before the group not ok (no 'skipped' marker) -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p24", "T14-A3", spaced(probe_frames("T14-A3")), link_before=False)["category"] == "CHUA_KIEM_CHUNG")
++    t("P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)",
++      lambda: one(tmp, "p25", "T14-A1", spaced(probe_frames("T14-A1")),
++                  over={"control": {"ok": False, "detail": "no ARP entry"}})["category"] == "CHUA_KIEM_CHUNG")
++    t("P26 A2 live control missing -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p26", "T14-A2", spaced(probe_frames("T14-A2")), over={"control": None})["category"] == "CHUA_KIEM_CHUNG")
++    t("P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)",
++      lambda: (lambda r: r["category"] == "CHUA_KIEM_CHUNG" and "arp_out_drop" in r["verdict"])(
++          one(tmp, "p27", "T14-A1", spaced(probe_frames("T14-A1")), extra={"arp_out_drop": 1})))
++    # determined failures
++    t("P28 worker ARP reply for the probed IP towards the guest -> FAIL",
++      lambda: one(tmp, "p28", "T14-A2", spaced(probe_frames("T14-A2") + [worker_arp("192.168.60.10")]))["category"] == "FAIL")
++    t("P29 probe ICMP packet seen (ARP was resolved) -> FAIL",
++      lambda: one(tmp, "p29", "T14-A1", spaced(probe_frames("T14-A1") + [icmp_to("192.168.60.2", 1401)]))["category"] == "FAIL")
++    t("P30 worker neighbour on tap0 changed -> FAIL",
++      lambda: one(tmp, "p30", "T15-S1", spaced(probe_frames("T15-S1")),
++                  over={"neigh_after": neigh_json([{"dst": "10.200.0.1", "dev": "tap0", "lladdr": GUEST,
++                                                    "state": ["STALE"]}])})["category"] == "FAIL")
++    t("P31 manager entry on eth0 got the guest MAC -> FAIL",
++      lambda: one(tmp, "p31", "T15-S1", spaced(probe_frames("T15-S1")),
++                  over={"neigh_after": NEIGH.replace(MANAGER_MAC, GUEST)})["category"] == "FAIL")
++    t("P32 counter delta lower than the probe frames -> FAIL",
++      lambda: one(tmp, "p32", "T14-A3", spaced(probe_frames("T14-A3")), extra={"arp_in_drop": -1})["category"] == "FAIL")
++    t("P33 a determined failure is reported even when the restore also failed",
++      lambda: one(tmp, "p33", "T14-A2", spaced(probe_frames("T14-A2") + [worker_arp("192.168.60.10")]),
++                  over={"guest_state": {"before": {"mac": GUEST}, "restore": {"restored": False}}})["category"] == "FAIL")
++    t("P34 a determined failure is reported even with an execution error",
++      lambda: one(tmp, "p34", "T14-A1", spaced(probe_frames("T14-A1") + [icmp_to("192.168.60.2", 1401)]),
++                  over={"exec_error": "settle: rc 1"})["category"] == "FAIL")
++    t("P35 worker ARP about a spoofed IP during T15 -> FAIL",
++      lambda: one(tmp, "p35", "T15-S1", spaced(probe_frames("T15-S1") + [worker_arp("10.200.0.1", tpa="192.168.60.1", op=1)]))["category"] == "FAIL")
++
++    t("P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame",
++      lambda: one(tmp, "p36", "T15-S1", spaced([B.eth(BC, GUEST, 0x0806, B.arp(1, GUEST, ip, ZERO, S.GUEST_IP))
++                                                for ip in ("10.200.0.1", "192.168.60.10", "192.168.60.1")]))["category"]
++      == "KHONG_TAO_DUOC_GOI")
++    t("P37 service link after with ok \"true\" (not the boolean) -> CHƯA KIỂM CHỨNG",
++      lambda: one(tmp, "p37", "T14-A3", spaced(probe_frames("T14-A3")),
++                  over={"service_link_after": {"ok": "true", "detail": "x"}})["category"] == "CHUA_KIEM_CHUNG")
++
++
++# ------------------------------------------------------------------ simulated guest for run_group
++class SimGuest(B.FakeGuest):
++    """selftest_l2.FakeGuest + ping/sleep. Frames are emitted with real timestamps into `frames`, and the
++    counters follow l2frames.classify (the ruleset is simulated, NOT verified). Kernel behaviour simulated:
++    an unresolved on-link destination -> 3 ARP requests; link up with arp_notify=1 -> one gratuitous request per
++    IPv4 address of the interface."""
++
++    def __init__(self, counters, frames, fail_cmds=(), restore_fail=False, raise_on=None, emit=True, **kw):
++        super().__init__(**kw)
++        self.counters, self.frames, self.fail_cmds, self.restore_fail = counters, frames, set(fail_cmds), restore_fail
++        self.raise_on, self.emit = raise_on, emit
++
++    def _emit(self, fr):
++        ts = time.time()
++        self.frames.append((ts, fr))
++        cls = L.classify(L.decode(ts, fr), TAP)[1]
++        if cls in self.counters:
++            self.counters[cls] += 1
++        time.sleep(0.005)
++
++    def run(self, cmd, timeout=60):
++        if self.raise_on and self.raise_on in cmd:      # once: the console recovers afterwards
++            self.raise_on = None
++            self.log.append(cmd)
++            raise TimeoutError("Timeout exceeded (simulated console)")
++        if cmd in self.fail_cmds:
++            self.log.append(cmd)
++            return 2, "RTNETLINK answers: Operation not permitted"
++        if self.restore_fail and cmd.startswith("ip addr del 192.168.60.10/32"):
++            self.log.append(cmd)
++            return 2, "RTNETLINK answers: Cannot assign"
++        m = re.fullmatch(r"ping -c 1 -W \d+ -s (\d+) (\S+)", cmd)
++        if m:
++            self.log.append(cmd)
++            time.sleep(0.03)
++            if self.emit:
++                for _ in range(3):
++                    self._emit(req(m.group(2)))
++            return 1, "1 packets transmitted, 0 packets received, 100% packet loss"
++        if re.fullmatch(r"sleep \d+", cmd):
++            self.log.append(cmd)
++            time.sleep(0.03)
++            return 0, ""
++        was_down = self.oper == "down"
++        rc, out = super().run(cmd, timeout)
++        if cmd == f"ip link set dev {self.iface} up" and was_down and self.notify == 1 and self.emit:
++            time.sleep(0.03)
++            for a in sorted(self.addrs):
++                self._emit(grat(a.split("/")[0]))
++        return rc, out
++
++
++def fake_counters_reader(counters, path):
++    def read(label):
++        t0 = time.time()
++        line = json.dumps({"label": label, "t_start": t0, "t_end": t0 + 0.001, "raw": V.raw(counters)})
++        with open(path, "a") as f:
++            f.write(line + "\n")
++        time.sleep(0.03)
++    return read
++
++
++def run_sim(tmp, name, guest_kw=None, link=lambda: (True, "HTTP=200 + hash"), neigh=lambda: NEIGH,
++            control=lambda c: (True, "ARP resolved on sandboxnet"), cases=None, reader=None):
++    counters, frames = dict(V.BASE), []
++    g = SimGuest(counters, frames, **(guest_kw or {}))
++    cf = os.path.join(tmp, name + ".jsonl")
++    open(cf, "w").close()
++    rec = A.run_group(g, reader or fake_counters_reader(counters, cf), link, neigh, control,
++                      cases or A.build_cases(), IF)
++    pc = V.pcapng(os.path.join(tmp, name + ".pcapng"), frames)
++    json.loads(json.dumps(rec))           # the record is JSON
++    return g, rec, pc, cf
++
++
++def sec_X(tmp):
++    g, rec, pc, cf = run_sim(tmp, "x1")
++    cmds = [c for c in g.log if c != GS.snapshot_cmd(IF)]
++    t("X1 run_group: order per case = state saved, setup, trigger, settle, restore; 4 cases, record is JSON",
++      lambda: [c["id"] for c in rec["cases"]] == list(A.CASE_IDS)
++      and cmds[:3] == ["ip route add 192.168.60.2/32 dev eth1", "ping -c 1 -W 2 -s 1401 192.168.60.2", f"sleep {A.SETTLE_S}"]
++      and cmds[3] == "ip route del 192.168.60.2/32 dev eth1")
++    t("X2 every case restored, route/addresses/arp_notify back to the before-state",
++      lambda: all(c["guest_state"]["restore"]["restored"] is True for c in rec["cases"])
++      and g.notify == 0 and g.addrs == {"10.200.0.2/30"} and f"default via 10.200.0.1 dev {IF}" in g.routes)
++    t("X3 T15 restore re-adds the default route lost by the link down; the flushed DYNAMIC neighbour is only reported",
++      lambda: any(c["cmd"].startswith("ip route add default via 10.200.0.1") for c in rec["cases"][3]["guest_state"]["restore"]["commands"])
++      and any("10.200.0.1" in d for d in rec["cases"][3]["guest_state"]["restore"]["dynamic_changes"])
++      and rec["cases"][3]["guest_state"]["restore"]["restored"] is True)
++    t("X4 service link checked before the group and after every case; neighbours before/after; control for A1/A2 only",
++      lambda: rec["service_link_before"]["ok"] and all(c["service_link_after"]["ok"] for c in rec["cases"])
++      and all(c["neigh_before"] and c["neigh_after"] for c in rec["cases"])
++      and [c["control"] is not None for c in rec["cases"]] == [True, True, False, False])
++    t("X5 group record complete (each case once, reviewed commands)", lambda: A.record_problems(rec) == [])
++    # restore failure stops the group
++    g, rec, pc, cf = run_sim(tmp, "x6", cases=[CASES["T15-S1"], CASES["T14-A3"]], guest_kw={"restore_fail": True})
++    t("X6 restore failure: the next case is not run (not_run), no service link after the failed case",
++      lambda: rec["cases"][0]["guest_state"]["restore"]["restored"] is False and rec["cases"][1]["not_run"] == A.NOT_RUN
++      and rec["cases"][0]["service_link_after"] is None and "ping -c 1 -W 2 -s 1403 10.200.0.6" not in g.log)
++    # an exception in the middle of the case: still restored
++    g, rec, pc, cf = run_sim(tmp, "x7", cases=[CASES["T15-S1"]], guest_kw={"raise_on": "link set dev eth1 up"})
++    t("X7 console timeout after 'link down': exec error recorded, read B taken, guest still restored (link up, addresses)",
++      lambda: "TimeoutError" in rec["cases"][0]["exec_error"] and rec["cases"][0]["read_error"] is None
++      and rec["cases"][0]["guest_state"]["restore"]["restored"] is True and g.oper == "up" and g.addrs == {"10.200.0.2/30"})
++    g, rec, pc, cf = run_sim(tmp, "x8", cases=[CASES["T14-A1"]], guest_kw={"fail": ["ip route add 192.168.60.2/32 dev eth1"]})
++    t("X8 setup failed: trigger not sent, exec error, still restored",
++      lambda: "rc 2" in rec["cases"][0]["exec_error"] and not any(c.startswith("ping") for c in g.log)
++      and rec["cases"][0]["guest_state"]["restore"]["restored"] is True)
++    g, rec, pc, cf = run_sim(tmp, "x9", cases=[CASES["T14-A1"], CASES["T14-A2"]], guest_kw={"bad_section": "arp"})
++    t("X9 guest state unreadable: no command sent, exec error, nothing to restore, group not stopped",
++      lambda: all("guest state not readable" in c["exec_error"] for c in rec["cases"])
++      and not any(c.startswith(("ip route add", "ping")) for c in g.log) and rec["stopped"] is None)
++    g, rec, pc, cf = run_sim(tmp, "x10", link=lambda: (False, "HTTP=000"))
++    t("X10 service link before fails: no case run, group skipped",
++      lambda: rec.get("skipped") and rec["cases"] == [] and not any(c.startswith(("ip ", "ping")) for c in g.log))
++    g, rec, pc, cf = run_sim(tmp, "x11", neigh=lambda: (_ for _ in ()).throw(OSError("ip: not found")))
++    t("X11 worker neighbour read error recorded (never 'unchanged')",
++      lambda: all(c["neigh_before"] is None and "OSError" in c["neigh_before_error"] for c in rec["cases"]))
++    g, rec, pc, cf = run_sim(tmp, "x12", control=lambda c: (_ for _ in ()).throw(RuntimeError("ctl down")))
++    t("X12 control error -> control not ok (A1/A2)", lambda: rec["cases"][0]["control"]["ok"] is False)
++    g, rec, pc, cf = run_sim(tmp, "x13", reader=lambda lbl: (_ for _ in ()).throw(RuntimeError("nft: rc 1")))
++    t("X13 counter read failure recorded as read_error, case still restored",
++      lambda: all("nft: rc 1" in c["read_error"] for c in rec["cases"])
++      and all(c["guest_state"]["restore"]["restored"] for c in rec["cases"]))
++    g, rec, pc, cf = run_sim(tmp, "x18", cases=[CASES["T15-S1"]], guest_kw={"fail": ["ip link set dev eth1 down"]})
++    t("X18 link down failed (trigger): exec error, 'link up' not sent, still restored",
++      lambda: "rc 2" in rec["cases"][0]["exec_error"]
++      and [x["cmd"] for x in rec["cases"][0]["steps"] if x["phase"] == "trigger"] == ["ip link set dev eth1 down"]
++      and rec["cases"][0]["guest_state"]["restore"]["restored"] is True)
++    g, rec, pc, cf = run_sim(tmp, "x19", link=lambda: (1, "truthy but not True"))
++    t("X19 service link returning a truthy non-True value is not ok: group skipped", lambda: rec.get("skipped") and rec["cases"] == [])
++    r2 = copy.deepcopy(run_sim(tmp, "x14")[1])
++    r2["cases"].append(copy.deepcopy(r2["cases"][0]))
++    t("X14 record_problems: duplicate case", lambda: any("more than once" in p for p in A.record_problems(r2)))
++    r2["cases"] = r2["cases"][1:4]
++    t("X15 record_problems: missing case", lambda: any("case missing: T14-A1" in p for p in A.record_problems(r2)))
++    r3 = copy.deepcopy(run_sim(tmp, "x16")[1])
++    r3["cases"][0]["steps"][0]["cmd"] = "ip route add 192.168.60.3/32 dev eth1"
++    t("X16 record_problems: a guest command that is not the reviewed one", lambda: any("not the reviewed" in p for p in A.record_problems(r3)))
++    t("X17 record_problems: invalid structure", lambda: A.record_problems({"cases": "x"}) and A.record_problems([]))
++
++
++# ------------------------------------------------------------------ E (end to end on the simulation)
++def sec_E(tmp):
++    g, rec, pc, cf = run_sim(tmp, "e1")
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("E1 end to end clean: A1, A2 ĐẠT (live control), A3, S1 ĐẠT (kiểm quy tắc); exit 0",
++      lambda: [c["category"] for c in res["cases"]] == ["DAT", "DAT", "DAT_KIEM_QUY_TAC", "DAT_KIEM_QUY_TAC"]
++      and A.group_exit(res) == 0)
++    t("E2 end to end: probe frames = 3 per T14 case, 4 gratuitous for S1 (10.200.0.2 + 3 spoofed)",
++      lambda: [c["probe_frames"] for c in res["cases"]] == [3, 3, 3, 4])
++    g, rec, pc, cf = run_sim(tmp, "e3", guest_kw={"emit": False})
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("E3 end to end: kernel sends nothing -> all KHÔNG TẠO ĐƯỢC GÓI, exit 4 (never 0)",
++      lambda: {c["category"] for c in res["cases"]} == {"KHONG_TAO_DUOC_GOI"} and A.group_exit(res) == 4)
++    g, rec, pc, cf = run_sim(tmp, "e4", cases=[CASES["T15-S1"], CASES["T14-A3"]], guest_kw={"restore_fail": True})
++    rec["cases"] = rec["cases"]
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("E4 end to end restore failure: S1 CHƯA KIỂM CHỨNG (khôi phục), A3 not run; record incomplete -> never exit 0",
++      lambda: [c["category"] for c in res["cases"]] == ["CHUA_KIEM_CHUNG", "CHUA_KIEM_CHUNG"]
++      and "khôi phục" in res["cases"][0]["verdict"] and A.group_exit(res) != 0)
++    g, rec, pc, cf = run_sim(tmp, "e5", neigh=iter([NEIGH, NEIGH, NEIGH, NEIGH.replace(MANAGER_MAC, GUEST)] + [NEIGH] * 4).__next__)
++    res = A.evaluate_group(pc, cf, TAP, rec)
++    t("E5 end to end: manager neighbour gets the guest MAC during A2 -> A2 FAIL, exit 1",
++      lambda: res["cases"][1]["category"] == "FAIL" and A.group_exit(res) == 1)
++
++
++# ------------------------------------------------------------------ C (CLI)
++def sec_C(tmp):
++    g, rec, pc, cf = run_sim(tmp, "c1")
++    rp = os.path.join(tmp, "c1.json")
++    json.dump(rec, open(rp, "w"))
++    out = os.path.join(tmp, "c1-out.json")
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = A.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp, "--out", out])
++    t("C1 CLI clean -> exit 0, JSON written", lambda: rc == 0 and len(json.load(open(out))["cases"]) == 4)
++    rec2 = copy.deepcopy(rec)
++    rec2["cases"] = rec2["cases"][:3]
++    json.dump(rec2, open(rp, "w"))
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = A.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp])
++    t("C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass", lambda: rc == 2)
++    open(rp, "w").write("[1, 2]")
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = A.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp])
++    t("C3 CLI: invalid record -> exit 2", lambda: rc == 2)
++    open(rp, "w").write("not json")
++    with contextlib.redirect_stdout(io.StringIO()):
++        rc = A.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp])
++    t("C4 CLI: unreadable record -> exit 2", lambda: rc == 2)
++    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
++        rc = A.main(["--pcap", pc])
++    t("C5 CLI: missing arguments -> exit 2", lambda: rc == 2)
++
++
++def main(argv):
++    jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
++    with tempfile.TemporaryDirectory(prefix="selftest-arp.") as tmp:
++        for name, fn in (("D", sec_D), ("N", sec_N), ("P", lambda: sec_P(tmp)), ("X", lambda: sec_X(tmp)),
++                         ("E", lambda: sec_E(tmp)), ("C", lambda: sec_C(tmp))):
++            print(f"== section {name}")
++            try:
++                fn()
++            except Exception:
++                t(f"{name}-INFRA section crashed", lambda: False)
++                traceback.print_exc()
++    if jpath:
++        json.dump(RESULTS, open(jpath, "w"), indent=0, sort_keys=True)
++    bad = [k for k, v in RESULTS.items() if not v]
++    print(f"SELFTEST-ARP: {len(RESULTS) - len(bad)}/{len(RESULTS)} passed" + ("" if not bad else f"; FAILED: {bad}"))
++    return 0 if not bad else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))

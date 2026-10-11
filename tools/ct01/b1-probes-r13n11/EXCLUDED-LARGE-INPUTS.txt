@@ -1,0 +1,3 @@
+# listed in SHA256SUMS but NOT copied (large/binary inputs kept outside Git)
+1775e3285b3975dd6fe12ab17047fb2270b65a0876037028e3975917d66d7095  repo/sandbox-worker/ARM/image.zip
+0aa4928e2c35dcf986443cfe58bd48525f0a68fde8d2366ebdf7d6eaaa6733a6  repo/sandbox-worker/MIPS/image.zip

@@ -1,0 +1,35 @@
+{
+  "variant": "boot-capture-v2",
+  "rc": 98,
+  "status": "CAPTURE LOST: before ARP guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: independent startup event",
+  "outcome": "FAIL: required confirmation not passed (ok=False): allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status 'CAPTURE LOST: before ARP guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w \\'HTTP=%{http_code}\\\\\\\\n\\' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: independent startup event'; arp-eval.json missing or unreadable; allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; captures alive for the whole test (probes stopped)",
+  "cli": "FAIL: required confirmation not passed (ok=False): allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; required confirmation missing: worker neighbour table read (ip -j neigh show) before and after every ARP case; required confirmation missing: tap0 MAC unchanged during the ARP group; required confirmation missing: all four ARP cases recorded exactly once with captures alive; required confirmation missing: capture liveness traffic from the worker after the ARP group (host captures; not a control for the ARP destinations); required confirmation missing: ARP group record: each reviewed case exactly once, execution contract, service links HTTP 200 + fixture hash; status 'CAPTURE LOST: before ARP guest command \"rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w \\'HTTP=%{http_code}\\\\\\\\n\\' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out\": host capture lost: independent startup event'; arp-eval.json missing or unreadable; allowed service link before the ARP group: GET get-task/T/file HTTP 200 + fixture hash; captures alive for the whole test (probes stopped)",
+  "script_mapping": "FAIL",
+  "categories": {},
+  "commands": [
+    "ip addr",
+    "ip route",
+    "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done",
+    "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done",
+    "curl --version | head -1"
+  ],
+  "control_A1": null,
+  "infrastructure": [
+    {
+      "test": "QEMU exit confirmed",
+      "ok": true,
+      "error": null
+    },
+    {
+      "test": "fixture, marker and temporary guest disk removed",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "files": "/home/dathq/projects/ct01-06b4ir1-work/before/fixtures/boot-capture-v2/out/ARM",
+  "boot_console": [
+    "ip addr add 10.200.0.2/30 brd + dev eth1",
+    "route add default gw 10.200.0.1 dev eth1",
+    "echo \"nameserver 8.8.8.8\" > /etc/resolv.conf"
+  ]
+}

@@ -1,0 +1,999 @@
+{
+  "nft_version": "nftables v1.0.2 (Lester Gooch)",
+  "tables": {
+    "arp sandbox_guest_arp": [
+      {
+        "table": {
+          "family": "arp",
+          "name": "sandbox_guest_arp"
+        }
+      },
+      {
+        "counter": {
+          "family": "arp",
+          "name": "arp_in_ok",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "counter": {
+          "family": "arp",
+          "name": "arp_in_drop",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "counter": {
+          "family": "arp",
+          "name": "arp_out_ok",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "counter": {
+          "family": "arp",
+          "name": "arp_out_drop",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "chain": {
+          "family": "arp",
+          "hook": "input",
+          "name": "input",
+          "policy": "accept",
+          "prio": 0,
+          "table": "sandbox_guest_arp",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "iifname"
+                  }
+                },
+                "op": "!=",
+                "right": "tap0"
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "htype",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": 1
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "ptype",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "ip"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "hlen",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": 6
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "plen",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": 4
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr ether",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "52:54:00:c7:00:02"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr ip",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.2"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr ip",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "operation",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": {
+                  "set": [
+                    "request",
+                    "reply"
+                  ]
+                }
+              }
+            },
+            {
+              "counter": "arp_in_ok"
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "counter": "arp_in_drop"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "chain": {
+          "family": "arp",
+          "hook": "output",
+          "name": "output",
+          "policy": "accept",
+          "prio": 0,
+          "table": "sandbox_guest_arp",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "oifname"
+                  }
+                },
+                "op": "!=",
+                "right": "tap0"
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr ip",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr ip",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.2"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "operation",
+                    "protocol": "arp"
+                  }
+                },
+                "op": "==",
+                "right": {
+                  "set": [
+                    "request",
+                    "reply"
+                  ]
+                }
+              }
+            },
+            {
+              "counter": "arp_out_ok"
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "counter": "arp_out_drop"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "arp",
+          "table": "sandbox_guest_arp"
+        }
+      }
+    ],
+    "inet sandbox_guest": [
+      {
+        "table": {
+          "family": "inet",
+          "name": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "allow_svc",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_spoof",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_non_ipv4",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_worker_other",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_private",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_bcast_mcast",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_public",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_input_backstop",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_forward",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "allow_out_svc",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "counter": {
+          "family": "inet",
+          "name": "drop_out",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "chain": {
+          "family": "inet",
+          "hook": "prerouting",
+          "name": "prerouting",
+          "policy": "accept",
+          "prio": -150,
+          "table": "sandbox_guest",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "iifname"
+                  }
+                },
+                "op": "!=",
+                "right": "tap0"
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "nfproto"
+                  }
+                },
+                "op": "!=",
+                "right": "ipv4"
+              }
+            },
+            {
+              "counter": "drop_non_ipv4"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "!=",
+                "right": "10.200.0.2"
+              }
+            },
+            {
+              "counter": "drop_spoof"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "dport",
+                    "protocol": "tcp"
+                  }
+                },
+                "op": "==",
+                "right": 8011
+              }
+            },
+            {
+              "counter": "allow_svc"
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "counter": "drop_worker_other"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": {
+                  "set": [
+                    {
+                      "prefix": {
+                        "addr": "0.0.0.0",
+                        "len": 8
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "10.0.0.0",
+                        "len": 8
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "100.64.0.0",
+                        "len": 10
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "127.0.0.0",
+                        "len": 8
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "169.254.0.0",
+                        "len": 16
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "172.16.0.0",
+                        "len": 12
+                      }
+                    },
+                    {
+                      "prefix": {
+                        "addr": "192.168.0.0",
+                        "len": 16
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "counter": "drop_private"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": {
+                  "set": [
+                    {
+                      "prefix": {
+                        "addr": "224.0.0.0",
+                        "len": 4
+                      }
+                    },
+                    "255.255.255.255"
+                  ]
+                }
+              }
+            },
+            {
+              "counter": "drop_bcast_mcast"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "prerouting",
+          "expr": [
+            {
+              "counter": "drop_public"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "chain": {
+          "family": "inet",
+          "hook": "input",
+          "name": "input",
+          "policy": "accept",
+          "prio": -10,
+          "table": "sandbox_guest",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "iifname"
+                  }
+                },
+                "op": "!=",
+                "right": "tap0"
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.2"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "dport",
+                    "protocol": "tcp"
+                  }
+                },
+                "op": "==",
+                "right": 8011
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "counter": "drop_input_backstop"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "chain": {
+          "family": "inet",
+          "hook": "forward",
+          "name": "forward",
+          "policy": "drop",
+          "prio": -10,
+          "table": "sandbox_guest",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "forward",
+          "expr": [
+            {
+              "counter": "drop_forward"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "chain": {
+          "family": "inet",
+          "hook": "output",
+          "name": "output",
+          "policy": "accept",
+          "prio": -10,
+          "table": "sandbox_guest",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "meta": {
+                    "key": "oifname"
+                  }
+                },
+                "op": "!=",
+                "right": "tap0"
+              }
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.1"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                  }
+                },
+                "op": "==",
+                "right": "10.200.0.2"
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "sport",
+                    "protocol": "tcp"
+                  }
+                },
+                "op": "==",
+                "right": 8011
+              }
+            },
+            {
+              "match": {
+                "left": {
+                  "ct": {
+                    "key": "state"
+                  }
+                },
+                "op": "in",
+                "right": "established"
+              }
+            },
+            {
+              "counter": "allow_out_svc"
+            },
+            {
+              "accept": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      },
+      {
+        "rule": {
+          "chain": "output",
+          "expr": [
+            {
+              "counter": "drop_out"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "inet",
+          "table": "sandbox_guest"
+        }
+      }
+    ],
+    "netdev sandbox_guest_l2": [
+      {
+        "table": {
+          "family": "netdev",
+          "name": "sandbox_guest_l2"
+        }
+      },
+      {
+        "counter": {
+          "family": "netdev",
+          "name": "l2_bad_mac",
+          "table": "sandbox_guest_l2"
+        }
+      },
+      {
+        "counter": {
+          "family": "netdev",
+          "name": "l2_bad_ethertype",
+          "table": "sandbox_guest_l2"
+        }
+      },
+      {
+        "chain": {
+          "family": "netdev",
+          "hook": "ingress",
+          "name": "ingress",
+          "policy": "accept",
+          "prio": -500,
+          "table": "sandbox_guest_l2",
+          "type": "filter"
+        }
+      },
+      {
+        "rule": {
+          "chain": "ingress",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "saddr",
+                    "protocol": "ether"
+                  }
+                },
+                "op": "!=",
+                "right": "52:54:00:c7:00:02"
+              }
+            },
+            {
+              "counter": "l2_bad_mac"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "netdev",
+          "table": "sandbox_guest_l2"
+        }
+      },
+      {
+        "rule": {
+          "chain": "ingress",
+          "expr": [
+            {
+              "match": {
+                "left": {
+                  "payload": {
+                    "field": "type",
+                    "protocol": "ether"
+                  }
+                },
+                "op": "!=",
+                "right": {
+                  "set": [
+                    "ip",
+                    "arp"
+                  ]
+                }
+              }
+            },
+            {
+              "counter": "l2_bad_ethertype"
+            },
+            {
+              "drop": null
+            }
+          ],
+          "family": "netdev",
+          "table": "sandbox_guest_l2"
+        }
+      }
+    ]
+  }
+}

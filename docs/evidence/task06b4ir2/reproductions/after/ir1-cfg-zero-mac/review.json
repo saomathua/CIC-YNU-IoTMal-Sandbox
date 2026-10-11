@@ -1,0 +1,985 @@
+{
+  "version": "ir1",
+  "variant": "cfg-zero-mac",
+  "rc": 1,
+  "status": "COMPLETED",
+  "outcome": "UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+  "cli": "UNVERIFIED: probe T14-A1 (arp, live control) -> CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+  "mapping": "UNVERIFIED",
+  "categories": {
+    "T14-A1": "CHUA_KIEM_CHUNG",
+    "T14-A2": "DAT",
+    "T14-A3": "DAT_KIEM_QUY_TAC",
+    "T15-S1": "DAT_KIEM_QUY_TAC"
+  },
+  "ctl_audit": {
+    "rows": 177,
+    "duplicates": 0,
+    "missing_detail": 0,
+    "arp_payloads": [
+      {
+        "ip": "192.168.60.2",
+        "hw": "02:42:c0:a8:3c:02",
+        "flags": "0x2",
+        "device": "eth0",
+        "device_mac": "00:00:00:00:00:00"
+      },
+      {
+        "ip": "192.168.60.2",
+        "hw": "02:42:c0:a8:3c:02",
+        "flags": "0x2",
+        "device": "eth0",
+        "device_mac": "00:00:00:00:00:00"
+      }
+    ]
+  },
+  "commands": [
+    [
+      "run",
+      "ip addr"
+    ],
+    [
+      "run",
+      "ip route"
+    ],
+    [
+      "run",
+      "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done"
+    ],
+    [
+      "run",
+      "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done"
+    ],
+    [
+      "run",
+      "curl --version | head -1"
+    ],
+    [
+      "monitor",
+      "info network"
+    ],
+    [
+      "run",
+      "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route add 192.168.60.2/32 dev eth1"
+    ],
+    [
+      "run",
+      "ping -c 1 -W 2 -s 1401 192.168.60.2"
+    ],
+    [
+      "run",
+      "sleep 3"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route del 192.168.60.2/32 dev eth1"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route add 192.168.60.10/32 dev eth1"
+    ],
+    [
+      "run",
+      "ping -c 1 -W 2 -s 1402 192.168.60.10"
+    ],
+    [
+      "run",
+      "sleep 3"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route del 192.168.60.10/32 dev eth1"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route add 10.200.0.6/32 dev eth1"
+    ],
+    [
+      "run",
+      "ping -c 1 -W 2 -s 1403 10.200.0.6"
+    ],
+    [
+      "run",
+      "sleep 3"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route del 10.200.0.6/32 dev eth1"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify"
+    ],
+    [
+      "run",
+      "ip addr add 10.200.0.1/32 dev eth1"
+    ],
+    [
+      "run",
+      "ip addr add 192.168.60.10/32 dev eth1"
+    ],
+    [
+      "run",
+      "ip addr add 192.168.60.1/32 dev eth1"
+    ],
+    [
+      "run",
+      "ip link set dev eth1 down"
+    ],
+    [
+      "run",
+      "ip link set dev eth1 up"
+    ],
+    [
+      "run",
+      "sleep 3"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip addr del 10.200.0.1/32 dev eth1"
+    ],
+    [
+      "run",
+      "ip addr del 192.168.60.1/32 dev eth1"
+    ],
+    [
+      "run",
+      "ip addr del 192.168.60.10/32 dev eth1"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "ip route add default via 10.200.0.1 dev eth1"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "echo 0 > /proc/sys/net/ipv4/conf/eth1/arp_notify"
+    ],
+    [
+      "run",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    [
+      "run",
+      "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+    ]
+  ],
+  "case_results": [
+    {
+      "arp_out_drop_delta": 0,
+      "category": "CHUA_KIEM_CHUNG",
+      "evidence_kind": "live_control",
+      "execution_problems": [],
+      "failure_evidence": [],
+      "id": "T14-A1",
+      "measurement_errors": [],
+      "neighbour_inconclusive": [],
+      "not_run": false,
+      "not_started": false,
+      "ok": false,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "reconciliation": {
+        "guard_s": 0.02,
+        "no_counter_frames": [],
+        "per_class": {
+          "allow_out_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "allow_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "delta": 3,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 3,
+            "lo": 3,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          }
+        },
+        "verdict": "PASS"
+      },
+      "restore": true,
+      "steps": [
+        {
+          "cmd": "ip route add 192.168.60.2/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+          "phase": "trigger",
+          "rc": 1
+        },
+        {
+          "cmd": "sleep 3",
+          "out": "",
+          "phase": "settle",
+          "rc": 0
+        }
+      ],
+      "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)"
+    },
+    {
+      "arp_out_drop_delta": 0,
+      "category": "DAT",
+      "evidence_kind": "live_control",
+      "execution_problems": [],
+      "failure_evidence": [],
+      "id": "T14-A2",
+      "measurement_errors": [],
+      "neighbour_inconclusive": [],
+      "not_run": false,
+      "not_started": false,
+      "ok": true,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "reconciliation": {
+        "guard_s": 0.02,
+        "no_counter_frames": [],
+        "per_class": {
+          "allow_out_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "allow_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "delta": 3,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 3,
+            "lo": 3,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          }
+        },
+        "verdict": "PASS"
+      },
+      "restore": true,
+      "steps": [
+        {
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+          "phase": "trigger",
+          "rc": 1
+        },
+        {
+          "cmd": "sleep 3",
+          "out": "",
+          "phase": "settle",
+          "rc": 0
+        }
+      ],
+      "verdict": "ĐẠT"
+    },
+    {
+      "arp_out_drop_delta": 0,
+      "category": "DAT_KIEM_QUY_TAC",
+      "evidence_kind": "rule_check",
+      "execution_problems": [],
+      "failure_evidence": [],
+      "id": "T14-A3",
+      "measurement_errors": [],
+      "neighbour_inconclusive": [],
+      "not_run": false,
+      "not_started": false,
+      "ok": true,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "reconciliation": {
+        "guard_s": 0.02,
+        "no_counter_frames": [],
+        "per_class": {
+          "allow_out_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "allow_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "delta": 3,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 3,
+            "lo": 3,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          }
+        },
+        "verdict": "PASS"
+      },
+      "restore": true,
+      "steps": [
+        {
+          "cmd": "ip route add 10.200.0.6/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ping -c 1 -W 2 -s 1403 10.200.0.6",
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+          "phase": "trigger",
+          "rc": 1
+        },
+        {
+          "cmd": "sleep 3",
+          "out": "",
+          "phase": "settle",
+          "rc": 0
+        }
+      ],
+      "verdict": "ĐẠT (kiểm quy tắc)"
+    },
+    {
+      "arp_out_drop_delta": 0,
+      "category": "DAT_KIEM_QUY_TAC",
+      "evidence_kind": "rule_check",
+      "execution_problems": [],
+      "failure_evidence": [],
+      "id": "T15-S1",
+      "measurement_errors": [],
+      "neighbour_inconclusive": [],
+      "not_run": false,
+      "not_started": false,
+      "ok": true,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "probe_frames": 4,
+      "probe_frames_certain": 4,
+      "reconciliation": {
+        "guard_s": 0.02,
+        "no_counter_frames": [],
+        "per_class": {
+          "allow_out_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "allow_svc": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 4,
+            "delta": 4,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 4,
+            "lo": 4,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "delta": 0,
+            "edge_end": [],
+            "edge_start": [],
+            "hi": 0,
+            "lo": 0,
+            "status": "PASS"
+          }
+        },
+        "verdict": "PASS"
+      },
+      "restore": true,
+      "steps": [
+        {
+          "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+          "out": "",
+          "phase": "setup",
+          "rc": 0
+        },
+        {
+          "cmd": "ip link set dev eth1 down",
+          "out": "",
+          "phase": "trigger",
+          "rc": 0
+        },
+        {
+          "cmd": "ip link set dev eth1 up",
+          "out": "",
+          "phase": "trigger",
+          "rc": 0
+        },
+        {
+          "cmd": "sleep 3",
+          "out": "",
+          "phase": "settle",
+          "rc": 0
+        }
+      ],
+      "verdict": "ĐẠT (kiểm quy tắc)"
+    }
+  ],
+  "cleanup": [
+    {
+      "arch": "ARM",
+      "test": "QEMU exit confirmed",
+      "ok": true,
+      "exitstatus": 0
+    },
+    {
+      "arch": "ARM",
+      "test": "fixture, marker and temporary guest disk removed",
+      "ok": true
+    }
+  ]
+}

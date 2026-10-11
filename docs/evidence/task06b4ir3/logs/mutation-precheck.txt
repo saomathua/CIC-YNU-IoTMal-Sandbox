@@ -1,0 +1,17 @@
+baseline: 40/40 tests pass
+OK  P1   DETECTED           target="C5 permission-denied: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec skipped as 'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented"
+OK  P2   DETECTED           target="C5 permission-denied: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec skipped as 'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented"
+OK  P3   DETECTED           target='O1b symlink to an EMPTY directory with the right owner/mode -> still refused (only O_NOFOLLOW stops it)'
+OK  P4   DETECTED           target='O4 a symlink planted under an output name -> creation fails (O_EXCL|O_NOFOLLOW), target untouched'
+OK  P5   DETECTED           target='O7 subprocess environment is exactly the fixed minimal one (nothing inherited)'
+OK  P6   DETECTED           target='C6 image id differs from the reviewed one -> FAIL (compared automatically), evaluator exit 1 path'
+OK  P7   DETECTED           target='C8 network-ambiguous: network not inspected (SKIPPED, reason kept), collector exit 3, evaluator UNKNOWN'
+OK  P8   DETECTED           target='C4 manager exited -> no docker exec at all (SKIPPED with the reason)'
+OK  P9   DETECTED           target='L2 snippet with a wrong hash (file swapped/changed): nothing run, the copy removed, exit 1'
+OK  P10  DETECTED           target="C14 pgrep-error: pgrep rc 1 = none, rc 0 = present (FAIL), other rc = read error (UNKNOWN), never 'none'"
+OK  P11  DETECTED           target='E3 evaluator CLI exit 2 on missing/failed reads'
+OK  P12  DETECTED           target='C15 nft read error -> UNKNOWN + collector exit 3'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None
+MUTATION-PRECHECK: 14 OK, 0 not as expected; files unchanged
+exit=0

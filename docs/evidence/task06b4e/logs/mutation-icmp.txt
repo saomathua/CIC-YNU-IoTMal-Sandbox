@@ -1,0 +1,23 @@
+baseline: 55/55 tests pass
+OK  C1   DETECTED           target='K1 no probe frame (broadcast refused locally), counters unchanged -> KHÔNG TẠO ĐƯỢC GÓI, not ĐẠT'
+OK  C2   DETECTED           target='E1 console error during the ping -> LỖI THỰC THI (not ĐẠT even if counters match)'
+OK  C3   DETECTED           target='U3 service link after the group not intact -> CHƯA KIỂM CHỨNG, never ĐẠT'
+OK  C4   DETECTED           target='F2 an ICMP frame towards the guest in the window -> FAIL (no_reply_to_guest)'
+OK  C5   DETECTED           target='F3 a probe frame that does not reach the expected counter (OTHERHOST) -> FAIL'
+OK  C6   DETECTED           target='P T12-B1: 3 probe frames = drop_bcast_mcast delta 3 -> ĐẠT (kiểm quy tắc), rule_check only'
+OK  C7   DETECTED           target='F4 a determined failure is reported even when execution also failed'
+OK  C8   DETECTED           target='D3 a registry change changes the command (single source)'
+OK  C9   DETECTED           target='M6 a counter read that failed during execution -> LỖI PHÉP ĐO'
+OK  C10  DETECTED           target="M3 counter read 'after' missing -> LỖI PHÉP ĐO (never 0)"
+OK  C11  DETECTED           target='R3 link before fails -> no ping is run, group skipped'
+OK  C12  DETECTED           target="R6 rc 127 -> 'tool missing' execution error"
+OK  C13  DETECTED           target='P T13-I2: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only'
+OK  C14  DETECTED           target='K4 an ICMP echo to the same destination with another size is NOT a probe frame -> KHÔNG TẠO ĐƯỢC GÓI'
+OK  C15  DETECTED           target='U4 service link before the group failed -> every case CHƯA KIỂM CHỨNG, none judged'
+OK  C16  DETECTED           target='M1 capture missing -> every case LỖI PHÉP ĐO'
+OK  C17  DETECTED           target='R5 a failed counter read is recorded as read_error'
+OK  C18  DETECTED           target='L6 group exit: FAIL wins over a measurement error in the same group (FAIL > LỖI PHÉP ĐO)'
+OK  C19  DETECTED           target='D7 bad interface name refused'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ICMP: 21 OK, 0 not as expected; harness unchanged

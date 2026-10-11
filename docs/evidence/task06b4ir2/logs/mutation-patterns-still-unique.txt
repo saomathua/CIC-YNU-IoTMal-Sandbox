@@ -1,0 +1,115 @@
+# mutation_test.sh: patterns on the 06B-4IR2 files (each must occur exactly once)
+ok S1-06b3b-url-regex
+ok S2-count-lines-not-packets
+ok S3-read-error-ignored
+ok W1-zombie-counts-as-alive
+ok W2-no-heartbeat-written
+ok W3-heartbeat-age-ignored-host
+ok P1-heartbeat-age-ignored
+ok P2-missing-heartbeat-tolerated
+ok P3-killed-watcher-not-noticed
+ok P4-host-marker-ignored
+ok P5-unreadable-marker-tolerated
+ok P6-tshark-exit-ignored
+ok M1-compose-up-rc-ignored
+ok M2-marked-started-before-confirmation
+ok M3-replacement-not-checked-before-stop
+ok M4-stop-by-service-not-by-id
+ok M5-created-accepted
+ok M6-running-manager-restarted
+ok M7-restart-not-detected
+ok N1-ifdrop-ignored
+ok N2-missing-statistics-pass
+ok N3-missing-ifdrop-as-zero
+ok N4-osdrop-ignored
+ok N5-ifrecv-mismatch-ignored
+ok N6-truncation-not-detected
+ok CW1-edges-ignored
+ok CW2-no-guard
+ok CW3-edges-as-certain
+ok CW4-ambiguity-hides-real-mismatch
+ok V1-unverified-counted-as-ok
+ok V2-failed-check-hidden-by-unverified
+ok V3-run-outcome-softens-failures
+ok T1-no-kill-at-deadline
+ok T2-exit-code-not-kept
+ok G1-missing-statistic-as-zero
+ok E1-evaluate-uses-old-window
+ok E2-undecided-probe-recorded-ok
+ok PV1-old-precedence
+ok PV2-host-alert-as-precondition
+ok PV3-guest-checks-skipped-with-tool
+ok PV4-tool-missing-excuses-counter-fail
+ok PV5-window-checks-on-invalid-data
+ok PV6-no-measurement-error-verdict
+ok VAL1-order-not-checked
+ok VAL2-finiteness-not-checked
+ok VAL3-negative-guard-accepted
+ok VAL4-negative-delta-accepted
+ok VAL5-frame-time-not-checked
+ok SE1-session-edges-ignored
+ok SE2-capture-completeness-ignored
+ok SE3-late-guest-frames-ignored
+ok SE4-instability-after-exit-ignored
+ok SE5-qemu-before-not-checked
+ok SE6-time-order-not-checked
+ok SE7-low-counter-softened-by-capture
+ok SE8-not-compared-hidden
+ok SE9-session-enters-results
+ok SE10-final-reads-after-tshark-stop
+ok SE11-session-read-after-spawn
+ok SE12-session-read-missing
+ok PW1-pre-window-frames-ignored
+ok PW2-pre-window-compared-classes-only
+ok PW3-pre-window-details-dropped
+ok QP1-qemu-after-exit-ignored
+ok QP2-unverifiable-qemu-state-accepted
+ok QP3-evaluate-session-drops-pids
+ok QP4-pids-before-not-checked
+ok FR1-f2-not-required
+ok FR2-final-read-error-ignored
+ok FR3-evaluate-session-drops-read-error
+ok CC1-missing-counter-as-zero
+ok Q1-scan-swallows-oserror
+ok Q2-vanished-pid-is-error
+ok Q3-no-pid-dir-check
+ok Q4-record-swallows-error
+ok Q5-unlistable-proc-swallowed
+ok X1-syntax-error
+ok X2-missing-dependency
+# mutation_icmp_wiring.py: patterns on the 06B-4IR2 files (each must occur exactly once; X1 is the not-found control)
+W1 icmp_harness.py [1]
+W2 icmp_harness.py [1]
+W3 icmp_harness.py [1]
+W4 icmp_harness.py [1]
+W5 icmp_harness.py [1]
+W6 icmp_harness.py [1]
+W7 icmp_harness.py [1]
+W8 icmp_harness.py [1]
+W9 icmp_harness.py [1]
+W10 icmp_harness.py [1]
+W11 icmp_harness.py [1]
+W12 icmp_harness.py [1]
+W13 icmp_harness.py [1]
+W14 icmp_harness.py [1]
+W16 probe_matrix.py [1]
+W17 probe_matrix.py [1]
+W18 probe_matrix.py [1]
+W19 probe_matrix.py [1]
+W20 probe_matrix.py [1]
+W21 probe_matrix.py [1]
+W22 probe_matrix.py [1]
+W23 probe_matrix.py [1]
+W24 run-06b4f.sh [1]
+W25 run-06b4f.sh [1]
+W26 run-06b4f.sh [1]
+W27 run-06b4f.sh [1]
+W28 probe_matrix.py [1]
+W29 probe_matrix.py [1]
+W30 icmp_harness.py [1]
+W31 icmp_harness.py [1]
+W32 icmp_harness.py [1]
+W33 icmp_harness.py [1]
+W34 icmp_harness.py [1]
+X1 icmp_harness.py [0]
+X2 selftest_icmp_wiring.py [1]

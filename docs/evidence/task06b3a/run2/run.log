@@ -1,0 +1,174 @@
+
+===== 1. preparation (14:39:38)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 5 hours ago
+mongo-db Up 10 minutes
+name=cic-ynu-iotmal-sandbox_sandboxnet subnet=192.168.60.0/24 gw=192.168.60.1 containers=[]
+58bfb13d585b2f625707af054256e708b7f954f6ea2a900197c01433bf66da42  /home/dathq/projects/ct01-06b3a/run-06b3a.sh
+02e6bf68aedfe4a686b99953b30bf4747548d5e5c8977842fe89cd70e2c409d6  /home/dathq/projects/ct01-06b3a/guest_probe.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b3a/sentinel/poller.py
+
+===== 2. startup: real run.sh + real server.py, poller sentinel (14:39:39)
+container id: 06da2be271ec2f605dfed967bfa245e3e8e7e68b2cd1ede5eb028980da184ac5
+[PASS] server ready (healthcheck 200 from 127.0.0.1)
+2026-10-06T14:39:39.441017582Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-06T14:39:39.457307393Z SENTINEL poller.py called (no real poller started)
+2026-10-06T14:39:39.791842912Z INFO:     Started server process [36]
+[PASS] V0 passed
+[PASS] code and guest images in container equal working tree
+[PASS] real server.py running, poller is sentinel, no qemu
+
+===== 3. guest ARM (14:39:40)
+[PASS] ARM: no QEMU running before start (sequential)
+14:39:41 [PASS] ARM: fresh guest image extracted {"rootfs_sha256": "1caa6fd8bdb98fa7606fc198ad93ed61d239396199ce10e0df53b590201b2b27", "zip": "./ARM/image.zip"}
+14:39:41 [PASS] ARM: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+14:39:41 [PASS] ARM: tshark capturing on tap0 {}
+14:39:41 spawning: qemu-system-arm -M virt-2.9 -kernel /tmp/g-ARM/image/zImage -no-reboot -nographic -device virtio-net-pci -netdev tap,id=net1,ifname=tap0,script=no,downscript=no -device virtio-net-pci,netdev=net1,mac=52:54:00:c7:00:02 -drive file=/tmp/g-ARM/image/root.ext4,if=virtio,format=raw -append "root=/dev/vda"
+14:39:47 [PASS] ARM: guest booted to shell {"qemu_pid": 105, "seconds": 6.0}
+14:39:55 [PASS] ARM: guest network configured by Analysis._configure_network {}
+14:39:57 info network:
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+virtio-net-pci.0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:12:34:56
+virtio-net-pci.1: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02
+ \ net1: index=0,type=tap,ifname=tap0,script=no,downscript=no
+
+14:39:57 [PASS] ARM: QEMU info network: only tap0 backend, no user/slirp/socket {"backends": ["nic", "tap"], "problems": []}
+14:39:57 [PASS] ARM: guest has 10.200.0.2/30 on eth1 {}
+14:39:57 [PASS] ARM: guest default route via 10.200.0.1 on eth1 {}
+14:39:57 [PASS] ARM: a guest NIC carries the pinned MAC 52:54:00:c7:00:02 {"all_macs": {"br-lan": "52:54:00:12:34:56", "eth0": "52:54:00:12:34:56", "eth1": "52:54:00:c7:00:02", "lo": "00:00:00:00:00:00"}, "interfaces": ["eth1"]}
+14:39:57 [PASS] ARM: harmless dummy upload file created in guest {}
+14:39:57 [PASS] ARM: no current_task: GET get-task/06b3a-arm-task/file -> 403 {"status": 403}
+14:39:57 [PASS] ARM: no current_task: POST update-task/06b3a-arm-task/strace -> 403 {"status": 403}
+14:39:58 [PASS] ARM: no current_task: POST update-task/06b3a-arm-task/sar -> 403 {"status": 403}
+14:39:58 [PASS] ARM: no current_task: nothing written {}
+14:39:58 group '1-no-current-task' counter delta: {'sandbox_guest_l2.l2_bad_ethertype': 1, 'sandbox_guest_arp.arp_in_ok': 1, 'sandbox_guest_arp.arp_out_ok': 1, 'sandbox_guest.allow_svc': 22, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 16}
+14:39:58 [PASS] ARM: GET get-task/T/file -> 200 {"status": 200}
+14:39:58 [PASS] ARM: downloaded file hash (computed in guest) == fixture {"expected": "d9d5786a4bc731991de4c22d90cdce66d993e3e914b630d50b7f8d69014c656e", "guest": "d9d5786a4bc731991de4c22d90cdce66d993e3e914b630d50b7f8d69014c656e"}
+14:39:59 group '2-download' counter delta: {'sandbox_guest_l2.l2_bad_ethertype': 1, 'sandbox_guest.allow_svc': 7, 'sandbox_guest.allow_out_svc': 5}
+14:39:59 [PASS] ARM: POST update-task/T/strace -> 200 {"status": 200}
+14:39:59 [PASS] ARM: received strace.log hash == payload {"expected": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611", "got": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611"}
+14:39:59 [PASS] ARM: POST update-task/T/sar -> 200 {"status": 200}
+14:39:59 [PASS] ARM: received sar.out hash == payload {"expected": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401", "got": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401"}
+14:40:00 group '3-upload' counter delta: {'sandbox_guest.allow_svc': 16, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 12}
+14:40:00 [PASS] ARM: forbidden: GET /healthcheck -> 403 {"status": 403}
+14:40:00 [PASS] ARM: forbidden: POST /stop -> 403 {"status": 403}
+14:40:01 [PASS] ARM: forbidden: GET other task file -> 403 {"status": 403}
+14:40:01 [PASS] ARM: forbidden: POST other task strace -> 403 {"status": 403}
+14:40:01 group '4-forbidden' counter delta: {'sandbox_guest.allow_svc': 28, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 20}
+14:40:01 [PASS] ARM: no stop file created {}
+14:40:01 [PASS] ARM: no task created / other task not written {"data_dir": ["06b3a-arm-other", "06b3a-arm-task"]}
+14:40:01 [PASS] ARM: after clearing current_task: GET get-task/T/file -> 403 {"status": 403}
+14:40:02 group '5-after-clear' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 5}
+14:40:02 [PASS] ARM: QEMU exit confirmed (shutdown_qemu) {"exitstatus": 0, "signalstatus": null}
+14:40:02 [PASS] ARM: tshark capture stopped {"returncode": 0}
+14:40:02 [PASS] ARM: fixtures, marker and temporary guest disk removed {}
+14:40:02 [PASS] ARM: capture: guest frames seen on tap0 {"frames_from_guest": 97}
+14:40:03 [PASS] ARM: group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 22, "pcap": 22}
+14:40:03 [PASS] ARM: group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:03 [PASS] ARM: group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 16, "pcap": 16}
+14:40:03 [PASS] ARM: group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 28, "pcap": 28}
+14:40:03 [PASS] ARM: group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:04 [PASS] ARM: info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A) {"count": 7}
+14:40:04 == ARM: status=COMPLETED; 37/37 checks passed
+guest_probe ARM exit=0
+[PASS] ARM: all guest checks passed (guest_probe exit 0)
+[PASS] ARM: no qemu-system/tshark left in container
+[PASS] ARM: no qemu-system on host
+[PASS] ARM: full verify after guest shutdown
+
+===== 3. guest MIPS (14:40:04)
+[PASS] MIPS: no QEMU running before start (sequential)
+14:40:04 [PASS] MIPS: fresh guest image extracted {"rootfs_sha256": "694fd1b8e3b34a879f56c9de6499d5220484c105534bd1e763157fc8fad6b445", "zip": "./MIPS/image.zip"}
+14:40:04 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+14:40:05 [PASS] MIPS: tshark capturing on tap0 {}
+14:40:05 spawning: qemu-system-mips -M malta -kernel /tmp/g-MIPS/image/vmlinux -hda /tmp/g-MIPS/image/root.ext4 -append "root=/dev/sda" -nographic -no-reboot -device pcnet,netdev=net0,mac=52:54:00:c7:00:02 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+14:40:16 [PASS] MIPS: guest booted to shell {"qemu_pid": 218, "seconds": 11.8}
+14:40:29 [PASS] MIPS: guest network configured by Analysis._configure_network {}
+14:40:31 info network:
+i[K[Din[K[D[Dinf[K[D[D[Dinfo[K[D[D[D[Dinfo [K[D[D[D[D[Dinfo n[K[D[D[D[D[D[Dinfo ne[K[D[D[D[D[D[D[Dinfo net[K[D[D[D[D[D[D[D[Dinfo netw[K[D[D[D[D[D[D[D[D[Dinfo netwo[K[D[D[D[D[D[D[D[D[D[Dinfo networ[K[D[D[D[D[D[D[D[D[D[D[Dinfo network[K
+pcnet.0: index=0,type=nic,model=pcnet,macaddr=52:54:00:c7:00:02
+ \ net0: index=0,type=tap,ifname=tap0,script=no,downscript=no
+
+14:40:31 [PASS] MIPS: QEMU info network: only tap0 backend, no user/slirp/socket {"backends": ["nic", "tap"], "problems": []}
+14:40:31 [PASS] MIPS: guest has 10.200.0.2/30 on br-lan {}
+14:40:31 [PASS] MIPS: guest default route via 10.200.0.1 on br-lan {}
+14:40:31 [PASS] MIPS: a guest NIC carries the pinned MAC 52:54:00:c7:00:02 {"all_macs": {"br-lan": "52:54:00:c7:00:02", "eth0": "52:54:00:c7:00:02", "hwsim0": "12:00:00:00:00:00", "lo": "00:00:00:00:00:00"}, "interfaces": ["br-lan", "eth0"]}
+14:40:31 [PASS] MIPS: harmless dummy upload file created in guest {}
+14:40:31 [PASS] MIPS: no current_task: GET get-task/06b3a-mips-task/file -> 403 {"status": 403}
+14:40:31 [PASS] MIPS: no current_task: POST update-task/06b3a-mips-task/strace -> 403 {"status": 403}
+14:40:32 [PASS] MIPS: no current_task: POST update-task/06b3a-mips-task/sar -> 403 {"status": 403}
+14:40:32 [PASS] MIPS: no current_task: nothing written {}
+14:40:32 group '1-no-current-task' counter delta: {'sandbox_guest_l2.l2_bad_ethertype': 4, 'sandbox_guest.allow_svc': 21, 'sandbox_guest.allow_out_svc': 15}
+14:40:32 [PASS] MIPS: GET get-task/T/file -> 200 {"status": 200}
+14:40:32 [PASS] MIPS: downloaded file hash (computed in guest) == fixture {"expected": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38", "guest": "4108f5ea7105ba4d77fed10129129bfa4dbd4820fe536eedfe8f89630f683e38"}
+14:40:33 group '2-download' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 5}
+14:40:33 [PASS] MIPS: POST update-task/T/strace -> 200 {"status": 200}
+14:40:33 [PASS] MIPS: received strace.log hash == payload {"expected": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c", "got": "02603db78c2d882b4948f16efdd02624fbf0b3030a22e6ac2fd7dde947bb031c"}
+14:40:33 [PASS] MIPS: POST update-task/T/sar -> 200 {"status": 200}
+14:40:33 [PASS] MIPS: received sar.out hash == payload {"expected": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57", "got": "5e5db3cd89f5817dd83158adbedc7adf4f41997b33f268063e929d3b984e0b57"}
+14:40:34 group '3-upload' counter delta: {'sandbox_guest.allow_svc': 14, 'sandbox_guest.drop_spoof': 1, 'sandbox_guest.allow_out_svc': 10}
+14:40:34 [PASS] MIPS: forbidden: GET /healthcheck -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: POST /stop -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: GET other task file -> 403 {"status": 403}
+14:40:34 [PASS] MIPS: forbidden: POST other task strace -> 403 {"status": 403}
+14:40:35 group '4-forbidden' counter delta: {'sandbox_guest.allow_svc': 28, 'sandbox_guest.allow_out_svc': 20}
+14:40:35 [PASS] MIPS: no stop file created {}
+14:40:35 [PASS] MIPS: no task created / other task not written {"data_dir": ["06b3a-mips-other", "06b3a-mips-task"]}
+14:40:35 [PASS] MIPS: after clearing current_task: GET get-task/T/file -> 403 {"status": 403}
+14:40:35 group '5-after-clear' counter delta: {'sandbox_guest.allow_svc': 7, 'sandbox_guest.drop_public': 2, 'sandbox_guest.allow_out_svc': 5}
+14:40:36 [PASS] MIPS: QEMU exit confirmed (shutdown_qemu) {"exitstatus": 0, "signalstatus": null}
+14:40:36 [PASS] MIPS: tshark capture stopped {"returncode": 0}
+14:40:36 [PASS] MIPS: fixtures, marker and temporary guest disk removed {}
+14:40:36 [PASS] MIPS: capture: guest frames seen on tap0 {"frames_from_guest": 93}
+14:40:36 [PASS] MIPS: group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 21, "pcap": 21}
+14:40:36 [PASS] MIPS: group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:36 [PASS] MIPS: group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 14, "pcap": 14}
+14:40:37 [PASS] MIPS: group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 28, "pcap": 28}
+14:40:37 [PASS] MIPS: group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets {"allow_svc": 7, "pcap": 7}
+14:40:37 [PASS] MIPS: info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A) {"count": 8}
+14:40:37 == MIPS: status=COMPLETED; 37/37 checks passed
+guest_probe MIPS exit=0
+[PASS] MIPS: all guest checks passed (guest_probe exit 0)
+[PASS] MIPS: no qemu-system/tshark left in container
+[PASS] MIPS: no qemu-system on host
+[PASS] MIPS: full verify after guest shutdown
+
+===== 4. final verify and teardown (14:40:37)
+[PASS] no marker, fixture, stop file or guest disk left in container
+[PASS] normalized runtime ruleset identical to expected
+[PASS] docker stop exit 0
+[PASS] docker rm exit 0
+[PASS] test container removed
+CHANGED: docker-ps.txt
+--- /home/dathq/projects/ct01-06b3a/out/host-before/docker-ps.txt	2026-10-06 14:39:39.024494771 +0000
++++ /home/dathq/projects/ct01-06b3a/out/host-after/docker-ps.txt	2026-10-06 14:40:40.307130371 +0000
+@@ -1,2 +1,2 @@
+ cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 5 hours ago
+-mongo-db mongo:8.0.32 Up 10 minutes
++mongo-db mongo:8.0.32 Up 11 minutes
+unchanged: host-tap0.txt
+unchanged: ip6-route.txt
+unchanged: ip-addr.txt
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+unchanged: lsmod-net.txt
+unchanged: nft-ruleset-stateless.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+unchanged: tshark.txt
+[PASS] host sysctl.txt unchanged
+[PASS] host nft-ruleset-stateless.txt unchanged
+[PASS] host ip-route.txt unchanged
+[PASS] host listen-tcp.txt unchanged
+[PASS] host qemu.txt unchanged
+[PASS] host tshark.txt unchanged
+[PASS] host ip-addr unchanged except IPv6 link-local on br-1d86fe3e8bbe
+created ids: 06da2be271ec2f605dfed967bfa245e3e8e7e68b2cd1ede5eb028980da184ac5
+
+===== result (14:40:40)
+ALL CHECKS PASSED

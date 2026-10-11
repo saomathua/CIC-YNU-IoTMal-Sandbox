@@ -1,0 +1,1 @@
+qemu-system-arm -M virt-2.9 -kernel /tmp/g-ARM/image/zImage -no-reboot -nographic -device virtio-net-pci -netdev tap,id=net1,ifname=tap0,script=no,downscript=no -device virtio-net-pci,netdev=net1,mac=52:54:00:c7:00:02 -drive file=/tmp/g-ARM/image/root.ext4,if=virtio,format=raw -append "root=/dev/vda"

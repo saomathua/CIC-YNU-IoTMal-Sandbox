@@ -1,0 +1,1361 @@
+--- 06b3b/run-06b3b.sh
++++ 06b3cr/run-06b3b.sh
+@@ -1,13 +1,20 @@
+ #!/bin/bash
+ # Nhiệm vụ 06B-3B — IPv4 block matrix from real guests (ARM, then MIPS) with live controls.
++# Harness revised in 06B-3C (same 20 probes, no new probe):
++#  * signature scan of host pcaps by sigscan.sh (probe URL regex fixed; fixture self-test first);
++#  * capture watcher: a capture that dies during the test is FAIL and stops the probes; tcpdump exit
++#    codes, kernel drops and pcap read errors are checked;
++#  * ip link / addr / route / neigh / rule of the worker netns recorded before and after;
++#  * manager restored to its initial state (running stays running and is not restarted).
+ #
+-#   sudo bash /home/dathq/projects/ct01-06b3b/run-06b3b.sh
++#   sudo bash /home/dathq/projects/ct01-06b3c/run-06b3b.sh
+ #
+ #  * Worker test container ct01-06b3b-guest: reviewed image (full id pinned), real run.sh (V0),
+ #    REAL server.py, sentinel poller. sandboxnet, --privileged like compose, --restart no,
+ #    no published ports, no host network, no lab-data / docker.sock mounts.
+-#  * The existing sandbox-manager container is started ONLY for controls:
+-#    `docker compose up -d --no-deps --no-build sandbox-manager`; it is stopped again at the end.
++#  * The existing sandbox-manager container is used for controls. If it is not running it is started
++#    with `docker compose up -d --no-deps --no-build sandbox-manager` and stopped again at the end;
++#    if it is already running it is left running and never restarted.
+ #    The compose worker service is never started.
+ #  * Control container ct01-06b3b-ctl (sandboxnet + dbnet) continuously checks MongoDB:27017,
+ #    worker eth0:8011 and manager:8011.
+@@ -20,7 +27,7 @@
+ set -uo pipefail
+ 
+ EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+-H=/home/dathq/projects/ct01-06b3b
++H=/home/dathq/projects/ct01-06b3c
+ OUT=$H/out
+ REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+ IMAGE=sandbox-worker:latest
+@@ -34,10 +41,16 @@
+ [ -e "$OUT" ] && { echo "ABORT: $OUT exists (keep previous evidence; move it first)"; exit 2; }
+ mkdir -p "$OUT/hostcap" "$OUT/ctl" "$OUT/harness-copy"
+ exec > >(tee "$OUT/run.log") 2>&1
+-cp "$0" "$H/probe_matrix.py" "$H/ctl_loop.py" "$H/sentinel/poller.py" "$OUT/harness-copy/"
++cp "$0" "$H/probe_matrix.py" "$H/ctl_loop.py" "$H/sentinel/poller.py" "$H/harness_lib.sh" "$H/sigscan.sh" \
++    "$H/make_fixtures.py" "$H/selftest.sh" "$H/independent_check.sh" "$H/pcapng_stats.py" "$H/mutation_test.sh" \
++    "$OUT/harness-copy/"
+ sha256sum "$OUT"/harness-copy/* | tee "$OUT/harness-sha256.txt"
++# Offline self-test of the scanner, the capture watcher and the manager handling; nothing runs if it fails.
++bash "$H/selftest.sh" "$OUT/selftest" > "$OUT/selftest.txt" 2>&1 || { cat "$OUT/selftest.txt"; echo "ABORT: harness self-test failed"; exit 3; }
++tail -1 "$OUT/selftest.txt"
++source "$H/harness_lib.sh"   # alive, start/stop_capture_watch, manager_prepare/restore
+ 
+-CREATED_IDS=(); FAILS=(); TCPDUMP_PIDS=(); MANAGER_STARTED=0
++CREATED_IDS=(); FAILS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
+ log()  { echo; echo "===== $* ($(date -u +%H:%M:%S))"; }
+ pass() { echo "[PASS] $*"; }
+ fail() { echo "[FAIL] $*"; FAILS+=("$*"); }
+@@ -46,14 +59,19 @@
+ rm_capd() { [[ "${CAPD:-}" == /tmp/ct01-06b3b-cap.?????? ]] && [ -d "$CAPD" ] && rm -r -- "$CAPD"; }
+ COMPOSE=(docker compose --project-directory "$REPO" -f "$REPO/docker-compose.yml")
+ 
++# Stops the host captures and records each exit code in hostcap/tcpdump-exit.txt ("<name> <rc>").
+ stop_tcpdumps() {
+-    local p
+-    for p in "${TCPDUMP_PIDS[@]:-}"; do [ -n "$p" ] && kill -INT "$p" 2>/dev/null; done
+-    for p in "${TCPDUMP_PIDS[@]:-}"; do [ -n "$p" ] && wait "$p" 2>/dev/null; done
+-    TCPDUMP_PIDS=()
++    local i rc
++    for i in "${!TCPDUMP_PIDS[@]}"; do kill -INT "${TCPDUMP_PIDS[$i]}" 2>/dev/null; done
++    for i in "${!TCPDUMP_PIDS[@]}"; do
++        wait "${TCPDUMP_PIDS[$i]}" 2>/dev/null; rc=$?
++        echo "${TCPDUMP_NAMES[$i]} $rc" >> "$OUT/hostcap/tcpdump-exit.txt"
++    done
++    TCPDUMP_PIDS=(); TCPDUMP_NAMES=()
+ }
+ CAPD=""
+ cleanup() {
++    stop_capture_watch
+     stop_tcpdumps
+     rm_capd || true
+     local id
+@@ -64,9 +82,7 @@
+             docker rm -f "$id" >/dev/null 2>&1 || true
+         fi
+     done
+-    if [ "$MANAGER_STARTED" = 1 ] && [ "$(docker inspect -f '{{.State.Running}}' "$MANAGER" 2>/dev/null)" = true ]; then
+-        "${COMPOSE[@]}" stop sandbox-manager >/dev/null 2>&1 || true
+-    fi
++    manager_restore >> "$OUT/manager-state.txt" 2>&1 || true   # no-op if teardown already restored it
+ }
+ trap cleanup EXIT
+ 
+@@ -103,8 +119,6 @@
+ pgrep -a qemu-system && { echo "ABORT: qemu running"; exit 3; }
+ pgrep -a 'tcpdump|tshark|dumpcap' && { echo "ABORT: capture process already running on host"; exit 3; }
+ for c in "$NAME" "$CTL"; do docker inspect "$c" >/dev/null 2>&1 && { echo "ABORT: pre-existing container $c (left untouched)"; exit 3; }; done
+-MANAGER_STATE_BEFORE=$(docker inspect -f '{{.State.Status}}' "$MANAGER")
+-echo "manager state before: $MANAGER_STATE_BEFORE" | tee "$OUT/manager-state.txt"
+ SANDBOXNET=$(docker network ls --filter label=com.docker.compose.network=sandboxnet --format '{{.Name}}')
+ DBNET=$(docker network ls --filter label=com.docker.compose.network=dbnet --format '{{.Name}}')
+ [ -n "$SANDBOXNET" ] && [ -n "$DBNET" ] || { echo "ABORT: networks not found"; exit 3; }
+@@ -117,9 +131,10 @@
+ host_state before
+ 
+ # ------------------------------------------------------------------ 2. manager (controls only)
+-log "2. start existing manager for controls (--no-deps --no-build)"
+-"${COMPOSE[@]}" up -d --no-deps --no-build sandbox-manager 2>&1 | tail -3
+-MANAGER_STARTED=1
++log "2. existing manager for controls (start only if not running: --no-deps --no-build)"
++manager_prepare > "$OUT/manager-state.txt" 2>&1; rc=$?
++cat "$OUT/manager-state.txt"
++[ $rc -eq 0 ] || { echo "ABORT: manager prepare failed (rc=$rc); see manager-state.txt"; exit 3; }
+ ok=0; for i in $(seq 1 30); do
+     python3 -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8011/healthcheck", timeout=2).status==200 else 1)' 2>/dev/null && { ok=1; break; }; sleep 1; done
+ check "manager healthy (127.0.0.1:8011/healthcheck)" test $ok -eq 1
+@@ -134,11 +149,20 @@
+     -e SANDBOX_MANAGER_URI=http://sandbox-manager:8011/api/v1/sandbox-manager \
+     -e ANALYSIS_DURATION=30 -e POST_ANALYSIS_WAIT=30 -e ALLOW_VM_INTERNET=false \
+     -v "$H/sentinel/poller.py:/app/poller.py:ro" -v "$H/probe_matrix.py:/harness/probe_matrix.py:ro" \
++    -v "$H/pcapng_stats.py:/harness/pcapng_stats.py:ro" \
+     -v "$D/sentinel:/sentinel-out" -v "$D/probe:/harness-out" \
+     -v "$OUT/hostcap:/hostcap:ro" -v "$OUT/ctl:/ctl:ro" \
+     "$IMAGE") || { echo "ABORT: docker run failed"; exit 3; }
+ CREATED_IDS+=("$ID"); echo "worker test container: $ID"
+ E() { docker exec "$ID" "$@"; }
++# Network state of the worker netns: full record, plus short forms that are compared before/after.
++netns_state() {
++    { for c in "ip -d link show" "ip addr show" "ip route show table all" "ip -6 route show table all" \
++               "ip neigh show" "ip rule show"; do echo "## $c"; E $c; echo; done; } > "$D/netns-$1.txt" 2>&1
++    E ip -o link show | awk -F': ' '{print $2}' | cut -d@ -f1 | sort | tr '\n' ' ' > "$D/netns-$1-ifnames.txt"
++    E ip -br addr show > "$D/netns-$1-addr-br.txt"
++    E ip route show > "$D/netns-$1-route-main.txt"
++}
+ ok=0; for i in $(seq 1 30); do
+     E python3 -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://127.0.0.1:8011/healthcheck", timeout=2).status==200 else 1)' 2>/dev/null && { ok=1; break; }; sleep 1; done
+ check "worker server ready" test $ok -eq 1
+@@ -153,6 +177,10 @@
+ E sh -c "cd /app && sha256sum $FILES" > "$D/sha256-in-container.txt"
+ ( cd "$REPO/sandbox-worker" && sha256sum $FILES ) > "$D/sha256-repo.txt"
+ check "code and guest images in container equal working tree" diff -q "$D/sha256-in-container.txt" "$D/sha256-repo.txt"
++netns_state before
++echo "worker netns interfaces: $(cat "$D/netns-before-ifnames.txt")"; cat "$D/netns-before-addr-br.txt" "$D/netns-before-route-main.txt"
++check "worker netns has exactly lo, eth0, tap0 (eth0 is the only way out besides tap0)" test "$(cat "$D/netns-before-ifnames.txt")" = "eth0 lo tap0 " \
++    || { echo "ABORT: the veth capture would not cover every way out of the worker netns"; exit 3; }
+ 
+ # ------------------------------------------------------------------ 4. control container
+ log "4. control container (sandboxnet + dbnet)"
+@@ -174,12 +202,12 @@
+ # tcpdump writes pcap to stdout and the root shell opens the file in a root-owned mktemp dir
+ # under /tmp; files are copied back after stop. The text-mode leak alert keeps `-Z root -l`.
+ CAPD=$(mktemp -d /tmp/ct01-06b3b-cap.XXXXXX); chmod 700 "$CAPD"; echo "capture dir: $CAPD"
+-tcpdump -U -n -i "$VETH" -w - > "$CAPD/veth.pcap" 2>"$OUT/hostcap/veth.err" & TCPDUMP_PIDS+=($!)
+-tcpdump -U -n -i "$BR" -w - > "$CAPD/bridge.pcap" 2>"$OUT/hostcap/bridge.err" & TCPDUMP_PIDS+=($!)
++tcpdump -U -n -i "$VETH" -w - > "$CAPD/veth.pcap" 2>"$OUT/hostcap/veth.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(veth)
++tcpdump -U -n -i "$BR" -w - > "$CAPD/bridge.pcap" 2>"$OUT/hostcap/bridge.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(bridge)
+ tcpdump -U -n -i ens33 -w - \
+-    "ether host $GUEST_MAC or net 10.200.0.0/30 or host 1.1.1.1 or host $LAN_DNS" > "$CAPD/ens33.pcap" 2>"$OUT/hostcap/ens33.err" & TCPDUMP_PIDS+=($!)
++    "ether host $GUEST_MAC or net 10.200.0.0/30 or host 1.1.1.1 or host $LAN_DNS" > "$CAPD/ens33.pcap" 2>"$OUT/hostcap/ens33.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(ens33)
+ : > "$OUT/hostcap/alert.txt"; chmod 644 "$OUT/hostcap/alert.txt"
+-tcpdump -Z root -l -n -i any "net 10.200.0.0/30" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert.err" & TCPDUMP_PIDS+=($!)
++tcpdump -Z root -l -n -i any "net 10.200.0.0/30" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert)
+ sleep 3
+ cap_ok=1
+ for p in "${TCPDUMP_PIDS[@]}"; do check "host tcpdump pid $p running" kill -0 "$p" || cap_ok=0; done
+@@ -202,6 +230,17 @@
+     cat "$D"
+     echo "ABORT: host-side capture not running; no guest is booted without it"; exit 3
+ fi
++# Watch the four captures for the whole test (1 s). The marker is visible to probe_matrix.py as
++# /hostcap/capture-dead.txt; it stops the probes when the marker appears.
++DEAD="$OUT/hostcap/capture-dead.txt"
++W=(); for i in "${!TCPDUMP_PIDS[@]}"; do W+=("${TCPDUMP_NAMES[$i]}:${TCPDUMP_PIDS[$i]}"); done
++HB="$OUT/hostcap/capture-watch.heartbeat"   # /hostcap/capture-watch.heartbeat in the container
++start_capture_watch "$DEAD" "$HB" 1 "${W[@]}"
++for i in $(seq 1 30); do [ -s "$HB" ] && break; sleep 0.1; done
++watch_ok() { alive "$WATCH_PID" && heartbeat_fresh "$HB" 5; }
++check "capture watcher running with a fresh heartbeat" watch_ok \
++    || { echo "ABORT: capture watcher not running; no guest is booted without it"; exit 3; }
++echo "capture watcher pid $WATCH_PID on ${W[*]}"
+ 
+ # ------------------------------------------------------------------ 6. guests, one at a time
+ TARGETS=$(printf '{"worker_ip":"%s","mongo_ip":"%s","manager_ip":"%s","ssh_ips":["%s","%s","%s"],"lan_dns":"%s"}' \
+@@ -211,12 +250,17 @@
+ for ARCH in ARM MIPS; do
+     log "6. guest $ARCH"
+     check "$ARCH: no QEMU running before start (sequential)" bash -c "! pgrep qemu-system >/dev/null"
++    check "$ARCH: all host captures alive before start" test ! -s "$DEAD" || break
++    check "$ARCH: capture watcher alive with a fresh heartbeat before start" watch_ok || break
+     timeout 1700 docker exec -e CT01_TARGETS="$TARGETS" "$ID" sh -c "cd /app && python3 /harness/probe_matrix.py $ARCH /harness-out"
+     rc=$?
+     echo "probe_matrix $ARCH exit=$rc"
+     if [ $rc -eq 99 ] || grep -q . "$OUT/hostcap/alert.txt"; then
+         LEAK=1; fail "$ARCH: PROBE PACKET SEEN ON HOST — all tests stopped"; break
+     fi
++    if [ $rc -eq 98 ] || [ -s "$DEAD" ] || ! watch_ok; then
++        fail "$ARCH: capture or watcher lost during the test (probe_matrix rc=$rc; $(cat "$DEAD" 2>/dev/null)) — probes stopped"; break
++    fi
+     check "$ARCH: probe_matrix exit 0 (all checks and probes passed)" test $rc -eq 0
+     E ps -eo pid,args > "$D/ps-after-$ARCH.txt"
+     check "$ARCH: no qemu-system/tshark left in container" bash -c "! grep -qE 'qemu-system|tshark' '$D/ps-after-$ARCH.txt'"
+@@ -225,8 +269,24 @@
+ done
+ 
+ # ------------------------------------------------------------------ 7. stop captures, analyse host side
++netns_state after
++check "worker netns interfaces unchanged after the guests" diff -q "$D/netns-before-ifnames.txt" "$D/netns-after-ifnames.txt"
++check "worker netns addresses unchanged after the guests" diff -u "$D/netns-before-addr-br.txt" "$D/netns-after-addr-br.txt"
++check "worker netns main routes unchanged after the guests" diff -u "$D/netns-before-route-main.txt" "$D/netns-after-route-main.txt"
++diff -u "$D/netns-before.txt" "$D/netns-after.txt" > "$D/netns-diff.txt" && echo "worker netns full record: unchanged" \
++    || echo "worker netns full record: differences in container/netns-diff.txt (reported, e.g. neighbor states)"
++
+ log "7. host capture analysis"
++check "capture watcher still alive with a fresh heartbeat at the end" watch_ok
++stop_capture_watch
++check "no host capture exited during the test (watcher marker empty)" test ! -s "$DEAD"
+ stop_tcpdumps
++cat "$OUT/hostcap/tcpdump-exit.txt"
++for f in veth bridge ens33 alert; do
++    check "tcpdump $f: exit 0 on stop" grep -qx "$f 0" "$OUT/hostcap/tcpdump-exit.txt"
++    check "tcpdump $f: ended normally (statistics printed)" grep -q ' packets captured$' "$OUT/hostcap/$f.err"
++    check "tcpdump $f: 0 packets dropped by kernel" grep -qx '0 packets dropped by kernel' "$OUT/hostcap/$f.err"
++done
+ # tcpdump prints a bare newline on SIGINT: only non-empty lines are packets
+ check "leak alert: no 10.200.0.0/30 packet line on any host interface" bash -c "! grep -q . '$OUT/hostcap/alert.txt'"
+ grep -E 'packets (captured|received by filter)' "$OUT/hostcap/alert.err" | tee -a "$OUT/hostcap/summary.txt"
+@@ -244,7 +304,17 @@
+     echo "$f: probe-signature packets=$n (tcpdump rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
+     check "$f.pcap readable (tcpdump exit 0)" test $rc -eq 0
+     check "$f.pcap: 0 packets with guest MAC / 10.200.0.0/30" test "$n" = 0
++    bash "$H/sigscan.sh" "$CAPD/$f.pcap" > "$OUT/hostcap/sigscan-$f.txt" 2>&1; rc=$?
++    echo "$f sigscan (rc=$rc): $(tr '\n' ' ' < "$OUT/hostcap/sigscan-$f.txt")" | tee -a "$OUT/hostcap/summary.txt"
++    check "$f.pcap: sigscan read OK (exit 0)" test $rc -eq 0
++    for k in guest_l2l3 probe_sport probe_qname probe_url; do
++        check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-$f.txt"
++    done
+ done
++# Positive on real data: the worker's control DNS queries (ct01-06b3b-ctl-<arch>) cross ens33, so the
++# payload scan must find them; 0 here means the scan is blind and every 0 above proves nothing.
++check "ens33.pcap: payload scan finds the control DNS queries (control_qname > 0)" \
++    bash -c "grep -qE '^control_qname=[1-9]' '$OUT/hostcap/sigscan-ens33.txt'"
+ n=$(count "$CAPD/veth.pcap" "src host $WORKER_IP and (dst host 1.1.1.1 or dst host $LAN_DNS or dst port 22 or dst host $MANAGER_IP)"); rc=$?
+ echo "veth: control packets from worker=$n (rc=$rc)" | tee -a "$OUT/hostcap/summary.txt"
+ check "veth capture live: worker control packets seen" bash -c "[ $rc -eq 0 ] && [ '$n' != ERR ] && [ '$n' -gt 0 ]"
+@@ -268,10 +338,9 @@
+ for id in "${CREATED_IDS[@]}"; do docker stop -t 10 "$id" >/dev/null; docker rm "$id" >/dev/null; done
+ left=0; for id in "${CREATED_IDS[@]}"; do docker inspect "$id" >/dev/null 2>&1 && left=1; done
+ check "all containers created by this run removed" test $left -eq 0
+-"${COMPOSE[@]}" stop sandbox-manager 2>&1 | tail -2
+-MANAGER_STATE_AFTER=$(docker inspect -f '{{.State.Status}}' "$MANAGER")
+-echo "manager state after: $MANAGER_STATE_AFTER (before: $MANAGER_STATE_BEFORE)" | tee -a "$OUT/manager-state.txt"
+-check "manager back to its previous state ($MANAGER_STATE_BEFORE)" test "$MANAGER_STATE_AFTER" = "$MANAGER_STATE_BEFORE"
++manager_restore > "$OUT/manager-restore.txt" 2>&1; rc=$?
++cat "$OUT/manager-restore.txt"; cat "$OUT/manager-restore.txt" >> "$OUT/manager-state.txt"
++check "manager back to its initial state ($MANAGER_STATE_BEFORE; same container; not restarted if it was running)" test $rc -eq 0
+ check "no qemu-system on host" bash -c "! pgrep qemu-system >/dev/null"
+ check "no capture process left on host" bash -c "! pgrep 'tcpdump|tshark|dumpcap' >/dev/null"
+ sleep 2; host_state after
+--- 06b3b/probe_matrix.py
++++ 06b3cr/probe_matrix.py
+@@ -12,6 +12,12 @@
+ (retransmissions and background traffic included). After each probe the host-side leak
+ alert file (/hostcap/alert.txt, tcpdump on all host interfaces for 10.200.0.0/30) must be
+ empty; otherwise every test stops immediately (exit 99).
++
++06B-3C/3CR: before boot and before/after every probe the tap0 tshark must still run, the host
++capture watcher marker (/hostcap/capture-dead.txt) must be empty and its heartbeat
++(/hostcap/capture-watch.heartbeat) fresh; otherwise the probes stop (exit 98). tshark must exit 0,
++and the drop statistics are taken from the pcapng interface statistics block (pcapng_stats.py):
++missing statistics are a failed check, not "0 dropped".
+ """
+ import ipaddress
+ import json
+@@ -27,6 +33,8 @@
+ import time
+ import http.client
+ import http.server
++
++import pcapng_stats   # /harness/pcapng_stats.py, next to this script (06B-3CR)
+ from zipfile import ZipFile
+ 
+ sys.path.insert(0, "/app")
+@@ -45,6 +53,9 @@
+ WORK = f"/tmp/g-{ARCH}"
+ PCAP = os.path.join(OUT, "tap0.pcapng")
+ ALERT = "/hostcap/alert.txt"
++CAPTURE_DEAD = "/hostcap/capture-dead.txt"   # written by the host capture watcher (06B-3C)
++HEARTBEAT = "/hostcap/capture-watch.heartbeat"   # epoch time, refreshed every 1 s by the watcher (06B-3CR)
++HEARTBEAT_MAX_AGE = 5.0
+ CTL = "/ctl/ctl.jsonl"
+ LISTENER_PORT = 18080
+ DEADLINE_S = 1500
+@@ -63,6 +74,35 @@
+     pass
+ 
+ 
++class CaptureLost(Exception):
++    pass
++
++
++def captures_alive(tshark, where):
++    """06B-3C/3CR: stop the probes (CaptureLost) unless the tap0 tshark runs, the host capture
++    marker is absent or empty, and the host watcher heartbeat exists and is fresh. A dead watcher
++    stops the probes even while every capture is still running."""
++    if tshark is None or tshark.poll() is not None:
++        raise CaptureLost(f"{where}: tap0 tshark exited rc={tshark and tshark.returncode}")
++    try:
++        dead = open(CAPTURE_DEAD).read().strip()
++    except FileNotFoundError:
++        dead = ""
++    except OSError as e:
++        raise CaptureLost(f"{where}: host capture marker unreadable: {e}")
++    if dead:
++        raise CaptureLost(f"{where}: host capture lost: {dead}")
++    try:
++        hb = float(open(HEARTBEAT).read().strip())
++    except FileNotFoundError:
++        raise CaptureLost(f"{where}: host watcher heartbeat missing (watcher not running)")
++    except (OSError, ValueError) as e:
++        raise CaptureLost(f"{where}: host watcher heartbeat unreadable: {e}")
++    age = time.time() - hb
++    if not -1.0 <= age <= HEARTBEAT_MAX_AGE:
++        raise CaptureLost(f"{where}: host watcher heartbeat is {age:.1f} s old (limit {HEARTBEAT_MAX_AGE} s)")
++
++
+ def say(msg):
+     line = f"{time.strftime('%H:%M:%S')} {msg}"
+     print(line, flush=True)
+@@ -329,6 +369,7 @@
+         verify_isolation(f"06B-3B {ARCH} harness pre-boot check (not V1)")
+         record("full isolation verify right before QEMU spawn (harness pre-boot, not V1)", True)
+ 
++        record("info: tshark version", True, version=run_checked(["tshark", "--version"]).splitlines()[0])
+         tshark = subprocess.Popen(["tshark", "-i", C.GUEST_IF, "-w", PCAP, "-q"], stdout=subprocess.DEVNULL,
+                                   stderr=open(os.path.join(OUT, "tshark.stderr"), "w"))
+         for _ in range(50):
+@@ -337,6 +378,7 @@
+             time.sleep(0.1)
+         record("tshark capturing on tap0", tshark.poll() is None and os.path.exists(PCAP))
+ 
++        captures_alive(tshark, "before boot")
+         an = A.Analysis(T, WORK, C.GUEST_IP, C.WORKER_GUEST_IP, WORK + cfg.image_kernel_path,
+                         WORK + cfg.image_rootfs_path, {"worker_ip": "unused"})
+         cmd = cfg.qemu_cmd_template.format(kernel=an.kernel_path, rootfs=an.rootfs_path, mac=C.GUEST_MAC)
+@@ -404,6 +446,7 @@
+             lport = 41000 + n
+             qname = f"ct01-06b3b-probe-{ARCH.lower()}-{n}.example"
+             say(f"--- probe {pid}: {proto} {ip}:{port} (expected block point: {klass})")
++            captures_alive(tshark, f"before probe {pid}")
+             cb = run_ctl(local_ctl) if local_ctl else None
+             c0, t0 = counters(), time.time()
+             if proto == "tcp":
+@@ -432,6 +475,10 @@
+             if alerts:
+                 record("NO probe packet seen on host interfaces (leak monitor)", False, probe=pid, alerts=alerts[:5])
+                 raise LeakDetected(f"probe {pid}: {len(alerts)} packet(s) of 10.200.0.0/30 seen on host interfaces")
++            captures_alive(tshark, f"after probe {pid}")
++
++        record("all planned probes executed with captures alive", len(probes) == len(plan),
++               planned=len(plan), executed=len(probes))
+ 
+         service_link("after probes")
+         current_task.clear()
+@@ -440,6 +487,10 @@
+     except LeakDetected as e:
+         status = f"LEAK: {e}"
+         return 99
++    except CaptureLost as e:
++        status = f"CAPTURE LOST: {e}"
++        record("captures alive for the whole test (probes stopped)", False, error=str(e), executed=len(probes))
++        return 98
+     except Exception as e:
+         status = f"ERROR: {type(e).__name__}: {e}"
+         record("harness completed without error", False, error=status)
+@@ -460,6 +511,19 @@
+                 tshark.kill()
+                 tshark.wait(timeout=5)
+             record("tap0 capture stopped cleanly", tshark.returncode == 0, returncode=tshark.returncode)
++            # 06B-3CR: tshark prints no drop line when nothing was dropped, so stderr cannot prove
++            # "0 dropped". The pcapng interface statistics block written by dumpcap is used instead;
++            # missing statistics are UNVERIFIED (a failed check), never "0 dropped".
++            err = open(os.path.join(OUT, "tshark.stderr")).read()
++            try:
++                st = pcapng_stats.read_stats(PCAP)
++                verdict, reason = pcapng_stats.drop_verdict(st)
++            except Exception as e:   # PcapngError, OSError, or a bug: never PASS, never crash finally
++                st, verdict, reason = None, "FAIL", f"pcapng statistics unreadable: {type(e).__name__}: {e}"
++            record("tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
++                   verdict == "PASS", verdict={"PASS": "ĐẠT", "FAIL": "FAIL",
++                                               "UNVERIFIED": "CHƯA KIỂM CHỨNG"}[verdict],
++                   reason=reason, stats=st, tshark_stderr_tail=err.strip()[-200:])
+         if listener is not None:
+             listener.stop()
+             gone = not run_ctl(lambda: ctl_http(C.WORKER_GUEST_IP, LISTENER_PORT, "/"))["ok"]
+@@ -488,6 +552,9 @@
+         record("tap0 pcap readable by tshark (exit 0)", False, error=str(e))
+         return
+     record("tap0 pcap readable by tshark (exit 0)", True, frames=len(rows))
++    if not rows:
++        record("tap0 pcap is not empty", False)
++        return
+     time.sleep(4)   # make sure the control log has entries after the last probe window
+     table = []
+     for p in probes:
+--- 06b3b/independent_check.sh
++++ 06b3cr/independent_check.sh
+@@ -6,8 +6,10 @@
+ #
+ # 1. tap0 pcap (per arch): guest->destination packets per probe, keyed by the probe's fixed source
+ #    port 41000+n; replies to the guest; the guest DNS probe qname.
+-# 2. host pcaps (veth, bridge, ens33): guest MAC / 10.200.0.0/30 / ARP for 10.200.0.2, probe source
+-#    ports 41000-41020, the guest probe qname and the probe URL path. All must be 0.
++# 2. sigscan.sh on the tap0 pcaps (probe signatures expected) and on the host pcaps (veth, bridge,
++#    ens33: guest MAC / 10.200.0.0/30 / ARP, probe source ports, probe qname and probe URL must be 0;
++#    the control qname proves the payload scan sees real traffic). 06B-3C: the 06B-3B URL regex
++#    /ct01-06b3b-[0-9] never matched a probe name; the scan now lives in sigscan.sh.
+ # 3. ctl.jsonl: failures and longest gap between successful controls per target.
+ # Every tcpdump read is exit-code checked; a read error aborts instead of counting as 0.
+ set -uo pipefail
+@@ -45,16 +47,12 @@
+     echo "guest probe qname lines: $(printf '%s\n' "$o" | grep -c "ct01-06b3b-probe-")"
+ done
+ 
+-echo "== 2. host pcaps"
+-for f in veth bridge ens33; do
+-    P=$R/hostcap/$f.pcap
+-    o=$(rd "$P" -A "") || exit 2
+-    echo "$f: frames=$(cnt "$P" "")" \
+-         "mac/net/arp=$(cnt "$P" "ether host 52:54:00:c7:00:02 or net 10.200.0.0/30 or arp host 10.200.0.2")" \
+-         "probe-src-ports=$(cnt "$P" "tcp portrange 41000-41020 or udp portrange 41000-41020")" \
+-         "probe-qname=$(printf '%s\n' "$o" | grep -c 'ct01-06b3b-probe-')" \
+-         "probe-url=$(printf '%s\n' "$o" | grep -cE '/ct01-06b3b-[0-9]')" \
+-         "control-qname=$(printf '%s\n' "$o" | grep -c 'ct01-06b3b-ctl-')"
++echo "== 2. signature scan (sigscan.sh) of tap0 and host pcaps"
++# tap0 must show the guest's own probe signatures (positive on real data); host pcaps must show none.
++S=$(dirname "$0")/sigscan.sh
++for P in "$R"/container/probe/*/tap0.pcapng "$R"/hostcap/veth.pcap "$R"/hostcap/bridge.pcap "$R"/hostcap/ens33.pcap; do
++    o=$(bash "$S" "$P") || { echo "READ ERROR: $P" >&2; exit 2; }
++    echo "${P#$R/}: $(echo $o)"
+ done
+ 
+ echo "== 3. control log"
+--- /dev/null
++++ 06b3cr/harness_lib.sh
+@@ -0,0 +1,138 @@
++# 06B-3C / 06B-3CR — helpers sourced by run-06b3b.sh and exercised offline by selftest.sh.
++
++# ---------------------------------------------------------------- capture watcher
++# alive <pid>: process exists and is not a zombie (an exited child that was not reaped yet).
++alive() {
++    local s
++    s=$(ps -o stat= -p "$1" 2>/dev/null) || return 1
++    [ -n "$s" ] && [ "${s:0:1}" != Z ]
++}
++
++# start_capture_watch <marker> <heartbeat> <interval-s> <name:pid>...
++# Background loop. Every <interval> it checks the watched processes:
++#   all alive -> writes the current epoch time to <heartbeat> (temp file + rename, never partial);
++#   one gone  -> appends it to <marker> and ends (the heartbeat then goes stale as well).
++# probe_matrix.py stops the probes (CaptureLost) when the marker is non-empty or unreadable, or the
++# heartbeat is missing, unparsable or older than its limit. A dead watcher therefore stops the probes
++# even while every capture still runs. run-06b3b.sh checks the same after each guest and at the end.
++start_capture_watch() {
++    local marker=$1 hb=$2 interval=$3
++    shift 3
++    (
++        trap - EXIT INT TERM
++        while :; do
++            for e in "$@"; do
++                if ! alive "${e##*:}"; then
++                    echo "$(date -u +%H:%M:%S) capture ${e%%:*} pid ${e##*:} exited during the test" >> "$marker"
++                    exit 0
++                fi
++            done
++            date +%s.%N > "$hb.tmp" && mv -f "$hb.tmp" "$hb"
++            sleep "$interval"
++        done
++    ) &
++    WATCH_PID=$!
++}
++
++# Stop the watcher BEFORE stopping the captures on purpose, so a normal stop is not reported.
++stop_capture_watch() {
++    if [ -n "${WATCH_PID:-}" ]; then
++        kill "$WATCH_PID" 2>/dev/null
++        wait "$WATCH_PID" 2>/dev/null
++    fi
++    return 0
++}
++
++# heartbeat_fresh <heartbeat> <max-age-s>: 0 if the file holds an epoch time at most <max-age> old.
++heartbeat_fresh() {
++    local hb now
++    hb=$(cat "$1" 2>/dev/null) || return 1
++    now=$(date +%s.%N)
++    awk -v hb="$hb" -v now="$now" -v max="$2" \
++        'BEGIN { if (hb !~ /^[0-9]+(\.[0-9]+)?$/) exit 1; age = now - hb; exit !(age >= -1 && age <= max) }'
++}
++
++# ---------------------------------------------------------------- manager
++# Needs MANAGER (container name) and COMPOSE (array).
++#  * running  -> used as is; never started, stopped or restarted by this run.
++#  * exited   -> `compose up --no-deps --no-build --no-recreate`; its exit code is kept: on failure
++#                prepare returns non-zero and the harness aborts. MANAGER_STARTED=1 only after the
++#                same container (same id) is confirmed running.
++#  * created  -> refused before any change: start + stop would leave it "exited", not "created".
++#  * other    -> refused.
++# restore stops only the container this run used (id checked right before `docker stop <id>`);
++# a replacement container is never stopped and is reported as a failure.
++MANAGER_STARTED=0
++MANAGER_UP_ATTEMPTED=0
++MANAGER_RESTORED=0
++
++manager_inspect() { docker inspect -f "$1" "$MANAGER" 2>/dev/null; }
++
++manager_prepare() {
++    MANAGER_STATE_BEFORE=$(manager_inspect '{{.State.Status}}') || { echo "manager container not found"; return 2; }
++    MANAGER_ID_BEFORE=$(manager_inspect '{{.Id}}') || return 2
++    MANAGER_STARTED_AT_BEFORE=$(manager_inspect '{{.State.StartedAt}}') || return 2
++    echo "manager before: state=$MANAGER_STATE_BEFORE id=${MANAGER_ID_BEFORE:0:12} startedAt=$MANAGER_STARTED_AT_BEFORE"
++    case "$MANAGER_STATE_BEFORE" in
++    running)
++        echo "manager already running: used as is, will be left running"
++        return 0
++        ;;
++    exited) ;;
++    created)
++        echo "manager is 'created': refused before any change (start+stop cannot restore 'created')"
++        return 2
++        ;;
++    *)
++        echo "manager in state '$MANAGER_STATE_BEFORE': refused before any change"
++        return 2
++        ;;
++    esac
++    local out rc st id
++    MANAGER_UP_ATTEMPTED=1
++    out=$("${COMPOSE[@]}" up -d --no-deps --no-build --no-recreate sandbox-manager 2>&1); rc=$?
++    printf '%s\n' "$out" | tail -3
++    if [ $rc -ne 0 ]; then
++        echo "compose up failed (rc=$rc)"
++        return 3
++    fi
++    id=$(manager_inspect '{{.Id}}'); st=$(manager_inspect '{{.State.Status}}')
++    if [ "$id" != "$MANAGER_ID_BEFORE" ]; then
++        echo "compose up replaced the manager container (${id:0:12} != ${MANAGER_ID_BEFORE:0:12})"
++        return 3
++    fi
++    if [ "$st" != running ]; then
++        echo "compose up returned 0 but the manager is '$st'"
++        return 3
++    fi
++    MANAGER_STARTED=1
++    echo "manager started by this run (same container): will be stopped again"
++}
++
++# Returns 0 only if the manager ends in its initial state, as the same container, and (if it was
++# running) was not restarted. Safe to call twice (teardown, then the EXIT trap).
++manager_restore() {
++    [ "$MANAGER_RESTORED" = 1 ] && return "${MANAGER_RESTORE_RC:-0}"
++    MANAGER_RESTORED=1
++    MANAGER_RESTORE_RC=0
++    [ -n "${MANAGER_STATE_BEFORE:-}" ] || return 0   # prepare never ran: nothing was touched
++    local st id at rc=0 src
++    id=$(manager_inspect '{{.Id}}'); st=$(manager_inspect '{{.State.Status}}')
++    if [ "$id" != "$MANAGER_ID_BEFORE" ]; then
++        echo "manager container was replaced (${id:0:12} != ${MANAGER_ID_BEFORE:0:12}): not stopped"
++        rc=1
++    elif [ "$MANAGER_STATE_BEFORE" = exited ] && [ "$st" = running ] && [ "$MANAGER_UP_ATTEMPTED" = 1 ]; then
++        # started by this run (also if compose up failed after starting it): stop exactly that id
++        docker stop -t 10 "$MANAGER_ID_BEFORE" > /dev/null 2>&1; src=$?
++        [ $src -eq 0 ] || { echo "docker stop failed (rc=$src)"; rc=1; }
++    fi
++    st=$(manager_inspect '{{.State.Status}}'); id=$(manager_inspect '{{.Id}}'); at=$(manager_inspect '{{.State.StartedAt}}')
++    echo "manager after: state=$st id=${id:0:12} startedAt=$at (before: $MANAGER_STATE_BEFORE ${MANAGER_ID_BEFORE:0:12} $MANAGER_STARTED_AT_BEFORE; started by this run: $MANAGER_STARTED)"
++    [ "$st" = "$MANAGER_STATE_BEFORE" ] || { echo "manager state differs"; rc=1; }
++    [ "$id" = "$MANAGER_ID_BEFORE" ] || { echo "manager container differs"; rc=1; }
++    if [ "$MANAGER_STATE_BEFORE" = running ] && [ "$at" != "$MANAGER_STARTED_AT_BEFORE" ]; then
++        echo "manager was restarted during the test"; rc=1
++    fi
++    MANAGER_RESTORE_RC=$rc
++    return $rc
++}
+--- /dev/null
++++ 06b3cr/sigscan.sh
+@@ -0,0 +1,47 @@
++#!/bin/bash
++# 06B-3C — leak-signature scanner for one pcap/pcapng file. Read-only, needs no root.
++#
++#   bash sigscan.sh <pcap>        prints key=value lines, exit 0
++#                                 exit 2 on any read problem (tcpdump error, truncated/empty file)
++#
++# Counts are PACKETS (not output lines):
++#   frames         all frames
++#   guest_l2l3     guest MAC, 10.200.0.0/30, or ARP for 10.200.0.2           (BPF)
++#   probe_sport    TCP/UDP port 41000-41020 (probe source ports)              (BPF)
++#   probe_qname    DNS name ct01-06b3b-probe-<arch>-<n>                       (payload)
++#   probe_url      URL path /ct01-06b3b-<probe name> of probe_matrix.py      (payload)
++#   control_qname  DNS name ct01-06b3b-ctl-<arch> (controls; expected > 0 on ens33, proves the
++#                  payload scan sees real traffic)
++# 06B-3B used /ct01-06b3b-[0-9], which never matched: probe names are words such as internet-tcp.
++set -uo pipefail
++F=${1:?pcap}
++GUEST_MAC=52:54:00:c7:00:02
++# Probe names exactly as in probe_matrix.py's plan; ssh-host-<IPv4> carries dots.
++NAMES='internet-tcp|lan-dns-udp|lan-dns-tcp|ssh-host-[0-9]{1,3}(\.[0-9]{1,3}){3}|manager|mongodb|worker-eth0|tap0-other-port-listener'
++URL_RE="/ct01-06b3b-($NAMES)([^A-Za-z0-9.-]|\$)"
++QNAME_RE='ct01-06b3b-probe-(arm|mips)-[0-9]+'
++CTL_RE='ct01-06b3b-ctl-(arm|mips)'
++
++ERR=$(mktemp); trap 'rm -f "$ERR"' EXIT
++rd() {  # filter -> tcpdump output; exit 2 on error or any stderr other than the banner
++    local out rc
++    out=$(tcpdump -n -tt "$@" -r "$F" 2>"$ERR"); rc=$?
++    if [ $rc -ne 0 ] || grep -qv '^reading from file ' "$ERR"; then
++        echo "READ ERROR rc=$rc file=$F: $(tr '\n' ' ' < "$ERR")" >&2; exit 2
++    fi
++    printf '%s' "$out"
++}
++pkts() { local o; o=$(rd "$@") || exit 2; [ -z "$o" ] && echo 0 || printf '%s\n' "$o" | grep -c .; }
++# -A output: a packet starts with an epoch timestamp line. Join each packet onto one line
++# (tab-separated) so that grep -c counts packets, not lines.
++per_packet() { awk '/^[0-9]+\.[0-9][0-9][0-9][0-9][0-9][0-9] / { if (p != "") print p; p = $0; next } { p = p "\t" $0 } END { if (p != "") print p }'; }
++
++[ -s "$F" ] || { echo "READ ERROR: $F is empty or missing" >&2; exit 2; }
++v=$(pkts) || exit 2; echo "frames=$v"
++v=$(pkts "ether host $GUEST_MAC or net 10.200.0.0/30 or arp host 10.200.0.2") || exit 2; echo "guest_l2l3=$v"
++v=$(pkts "tcp portrange 41000-41020 or udp portrange 41000-41020") || exit 2; echo "probe_sport=$v"
++A=$(rd -A) || exit 2
++P=$(printf '%s\n' "$A" | per_packet)
++echo "probe_qname=$(printf '%s\n' "$P" | grep -cE "$QNAME_RE")"
++echo "probe_url=$(printf '%s\n' "$P" | grep -cE "$URL_RE")"
++echo "control_qname=$(printf '%s\n' "$P" | grep -cE "$CTL_RE")"
+--- /dev/null
++++ 06b3cr/make_fixtures.py
+@@ -0,0 +1,165 @@
++"""06B-3C — build pcap fixtures for the signature scanner self-test (offline, no packet is sent).
++
++  python3 make_fixtures.py <dir>
++
++positive.pcap   one frame per leak signature; payload signatures are carried by NATed addresses
++                (no guest MAC / 10.200.0.0/30), so they prove payload matching works on its own
++negative.pcap   look-alikes that must NOT match (control qname, near-miss URLs, port 41021, ...)
++truncated.pcap  positive.pcap cut inside the last frame -> reader must report an error
++empty.pcap      0 bytes (what a crashed tcpdump left in 06B-3B run 1) -> reader must report an error
++ng-*.pcapng     pcapng drop-statistics cases for pcapng_stats.py (drop=0, drop>0, osdrop>0,
++                ifrecv mismatch, no statistics, statistics without ifdrop, truncated, not pcapng)
++expected.json   exact counts sigscan.sh must print for positive.pcap and negative.pcap, and the
++                expected pcapng_stats verdict of every ng-*.pcapng
++"""
++import json
++import os
++import struct
++import sys
++
++GUEST_MAC = bytes.fromhex("525400c70002")
++HOST_MAC = bytes.fromhex("02420000aa01")
++OTHER_MAC = bytes.fromhex("02420000bb02")
++
++
++def csum(b):
++    if len(b) % 2:
++        b += b"\0"
++    s = sum(struct.unpack(f"!{len(b) // 2}H", b))
++    while s >> 16:
++        s = (s & 0xFFFF) + (s >> 16)
++    return ~s & 0xFFFF
++
++
++def ip4(a):
++    return bytes(int(x) for x in a.split("."))
++
++
++def ipv4(src, dst, proto, payload):
++    h = struct.pack("!BBHHHBBH4s4s", 0x45, 0, 20 + len(payload), 1, 0x4000, 64, proto, 0, ip4(src), ip4(dst))
++    return h[:10] + struct.pack("!H", csum(h)) + h[12:] + payload
++
++
++def l4(src, dst, proto, hdr, payload):
++    pseudo = ip4(src) + ip4(dst) + struct.pack("!BBH", 0, proto, len(hdr) + len(payload))
++    c = csum(pseudo + hdr + payload)
++    off = 16 if proto == 6 else 6
++    return hdr[:off] + struct.pack("!H", c) + hdr[off + 2:] + payload
++
++
++def tcp(src, sport, dst, dport, payload=b"", flags=0x18):
++    hdr = struct.pack("!HHIIBBHHH", sport, dport, 1, 1, 5 << 4, flags, 64240, 0, 0)
++    return ipv4(src, dst, 6, l4(src, dst, 6, hdr, payload))
++
++
++def udp(src, sport, dst, dport, payload):
++    hdr = struct.pack("!HHHH", sport, dport, 8 + len(payload), 0)
++    return ipv4(src, dst, 17, l4(src, dst, 17, hdr, payload))
++
++
++def dns_query(qname, qid=0x1234):
++    q = struct.pack("!HHHHHH", qid, 0x0100, 1, 0, 0, 0)
++    q += b"".join(bytes([len(p)]) + p.encode() for p in qname.rstrip(".").split(".")) + b"\0"
++    return q + struct.pack("!HH", 1, 1)
++
++
++def icmp_echo(src, dst):
++    body = struct.pack("!BBHHH", 8, 0, 0, 1, 1) + b"06b3c-fixture"
++    body = body[:2] + struct.pack("!H", csum(body)) + body[4:]
++    return ipv4(src, dst, 1, body)
++
++
++def eth(src_mac, ip_packet, dst_mac=OTHER_MAC, ethertype=0x0800):
++    return dst_mac + src_mac + struct.pack("!H", ethertype) + ip_packet
++
++
++def arp_request(sha, spa, tpa):
++    body = struct.pack("!HHBBH6s4s6s4s", 1, 0x0800, 6, 4, 1, sha, ip4(spa), b"\0" * 6, ip4(tpa))
++    return eth(sha, body, dst_mac=b"\xff" * 6, ethertype=0x0806)
++
++
++def write_pcap(path, frames):
++    with open(path, "wb") as f:
++        f.write(struct.pack("<IHHiIII", 0xA1B2C3D4, 2, 4, 0, 0, 65535, 1))
++        for i, fr in enumerate(frames):
++            f.write(struct.pack("<IIII", 1791300000 + i, 0, len(fr), len(fr)) + fr)
++
++
++def http_get(path):
++    return f"GET {path} HTTP/1.1\r\nHost: x\r\n\r\n".encode()
++
++
++positive = [
++    # payload signatures from NATed/worker addresses: found only by payload matching
++    eth(HOST_MAC, tcp("192.168.177.128", 50000, "1.1.1.1", 443, http_get("/ct01-06b3b-internet-tcp"))),
++    eth(HOST_MAC, tcp("192.168.60.2", 50001, "192.168.60.1", 22, http_get("/ct01-06b3b-ssh-host-192.168.60.1"))),
++    eth(HOST_MAC, udp("192.168.177.128", 50002, "192.168.177.2", 53, dns_query("ct01-06b3b-probe-mips-1.example"))),
++    # probe source port seen after a hypothetical NAT that keeps ports
++    eth(HOST_MAC, tcp("192.168.60.2", 41003, "192.168.60.1", 22, flags=0x02)),
++    # original guest MAC / address and guest ARP
++    eth(GUEST_MAC, icmp_echo("10.200.0.2", "8.8.8.8")),
++    arp_request(GUEST_MAC, "10.200.0.2", "10.200.0.1"),
++]
++negative = [
++    eth(HOST_MAC, udp("192.168.177.128", 50003, "192.168.177.2", 53, dns_query("ct01-06b3b-ctl-arm.example"))),
++    eth(HOST_MAC, tcp("192.168.60.3", 50004, "192.168.60.2", 8011, http_get("/api/v1/sandbox-worker/healthcheck"))),
++    eth(HOST_MAC, tcp("192.168.60.3", 50005, "192.168.60.2", 8011, http_get("/ct01-06b3b-ctl-arm"))),
++    eth(HOST_MAC, tcp("192.168.60.3", 50006, "192.168.60.2", 8011, http_get("/ct01-06b3b-managerx"))),
++    eth(HOST_MAC, tcp("192.168.60.3", 50007, "192.168.60.2", 8011, http_get("/ct01-06b3c-internet-tcp"))),
++    eth(HOST_MAC, tcp("192.168.177.128", 52914, "1.1.1.1", 443, flags=0x02)),
++    eth(HOST_MAC, tcp("192.168.60.2", 41021, "192.168.60.1", 22, flags=0x02)),
++    eth(HOST_MAC, icmp_echo("10.200.0.6", "8.8.8.8")),
++]
++
++# ---------------------------------------------------------------- pcapng drop-statistics fixtures
++def pcapng(frames, isb=None, e="<"):
++    """SHB + IDB (Ethernet) + one EPB per frame [+ ISB with the given 64-bit options]."""
++    def block(btype, body):
++        body += b"\0" * (-len(body) % 4)
++        n = 12 + len(body)
++        return struct.pack(e + "II", btype, n) + body + struct.pack(e + "I", n)
++
++    def opt(code, value):
++        v = value if isinstance(value, bytes) else struct.pack(e + "Q", value)
++        return struct.pack(e + "HH", code, len(v)) + v + b"\0" * (-len(v) % 4)
++    out = block(0x0A0D0D0A, struct.pack(e + "IHHq", 0x1A2B3C4D, 1, 0, -1))
++    out += block(0x00000001, struct.pack(e + "HHI", 1, 0, 262144))
++    for i, fr in enumerate(frames):
++        out += block(0x00000006, struct.pack(e + "IIIII", 0, 0, i, len(fr), len(fr)) + fr)
++    if isb is not None:
++        opts = opt(1, b"Counters provided by dumpcap") + b"".join(opt(c, v) for c, v in isb) + opt(0, b"")
++        out += block(0x00000005, struct.pack(e + "III", 0, 0, 99) + opts)
++    return out
++
++
++three = positive[:3]
++PCAPNG = {   # name: (bytes, expected verdict of pcapng_stats.drop_verdict, or "ERROR" for PcapngError)
++    "ng-drop0.pcapng": (pcapng(three, [(4, 3), (5, 0)]), "PASS"),
++    "ng-drop0-bigendian.pcapng": (pcapng(three, [(4, 3), (5, 0)], e=">"), "PASS"),
++    "ng-drop3.pcapng": (pcapng(three, [(4, 3), (5, 3)]), "FAIL"),            # ifrecv == stored: only ifdrop fails
++    "ng-drop3-recv6.pcapng": (pcapng(three, [(4, 6), (5, 3)]), "FAIL"),      # libpcap-style ifrecv incl. drops
++    "ng-osdrop2.pcapng": (pcapng(three, [(4, 3), (5, 0), (7, 2)]), "FAIL"),
++    "ng-recv-mismatch.pcapng": (pcapng(three, [(4, 5), (5, 0)]), "FAIL"),
++    "ng-no-stats.pcapng": (pcapng(three), "UNVERIFIED"),
++    "ng-isb-without-ifdrop.pcapng": (pcapng(three, [(4, 3)]), "UNVERIFIED"),
++}
++PCAPNG["ng-truncated.pcapng"] = (PCAPNG["ng-drop0.pcapng"][0][:-6], "ERROR")          # cut inside the ISB
++PCAPNG["ng-truncated-in-packet.pcapng"] = (PCAPNG["ng-no-stats.pcapng"][0][:-10], "ERROR")  # capture cut mid-packet
++PCAPNG["ng-not-pcapng.pcapng"] = (b"\xd4\xc3\xb2\xa1" + b"\0" * 40, "ERROR")
++
++out = sys.argv[1]
++os.makedirs(out, exist_ok=True)
++write_pcap(os.path.join(out, "positive.pcap"), positive)
++write_pcap(os.path.join(out, "negative.pcap"), negative)
++data = open(os.path.join(out, "positive.pcap"), "rb").read()
++open(os.path.join(out, "truncated.pcap"), "wb").write(data[:-10])
++open(os.path.join(out, "empty.pcap"), "wb").close()
++for name, (blob, _) in PCAPNG.items():
++    open(os.path.join(out, name), "wb").write(blob)
++json.dump({
++    "pcapng_verdicts": {name: verdict for name, (_, verdict) in PCAPNG.items()},
++    "positive.pcap": {"frames": 6, "guest_l2l3": 2, "probe_sport": 1, "probe_qname": 1, "probe_url": 2,
++                      "control_qname": 0},
++    "negative.pcap": {"frames": 8, "guest_l2l3": 0, "probe_sport": 0, "probe_qname": 0, "probe_url": 0,
++                      "control_qname": 2},   # control DNS query + /ct01-06b3b-ctl-arm URL
++}, open(os.path.join(out, "expected.json"), "w"), indent=1)
+--- /dev/null
++++ 06b3cr/selftest.sh
+@@ -0,0 +1,294 @@
++#!/bin/bash
++# 06B-3C / 06B-3CR — offline self-test of the harness helpers.
++# No root, no Docker, no QEMU, no network traffic. Deletes nothing (it runs as root inside run-06b3b.sh).
++#
++#   bash selftest.sh [outdir]
++#
++#  0. prerequisites (tools); a missing tool is a SELFTEST-ERROR, not a behavioural failure
++#  A. sigscan.sh against generated pcap fixtures; every real probe URL must match
++#  A2. pcapng_stats.py: drop=0, drop>0, osdrop>0, ifrecv mismatch, no statistics, statistics without
++#      ifdrop, truncated, not pcapng; plus the two real 06B-3B run 5 tap0.pcapng if present
++#  B. capture watcher (harness_lib.sh): heartbeat refreshed; marker when a capture dies; heartbeat
++#     goes stale when the watcher is killed while the captures still run; heartbeat_fresh cases
++#  B2. probe_matrix.py captures_alive (extracted with ast): tshark, marker and heartbeat cases, and a
++#      real watcher killed while captures run -> CaptureLost
++#  C. manager handling (harness_lib.sh) with a fake docker/compose, 12 scenarios
++# Lines "[FAIL] ..." are behavioural failures; "SELFTEST-ERROR: ..." means the test itself could not
++# run (missing tool, fixture build, extraction). Exit 0 only if every check passes.
++set -uo pipefail
++H=$(cd "$(dirname "$0")" && pwd)
++OUTD=${1:-$(mktemp -d)}
++mkdir -p "$OUTD"
++FAILS=0
++ok()  { echo "[PASS] $*"; }
++bad() { echo "[FAIL] $*"; FAILS=$((FAILS + 1)); }
++t()   { local m=$1; shift; if "$@"; then ok "$m"; else bad "$m"; fi; }
++infra() { echo "SELFTEST-ERROR: $*"; exit 3; }
++
++echo "== 0. prerequisites"
++for c in tcpdump python3 ps awk grep mktemp sleep date; do command -v "$c" > /dev/null || infra "missing tool: $c"; done
++echo "tcpdump: $(tcpdump --version 2>&1 | head -1); python3: $(python3 --version 2>&1)"
++
++echo "== A. signature scanner"
++python3 "$H/make_fixtures.py" "$OUTD/fx" || infra "fixture build failed"
++sha256sum "$OUTD"/fx/*.pcap "$OUTD"/fx/*.pcapng
++for f in positive.pcap negative.pcap; do
++    got=$(bash "$H/sigscan.sh" "$OUTD/fx/$f"); rc=$?
++    echo "-- $f (rc=$rc)"; echo "$got"
++    t "$f: sigscan exit 0" test $rc -eq 0
++    want=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1]))[sys.argv[2]]; print('\n'.join(f'{k}={v}' for k,v in d.items()))" \
++        "$OUTD/fx/expected.json" "$f") || infra "expected.json unreadable"
++    t "$f: counts equal expected.json" test "$got" = "$want"
++done
++for f in truncated.pcap empty.pcap; do
++    bash "$H/sigscan.sh" "$OUTD/fx/$f" > /dev/null 2> "$OUTD/fx/$f.err"; rc=$?
++    echo "-- $f: rc=$rc $(head -c 200 "$OUTD/fx/$f.err")"
++    t "$f: read error reported (exit 2), never counted as 0 packets" test $rc -eq 2
++done
++bash "$H/sigscan.sh" "$OUTD/fx/missing.pcap" > /dev/null 2>&1
++t "missing file: read error reported (exit 2)" test $? -eq 2
++names=$(python3 - "$H/probe_matrix.py" <<'EOF'
++import re, sys
++src = open(sys.argv[1]).read()
++fixed = re.findall(r'plan(?:\.append\(\(| = \[\()"([a-z0-9-]+)"', src)
++assert 'f"ssh-host-{ip}"' in src
++print("\n".join(fixed + ["ssh-host-192.168.60.1", "ssh-host-192.168.177.128", "ssh-host-172.18.0.1"]))
++EOF
++) || infra "probe names not extracted from probe_matrix.py"
++echo "probe names from probe_matrix.py: $(echo $names)"
++t "probe_matrix.py plan has 7 fixed names + 3 ssh-host" test "$(echo "$names" | wc -l)" -eq 10
++URL_RE=$(bash -c 'source <(sed -n "/^NAMES=/p;/^URL_RE=/p" "$1"); echo "$URL_RE"' _ "$H/sigscan.sh")
++[ -n "$URL_RE" ] || infra "URL_RE not found in sigscan.sh"
++miss=0
++for n in $names; do
++    printf 'GET /ct01-06b3b-%s HTTP/1.1\n' "$n" | grep -qE "$URL_RE" || { echo "no match: $n"; miss=1; }
++done
++t "every real probe URL matches the scanner regex" test $miss -eq 0
++t "06B-3B regex /ct01-06b3b-[0-9] matched none of them (the defect fixed in 06B-3C)" \
++    bash -c "! printf '%s\n' $(echo $names | sed 's|[^ ]*|/ct01-06b3b-&|g') | grep -qE '/ct01-06b3b-[0-9]'"
++
++echo "== A2. pcapng drop statistics (pcapng_stats.py)"
++python3 - "$H" "$OUTD/fx" <<'EOF'
++import json, os, sys
++sys.path.insert(0, sys.argv[1])
++try:
++    import pcapng_stats as P
++except Exception as e:
++    print(f"SELFTEST-ERROR: import pcapng_stats: {e}"); sys.exit(3)
++fx = sys.argv[2]
++want = json.load(open(os.path.join(fx, "expected.json")))["pcapng_verdicts"]
++fails = 0
++for name, verdict in want.items():
++    try:
++        got = P.drop_verdict(P.read_stats(os.path.join(fx, name)))
++    except P.PcapngError as e:
++        got = ("ERROR", str(e))
++    except Exception as e:   # anything else is a reader bug: report it against this fixture
++        got = ("EXCEPTION", f"{type(e).__name__}: {e}")
++    good = got[0] == verdict
++    fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] {name}: expected {verdict}, got {got[0]} ({got[1]})")
++real = "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3b/run5/container/probe"
++for arch, n in (("ARM", 97), ("MIPS", 125)):
++    f = f"{real}/{arch}/tap0.pcapng"
++    if not os.path.exists(f):
++        print(f"[SKIP] real 06B-3B {arch} tap0.pcapng not present"); continue
++    st = P.read_stats(f); v = P.drop_verdict(st); isb = st["isb"].get(0, {})
++    good = v[0] == "PASS" and isb.get("isb_ifrecv") == n and isb.get("isb_ifdrop") == 0 and st["epb"].get(0) == n
++    fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] real 06B-3B {arch} tap0.pcapng: {v[0]}, isb={isb}, stored={st['epb']}")
++sys.exit(1 if fails else 0)
++EOF
++rc=$?
++[ $rc -eq 3 ] && infra "pcapng_stats test could not run"
++t "pcapng_stats verdicts as expected" test $rc -eq 0
++
++echo "== B. capture watcher with heartbeat"
++source "$H/harness_lib.sh" || infra "harness_lib.sh not sourceable"
++WD=$(mktemp -d "$OUTD/watch.XXXXXX"); M=$WD/capture-dead.txt; HBF=$WD/heartbeat
++sleep 60 & P1=$!
++sleep 60 & P2=$!
++start_capture_watch "$M" "$HBF" 0.2 "p1:$P1" "p2:$P2"
++sleep 1
++t "watcher quiet while captures run" test ! -e "$M"
++t "heartbeat present and fresh" heartbeat_fresh "$HBF" 1
++h1=$(cat "$HBF"); sleep 0.6; h2=$(cat "$HBF")
++t "heartbeat refreshed ($h1 -> $h2)" test "$h1" != "$h2"
++# watcher killed while both captures still run: no marker, but the heartbeat must go stale
++kill "$WATCH_PID"; wait "$WATCH_PID" 2>/dev/null
++t "captures still alive after the watcher was killed" bash -c "kill -0 $P1 && kill -0 $P2"
++sleep 1.6
++t "heartbeat stale 1.6 s after the watcher died (limit 1 s)" bash -c "! { source '$H/harness_lib.sh'; heartbeat_fresh '$HBF' 1; }"
++# capture death: marker names it
++WD2=$(mktemp -d "$OUTD/watch.XXXXXX"); M2=$WD2/capture-dead.txt
++start_capture_watch "$M2" "$WD2/heartbeat" 0.2 "p1:$P1" "p2:$P2"
++sleep 0.5
++kill "$P2"; wait "$P2" 2>/dev/null
++for i in $(seq 1 20); do [ -s "$M2" ] && break; sleep 0.2; done
++echo "marker: $(cat "$M2" 2>/dev/null)"
++t "watcher writes marker naming the dead capture" grep -q "p2 pid $P2 exited" "$M2"
++t "watcher ends after a capture died" bash -c "sleep 0.5; ! kill -0 $WATCH_PID 2>/dev/null"
++# A real zombie: a parent (python) that never reaps its killed child. kill -0 still succeeds on a
++# zombie, so the watcher must treat it as dead. (06B-3C's test killed a child of this shell, which
++# bash reaps at once, so no zombie ever existed; found by mutation W1 in 06B-3CR.)
++python3 -c 'import os, subprocess, time
++p = subprocess.Popen(["sleep", "60"]); print(p.pid, flush=True); os.kill(p.pid, 9); time.sleep(30)' > "$WD2/zpid" &
++ZP=$!
++for i in $(seq 1 20); do [ -s "$WD2/zpid" ] && break; sleep 0.1; done; sleep 0.3
++Z=$(cat "$WD2/zpid")
++[ "$(ps -o stat= -p "$Z" 2>/dev/null | cut -c1)" = Z ] || infra "could not create a zombie for the watcher test (pid $Z)"
++t "precondition: pid $Z is a zombie and kill -0 still succeeds on it" kill -0 "$Z"
++M3=$WD2/zombie-marker.txt
++start_capture_watch "$M3" "$WD2/heartbeat-z" 0.2 "p1:$P1" "z:$Z"
++for i in $(seq 1 20); do [ -s "$M3" ] && break; sleep 0.2; done
++t "watcher treats a zombie capture as dead (marker written)" grep -q "z pid $Z exited" "$M3"
++stop_capture_watch
++kill "$ZP" "$P1"; wait "$ZP" "$P1" 2>/dev/null
++echo "$(date +%s.%N)" > "$WD/hb-now"; echo "$(( $(date +%s) - 30 )).0" > "$WD/hb-old"; echo "garbage" > "$WD/hb-bad"
++echo "$(( $(date +%s) + 60 )).0" > "$WD/hb-future"
++t "heartbeat_fresh: current -> fresh" heartbeat_fresh "$WD/hb-now" 5
++t "heartbeat_fresh: 30 s old -> stale" bash -c "! { source '$H/harness_lib.sh'; heartbeat_fresh '$WD/hb-old' 5; }"
++t "heartbeat_fresh: unparsable -> stale" bash -c "! { source '$H/harness_lib.sh'; heartbeat_fresh '$WD/hb-bad' 5; }"
++t "heartbeat_fresh: 60 s in the future -> stale" bash -c "! { source '$H/harness_lib.sh'; heartbeat_fresh '$WD/hb-future' 5; }"
++t "heartbeat_fresh: missing file -> stale" bash -c "! { source '$H/harness_lib.sh'; heartbeat_fresh '$WD/none' 5; }"
++
++echo "== B2. probe_matrix.py captures_alive (extracted with ast; sleep stands in for tshark/tcpdump)"
++WD3=$(mktemp -d "$OUTD/pm.XXXXXX")
++sleep 60 & C1=$!
++start_capture_watch "$WD3/capture-dead.txt" "$WD3/heartbeat" 0.2 "c1:$C1"
++sleep 0.5
++python3 - "$H/probe_matrix.py" "$WD3" "$WATCH_PID" <<'EOF'
++import ast, os, signal, subprocess, sys, time
++src, wd, watcher = sys.argv[1], sys.argv[2], int(sys.argv[3])
++try:
++    tree = ast.parse(open(src).read())
++    keep = [n for n in tree.body if isinstance(n, (ast.ClassDef, ast.FunctionDef))
++            and n.name in ("CaptureLost", "captures_alive")]
++    assert len(keep) == 2, "captures_alive / CaptureLost not found"
++except Exception as e:
++    print(f"SELFTEST-ERROR: extraction: {e}"); sys.exit(3)
++fails = 0
++def run(msg, marker, hb, tshark, lost, max_age=5.0):
++    global fails
++    ns = {"time": time, "CAPTURE_DEAD": marker, "HEARTBEAT": hb, "HEARTBEAT_MAX_AGE": max_age}
++    exec(compile(ast.Module(body=keep, type_ignores=[]), "probe_matrix.py", "exec"), ns)
++    try:
++        ns["captures_alive"](tshark, "t"); got, why = False, ""
++    except ns["CaptureLost"] as e:
++        got, why = True, str(e)
++    good = got == lost
++    fails += not good
++    print(f"[{'PASS' if good else 'FAIL'}] {msg}" + (f" ({why})" if why else ""))
++def w(name, text):
++    p = os.path.join(wd, name); open(p, "w").write(text); return p
++none = os.path.join(wd, "absent")
++fresh = w("hb-fresh", f"{time.time()}\n"); old = w("hb-old", f"{time.time() - 30}\n")
++bad = w("hb-bad", "xyz\n"); future = w("hb-future", f"{time.time() + 60}\n")
++dead = w("marker-dead", "12:00:00 capture ens33 pid 1 exited during the test\n"); empty = w("marker-empty", "")
++os.mkdir(os.path.join(wd, "marker-dir"))
++p = subprocess.Popen(["sleep", "60"])
++run("tshark alive, no marker, fresh heartbeat -> continue", none, fresh, p, False)
++run("empty marker file -> continue", empty, fresh, p, False)
++run("host marker present -> CaptureLost", dead, fresh, p, True)
++run("marker unreadable (a directory) -> CaptureLost", os.path.join(wd, "marker-dir"), fresh, p, True)
++run("heartbeat missing -> CaptureLost", none, none, p, True)
++run("heartbeat 30 s old -> CaptureLost", none, old, p, True)
++run("heartbeat unparsable -> CaptureLost", none, bad, p, True)
++run("heartbeat in the future -> CaptureLost", none, future, p, True)
++live = os.path.join(wd, "heartbeat")
++run("real watcher running -> continue", os.path.join(wd, "capture-dead.txt"), live, p, False, 1.0)
++os.kill(watcher, signal.SIGTERM)
++time.sleep(1.6)
++run("real watcher killed while the capture still runs -> CaptureLost", os.path.join(wd, "capture-dead.txt"), live, p, True, 1.0)
++p.kill(); p.wait()
++run("tshark exited -> CaptureLost", none, fresh, p, True)
++run("tshark never started -> CaptureLost", none, fresh, None, True)
++sys.exit(1 if fails else 0)
++EOF
++rc=$?
++wait "$WATCH_PID" 2>/dev/null; kill "$C1"; wait "$C1" 2>/dev/null
++[ $rc -eq 3 ] && infra "captures_alive test could not run"
++t "probe_matrix.py captures_alive behaves as specified" test $rc -eq 0
++
++echo "== C. manager handling (fake docker)"
++# Fake docker. State in $FAKE_STATE: status, id, started, calls; behaviour: up_mode, stop_mode.
++#   up_mode:  ok | fail (nothing changes, rc 1) | fail-started (container runs, rc 1) | recreate (new id)
++#   stop_mode: ok | fail
++docker() {
++    case "$1" in
++    inspect) case "$3" in
++        *State.Status*) cat "$FAKE_STATE/status" ;;
++        *State.StartedAt*) cat "$FAKE_STATE/started" ;;
++        *.Id*) cat "$FAKE_STATE/id" ;;
++        esac ;;
++    compose)
++        case " $* " in
++        *" up "*)
++            echo up >> "$FAKE_STATE/calls"
++            case $(cat "$FAKE_STATE/up_mode") in
++            ok) echo running > "$FAKE_STATE/status"; date +%s%N > "$FAKE_STATE/started" ;;
++            fail) echo "compose: error" >&2; return 1 ;;
++            fail-started) echo running > "$FAKE_STATE/status"; date +%s%N > "$FAKE_STATE/started"; return 1 ;;
++            recreate) echo cid-new > "$FAKE_STATE/id"; echo running > "$FAKE_STATE/status"; date +%s%N > "$FAKE_STATE/started" ;;
++            esac ;;
++        *) echo "other-compose" >> "$FAKE_STATE/calls" ;;
++        esac ;;
++    stop)
++        echo "stop ${*: -1}" >> "$FAKE_STATE/calls"
++        [ "$(cat "$FAKE_STATE/stop_mode")" = ok ] || return 1
++        [ "${*: -1}" = "$(cat "$FAKE_STATE/id")" ] || return 1
++        echo exited > "$FAKE_STATE/status" ;;
++    *) echo "other-docker $1" >> "$FAKE_STATE/calls" ;;
++    esac
++}
++COMPOSE=(docker compose -f fake.yml); MANAGER=fake-manager
++# scenario <initial status> <up_mode> <stop_mode> [tamper during the test]
++# sets PREP_RC, REST_RC, STARTED; calls/status are read from $FAKE_STATE afterwards
++scenario() {
++    FAKE_STATE=$(mktemp -d "$OUTD/fake-manager.XXXXXX")
++    MANAGER_STARTED=0; MANAGER_UP_ATTEMPTED=0; MANAGER_RESTORED=0; MANAGER_RESTORE_RC=0; unset MANAGER_STATE_BEFORE
++    echo "$1" > "$FAKE_STATE/status"; echo T0 > "$FAKE_STATE/started"; echo cid1 > "$FAKE_STATE/id"; : > "$FAKE_STATE/calls"
++    echo "$2" > "$FAKE_STATE/up_mode"; echo "$3" > "$FAKE_STATE/stop_mode"
++    manager_prepare > "$FAKE_STATE/prepare.out" 2>&1; PREP_RC=$?
++    STARTED=$MANAGER_STARTED
++    [ -n "${4:-}" ] && eval "$4"
++    manager_restore > "$FAKE_STATE/restore.out" 2>&1; REST_RC=$?
++}
++calls() { tr '\n' ' ' < "$FAKE_STATE/calls"; }
++st() { cat "$FAKE_STATE/status"; }
++
++scenario running ok ok
++t "C1 running: prepare 0, restore 0, still running" test $PREP_RC -eq 0 -a $REST_RC -eq 0 -a "$(st)" = running
++t "C1 running: no compose up and no stop (never restarted)" test -z "$(calls)"
++scenario exited ok ok
++t "C2 exited: prepare 0, marked started, restore 0, exited again" test $PREP_RC -eq 0 -a "$STARTED" = 1 -a $REST_RC -eq 0 -a "$(st)" = exited
++t "C2 exited: exactly one compose up, then docker stop of the same id" test "$(calls)" = "up stop cid1 "
++scenario running ok ok 'date +%s%N > "$FAKE_STATE/started"'
++t "C3 running, restarted during the test: restore fails, nothing stopped" test $REST_RC -ne 0 -a -z "$(calls)"
++scenario running ok ok 'echo cid2 > "$FAKE_STATE/id"'
++t "C4 running, container replaced: restore fails, replacement not stopped" test $REST_RC -ne 0 -a -z "$(calls)" -a "$(st)" = running
++scenario running ok ok 'echo exited > "$FAKE_STATE/status"'
++t "C5 running, stopped by someone else: restore fails" test $REST_RC -ne 0
++scenario exited fail ok
++t "C6 compose up fails: prepare non-zero, NOT marked started" test $PREP_RC -ne 0 -a "$STARTED" = 0
++t "C6 compose up fails: restore 0, nothing stopped, still exited" test $REST_RC -eq 0 -a "$(calls)" = "up " -a "$(st)" = exited
++scenario exited fail-started ok
++t "C7 compose up fails after starting it: prepare non-zero, NOT marked started" test $PREP_RC -ne 0 -a "$STARTED" = 0
++t "C7 ... restore stops that same container and returns 0" test $REST_RC -eq 0 -a "$(calls)" = "up stop cid1 " -a "$(st)" = exited
++scenario exited recreate ok
++t "C8 compose up replaced the container: prepare non-zero, NOT marked started" test $PREP_RC -ne 0 -a "$STARTED" = 0
++t "C8 ... restore fails and does not stop the replacement" test $REST_RC -ne 0 -a "$(calls)" = "up " -a "$(st)" = running
++scenario exited ok ok 'echo cid2 > "$FAKE_STATE/id"'
++t "C9 started by us, replaced during the test: restore fails, replacement not stopped" \
++    test $REST_RC -ne 0 -a "$(calls)" = "up " -a "$(st)" = running
++scenario exited ok fail
++t "C10 docker stop fails: restore fails" test $REST_RC -ne 0 -a "$(calls)" = "up stop cid1 "
++scenario created ok ok
++t "C11 created: refused before any change (no docker call that changes state)" test $PREP_RC -ne 0 -a -z "$(calls)" -a "$(st)" = created
++scenario paused ok ok
++t "C12 paused: refused before any change" test $PREP_RC -ne 0 -a -z "$(calls)" -a "$(st)" = paused
++unset -f docker
++
++echo
++[ $FAILS -eq 0 ] && { echo "SELFTEST: ALL PASSED"; exit 0; }
++echo "SELFTEST: $FAILS FAILED"; exit 1
+--- /dev/null
++++ 06b3cr/mutation_test.sh
+@@ -0,0 +1,145 @@
++#!/bin/bash
++# 06B-3C / 06B-3CR — does selftest.sh catch broken helpers? No root, no Docker, no network, deletes nothing.
++#
++#   bash mutation_test.sh
++#
++# 1. Baseline: an unmodified copy must pass the syntax checks and selftest.sh; otherwise stop.
++# 2. Each mutation edits a COPY (new mktemp dir) and is classified:
++#      INVALID   the mutated file fails bash -n / Python parsing (syntax), selftest not run
++#      ERROR     selftest could not run (SELFTEST-ERROR: missing tool, import, extraction)
++#      MISSED    selftest still passes
++#      DETECTED-ELSEWHERE  selftest fails, but not in the check this mutation targets
++#      DETECTED  selftest fails in the targeted check (behaviour caught)
++#    Behavioural mutations must be DETECTED. Two control mutations (a syntax error, a missing
++#    dependency) must be INVALID and ERROR: they show that such failures are never counted as
++#    "caught". Exit 0 only if every mutation got its expected class.
++set -uo pipefail
++H=$(cd "$(dirname "$0")" && pwd)
++W=$(mktemp -d "${TMPDIR:-/tmp}/ct01-06b3c-mut.XXXXXX")
++echo "work dir (left in place for inspection): $W"
++FILES=(run-06b3b.sh harness_lib.sh sigscan.sh selftest.sh mutation_test.sh independent_check.sh
++       probe_matrix.py pcapng_stats.py make_fixtures.py ctl_loop.py)
++
++copy() { local d; d=$(mktemp -d "$W/$1.XXXXXX"); cp "${FILES[@]/#/$H/}" "$d/"; echo "$d"; }
++syntax_ok() {  # dir -> 0 if every file parses
++    local d=$1 f
++    for f in "$d"/*.sh; do bash -n "$f" 2>/dev/null || { echo "bash -n: ${f##*/}"; return 1; }; done
++    for f in "$d"/*.py; do
++        python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$f" 2>/dev/null || { echo "python: ${f##*/}"; return 1; }
++    done
++}
++classify() {  # dir expected-check-substring -> prints class
++    local d=$1 want=$2 out rc why
++    why=$(syntax_ok "$d") || { echo "INVALID ($why)"; return; }
++    out=$(bash "$d/selftest.sh" "$d/out" 2>&1); rc=$?
++    echo "$out" > "$d/selftest.log"
++    if grep -q '^SELFTEST-ERROR' <<< "$out"; then echo "ERROR ($(grep -m1 '^SELFTEST-ERROR' <<< "$out"))"; return; fi
++    if [ $rc -eq 0 ]; then echo "MISSED"; return; fi
++    if grep -E '^\[FAIL\]' <<< "$out" | grep -qF -- "$want"; then
++        echo "DETECTED ($(grep -E '^\[FAIL\]' <<< "$out" | grep -F -m1 -- "$want"))"
++    else
++        echo "DETECTED-ELSEWHERE (rc=$rc; $(grep -E '^\[FAIL\]' <<< "$out" | head -2 | tr '\n' ' '))"
++    fi
++}
++
++echo "== baseline (unmodified copy)"
++B=$(copy baseline)
++why=$(syntax_ok "$B") || { echo "BASELINE INVALID: $why"; exit 2; }
++bash "$B/selftest.sh" "$B/out" > "$B/selftest.log" 2>&1; rc=$?
++tail -1 "$B/selftest.log"
++[ $rc -eq 0 ] || { echo "BASELINE FAILED (rc=$rc): mutation results would be meaningless"; exit 2; }
++
++BAD=0
++# mut <name> <expected class> <check substring> <file> <old> <new> [<old> <new> ...]
++mut() {
++    local name=$1 exp=$2 want=$3 file=$4 d res
++    shift 4
++    d=$(copy "$name")
++    python3 - "$d/$file" "$@" <<'EOF' || { echo "[BAD] $name: mutation could not be applied"; BAD=$((BAD + 1)); return; }
++import sys
++p, pairs = sys.argv[1], sys.argv[2:]
++s = open(p).read()
++for old, new in zip(pairs[::2], pairs[1::2]):
++    assert s.count(old) == 1, f"pattern found {s.count(old)} times: {old[:60]!r}"
++    s = s.replace(old, new)
++open(p, "w").write(s)
++EOF
++    res=$(classify "$d" "$want")
++    if [ "${res%% *}" = "$exp" ]; then echo "[OK]  $name -> $res"; else echo "[BAD] $name -> $res (expected $exp)"; BAD=$((BAD + 1)); fi
++}
++
++echo "== behavioural mutations (must be DETECTED in the targeted check)"
++mut S1-06b3b-url-regex DETECTED "positive.pcap: counts equal" sigscan.sh \
++    'URL_RE="/ct01-06b3b-($NAMES)([^A-Za-z0-9.-]|\$)"' 'URL_RE="/ct01-06b3b-[0-9]"'
++mut S2-count-lines-not-packets DETECTED "positive.pcap: counts equal" sigscan.sh \
++    'P=$(printf '"'"'%s\n'"'"' "$A" | per_packet)' 'P=$A'
++mut S3-read-error-ignored DETECTED "truncated.pcap: read error" sigscan.sh \
++    'if [ $rc -ne 0 ] || grep -qv' 'if false && grep -qv'
++mut W1-zombie-counts-as-alive DETECTED "watcher treats a zombie capture as dead" harness_lib.sh \
++    '[ -n "$s" ] && [ "${s:0:1}" != Z ]' 'kill -0 "$1" 2>/dev/null'
++mut W2-no-heartbeat-written DETECTED "heartbeat present and fresh" harness_lib.sh \
++    'date +%s.%N > "$hb.tmp" && mv -f "$hb.tmp" "$hb"' ':'
++mut W3-heartbeat-age-ignored-host DETECTED "heartbeat_fresh: 30 s old -> stale" harness_lib.sh \
++    'exit !(age >= -1 && age <= max)' 'exit 0'
++mut P1-heartbeat-age-ignored DETECTED "heartbeat 30 s old -> CaptureLost" probe_matrix.py \
++    'if not -1.0 <= age <= HEARTBEAT_MAX_AGE:' 'if False:'
++mut P2-missing-heartbeat-tolerated DETECTED "heartbeat missing -> CaptureLost" probe_matrix.py \
++    'raise CaptureLost(f"{where}: host watcher heartbeat missing (watcher not running)")' 'hb = time.time()'
++mut P3-killed-watcher-not-noticed DETECTED "real watcher killed while the capture still runs" probe_matrix.py \
++    'if not -1.0 <= age <= HEARTBEAT_MAX_AGE:' 'if age < -1.0:'
++mut P4-host-marker-ignored DETECTED "host marker present -> CaptureLost" probe_matrix.py \
++    '    if dead:' '    if False:'
++mut P5-unreadable-marker-tolerated DETECTED "marker unreadable" probe_matrix.py \
++    'raise CaptureLost(f"{where}: host capture marker unreadable: {e}")' 'dead = ""'
++mut P6-tshark-exit-ignored DETECTED "tshark exited -> CaptureLost" probe_matrix.py \
++    'if tshark is None or tshark.poll() is not None:' 'if tshark is None:'
++# with up rc ignored, C6 still fails later ("returned 0 but exited"); C7 (up fails after starting) is the case
++mut M1-compose-up-rc-ignored DETECTED "C7 compose up fails after starting it" harness_lib.sh \
++    'if [ $rc -ne 0 ]; then
++        echo "compose up failed' 'if false; then
++        echo "compose up failed'
++mut M2-marked-started-before-confirmation DETECTED "NOT marked started" harness_lib.sh \
++    'MANAGER_UP_ATTEMPTED=1
++    out=' 'MANAGER_UP_ATTEMPTED=1; MANAGER_STARTED=1
++    out='
++mut M3-replacement-not-checked-before-stop DETECTED "C9 started by us, replaced" harness_lib.sh \
++    'if [ "$id" != "$MANAGER_ID_BEFORE" ]; then
++        echo "manager container was replaced' 'if false; then
++        echo "manager container was replaced'
++mut M4-stop-by-service-not-by-id DETECTED "C2 exited: exactly one compose up" harness_lib.sh \
++    'docker stop -t 10 "$MANAGER_ID_BEFORE"' '"${COMPOSE[@]}" stop sandbox-manager'
++mut M5-created-accepted DETECTED "C11 created" harness_lib.sh \
++    '    exited) ;;' '    exited | created) ;;'
++mut M6-running-manager-restarted DETECTED "C1 running: no compose up" harness_lib.sh \
++    'echo "manager already running: used as is, will be left running"
++        return 0' '"${COMPOSE[@]}" up -d sandbox-manager; echo "manager already running"'
++mut M7-restart-not-detected DETECTED "C3 running, restarted" harness_lib.sh \
++    '[ "$at" != "$MANAGER_STARTED_AT_BEFORE" ]' 'false'
++mut N1-ifdrop-ignored DETECTED "ng-drop3.pcapng" pcapng_stats.py \
++    'if isb["isb_ifdrop"] > 0:' 'if False:'
++mut N2-missing-statistics-pass DETECTED "ng-no-stats.pcapng" pcapng_stats.py \
++    'return "UNVERIFIED", "no interface statistics block: drop count unknown"' 'return "PASS", "assumed 0"'
++mut N3-missing-ifdrop-as-zero DETECTED "ng-isb-without-ifdrop.pcapng" pcapng_stats.py \
++    'if "isb_ifdrop" not in isb:' 'if False:' \
++    'if isb["isb_ifdrop"] > 0:' 'if isb.get("isb_ifdrop", 0) > 0:'
++mut N4-osdrop-ignored DETECTED "ng-osdrop2.pcapng" pcapng_stats.py \
++    'if isb.get("isb_osdrop", 0) > 0:' 'if False:'
++mut N5-ifrecv-mismatch-ignored DETECTED "ng-recv-mismatch.pcapng" pcapng_stats.py \
++    'if "isb_ifrecv" in isb and isb["isb_ifrecv"] != stored:' 'if False:'
++# ng-truncated.pcapng (cut inside the ISB) is still caught through struct.error -> PcapngError, so the
++# length checks are targeted with ng-truncated-in-packet.pcapng (cut inside the last packet, no ISB)
++mut N6-truncation-not-detected DETECTED "ng-truncated-in-packet.pcapng" pcapng_stats.py \
++    'if blen < 12 or blen % 4 or off + blen > len(data):' 'if blen < 12 or blen % 4:' \
++    'if struct.unpack_from(E + "I", data, off + blen - 4)[0] != blen:' 'if off + blen <= len(data) and struct.unpack_from(E + "I", data, off + blen - 4)[0] != blen:' \
++    '        off += blen
++    if st["interfaces"] == 0:' '        off += blen
++        if off > len(data): break
++    if st["interfaces"] == 0:'
++
++echo "== control mutations (must NOT be counted as caught)"
++mut X1-syntax-error INVALID "-" pcapng_stats.py 'def drop_verdict(st):' 'def drop_verdict(st:'
++mut X2-missing-dependency ERROR "-" selftest.sh 'import pcapng_stats as P' 'import pcapng_stats_missing as P'
++
++echo
++[ $BAD -eq 0 ] && { echo "MUTATION TEST: every mutation got its expected class"; exit 0; }
++echo "MUTATION TEST: $BAD mutation(s) not as expected"; exit 1
+--- /dev/null
++++ 06b3cr/pcapng_stats.py
+@@ -0,0 +1,116 @@
++"""06B-3CR — drop statistics of a tshark/dumpcap pcapng capture, read from the file itself.
++
++tshark (the version in the worker image) prints only "N packets captured" on stderr and prints
++no drop line at all when nothing was dropped, so a missing stderr line cannot mean "0 dropped".
++dumpcap writes an Interface Statistics Block (ISB) at the end of a clean capture; in 06B-3B run 5:
++    ISB if 0 {comment: "Counters provided by dumpcap", isb_ifrecv: 97, isb_ifdrop: 0}
++This module reads those counters. Pure Python, no dependencies; imported by probe_matrix.py.
++
++    read_stats(path)  -> {"interfaces": n_idb, "epb": {if: n}, "isb": {if: {...}}}  (last ISB per if)
++                         raises PcapngError on anything malformed or truncated
++    drop_verdict(st)  -> ("PASS" | "FAIL" | "UNVERIFIED", reason)
++        PASS        every interface has an ISB with isb_ifdrop == 0 (isb_osdrop == 0 if present)
++                    and isb_ifrecv, if present, equals the packets stored for that interface
++        FAIL        a drop counter > 0, or ifrecv != stored packets
++        UNVERIFIED  no ISB, or an ISB without isb_ifdrop: the drop count is unknown
++"""
++import struct
++
++SHB, IDB, EPB, SPB, ISB = 0x0A0D0D0A, 0x00000001, 0x00000006, 0x00000003, 0x00000005
++OPT = {1: "comment", 4: "isb_ifrecv", 5: "isb_ifdrop", 6: "isb_filteraccept", 7: "isb_osdrop",
++       8: "isb_usrdeliv"}
++
++
++class PcapngError(Exception):
++    pass
++
++
++def _options(body, off, end, E):
++    opts = {}
++    while off + 4 <= end:
++        code, ln = struct.unpack_from(E + "HH", body, off)
++        off += 4
++        if code == 0:
++            return opts
++        if off + ln > end:
++            raise PcapngError("option runs past the end of its block")
++        val = body[off:off + ln]
++        name = OPT.get(code)
++        if name == "comment":
++            opts[name] = val.decode("utf-8", "replace")
++        elif name:
++            if ln != 8:
++                raise PcapngError(f"{name} has length {ln}, expected 8")
++            opts[name] = struct.unpack(E + "Q", val)[0]
++        off += (ln + 3) & ~3
++    return opts
++
++
++def read_stats(path):
++    """Raises PcapngError (never struct.error etc.) on anything that cannot be decoded."""
++    data = open(path, "rb").read()
++    try:
++        return _read(data)
++    except PcapngError:
++        raise
++    except (struct.error, IndexError, ValueError) as e:
++        raise PcapngError(f"cannot decode pcapng: {type(e).__name__}: {e}")
++
++
++def _read(data):
++    E = "<"
++    if len(data) < 28:
++        raise PcapngError(f"file too short ({len(data)} bytes)")
++    if struct.unpack_from("<I", data, 0)[0] != SHB:
++        raise PcapngError("not a pcapng file (no section header block)")
++    st = {"interfaces": 0, "epb": {}, "isb": {}}
++    off = 0
++    while off < len(data):
++        if off + 12 > len(data):
++            raise PcapngError(f"truncated block header at offset {off}")
++        btype = struct.unpack_from("<I", data, off)[0]
++        if btype == SHB:
++            magic = data[off + 8:off + 12]
++            E = {b"\x4d\x3c\x2b\x1a": "<", b"\x1a\x2b\x3c\x4d": ">"}.get(magic)
++            if E is None:
++                raise PcapngError("bad byte-order magic")
++        blen = struct.unpack_from(E + "I", data, off + 4)[0]
++        if blen < 12 or blen % 4 or off + blen > len(data):
++            raise PcapngError(f"truncated or invalid block (type {btype:#x}, length {blen}) at offset {off}")
++        if struct.unpack_from(E + "I", data, off + blen - 4)[0] != blen:
++            raise PcapngError(f"block length trailer mismatch at offset {off}")
++        btype = struct.unpack_from(E + "I", data, off)[0]
++        body_end = off + blen - 4
++        if btype == IDB:
++            st["interfaces"] += 1
++        elif btype == EPB:
++            iface = struct.unpack_from(E + "I", data, off + 8)[0]
++            st["epb"][iface] = st["epb"].get(iface, 0) + 1
++        elif btype == SPB:
++            st["epb"][0] = st["epb"].get(0, 0) + 1
++        elif btype == ISB:
++            iface = struct.unpack_from(E + "I", data, off + 8)[0]
++            st["isb"][iface] = _options(data, off + 20, body_end, E)   # after if id + 64-bit timestamp
++        off += blen
++    if st["interfaces"] == 0:
++        raise PcapngError("no interface description block")
++    return st
++
++
++def drop_verdict(st):
++    if not st["isb"]:
++        return "UNVERIFIED", "no interface statistics block: drop count unknown"
++    for iface in range(st["interfaces"]):
++        isb = st["isb"].get(iface)
++        if isb is None:
++            return "UNVERIFIED", f"interface {iface}: no interface statistics block"
++        if "isb_ifdrop" not in isb:
++            return "UNVERIFIED", f"interface {iface}: statistics block without isb_ifdrop"
++        if isb["isb_ifdrop"] > 0:
++            return "FAIL", f"interface {iface}: isb_ifdrop={isb['isb_ifdrop']}"
++        if isb.get("isb_osdrop", 0) > 0:
++            return "FAIL", f"interface {iface}: isb_osdrop={isb['isb_osdrop']}"
++        stored = st["epb"].get(iface, 0)
++        if "isb_ifrecv" in isb and isb["isb_ifrecv"] != stored:
++            return "FAIL", f"interface {iface}: isb_ifrecv={isb['isb_ifrecv']} but {stored} packets stored"
++    return "PASS", "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets"

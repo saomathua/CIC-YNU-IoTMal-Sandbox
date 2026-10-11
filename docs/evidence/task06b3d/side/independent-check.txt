@@ -1,0 +1,37 @@
+== 1. tap0 pcaps
+-- ARM (99 frames)
+internet-tcp: guest:41000->1.1.1.1:443/tcp=3 (other src ports=0) replies-to-guest=0
+lan-dns-udp: guest->192.168.177.2:53/udp=4 replies-to-guest=0
+lan-dns-tcp: guest:41002->192.168.177.2:53/tcp=3 (other src ports=0) replies-to-guest=0
+ssh-host-192.168.60.1: guest:41003->192.168.60.1:22/tcp=3 (other src ports=0) replies-to-guest=0
+ssh-host-192.168.177.128: guest:41004->192.168.177.128:22/tcp=3 (other src ports=0) replies-to-guest=0
+ssh-host-172.18.0.1: guest:41005->172.18.0.1:22/tcp=3 (other src ports=0) replies-to-guest=0
+manager: guest:41006->192.168.60.10:8011/tcp=3 (other src ports=0) replies-to-guest=0
+mongodb: guest:41007->172.18.0.2:27017/tcp=3 (other src ports=0) replies-to-guest=0
+worker-eth0: guest:41008->192.168.60.2:8011/tcp=3 (other src ports=0) replies-to-guest=0
+tap0-other-port-listener: guest:41009->10.200.0.1:18080/tcp=3 (other src ports=0) replies-to-guest=0
+IPv4 to guest from anything but 10.200.0.1: 0
+guest probe qname lines: 8
+-- MIPS (125 frames)
+internet-tcp: guest:41000->1.1.1.1:443/tcp=4 (other src ports=0) replies-to-guest=0
+lan-dns-udp: guest->192.168.177.2:53/udp=4 replies-to-guest=0
+lan-dns-tcp: guest:41002->192.168.177.2:53/tcp=4 (other src ports=0) replies-to-guest=0
+ssh-host-192.168.60.1: guest:41003->192.168.60.1:22/tcp=4 (other src ports=0) replies-to-guest=0
+ssh-host-192.168.177.128: guest:41004->192.168.177.128:22/tcp=4 (other src ports=0) replies-to-guest=0
+ssh-host-172.18.0.1: guest:41005->172.18.0.1:22/tcp=4 (other src ports=0) replies-to-guest=0
+manager: guest:41006->192.168.60.10:8011/tcp=4 (other src ports=0) replies-to-guest=0
+mongodb: guest:41007->172.18.0.2:27017/tcp=4 (other src ports=0) replies-to-guest=0
+worker-eth0: guest:41008->192.168.60.2:8011/tcp=4 (other src ports=0) replies-to-guest=0
+tap0-other-port-listener: guest:41009->10.200.0.1:18080/tcp=4 (other src ports=0) replies-to-guest=0
+IPv4 to guest from anything but 10.200.0.1: 0
+guest probe qname lines: 8
+== 2. signature scan (sigscan.sh) of tap0 and host pcaps
+container/probe/ARM/tap0.pcapng: frames=99 guest_l2l3=99 probe_sport=27 probe_qname=4 probe_url=0 control_qname=0
+container/probe/MIPS/tap0.pcapng: frames=125 guest_l2l3=125 probe_sport=36 probe_qname=4 probe_url=0 control_qname=0
+hostcap/veth.pcap: frames=3837 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8
+hostcap/bridge.pcap: frames=7438 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8
+hostcap/ens33.pcap: frames=94 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8
+== 3. control log
+mongo 172.18.0.2:27017: n=327 ok=326 fail=1 ["16:42:09 TimeoutError('timed out')"] span=16:42:09-16:44:56 max_gap_between_ok=0.52s
+worker-eth0 192.168.60.2:8011: n=327 ok=327 fail=0 [] span=16:42:11-16:44:56 max_gap_between_ok=0.52s
+manager 192.168.60.10:8011: n=327 ok=327 fail=0 [] span=16:42:11-16:44:56 max_gap_between_ok=0.52s

@@ -1,0 +1,8 @@
+== docker client/server (no sudo)
+/usr/bin/docker
+srw-rw---- 1 root docker 0 Oct  8 01:56 /var/run/docker.sock
+client=29.8.2 server=
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+rc=1
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+rc=0
