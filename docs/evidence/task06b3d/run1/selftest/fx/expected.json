@@ -1,0 +1,31 @@
+{
+ "pcapng_verdicts": {
+  "ng-drop0.pcapng": "PASS",
+  "ng-drop0-bigendian.pcapng": "PASS",
+  "ng-drop3.pcapng": "FAIL",
+  "ng-drop3-recv6.pcapng": "FAIL",
+  "ng-osdrop2.pcapng": "FAIL",
+  "ng-recv-mismatch.pcapng": "FAIL",
+  "ng-no-stats.pcapng": "UNVERIFIED",
+  "ng-isb-without-ifdrop.pcapng": "UNVERIFIED",
+  "ng-truncated.pcapng": "ERROR",
+  "ng-truncated-in-packet.pcapng": "ERROR",
+  "ng-not-pcapng.pcapng": "ERROR"
+ },
+ "positive.pcap": {
+  "frames": 6,
+  "guest_l2l3": 2,
+  "probe_sport": 1,
+  "probe_qname": 1,
+  "probe_url": 2,
+  "control_qname": 0
+ },
+ "negative.pcap": {
+  "frames": 8,
+  "guest_l2l3": 0,
+  "probe_sport": 0,
+  "probe_qname": 0,
+  "probe_url": 0,
+  "control_qname": 2
+ }
+}

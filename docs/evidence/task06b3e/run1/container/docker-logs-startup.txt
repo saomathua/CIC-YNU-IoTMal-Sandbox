@@ -1,0 +1,19 @@
+2026-10-07T05:33:25.345784839Z SYSCTL REPORT (before run.sh): net.ipv4.ip_forward=1
+2026-10-07T05:33:25.345820352Z SYSCTL REPORT (before run.sh): rp_filter [max] configured: all=2 default=2 tap0=None eth0=2 | effective: tap0=None eth0=2
+2026-10-07T05:33:25.345822807Z SYSCTL REPORT (before run.sh): arp_ignore [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-07T05:33:25.345824377Z SYSCTL REPORT (before run.sh): arp_announce [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-07T05:33:25.345825843Z SYSCTL REPORT (before run.sh): arp_accept [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-07T05:33:25.345827445Z SYSCTL REPORT (before run.sh): forwarding [dev] configured: all=1 default=1 tap0=None eth0=1 | effective: tap0=None eth0=1
+2026-10-07T05:33:25.474346070Z SYSCTL REPORT (after run.sh): net.ipv4.ip_forward=0
+2026-10-07T05:33:25.474374353Z SYSCTL REPORT (after run.sh): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+2026-10-07T05:33:25.474376576Z SYSCTL REPORT (after run.sh): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+2026-10-07T05:33:25.474378008Z SYSCTL REPORT (after run.sh): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+2026-10-07T05:33:25.474379370Z SYSCTL REPORT (after run.sh): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-07T05:33:25.474380743Z SYSCTL REPORT (after run.sh): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-07T05:33:25.530971826Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-07T05:33:25.545362495Z SENTINEL poller.py called (no real poller started)
+2026-10-07T05:33:26.095558812Z INFO:     Started server process [36]
+2026-10-07T05:33:26.095587093Z INFO:     Waiting for application startup.
+2026-10-07T05:33:26.095876656Z INFO:     Application startup complete.
+2026-10-07T05:33:26.096098331Z INFO:     Uvicorn running on http://0.0.0.0:8011 (Press CTRL+C to quit)
+2026-10-07T05:33:26.495469388Z INFO:     127.0.0.1:55230 - "GET /healthcheck HTTP/1.1" 200 OK

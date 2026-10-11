@@ -1,0 +1,17 @@
+#!/usr/sbin/nft -f
+# Atomic (re)load of the CT-01 tables: `nft -f load.nft` is ONE transaction.
+# The "table X / delete table X" pairs remove an existing CT-01 table without
+# failing when it does not exist yet (nftables 1.0.2 has no "destroy").
+# Only these three tables are touched; the rest of the namespace ruleset
+# (e.g. Docker's own tables) is never flushed.
+# If guest.nft has a syntax error, or the kernel rejects anything at commit,
+# the whole transaction is discarded and the previously loaded tables remain.
+
+table netdev sandbox_guest_l2
+delete table netdev sandbox_guest_l2
+table arp sandbox_guest_arp
+delete table arp sandbox_guest_arp
+table inet sandbox_guest
+delete table inet sandbox_guest
+
+include "/app/isolation/guest.nft"

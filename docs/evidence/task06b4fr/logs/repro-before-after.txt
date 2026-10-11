@@ -1,0 +1,88 @@
+== P1: alert / unreadable alert file appears during the counter read 'T12-B2 before'
+leak-before-B2               06B-4F   rc=99  pings sent (sizes)=['1201', '1202']  status=LEAK: after 'ping -c 3 -s 1202 -w 5 224.0.0.1': 1 signature packet(s) seen on host interfa
+leak-before-B2               06B-4FR  rc=99  pings sent (sizes)=['1201']  status=LEAK: before 'ping -c 3 -s 1202 -w 5 224.0.0.1': 1 signature packet(s) seen on host interf
+alert-unreadable-before-B2   06B-4F   rc=1   pings sent (sizes)=['1201', '1202']  status=ERROR: IsADirectoryError: [Errno 21] Is a directory: '/tmp/repro-06b4fr.0a72rt4r/06b4f/sc-
+alert-unreadable-before-B2   06B-4FR  rc=1   pings sent (sizes)=['1201']  status=ERROR: IsADirectoryError: [Errno 21] Is a directory: '/tmp/repro-06b4fr.0a72rt4r/06b4fr/sc
+
+== P2: required infrastructure confirmations (variants of the REAL clean run of each version,
+        judged by that version's `icmp_harness.py --outcome`, the call made by run-06b4f.sh)
+- clean fixture (real clean run)
+    06B-4F : ok    PASS
+    06B-4FR: ok    PASS
+- missing: host leak monitor running and empty before boot
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: host leak monitor running and empty before boot
+- missing: full isolation verify right before QEMU spawn (harness pre-boot, not V1)
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: full isolation verify right before QEMU spawn (harness pre-boot, not V1)
+- missing: tshark capturing on tap0
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: tshark capturing on tap0
+- missing: guest booted and network configured
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: guest booted and network configured
+- missing: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC a...
+- missing: capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP destinations)
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: capture liveness traffic from the worker before the ICMP group (host c...
+- missing: allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: allowed service link before the ICMP group: GET get-task/T/file HTTP 2...
+- missing: allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: allowed service link after the ICMP group: GET get-task/T/file HTTP 20...
+- missing: tap0 MAC unchanged during the ICMP group
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: tap0 MAC unchanged during the ICMP group
+- missing: all five ICMP cases executed with captures alive
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: all five ICMP cases executed with captures alive
+- missing: capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP destinations)
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: capture liveness traffic from the worker after the ICMP group (host ca...
+- missing: QEMU exit confirmed
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: QEMU exit confirmed
+- missing: tap0 capture stopped cleanly
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: tap0 capture stopped cleanly
+- missing: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 ...
+- missing: fixture, marker and temporary guest disk removed
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: fixture, marker and temporary guest disk removed
+- missing: ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: ICMP group record: each reviewed case exactly once, service link befor...
+- missing: ALL required confirmations
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation missing: host leak monitor running and empty before boot; required confirmation...
+- duplicate (both ok): QEMU exit confirmed
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation recorded 2 times: QEMU exit confirmed
+- duplicate (both ok): tap0 capture stopped cleanly
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: required confirmation recorded 2 times: tap0 capture stopped cleanly
+- wrong type ok='true': QEMU exit confirmed
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: result record(s) [14] not an object with a string 'test' and a boolean 'ok'
+- wrong type ok=1: QEMU exit confirmed
+    06B-4F : WRONG PASS
+    06B-4FR: ok    FAIL: result record(s) [14] not an object with a string 'test' and a boolean 'ok'
+- wrong type ok=None: QEMU exit confirmed
+    06B-4F : ok    FAIL: QEMU exit confirmed
+    06B-4FR: ok    FAIL: result record(s) [14] not an object with a string 'test' and a boolean 'ok'
+- 'ok' key missing: tap0 capture stopped cleanly
+    06B-4F : ok    FAIL: results malformed (KeyError: 'ok')
+    06B-4FR: ok    FAIL: result record(s) [15] not an object with a string 'test' and a boolean 'ok'
+- not passed ok=False: QEMU exit confirmed
+    06B-4F : ok    FAIL: QEMU exit confirmed
+    06B-4FR: ok    FAIL: required confirmation not passed (ok=False): QEMU exit confirmed; QEMU exit confirmed
+- not passed ok=False: fixture, marker and temporary guest disk removed
+    06B-4F : ok    FAIL: fixture, marker and temporary guest disk removed
+    06B-4FR: ok    FAIL: required confirmation not passed (ok=False): fixture, marker and temporary guest disk removed; fixtur...
+
+P2 summary: 26 variants; wrong conclusion 06B-4F: 21, 06B-4FR: 0

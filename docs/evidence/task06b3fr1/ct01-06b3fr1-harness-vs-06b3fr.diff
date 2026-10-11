@@ -1,0 +1,279 @@
+--- 06b3fr/probe_matrix.py
++++ 06b3fr1/probe_matrix.py
+@@ -132,19 +132,57 @@
+     return r.stdout
+ 
+ 
++PROC_ROOT = "/proc"   # 06B-3FR1: module-level so that the offline test can point qemu_pids() at a fake tree
++
++
++class ProcessScanError(Exception):
++    """The QEMU process state could not be verified."""
++
++
+ def qemu_pids():
+-    """06B-3F: pids of qemu-system* processes visible in this container."""
++    """06B-3F/3FR1: pids of qemu-system* processes visible in this container.
++    A pid that vanished between listing and reading (comm gone AND /proc/<pid> gone) is skipped.
++    Anything else that prevents reading (PermissionError, I/O errors, comm missing while the pid
++    directory still exists, /proc not listable) raises ProcessScanError: never treated as "no QEMU"."""
++    try:
++        entries = os.listdir(PROC_ROOT)
++    except OSError as e:
++        raise ProcessScanError(f"cannot list {PROC_ROOT}: {type(e).__name__}: {e}")
+     pids = []
+-    for d in os.listdir("/proc"):
+-        if d.isdigit():
+-            try:
+-                if open(f"/proc/{d}/comm").read().startswith("qemu-system"):
+-                    pids.append(int(d))
+-            except OSError:
+-                pass
++    for d in entries:
++        if not d.isdigit():
++            continue
++        path = f"{PROC_ROOT}/{d}/comm"
++        try:
++            with open(path) as f:
++                comm = f.read()
++        except (FileNotFoundError, ProcessLookupError) as e:
++            if os.path.exists(f"{PROC_ROOT}/{d}"):
++                raise ProcessScanError(f"{path} unreadable although the pid directory exists: "
++                                       f"{type(e).__name__}: {e}")
++            continue   # the process exited between listing and reading
++        except OSError as e:
++            raise ProcessScanError(f"cannot read {path}: {type(e).__name__}: {e}")
++        if comm.startswith("qemu-system"):
++            pids.append(int(d))
+     return pids
+ 
+ 
++def record_qemu_scan(when):
++    """06B-3FR1: scan the QEMU process state into `session` ("before" or "after_exit").
++    On a scan error the pid list is None and the error is kept; the caller continues (cleanup in
++    `finally` keeps running) and session_reconcile() turns it into ERROR."""
++    try:
++        pids, err = qemu_pids(), None
++    except Exception as e:   # ProcessScanError or anything unexpected: unverified, never "no QEMU"
++        pids, err = None, f"{type(e).__name__}: {e}"
++    session[f"qemu_pids_{when}"] = pids
++    session[f"qemu_pids_{when}_error"] = err
++    if when == "before":
++        session["no_qemu_before"] = pids == []
++    return pids, err
++
++
+ def counters_read(label):
+     """06B-3DR: one nft counter read with the wall-clock start/end of the call. The raw JSON is kept
+     in counters-raw.jsonl; the snapshot happened somewhere between t_start and t_end."""
+@@ -410,9 +448,8 @@
+ 
+         captures_alive(tshark, "before boot")
+         # 06B-3F: session-wide window opens here: captures alive (checked above), no QEMU yet
+-        before_pids = qemu_pids()
+-        session.update(no_qemu_before=not before_pids, qemu_pids_before=before_pids,
+-                       read_before=counters_read("session before boot"))
++        record_qemu_scan("before")
++        session.update(read_before=counters_read("session before boot"))
+         an = A.Analysis(T, WORK, C.GUEST_IP, C.WORKER_GUEST_IP, WORK + cfg.image_kernel_path,
+                         WORK + cfg.image_rootfs_path, {"worker_ip": "unused"})
+         cmd = cfg.qemu_cmd_template.format(kernel=an.kernel_path, rootfs=an.rootfs_path, mac=C.GUEST_MAC)
+@@ -544,11 +581,7 @@
+             if "read_before" in session:
+                 session["exit_confirmed"] = not proc.isalive()
+                 session["exit_confirmed_t"] = time.time()
+-                try:   # 06B-3FR: part of the session verdict; an error leaves it unverified (None)
+-                    session["qemu_pids_after_exit"] = qemu_pids()
+-                except Exception as e:
+-                    session["qemu_pids_after_exit"] = None
+-                    session["qemu_pids_after_exit_error"] = f"{type(e).__name__}: {e}"
++                record_qemu_scan("after_exit")   # 06B-3FR1: errors are kept, never swallowed
+                 session["finals"] = []
+                 if session["exit_confirmed"]:
+                     try:
+@@ -617,6 +650,7 @@
+     frames = [{"t": r["t"], "cls": classify(r)} for r in rows]
+     qemu = {"no_qemu_before": session.get("no_qemu_before", False),
+             "pids_before": session.get("qemu_pids_before"),
++            "pids_before_error": session.get("qemu_pids_before_error"),
+             "exit_confirmed": session.get("exit_confirmed", False),
+             "exit_confirmed_t": session.get("exit_confirmed_t"),
+             "pids_after_exit": session.get("qemu_pids_after_exit"),
+--- 06b3fr/counter_window.py
++++ 06b3fr1/counter_window.py
+@@ -197,7 +197,8 @@
+     """frames: every frame of the tap0 pcap as {"t", "cls"} (cls None for frames not sent by the guest).
+     read_before: counter read before QEMU was spawned; final_reads: every counter read taken after QEMU
+     exit was confirmed (all kept; the FIRST one closes the window, the others check stability).
+-    qemu: {"no_qemu_before": bool, "pids_before": list, "exit_confirmed": bool, "exit_confirmed_t": float,
++    qemu: {"no_qemu_before": bool, "pids_before": list, "pids_before_error": str | None,
++           "exit_confirmed": bool, "exit_confirmed_t": float,
+            "pids_after_exit": list | None, "pids_after_exit_error": str | None}
+     capture: {"tshark_rc": int|None, "drop_verdict": "PASS"|..., "pcap_readable": bool}
+     Verdict: ERROR (invalid measurement / precondition) > FAIL (real mismatch) > UNVERIFIED > PASS.
+@@ -215,9 +216,10 @@
+         return out
+ 
+     # --- QEMU process state before boot and after exit (06B-3FR: both are part of the verdict)
+-    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:
++    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != [] or qemu.get("pids_before_error"):
+         return done("ERROR", f"QEMU process state before boot not clean or not verified: "
+-                             f"no_qemu_before={qemu.get('no_qemu_before')!r}, pids_before={qemu.get('pids_before')!r}")
++                             f"no_qemu_before={qemu.get('no_qemu_before')!r}, pids_before={qemu.get('pids_before')!r}, "
++                             f"error={qemu.get('pids_before_error')!r}")
+     if not qemu.get("exit_confirmed"):
+         return done("ERROR", "QEMU exit was not confirmed before the final reads")
+     pa = qemu.get("pids_after_exit")
+--- 06b3fr/selftest.sh
++++ 06b3fr1/selftest.sh
+@@ -22,6 +22,9 @@
+ #     wrong times, preconditions, instability / guest frames after QEMU exit); 06B-3FR adds 14:
+ #     guest frames before the window (ARP included), QEMU state after exit, F1+F2 and read errors,
+ #     missing compared counters
++#  (H also) 06B-3FR1: the real qemu_pids()/record_qemu_scan() on a fake /proc with simulated read
++#     errors (PermissionError, EIO, unlistable /proc, comm missing), vanished pid, QEMU present,
++#     each carried through the real evaluate_session()
+ #  H. probe_matrix.py evaluate() replayed offline with stub worker modules: clean -> ĐẠT,
+ #     IPv6 frame inside read A (06B-3D shape) -> CHƯA KIỂM CHỨNG, real mismatch -> FAIL
+ # Lines "[FAIL] ..." are behavioural failures; "SELFTEST-ERROR: ..." means the test itself could not
+@@ -616,6 +619,63 @@
+ r4 = sess_with(read_before={"t_start": 50.0, "t_end": 50.01, "values": short})
+ check("3FR replay 4: compared counter missing in A -> ERROR (not taken as 0)", r4["verdict"] == "ERROR")
+ check("3FR replay: session results still not in results", len(pm.results) == n_results_after_clean)
++# ---- 06B-3FR1: the real qemu_pids() / record_qemu_scan() on a fake /proc with simulated read errors,
++# carried through the real evaluate_session(); no error field is put into `session` by the test
++import builtins, errno
++FP = os.path.join(SB, "fakeproc"); os.makedirs(FP, exist_ok=True)
++for pid, comm in (("1", "systemd\n"), ("2", "python3\n")):
++    os.makedirs(os.path.join(FP, pid), exist_ok=True); open(os.path.join(FP, pid, "comm"), "w").write(comm)
++os.makedirs(os.path.join(FP, "self"), exist_ok=True)          # non-numeric entry: ignored
++pm.PROC_ROOT = FP
++real_open, real_os = builtins.open, pm.os
++class OsShim:
++    def __init__(self, extra): self.extra = extra
++    def __getattr__(self, name): return getattr(real_os, name)
++    def listdir(self, p): return real_os.listdir(p) + self.extra
++def failing_open(pid, exc):
++    def f(path, *a, **k):
++        if str(path) == f"{FP}/{pid}/comm":
++            raise exc
++        return real_open(path, *a, **k)
++    return f
++def scan_then_session(when="after_exit", open_shim=None, os_shim=None):
++    set_session(vals_after)
++    if open_shim: pm.open = open_shim
++    if os_shim: pm.os = os_shim
++    try:
++        pids, err = pm.record_qemu_scan(when)
++        if when == "before":   # isolate the scan before boot: the after-exit part stays as set_session() made it
++            pm.session["qemu_pids_after_exit"], pm.session["qemu_pids_after_exit_error"] = [], None
++    finally:
++        if open_shim: del pm.open
++        pm.os = real_os
++    return pids, err, pm.evaluate_session()["verdict"]
++r = scan_then_session()
++check("3FR1 1: scan OK, no QEMU -> qemu_pids()==[] and session PASS", r[0] == [] and r[1] is None and r[2] == "PASS")
++os.makedirs(os.path.join(FP, "3"), exist_ok=True); open(os.path.join(FP, "3", "comm"), "w").write("qemu-system-mips\n")
++r = scan_then_session()
++check("3FR1 2: QEMU present after exit -> pids [3], session ERROR", r[0] == [3] and r[2] == "ERROR")
++r = scan_then_session("before")
++check("3FR1 2: QEMU present before boot -> no_qemu_before False, session ERROR", r[0] == [3] and pm.session["no_qemu_before"] is False and r[2] == "ERROR")
++os.rename(os.path.join(FP, "3"), os.path.join(SB, "qemu-gone"))  # that QEMU exits
++r = scan_then_session(os_shim=OsShim(["300"]))
++check("3FR1 3: pid listed then vanished (no /proc/300) -> skipped, scan OK, session PASS", r[0] == [] and r[1] is None and r[2] == "PASS")
++os.makedirs(os.path.join(FP, "4"), exist_ok=True)
++r = scan_then_session()
++check("3FR1 3b: comm missing although /proc/4 exists -> not 'vanished': error, session ERROR", r[0] is None and "pid directory exists" in (r[1] or "") and r[2] == "ERROR")
++os.rename(os.path.join(FP, "4"), os.path.join(SB, "pid4-gone"))
++r = scan_then_session(open_shim=failing_open("2", PermissionError(errno.EACCES, "Permission denied")))
++check("3FR1 4: PermissionError on /proc/2/comm -> error kept, session ERROR (06B-3FR gave [] and PASS)", r[0] is None and "PermissionError" in (r[1] or "") and r[2] == "ERROR")
++r = scan_then_session("before", open_shim=failing_open("2", PermissionError(errno.EACCES, "Permission denied")))
++check("3FR1 4: PermissionError before boot -> no_qemu_before False, session ERROR", r[0] is None and pm.session["no_qemu_before"] is False and r[2] == "ERROR")
++r = scan_then_session(open_shim=failing_open("1", OSError(errno.EIO, "Input/output error")))
++check("3FR1 4: other read error (EIO) -> error kept, session ERROR", r[0] is None and "Input/output error" in (r[1] or "") and r[2] == "ERROR")
++pm.PROC_ROOT = os.path.join(SB, "no-such-proc")
++r = scan_then_session()
++check("3FR1 4: /proc not listable -> error kept, session ERROR", r[0] is None and "cannot list" in (r[1] or "") and r[2] == "ERROR")
++pm.PROC_ROOT = FP
++r = scan_then_session()
++check("3FR1: back to a clean scan -> PASS (no state leaks between cases)", r[2] == "PASS")
+ sys.exit(1 if fails else 0)
+ EOF
+ rc=$?; [ $rc -eq 3 ] && infra "evaluate replay could not run"
+@@ -662,7 +722,7 @@
+ def line_of(snippet):
+     hits = [n.lineno for n in ast.walk(main) if isinstance(n, ast.stmt) and snippet in ast.get_source_segment(src, n).splitlines()[0]]
+     return min(hits) if hits else None   # a missing step is a behavioural FAIL, not a test error
+-order = [("no QEMU check + session read before boot", 'session.update(no_qemu_before='),
++order = [("no QEMU check + session read before boot", 'record_qemu_scan("before")'),
+          ("QEMU spawned", 'proc = an._start_qemu(cfg)'),
+          ("QEMU shut down", 'A.shutdown_qemu(proc'),
+          ("final session reads", '"session final'),
+--- 06b3fr/mutation_test.sh
++++ 06b3fr1/mutation_test.sh
+@@ -226,7 +226,7 @@
+ mut SE4-instability-after-exit-ignored DETECTED "session unstable-after-exit" counter_window.py \
+     '    if unstable:' '    if False:'
+ mut SE5-qemu-before-not-checked DETECTED "session qemu-running-before" counter_window.py \
+-    '    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:' '    if False:'
++    '    if not qemu.get("no_qemu_before") or qemu.get("pids_before") != [] or qemu.get("pids_before_error"):' '    if False:'
+ mut SE6-time-order-not-checked DETECTED "session exit-after-final-read" counter_window.py \
+     '    if any(a > b for a, b in zip(seq, seq[1:])):' '    if False:'
+ mut SE7-low-counter-softened-by-capture DETECTED "session capture-incomplete-counter-below" counter_window.py \
+@@ -242,18 +242,16 @@
+     '            session["capture"] = {"tshark_rc"' '            session.setdefault("finals", []).append(counters_read("session final after tshark stop"))
+             session["capture"] = {"tshark_rc"'
+ mut SE11-session-read-after-spawn DETECTED "session step order" probe_matrix.py \
+-    '        before_pids = qemu_pids()
+-        session.update(no_qemu_before=not before_pids, qemu_pids_before=before_pids,
+-                       read_before=counters_read("session before boot"))
++    '        record_qemu_scan("before")
++        session.update(read_before=counters_read("session before boot"))
+ ' '' \
+     '        proc = an._start_qemu(cfg)
+ ' '        proc = an._start_qemu(cfg)
+-        session.update(no_qemu_before=not qemu_pids(), read_before=counters_read("session before boot"))
++        record_qemu_scan("before"); session.update(read_before=counters_read("session before boot"))
+ '
+ mut SE12-session-read-missing DETECTED "required step missing" probe_matrix.py \
+-    '        before_pids = qemu_pids()
+-        session.update(no_qemu_before=not before_pids, qemu_pids_before=before_pids,
+-                       read_before=counters_read("session before boot"))
++    '        record_qemu_scan("before")
++        session.update(read_before=counters_read("session before boot"))
+ ' ''
+ 
+ echo "== 06B-3FR mutations (session completeness: pre-window frames, QEMU state, F1+F2, counters)"
+@@ -272,7 +270,8 @@
+ mut QP3-evaluate-session-drops-pids DETECTED "3FR replay 2: QEMU left after exit" probe_matrix.py \
+     '"pids_after_exit": session.get("qemu_pids_after_exit"),' '"pids_after_exit": [],'
+ mut QP4-pids-before-not-checked DETECTED "session qemu-pids-before-inconsistent" counter_window.py \
+-    'if not qemu.get("no_qemu_before") or qemu.get("pids_before") != []:' 'if not qemu.get("no_qemu_before"):'
++    'if not qemu.get("no_qemu_before") or qemu.get("pids_before") != [] or qemu.get("pids_before_error"):' \
++    'if not qemu.get("no_qemu_before") or qemu.get("pids_before_error"):'
+ mut FR1-f2-not-required DETECTED "session missing-F2" counter_window.py \
+     'if not isinstance(final_reads, list) or len(final_reads) < required_finals:' 'if not final_reads:'
+ mut FR2-final-read-error-ignored DETECTED "session final-read-error" counter_window.py \
+@@ -288,6 +287,22 @@
+     'delta = {k: first["values"][k] - read_before["values"][k] for k in classes}' \
+     'delta = {k: first["values"].get(k, 0) - read_before["values"].get(k, 0) for k in classes}'
+ 
++echo "== 06B-3FR1 mutations (QEMU process scan errors)"
++mut Q1-scan-swallows-oserror DETECTED "3FR1 4: PermissionError on /proc/2/comm" probe_matrix.py \
++    '        except OSError as e:
++            raise ProcessScanError(f"cannot read {path}' '        except OSError as e:
++            continue
++            raise ProcessScanError(f"cannot read {path}'
++mut Q2-vanished-pid-is-error DETECTED "3FR1 3: pid listed then vanished" probe_matrix.py \
++    '            continue   # the process exited between listing and reading' \
++    '            raise ProcessScanError("vanished pid treated as an error")'
++mut Q3-no-pid-dir-check DETECTED "3FR1 3b: comm missing although /proc/4 exists" probe_matrix.py \
++    '            if os.path.exists(f"{PROC_ROOT}/{d}"):' '            if False:'
++mut Q4-record-swallows-error DETECTED "3FR1 4: PermissionError on /proc/2/comm" probe_matrix.py \
++    '        pids, err = None, f"{type(e).__name__}: {e}"' '        pids, err = [], None'
++mut Q5-unlistable-proc-swallowed DETECTED "3FR1 4: /proc not listable" probe_matrix.py \
++    '        raise ProcessScanError(f"cannot list {PROC_ROOT}: {type(e).__name__}: {e}")' '        return []'
++
+ echo "== control mutations (must NOT be counted as caught)"
+ mut X1-syntax-error INVALID "-" pcapng_stats.py 'def drop_verdict(st):' 'def drop_verdict(st:'
+ mut X2-missing-dependency ERROR "-" selftest.sh 'import pcapng_stats as P' 'import pcapng_stats_missing as P'

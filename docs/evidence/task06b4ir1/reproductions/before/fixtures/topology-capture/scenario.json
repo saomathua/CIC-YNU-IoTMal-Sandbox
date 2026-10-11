@@ -1,0 +1,64 @@
+{
+ "rc": 98,
+ "commands": [
+  [
+   "run",
+   "ip addr"
+  ],
+  [
+   "run",
+   "ip route"
+  ],
+  [
+   "run",
+   "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done"
+  ],
+  [
+   "run",
+   "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done"
+  ],
+  [
+   "run",
+   "curl --version | head -1"
+  ],
+  [
+   "monitor",
+   "info network"
+  ]
+ ],
+ "worker_cmds": [],
+ "http_calls": [
+  [
+   "192.168.60.10",
+   8011,
+   "session before boot"
+  ]
+ ],
+ "mounted": [
+  "arp_cases.py",
+  "arp_harness.py",
+  "counter_window.py",
+  "guest_state.py",
+  "icmp_cases.py",
+  "icmp_harness.py",
+  "l2eval.py",
+  "l2frames.py",
+  "pcapng_stats.py",
+  "probe_matrix.py",
+  "signatures.py"
+ ],
+ "modules": {
+  "arp_harness": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/arp_harness.py",
+  "arp_cases": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/arp_cases.py",
+  "guest_state": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/guest_state.py",
+  "icmp_harness": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/icmp_harness.py",
+  "icmp_cases": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/icmp_cases.py",
+  "l2frames": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/l2frames.py",
+  "l2eval": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/l2eval.py",
+  "signatures": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/signatures.py",
+  "counter_window": "/home/dathq/projects/ct01-06b4ir1-work/before/review/harness/counter_window.py",
+  "pcapng_stats": "/home/dathq/projects/ct01-06b4ir1-work/before/fixtures/topology-capture/harness/pcapng_stats.py"
+ },
+ "fixture_sha": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+ "out": "/home/dathq/projects/ct01-06b4ir1-work/before/fixtures/topology-capture/out/ARM"
+}

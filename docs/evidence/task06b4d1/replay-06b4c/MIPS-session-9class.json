@@ -1,0 +1,168 @@
+{
+ "assumption": "guard covers the delay from capture timestamp to nft counter hit; NOT measured",
+ "frames_in_window": {
+  "guest/allow_svc": 15,
+  "guest/arp_in_ok": 2,
+  "guest/drop_private": 32,
+  "guest/drop_public": 40,
+  "guest/drop_spoof": 20,
+  "guest/drop_worker_other": 4,
+  "guest/l2_bad_ethertype": 7,
+  "worker/allow_out_svc": 11,
+  "worker/arp_out_ok": 2
+ },
+ "frames_outside_window": 0,
+ "input": {
+  "after": "session final 1",
+  "before": "session before boot",
+  "classes": [
+   "allow_svc",
+   "drop_spoof",
+   "drop_non_ipv4",
+   "drop_worker_other",
+   "drop_private",
+   "drop_bcast_mcast",
+   "drop_public",
+   "l2_bad_ethertype",
+   "l2_bad_mac"
+  ],
+  "counters": "/home/dathq/projects/ct01-06b4b/out-06b4c-run1/container/probe/MIPS/counters-raw.jsonl",
+  "counters_sha256": "26e5b100179c389cdaf8d916f1c1d423cebc44647764e4c584371d15c2a722ca",
+  "guard_s": 0.02,
+  "pcap": "/home/dathq/projects/ct01-06b4b/out-06b4c-run1/container/probe/MIPS/tap0.pcapng",
+  "pcap_sha256": "bb87e7c70deff97fdf7c8410234ad659b221de62dd3eb8f47bba7451acddf20a",
+  "tap_mac": "96:c1:56:82:5b:40"
+ },
+ "no_counter_frames": [],
+ "not_compared": {
+  "allow_out_svc": {
+   "delta": 11,
+   "reason": "not in the compared classes"
+  },
+  "arp_in_drop": {
+   "delta": 0,
+   "reason": "not in the compared classes"
+  },
+  "arp_in_ok": {
+   "delta": 2,
+   "reason": "not in the compared classes"
+  },
+  "arp_out_drop": {
+   "delta": 0,
+   "reason": "dropped at NF_ARP_OUT before the tap0 capture point [Kernel]"
+  },
+  "arp_out_ok": {
+   "delta": 2,
+   "reason": "not in the compared classes"
+  },
+  "drop_forward": {
+   "delta": 0,
+   "reason": "forward hook after prerouting: no frame-level mapping"
+  },
+  "drop_input_backstop": {
+   "delta": 0,
+   "reason": "input hook after prerouting: no frame-level mapping"
+  },
+  "drop_out": {
+   "delta": 0,
+   "reason": "dropped at the inet output hook before the tap0 capture point [Kernel]"
+  }
+ },
+ "per_class": {
+  "allow_svc": {
+   "certain": 15,
+   "delta": 15,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 15,
+   "lo": 15,
+   "status": "PASS"
+  },
+  "drop_bcast_mcast": {
+   "certain": 0,
+   "delta": 0,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 0,
+   "lo": 0,
+   "status": "PASS"
+  },
+  "drop_non_ipv4": {
+   "certain": 0,
+   "delta": 0,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 0,
+   "lo": 0,
+   "status": "PASS"
+  },
+  "drop_private": {
+   "certain": 32,
+   "delta": 32,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 32,
+   "lo": 32,
+   "status": "PASS"
+  },
+  "drop_public": {
+   "certain": 40,
+   "delta": 40,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 40,
+   "lo": 40,
+   "status": "PASS"
+  },
+  "drop_spoof": {
+   "certain": 20,
+   "delta": 20,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 20,
+   "lo": 20,
+   "status": "PASS"
+  },
+  "drop_worker_other": {
+   "certain": 4,
+   "delta": 4,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 4,
+   "lo": 4,
+   "status": "PASS"
+  },
+  "l2_bad_ethertype": {
+   "certain": 7,
+   "delta": 7,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 7,
+   "lo": 7,
+   "status": "PASS"
+  },
+  "l2_bad_mac": {
+   "certain": 0,
+   "delta": 0,
+   "edge_end": [],
+   "edge_start": [],
+   "hi": 0,
+   "lo": 0,
+   "status": "PASS"
+  }
+ },
+ "reads": {
+  "after": {
+   "t_end": 1791434056.9328263,
+   "t_start": 1791434056.924763
+  },
+  "before": {
+   "t_end": 1791433970.4193668,
+   "t_start": 1791433970.4058065
+  }
+ },
+ "reasons": [
+  "every compared class: counter delta equals the certain frames, no edge frame, no frame without a counter inside the window"
+ ],
+ "verdict": "PASS"
+}

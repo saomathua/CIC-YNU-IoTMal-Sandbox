@@ -1,0 +1,9 @@
+48ce02a68a0024c4cc99582cb3fc490da468957efb97db1c4448cc5087f13745  ./ct01-06b4b-harness-vs-06b3fr1.diff
+d5f72d7bd1725a5c9da052d3c0d7b917c4583b179e125021a00bd609e054461b  ./guest_static_inventory.sh
+d98bed390d34f1d383d2cc161e3544889068f63f0a3df2a156c6a034e5abd930  ./guest-static-inventory.txt
+26726abdbc2441798861151adc2f28de52254e6694c78049fe88764aa677850b  ./harness-sha256.txt
+f199a37ebf020da25ff2f97d029259ecb573f70623bdb0b571c9f147e4a02ccd  ./logs/mutation-l2.txt
+c0279ee9ee52f598eb3ad0194e7fd740e730d6caa56db04aad23dbcf2dd4ccef  ./logs/mutation-legacy.txt
+c7bb242c8240b9984e56569f0107ac922d9d1e7347e0ca22d68eb4196503abbb  ./logs/selftest-l2.json
+0094395d4f4a8d09215c4fc9a189a66a205faf80861f5cbe27ea37143daf6e25  ./logs/selftest-l2.log
+ac308a4dc389fbb12a7866399fd343a4bba84743b42f9a70b5a450fa11fe5912  ./logs/selftest-legacy.log

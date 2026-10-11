@@ -1,0 +1,2 @@
+GUEST_MAC = "52:54:00:c7:00:02"; GUEST_IP = "10.200.0.2"; WORKER_GUEST_IP = "10.200.0.1"; SVC_PORT = 8011
+GUEST_IF = "tap0"; GUEST_PREFIX = 30; CURRENT_TASK_FILE = "/nonexistent/current_task"

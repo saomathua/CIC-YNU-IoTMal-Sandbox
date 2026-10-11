@@ -1,0 +1,7 @@
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+@@SEND_ARCH ARM
+probe_matrix ARM exit=99
+[FAIL] ARM: PROBE PACKET SEEN ON HOST — all tests stopped
+@@FAIL_COUNT=1

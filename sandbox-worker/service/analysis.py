@@ -5,13 +5,63 @@ import signal
 import subprocess
 import time
 import pexpect
-import ipaddress
 from dataclasses import dataclass
 from zipfile import ZipFile
 
 from config.settings import app_settings
+from isolation import constants as guestnet
+from isolation.verify import verify_isolation
 
 logger = logging.getLogger(__name__)
+
+# QEMU shutdown (CT-01): phase 2 and V2 only run once the phase-1 QEMU process
+# is confirmed to have exited. Module-level so tests can shorten them.
+QEMU_SIGINT_GRACE = 10.0
+QEMU_SIGKILL_GRACE = 5.0
+
+
+class QemuShutdownError(RuntimeError):
+    """The QEMU process could not be confirmed to have exited."""
+
+
+def _wait_exit(proc, timeout: float) -> bool:
+    deadline = time.monotonic() + timeout
+    while proc.isalive():          # isalive() reaps the child via waitpid()
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
+    return True
+
+
+def _signal(proc, sig):
+    try:
+        proc.kill(sig)
+    except ProcessLookupError:
+        pass
+
+
+def shutdown_qemu(proc, phase: str) -> None:
+    """Stop a QEMU child and confirm it exited: SIGINT, bounded wait, SIGKILL,
+    bounded wait. Raises QemuShutdownError if exit cannot be confirmed."""
+    logger.info(f"Shutting down QEMU ({phase}, pid {proc.pid})...")
+    if not _wait_exit(proc, 0):
+        _signal(proc, signal.SIGINT)
+        if not _wait_exit(proc, QEMU_SIGINT_GRACE):
+            logger.warning(f"QEMU pid {proc.pid} still running {QEMU_SIGINT_GRACE}s after SIGINT; sending SIGKILL")
+            _signal(proc, signal.SIGKILL)
+            if not _wait_exit(proc, QEMU_SIGKILL_GRACE):
+                raise QemuShutdownError(f"QEMU pid {proc.pid} did not exit after SIGKILL ({phase})")
+    try:
+        proc.close()
+    except Exception:
+        logger.exception("closing QEMU pty failed")
+    if proc.logfile is not None:
+        try:
+            proc.logfile.close()
+        except Exception:
+            logger.exception("closing QEMU log failed")
+    logger.info(f"QEMU shutdown complete ({phase}, pid {proc.pid}, "
+                f"exitstatus={proc.exitstatus}, signalstatus={proc.signalstatus})")
 
 
 @dataclass
@@ -40,7 +90,7 @@ ARCH_CONFIGS = {
         qemu_cmd_template=(
             'qemu-system-arm -M virt-2.9 -kernel {kernel} -no-reboot -nographic'
             ' -device virtio-net-pci -netdev tap,id=net1,ifname=tap0,script=no,downscript=no'
-            ' -device virtio-net-pci,netdev=net1 -drive file={rootfs},if=virtio,format=raw'
+            ' -device virtio-net-pci,netdev=net1,mac={mac} -drive file={rootfs},if=virtio,format=raw'
             ' -append "root=/dev/vda"'
         ),
         net_iface="eth1",
@@ -58,7 +108,7 @@ ARCH_CONFIGS = {
         qemu_cmd_template=(
             'qemu-system-mips -M malta -kernel {kernel} -hda {rootfs}'
             ' -append "root=/dev/sda" -nographic -no-reboot'
-            ' -device pcnet,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
+            ' -device pcnet,netdev=net0,mac={mac} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
         ),
         net_iface="br-lan",
         boot_ready_prompt="entered forwarding state",
@@ -75,7 +125,7 @@ ARCH_CONFIGS = {
         qemu_cmd_template=(
             'qemu-system-mipsel -m 512 -kernel {kernel} -hda {rootfs}'
             ' -append "root=/dev/sda" -nographic -no-reboot'
-            ' -device pcnet,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
+            ' -device pcnet,netdev=net0,mac={mac} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
         ),
         net_iface="br-lan",
         boot_ready_prompt="entered forwarding state",
@@ -92,7 +142,7 @@ ARCH_CONFIGS = {
         qemu_cmd_template=(
             'qemu-system-i386 -m 512 -kernel {kernel} -hda {rootfs}'
             ' -append "root=/dev/sda" -nographic -no-reboot'
-            ' -device pcnet,netdev=net0 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
+            ' -device pcnet,netdev=net0,mac={mac} -netdev tap,id=net0,ifname=tap0,script=no,downscript=no'
         ),
         net_iface="br-lan",
         boot_ready_prompt="entered forwarding state",
@@ -139,22 +189,30 @@ class Analysis:
         self.kernel_path = kernel_path
         self.rootfs_path = rootfs_path
         self.worker = worker
+        # URL used by the guest: the worker's address on the isolated guest link,
+        # not its sandboxnet address (CT-01).
         self.worker_base_url = (
-            f"http://{worker['worker_ip']}:{app_settings.port}{app_settings.app_base_url}"
+            f"http://{guestnet.WORKER_GUEST_IP}:{guestnet.SVC_PORT}{app_settings.app_base_url}"
         )
 
     def _start_qemu(self, arch: ArchConfig) -> pexpect.spawn:
-        qemu_cmd = arch.qemu_cmd_template.format(kernel=self.kernel_path, rootfs=self.rootfs_path)
+        qemu_cmd = arch.qemu_cmd_template.format(kernel=self.kernel_path, rootfs=self.rootfs_path,
+                                                 mac=guestnet.GUEST_MAC)
         logger.info("Starting QEMU...")
         proc = pexpect.spawn(qemu_cmd, encoding='utf-8', timeout=arch.qemu_timeout)
-        proc.logfile = open(self.task_dir + app_settings.qemu_log_path, 'w', encoding='utf-8')
-        idx = proc.expect([pexpect.TIMEOUT, 'Please press Enter to activate this console.', pexpect.EOF])
-        if idx == 0:
-            raise RuntimeError("QEMU timed out waiting for boot prompt")
-        proc.sendline("")
-        idx = proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
-        if idx == 0:
-            raise RuntimeError("QEMU timed out waiting for shell prompt after boot")
+        try:
+            proc.logfile = open(self.task_dir + app_settings.qemu_log_path, 'w', encoding='utf-8')
+            idx = proc.expect([pexpect.TIMEOUT, 'Please press Enter to activate this console.', pexpect.EOF])
+            if idx == 0:
+                raise RuntimeError("QEMU timed out waiting for boot prompt")
+            proc.sendline("")
+            idx = proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            if idx == 0:
+                raise RuntimeError("QEMU timed out waiting for shell prompt after boot")
+        except BaseException:
+            # Never leave a spawned QEMU behind when boot fails.
+            shutdown_qemu(proc, "boot failure")
+            raise
         logger.info("Started QEMU")
         return proc
 
@@ -164,15 +222,19 @@ class Analysis:
         before the network-ready prompt appears."""
         proc = self._start_qemu(arch)
         if arch.extra_boot_prompt_phase2:
-            proc.sendline("")
-            proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            try:
+                proc.sendline("")
+                proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            except BaseException:
+                shutdown_qemu(proc, "phase 2 boot failure")
+                raise
         return proc
 
     def _configure_network(self, proc: pexpect.spawn, arch: ArchConfig):
         idx = proc.expect([pexpect.TIMEOUT, arch.boot_ready_prompt, pexpect.EOF])
         if idx == 0 and not arch.network_ready_prompt_optional:
             raise RuntimeError("QEMU timed out waiting for network-ready prompt")
-        proc.sendline(f'ip addr add {self.qemu_ip}/24 brd + dev {arch.net_iface}')
+        proc.sendline(f'ip addr add {self.qemu_ip}/{guestnet.GUEST_PREFIX} brd + dev {arch.net_iface}')
         idx = proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
         if idx == 0:
             raise RuntimeError("QEMU timed out after IP assignment")
@@ -291,22 +353,25 @@ class Analysis:
     def behaviour_analysis(self, arch: ArchConfig):
         # Phase 1: Boot VM, execute malware, capture strace/sar/network data
         _check_stop()
+        verify_isolation("V1 before phase 1")
         proc = self._start_qemu(arch)
-        self._configure_network(proc, arch)
-        self._run_analysis(proc, arch)
-        logger.info("Shutting down QEMU...")
-        proc.kill(signal.SIGINT)
-        logger.info("QEMU shutdown complete")
+        try:
+            self._configure_network(proc, arch)
+            self._run_analysis(proc, arch)
+        finally:
+            # Raises QemuShutdownError if exit cannot be confirmed: V2/phase 2 never run then.
+            shutdown_qemu(proc, "phase 1")
 
         # Phase 2: Reboot VM to exfiltrate captured log files.
         # Files are read from the same virtual disk written in phase 1.
         _check_stop()
+        verify_isolation("V2 before phase 2")
         proc = self._start_qemu_phase2(arch)
-        self._configure_network(proc, arch)
-        self._exfiltrate(proc, arch)
-        logger.info("Shutting down QEMU...")
-        proc.kill(signal.SIGINT)
-        logger.info("QEMU shutdown complete")
+        try:
+            self._configure_network(proc, arch)
+            self._exfiltrate(proc, arch)
+        finally:
+            shutdown_qemu(proc, "phase 2")
 
 
 _LOCK_FILE = "/tmp/sandbox_worker.lock"
@@ -354,8 +419,10 @@ def _run_analysis_locked(task_id, task_dir="", worker={}):
 
     arch_config = ARCH_CONFIGS[arch_name]
 
-    qemu_ip = str(ipaddress.IPv4Address(worker["worker_ip"]) + 1)
-    qemu_gw = str(ipaddress.ip_network(qemu_ip + '/24', strict=False).network_address + 1)
+    if app_settings.port != guestnet.SVC_PORT:
+        raise RuntimeError(f"worker PORT {app_settings.port} != guest service port {guestnet.SVC_PORT}")
+    qemu_ip = guestnet.GUEST_IP
+    qemu_gw = guestnet.WORKER_GUEST_IP
 
     with ZipFile(arch_config.image_zip_path, 'r') as z:
         z.extractall(path=task_dir)

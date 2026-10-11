@@ -1,0 +1,5 @@
+arm-fail: @@SEND_ARCH ARM  
+arm-restore-fail: @@SEND_ARCH ARM  
+after-arm-verify-fail: @@SEND_ARCH ARM  
+arm-leak: @@SEND_ARCH ARM  
+arm-capture: @@SEND_ARCH ARM  

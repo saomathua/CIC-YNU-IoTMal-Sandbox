@@ -1,0 +1,287 @@
+--- base-06b4e/l2frames.py	2026-10-08 03:23:20.224165212 +0000
++++ l2frames.py	2026-10-08 05:30:01.689123139 +0000
+@@ -262,6 +262,11 @@
+                   dst=str(ipaddress.IPv6Address(p[24:40])), icmp6_type=None, payload_complete=40 + plen <= len(p))
+         if nh == 58 and len(p) >= 41:
+             v6["icmp6_type"] = p[40]
++            # 06B-4ER: Neighbor Solicitation target (type 135: type, code, checksum, 4 reserved, 16-byte target).
++            # Additive field only (classification unchanged). None when the target is not fully present,
++            # in the capture or within the IPv6 payload length.
++            if p[40] == 135:
++                v6["ns_target"] = (str(ipaddress.IPv6Address(p[48:64])) if len(p) >= 64 and plen >= 24 else None)
+         if 40 + plen > wire:
+             v6["why"] = "payload length beyond the frame on the wire"
+         elif 40 + plen > len(p):
+--- base-06b4e/icmp_cases.py	2026-10-08 05:19:08.947953470 +0000
++++ icmp_cases.py	2026-10-08 05:30:01.690123144 +0000
+@@ -150,7 +150,11 @@
+         return False
+     if v6.get("icmp6_type") == 128 and v6.get("dst") == case["dst"] and v6.get("plen") == case["size"] + 8:
+         return True
+-    return bool(case.get("ns_group")) and v6.get("icmp6_type") == 135 and v6.get("dst") == case["ns_group"]
++    # 06B-4ER: an NS counts only if its decoded TARGET is this case's address (the solicited-node group is
++    # shared by every address with the same low 24 bits, so the group alone identifies nothing), and it
++    # is sent to that target's group. A missing/undecodable target is never a probe frame.
++    return (bool(case.get("ns_group")) and v6.get("icmp6_type") == 135 and v6.get("ns_target") is not None
++            and v6.get("ns_target") == case["dst"] and v6.get("dst") == case["ns_group"])
+ 
+ 
+ def is_reply_to_guest(f):
+@@ -169,7 +173,13 @@
+     return out
+ 
+ 
+-def evaluate_case(frames, reads, case, crec, link_after_ok, guard=GUARD_S):
++def link_ok(state):
++    """06B-4ER: a service-link state counts only if it is an object whose "ok" is exactly True.
++    Missing, False, None, "true", 1, a list ... are all "not intact"."""
++    return isinstance(state, dict) and state.get("ok") is True
++
++
++def evaluate_case(frames, reads, case, crec, link_after_ok, guard=GUARD_S, link_before_ok=False):
+     """One case. `frames` are l2frames.classified_frames() output, `reads` l2eval.load_reads() output."""
+     cid = case["id"]
+     classes = l2eval.check_classes(None)           # every frame-mapped counter class
+@@ -213,6 +223,9 @@
+         return _result(cid, "FAIL", "FAIL", failed=["probe_verdict"], **detail)
+     if not ok:
+         return _result(cid, "CHUA_KIEM_CHUNG", text, **detail)
++    if not link_before_ok:
++        return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (liên kết dịch vụ trước nhóm thử thiếu, "
++                       "không đạt hoặc không hợp lệ)", **detail)
+     if not link_after_ok:
+         return _result(cid, "CHUA_KIEM_CHUNG", "CHƯA KIỂM CHỨNG (liên kết dịch vụ sau nhóm thử không đạt)", **detail)
+     assert text == "ĐẠT (kiểm quy tắc)"
+@@ -222,6 +235,9 @@
+ def evaluate_group(pcap, counters_file, tap_mac, record, guard=GUARD_S):
+     """-> {"cases": [...], "group": {...}}. A capture/counter-file problem makes every case LOI_PHEP_DO."""
+     cases = {c["id"]: c for c in build_cases(tap_mac)}
++    if not isinstance(record, dict) or not isinstance(record.get("cases", []), list) or \
++            not all(isinstance(c, dict) for c in record.get("cases", [])):
++        raise ValueError("group record must be an object whose 'cases' is a list of objects")
+     out = {"guard_s": guard, "assumption": l2eval.ASSUMPTION, "evidence_kind": "rule_check",
+            "service_link_before": record.get("service_link_before"),
+            "service_link_after": record.get("service_link_after"), "cases": []}
+@@ -239,12 +255,13 @@
+     if err:
+         out["cases"] = [_result(c["id"], "LOI_PHEP_DO", f"LỖI PHÉP ĐO ({err})") for c in record.get("cases", [])]
+         return out
+-    link_after = bool((record.get("service_link_after") or {}).get("ok"))
++    # 06B-4ER: both links are judged from the record itself, never only from the "skipped" marker.
++    link_before, link_after = link_ok(record.get("service_link_before")), link_ok(record.get("service_link_after"))
+     for crec in record.get("cases", []):
+         if crec.get("id") not in cases:
+             out["cases"].append(_result(str(crec.get("id")), "LOI_PHEP_DO", "LỖI PHÉP ĐO (unknown case id)"))
+             continue
+-        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, link_after, guard))
++        out["cases"].append(evaluate_case(frames, reads, cases[crec["id"]], crec, link_after, guard, link_before))
+     return out
+ 
+ 
+--- base-06b4e/selftest_icmp.py	2026-10-08 05:22:09.934766108 +0000
++++ selftest_icmp.py	2026-10-08 05:31:00.769353084 +0000
+@@ -6,7 +6,9 @@
+ """
+ import contextlib
+ import io
++import ipaddress
+ import json
++import struct
+ import os
+ import sys
+ import tempfile
+@@ -45,9 +47,20 @@
+         return [B.eth(DMAC[c["dst"]], GUEST, 0x0800, B.ipv4(S.GUEST_IP, c["dst"], 1, B.icmp(c["size"])))] * n
+     if cid == "T13-I1":
+         return [B.eth("33:33:00:00:00:01", GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, "ff02::1", 58, B.icmp6(c["size"])))] * n
+-    grp = c["ns_group"]
+-    mac = "33:33:" + ":".join(f"{b:02x}" for b in __import__("ipaddress").IPv6Address(grp).packed[12:])
+-    return [B.eth(mac, GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, grp, 58, B.icmp6(16, typ=135)))] * n
++    return [ns_frame(c["dst"])] * n
++
++
++def ns_frame(target, group=None, with_target=True, smac=GUEST):
++    """06B-4ER: a well-formed Neighbor Solicitation (RFC 4861 §4.3): type 135, code 0, checksum (left 0:
++    not verified by the decoder), 4 reserved bytes, the 16-byte target, then a source link-layer address
++    option (type 1, length 1 = 8 bytes, MAC). Sent to the target's solicited-node group unless `group`."""
++    tgt = ipaddress.IPv6Address(target)
++    grp = group or I.solicited_node(str(tgt))
++    body = struct.pack("!BBHI", 135, 0, 0, 0)
++    if with_target:
++        body += tgt.packed + bytes([1, 1]) + B.mac(smac)
++    mac = "33:33:" + ":".join(f"{b:02x}" for b in ipaddress.IPv6Address(grp).packed[12:])
++    return B.eth(mac, smac, 0x86DD, B.ipv6(S.GUEST_LL6, grp, 58, body))
+ 
+ 
+ def dhcp():
+@@ -191,6 +204,89 @@
+           one(tmp, "k-othersize", "T12-B2", spaced([bg_icmp("T12-B2")]), {"drop_bcast_mcast": 1})[1]))
+ 
+ 
++def sec_N(tmp):
++    c = CASES["T13-I2"]
++    tap_ll = ipaddress.IPv6Address(c["dst"])
++    # same low 24 bits -> same solicited-node group, different address
++    other = str(ipaddress.IPv6Address(int(tap_ll) ^ (0xABCD << 64)))
++    t("N0 the 'other' target shares the solicited-node group of the case target",
++      lambda: other != c["dst"] and I.solicited_node(other) == c["ns_group"])
++    t("N1 decode: ns_target of a well-formed NS is the target address",
++      lambda: B.L.decode(1.0, ns_frame(c["dst"]))["ip6"]["ns_target"] == c["dst"])
++    t("N2 decode: NS without the target bytes -> ns_target None",
++      lambda: B.L.decode(1.0, ns_frame(c["dst"], with_target=False))["ip6"]["ns_target"] is None)
++    padded = ns_frame(c["dst"], with_target=False) + ipaddress.IPv6Address(c["dst"]).packed + b"\0" * 8
++    t("N10 decode: NS whose IPv6 payload ends before the target, followed by trailing bytes -> ns_target None",
++      lambda: B.L.decode(1.0, padded)["ip6"]["ns_target"] is None and B.L.decode(1.0, padded)["ip6"]["plen"] == 8)
++    t("N3 NS with the right target -> probe frames counted, ĐẠT (kiểm quy tắc)",
++      lambda: (lambda r: r["category"] == "DAT_KIEM_QUY_TAC" and r["probe_frames"] == 3)(
++          one(tmp, "n-ok", "T13-I2", spaced([ns_frame(c["dst"])] * 3), {"l2_bad_ethertype": 3})[1]))
++    t("N4 NS to the same group but another target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI" and r["probe_frames"] == 0)(
++          one(tmp, "n-other", "T13-I2", spaced([ns_frame(other, group=c["ns_group"])] * 3), {"l2_bad_ethertype": 3})[1]))
++    t("N5 NS without a target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(
++          one(tmp, "n-notgt", "T13-I2", spaced([ns_frame(c["dst"], with_target=False)] * 3), {"l2_bad_ethertype": 3})[1]))
++    old = B.eth("33:33:" + ":".join(f"{b:02x}" for b in ipaddress.IPv6Address(c["ns_group"]).packed[12:]), GUEST, 0x86DD,
++                B.ipv6(S.GUEST_LL6, c["ns_group"], 58, B.icmp6(16, typ=135)))
++    t("N6 the 06B-4E fixture (target bytes cdcd...) is NOT a probe",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(
++          one(tmp, "n-cdcd", "T13-I2", spaced([old] * 3), {"l2_bad_ethertype": 3})[1]))
++    mld = B.eth("33:33:00:00:00:16", GUEST, 0x86DD, B.ipv6(S.GUEST_LL6, "ff02::16", 58, B.icmp6(20, typ=143)))
++    t("N7 background IPv6 (MLD report) only -> KHÔNG TẠO ĐƯỢC GÓI, never a probe",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(
++          one(tmp, "n-mld", "T13-I2", spaced([mld] * 2), {"l2_bad_ethertype": 2})[1]))
++    t("N8 right-target NS sent to the wrong multicast group is NOT a probe",
++      lambda: (lambda r: r["category"] == "KHONG_TAO_DUOC_GOI")(
++          one(tmp, "n-grp", "T13-I2", spaced([ns_frame(c["dst"], group="ff02::1")] * 3), {"l2_bad_ethertype": 3})[1]))
++    t("N9 mixed: 3 real probe NS + other-target NS + MLD -> only the 3 counted, ĐẠT (kiểm quy tắc)",
++      lambda: (lambda r: r["category"] == "DAT_KIEM_QUY_TAC" and r["probe_frames"] == 3)(
++          one(tmp, "n-mix", "T13-I2", spaced([ns_frame(c["dst"])] * 3 + [ns_frame(other, group=c["ns_group"]), mld]),
++              {"l2_bad_ethertype": 5})[1]))
++
++
++def link_case(tmp, name, before, frames=None, inc=None):
++    pc, cf, rec = scenario(tmp, name, [("T12-B1", frames if frames is not None else spaced(probe_frames("T12-B1")),
++                                        inc if inc is not None else {"drop_bcast_mcast": 3}, OK_EXEC)])
++    if before == "absent":
++        del rec["service_link_before"]
++    else:
++        rec["service_link_before"] = before
++    return pc, cf, rec
++
++
++def sec_B(tmp):
++    for name, before in (("B1 ok=False", {"ok": False, "detail": "HTTP 000"}), ("B2 state missing", "absent"),
++                         ("B3 state null", None), ("B4 ok is the string 'true'", {"ok": "true"}),
++                         ("B5 ok is 1", {"ok": 1}), ("B6 state is a list", [True]), ("B7 ok key missing", {"detail": "200"})):
++        t(f"{name}, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT",
++          lambda before=before, name=name: (lambda res: res["cases"][0]["category"] == "CHUA_KIEM_CHUNG"
++              and "trước nhóm" in res["cases"][0]["verdict"])(
++              I.evaluate_group(*link_case(tmp, "b-" + name[:2], before)[:2], TAP, link_case(tmp, "b-" + name[:2], before)[2])))
++    t("B8 link before ok=True -> ĐẠT (kiểm quy tắc) still possible",
++      lambda: (lambda a: I.evaluate_group(a[0], a[1], TAP, a[2])["cases"][0]["category"] == "DAT_KIEM_QUY_TAC")(
++          link_case(tmp, "b-ok", {"ok": True, "detail": "200"})))
++    t("B9 link before failed but the counters prove a mismatch -> FAIL is still reported",
++      lambda: (lambda a: I.evaluate_group(a[0], a[1], TAP, a[2])["cases"][0]["category"] == "FAIL")(
++          link_case(tmp, "b-fail", {"ok": False}, inc={"drop_bcast_mcast": 1})))
++    t("B10 link before failed and a reply reaches the guest -> FAIL",
++      lambda: (lambda a: I.evaluate_group(a[0], a[1], TAP, a[2])["cases"][0]["category"] == "FAIL")(
++          link_case(tmp, "b-reply", {"ok": False}, frames=spaced(probe_frames("T12-B1") + [reply_to_guest()]))))
++
++    def cli(name, before):
++        pc, cf, rec = link_case(tmp, name, before)
++        rp, out = os.path.join(tmp, name + "-rec.json"), os.path.join(tmp, name + "-out.json")
++        json.dump(rec, open(rp, "w"))
++        with contextlib.redirect_stdout(io.StringIO()):
++            rc = I.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp, "--out", out])
++        return rc, json.load(open(out))
++    t("B11 CLI: link before ok=False -> exit 4, case CHƯA KIỂM CHỨNG",
++      lambda: (lambda r: r[0] == 4 and r[1]["cases"][0]["category"] == "CHUA_KIEM_CHUNG")(cli("b-cli1", {"ok": False})))
++    t("B12 CLI: link before state missing -> exit 4", lambda: cli("b-cli2", "absent")[0] == 4)
++    t("B13 evaluate_group: 'cases' not a list -> ValueError (CLI exit 2)",
++      lambda: _raises(ValueError, lambda: I.evaluate_group("x", "y", TAP, {"cases": "T12-B1"})))
++
++
+ def sec_E(tmp):
+     t("E1 console error during the ping -> LỖI THỰC THI (not ĐẠT even if counters match)",
+       lambda: (lambda r: r["category"] == "LOI_THUC_THI" and not r["ok"])(one(tmp, "e-exc", "T12-B1", spaced(probe_frames("T12-B1")), {"drop_bcast_mcast": 3},
+@@ -336,7 +432,8 @@
+     jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
+     with tempfile.TemporaryDirectory(prefix="selftest-icmp.") as tmp:
+         for name, fn in (("D", sec_D), ("P", lambda: sec_P(tmp)), ("F", lambda: sec_F(tmp)), ("U", lambda: sec_U(tmp)),
+-                         ("K", lambda: sec_K(tmp)), ("K2", lambda: sec_K2(tmp)), ("E", lambda: sec_E(tmp)), ("M", lambda: sec_M(tmp)),
++                         ("K", lambda: sec_K(tmp)), ("K2", lambda: sec_K2(tmp)),
++                         ("N", lambda: sec_N(tmp)), ("B", lambda: sec_B(tmp)), ("E", lambda: sec_E(tmp)), ("M", lambda: sec_M(tmp)),
+                          ("L", lambda: sec_L(tmp)), ("R", lambda: sec_R(tmp)), ("C", lambda: sec_C(tmp))):
+             print(f"== section {name}")
+             try:
+--- base-06b4e/mutation_icmp.py	2026-10-08 05:22:09.934766108 +0000
++++ mutation_icmp.py	2026-10-08 05:31:19.154418754 +0000
+@@ -34,8 +34,8 @@
+      "R3 link before fails -> no ping is run, group skipped"),
+     ("C12", [('            if rc == 127 or "not found" in (out or ""):', '            if False:')],
+      "R6 rc 127 -> 'tool missing' execution error"),
+-    ("C13", [('    return bool(case.get("ns_group")) and v6.get("icmp6_type") == 135 and v6.get("dst") == case["ns_group"]',
+-              '    return False')], "P T13-I2: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only"),
++    ("C13", [('    return (bool(case.get("ns_group")) and v6.get("icmp6_type") == 135', '    return (False and v6.get("icmp6_type") == 135')],   # 06B-4ER: line moved
++     "P T13-I2: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only"),
+     ("C14", [('and ip.get("proto") == 1 and ip.get("tot_len") == case["size"] + 28)', 'and ip.get("proto") == 1)')],
+      "K4 an ICMP echo to the same destination with another size is NOT a probe frame -> KHÔNG TẠO ĐƯỢC GÓI"),
+     ("C15", [('    if record.get("skipped"):', '    if False:')],
+@@ -48,6 +48,30 @@
+     ("C18", [('    for cat, code in (("FAIL", 1), ("LOI_PHEP_DO", 2)):', '    for cat, code in (("LOI_PHEP_DO", 2), ("FAIL", 1)):')],
+      "L6 group exit: FAIL wins over a measurement error in the same group (FAIL > LỖI PHÉP ĐO)"),
+     ("C19", [('        raise ValueError(f"bad interface name {iface!r}")', '        pass')], "D7 bad interface name refused"),
++    # ---- 06B-4ER
++    ("C20", [('    if not link_before_ok:\n        return _result', '    if False:\n        return _result')],
++     "B1 ok=False, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT"),
++    ("C21", [('    return isinstance(state, dict) and state.get("ok") is True', '    return isinstance(state, dict) and bool(state.get("ok"))')],
++     "B4 ok is the string 'true', cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT"),
++    ("C22", [('    return isinstance(state, dict) and state.get("ok") is True', '    return state is not None and state.get("ok") is True')],
++     "B6 state is a list, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT"),
++    ("C23", [('            and v6.get("ns_target") == case["dst"] and v6.get("dst") == case["ns_group"])',
++              '            and v6.get("dst") == case["ns_group"])')],
++     "N4 NS to the same group but another target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI"),
++    ("C24", [('            and v6.get("ns_target") == case["dst"] and v6.get("dst") == case["ns_group"])',
++              '            and v6.get("ns_target") == case["dst"])')],
++     "N8 right-target NS sent to the wrong multicast group is NOT a probe"),
++    ("C25", [("    if not isinstance(record, dict) or not isinstance(record.get(\"cases\", []), list) or \\\n",
++              "    if False and \\\n")],
++     "B13 evaluate_group: 'cases' not a list -> ValueError (CLI exit 2)"),
++    ("C26", [('    link_before, link_after = link_ok(record.get("service_link_before")), link_ok(record.get("service_link_after"))',
++              '    link_before, link_after = not record.get("skipped"), link_ok(record.get("service_link_after"))')],
++     "B1 ok=False, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT"),
++    ("C27", [('str(ipaddress.IPv6Address(p[48:64])) if len(p) >= 64 and plen >= 24 else None',
++              'str(ipaddress.IPv6Address(p[40:56])) if len(p) >= 64 and plen >= 24 else None')],
++     "N1 decode: ns_target of a well-formed NS is the target address", "l2frames.py"),
++    ("C28", [('if len(p) >= 64 and plen >= 24 else None', 'if len(p) >= 64 else None')],
++     "N10 decode: NS whose IPv6 payload ends before the target, followed by trailing bytes -> ns_target None", "l2frames.py"),
+     ("X1", [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", [("import argparse\n", "import argparse(\n")], None),
+ ]
+@@ -84,13 +108,15 @@
+             print("BASELINE FAILED", err or [k for k, v in base.items() if not v])
+             return 2
+         print(f"baseline: {len(base)}/{len(base)} tests pass")
+-        for mid, reps, target in M:
++        for entry in M:
++            mid, reps, target = entry[:3]
++            fname = entry[3] if len(entry) > 3 else "icmp_cases.py"
+             if target is not None and target not in base:
+                 print(f"BAD-TARGET {mid}: {target!r}")
+                 bad += 1
+                 continue
+             d = copy()
+-            src = open(os.path.join(d, "icmp_cases.py")).read()
++            src = open(os.path.join(d, fname)).read()
+             klass, failed = None, []
+             for old, new in reps:
+                 if src.count(old) != 1:
+@@ -98,7 +124,7 @@
+                     break
+                 src = src.replace(old, new)
+             if klass is None:
+-                open(os.path.join(d, "icmp_cases.py"), "w").write(src)
++                open(os.path.join(d, fname), "w").write(src)
+                 res, err = suite(d)
+                 if res is None:
+                     klass = "ERROR"

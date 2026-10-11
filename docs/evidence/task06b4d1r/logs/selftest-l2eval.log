@@ -1,0 +1,82 @@
+== section S
+[PASS] S1 PASS: every class equals its certain frames
+[PASS] S2 PASS: per-class certain counts and deltas in the JSON
+[PASS] S3 frames counted by direction/class inside the window; the outside frame is counted apart
+[PASS] S4 not-compared counters listed with delta and reason (unobservable ones named)
+[PASS] S5 reasons say why it passed
+[PASS] S6 input hashes and the unmeasured-guard assumption recorded
+[PASS] S7 FAIL: counter delta above the frames (arp_in_ok 2 vs 1 frame)
+[PASS] S8 FAIL: frame present, counter did not move (arp_in_ok 0 vs 1 frame)
+[PASS] S9 UNVERIFIED: an edge frame makes drop_public undecidable
+[PASS] S10 UNVERIFIED: a frame without a counter mapping inside the window, listed
+[PASS] S11 UNVERIFIED: an ARP frame that never reaches the hook (OTHERHOST) is not counted under a counter
+[PASS] S12 class subset: only the chosen classes compared, the others listed as not compared
+== section X
+[PASS] X1 missing capture -> ERROR (capture read error), not 0 frames
+[PASS] X2 file cut inside a block -> ERROR
+[PASS] X3 empty capture file -> ERROR
+[PASS] X4 captured > original length -> ERROR
+[PASS] X5 malformed TAP MAC -> ERROR (invalid argument)
+[PASS] X6 frames cut by snaplen are never counted under a counter class -> UNVERIFIED
+== section M
+[PASS] M1 read label 'B' missing -> ERROR from the measurement-data check
+[PASS] M2 duplicate label -> ERROR from the measurement-data check
+[PASS] M3 malformed JSON line -> ERROR from the measurement-data check
+[PASS] M4 raw nft output not JSON -> ERROR from the measurement-data check
+[PASS] M5 read time not finite -> ERROR from the measurement-data check
+[PASS] M6 counter packets is a bool -> ERROR from the measurement-data check
+[PASS] M7 counter packets negative -> ERROR from the measurement-data check
+[PASS] M8 read without any counter -> ERROR from the measurement-data check
+[PASS] M9 compared counter missing in read B (never 0) -> ERROR from the measurement-data check
+[PASS] M10 counter decreased -> ERROR from the measurement-data check
+[PASS] M11 reads out of order (B before A) -> ERROR from the measurement-data check
+[PASS] M15 bool in a NOT compared counter -> ERROR (would otherwise become a numeric delta)
+[PASS] M16 a counter listed twice in one read -> ERROR
+[PASS] M12 comparing an unobservable counter (arp_out_drop) -> ERROR
+[PASS] M13 a NOT compared counter missing in one read is reported missing (delta null), never 0
+[PASS] M14 an unknown class name -> ERROR
+== section C
+[PASS] C1 PASS -> exit 0, JSON written
+[PASS] C2 FAIL -> exit 1
+[PASS] C3 ERROR -> exit 2, JSON still written with the error
+[PASS] C4 UNVERIFIED -> exit 4
+[PASS] C5 missing arguments -> exit 2
+[PASS] C6 --classes "" -> exit 2, JSON written with the reason
+[PASS] C7 --classes "a,,b" (empty name) -> exit 2, not filtered
+[PASS] C8 --classes with a duplicate -> exit 2
+[PASS] C9 --classes valid subset -> exit 0, only those classes compared
+== section N
+[PASS] N1 classes=[] -> ERROR (nothing compared is never PASS)
+[PASS] N2 duplicate class name -> ERROR
+[PASS] N3 empty class name -> ERROR
+[PASS] N4 unobservable class (arp_out_drop) -> ERROR before reading anything
+[PASS] N5 classes given as a string -> ERROR
+[PASS] N6 non-string class name -> ERROR
+[PASS] N7 a valid subset (tuple) is still accepted
+== section J
+[PASS] J1 nftables=[{counter: null}] -> ERROR with reason (evaluate)
+[PASS] J2 nftables=null -> ERROR with reason (evaluate)
+[PASS] J3 nftables=[{counter: []}] -> ERROR with reason (evaluate)
+[PASS] J4 nft output is a list -> ERROR with reason (evaluate)
+[PASS] J5 nft output without nftables -> ERROR with reason (evaluate)
+[PASS] J6 a non-object element among valid counters (not skipped) -> ERROR with reason (evaluate)
+[PASS] J7 counter without packets -> ERROR with reason (evaluate)
+[PASS] J8 counter name not a string -> ERROR with reason (evaluate)
+[PASS] J12 counter name empty -> ERROR with reason (evaluate)
+[PASS] J9 record line is a JSON list -> ERROR with reason (evaluate)
+[PASS] J10 record without raw -> ERROR with reason (evaluate)
+[PASS] J11 raw is an object, not text -> ERROR with reason (evaluate)
+[PASS] J1-CLI exit 2 and JSON written with the reason
+[PASS] J2-CLI exit 2 and JSON written with the reason
+[PASS] J3-CLI exit 2 and JSON written with the reason
+== section R
+[PASS] R0 TAP_MAC read from the 06B-4C netns record
+[PASS] R1 ARM: session window, 9 legacy classes -> PASS as in session.json, same certain counts
+[PASS] R2 ARM: session window, 13 frame-mapped classes (ARP added) -> PASS, ARP frames = ARP deltas
+[PASS] R3 ARM: per probe, 9 legacy classes: reconciliation verdict equals matrix.json
+      ARM per probe (observation): internet-tcp=PASS, lan-dns-udp=PASS, lan-dns-tcp=PASS, ssh-host-192.168.60.1=PASS, ssh-host-192.168.177.128=PASS, ssh-host-172.18.0.1=PASS, manager=PASS, mongodb=PASS, worker-eth0=PASS, tap0-other-port-listener=PASS
+[PASS] R1 MIPS: session window, 9 legacy classes -> PASS as in session.json, same certain counts
+[PASS] R2 MIPS: session window, 13 frame-mapped classes (ARP added) -> PASS, ARP frames = ARP deltas
+[PASS] R3 MIPS: per probe, 9 legacy classes: reconciliation verdict equals matrix.json
+      MIPS per probe (observation): internet-tcp=PASS, lan-dns-udp=UNVERIFIED, lan-dns-tcp=PASS, ssh-host-192.168.60.1=PASS, ssh-host-192.168.177.128=PASS, ssh-host-172.18.0.1=PASS, manager=PASS, mongodb=PASS, worker-eth0=PASS, tap0-other-port-listener=PASS
+SELFTEST-L2EVAL: 72/72 passed

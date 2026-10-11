@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/dathq/projects/ct01-06b4ir3-work/after/control-fragments.py", line 40, in <module>
+    for v in ['arm-fail','arm-restore-fail','after-arm-verify-fail']:assert out[v]['architectures_sent']==['ARM','MIPS']
+                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

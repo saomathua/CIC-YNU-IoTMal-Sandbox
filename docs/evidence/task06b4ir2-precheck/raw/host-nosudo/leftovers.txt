@@ -1,0 +1,2 @@
+ls: cannot access '/home/dathq/projects/ct01-06b4ir2/out': No such file or directory
+ls: cannot access '/tmp/ct01-06b3b-cap.*': No such file or directory

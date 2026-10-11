@@ -1,0 +1,3 @@
+echo @@B6; cat /etc/resolv.conf; echo @@E6 rc=$?
+@@B6
+nameserver 8.8.8.8

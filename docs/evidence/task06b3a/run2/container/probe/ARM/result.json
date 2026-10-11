@@ -1,0 +1,323 @@
+{
+ "status": "COMPLETED",
+ "results": [
+  {
+   "arch": "ARM",
+   "test": "fresh guest image extracted",
+   "ok": true,
+   "zip": "./ARM/image.zip",
+   "rootfs_sha256": "1caa6fd8bdb98fa7606fc198ad93ed61d239396199ce10e0df53b590201b2b27"
+  },
+  {
+   "arch": "ARM",
+   "test": "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "tshark capturing on tap0",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "guest booted to shell",
+   "ok": true,
+   "seconds": 6.0,
+   "qemu_pid": 105
+  },
+  {
+   "arch": "ARM",
+   "test": "guest network configured by Analysis._configure_network",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "QEMU info network: only tap0 backend, no user/slirp/socket",
+   "ok": true,
+   "problems": [],
+   "backends": [
+    "nic",
+    "tap"
+   ]
+  },
+  {
+   "arch": "ARM",
+   "test": "guest has 10.200.0.2/30 on eth1",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "guest default route via 10.200.0.1 on eth1",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "a guest NIC carries the pinned MAC 52:54:00:c7:00:02",
+   "ok": true,
+   "interfaces": [
+    "eth1"
+   ],
+   "all_macs": {
+    "br-lan": "52:54:00:12:34:56",
+    "eth0": "52:54:00:12:34:56",
+    "eth1": "52:54:00:c7:00:02",
+    "lo": "00:00:00:00:00:00"
+   }
+  },
+  {
+   "arch": "ARM",
+   "test": "harmless dummy upload file created in guest",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "no current_task: GET get-task/06b3a-arm-task/file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "no current_task: POST update-task/06b3a-arm-task/strace -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "no current_task: POST update-task/06b3a-arm-task/sar -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "no current_task: nothing written",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "GET get-task/T/file -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "ARM",
+   "test": "downloaded file hash (computed in guest) == fixture",
+   "ok": true,
+   "guest": "d9d5786a4bc731991de4c22d90cdce66d993e3e914b630d50b7f8d69014c656e",
+   "expected": "d9d5786a4bc731991de4c22d90cdce66d993e3e914b630d50b7f8d69014c656e"
+  },
+  {
+   "arch": "ARM",
+   "test": "POST update-task/T/strace -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "ARM",
+   "test": "received strace.log hash == payload",
+   "ok": true,
+   "got": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611",
+   "expected": "e4d8c2c70212537b599f237be47f0d9062b8817f33c7a960f891616c8042c611"
+  },
+  {
+   "arch": "ARM",
+   "test": "POST update-task/T/sar -> 200",
+   "ok": true,
+   "status": 200
+  },
+  {
+   "arch": "ARM",
+   "test": "received sar.out hash == payload",
+   "ok": true,
+   "got": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401",
+   "expected": "91a0d0c70a1fce1ba54babb21b5e5bc0b8e4a8768c3337bc5320297fe1452401"
+  },
+  {
+   "arch": "ARM",
+   "test": "forbidden: GET /healthcheck -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "forbidden: POST /stop -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "forbidden: GET other task file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "forbidden: POST other task strace -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "no stop file created",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "no task created / other task not written",
+   "ok": true,
+   "data_dir": [
+    "06b3a-arm-other",
+    "06b3a-arm-task"
+   ]
+  },
+  {
+   "arch": "ARM",
+   "test": "after clearing current_task: GET get-task/T/file -> 403",
+   "ok": true,
+   "status": 403
+  },
+  {
+   "arch": "ARM",
+   "test": "QEMU exit confirmed (shutdown_qemu)",
+   "ok": true,
+   "exitstatus": 0,
+   "signalstatus": null
+  },
+  {
+   "arch": "ARM",
+   "test": "tshark capture stopped",
+   "ok": true,
+   "returncode": 0
+  },
+  {
+   "arch": "ARM",
+   "test": "fixtures, marker and temporary guest disk removed",
+   "ok": true
+  },
+  {
+   "arch": "ARM",
+   "test": "capture: guest frames seen on tap0",
+   "ok": true,
+   "frames_from_guest": 97
+  },
+  {
+   "arch": "ARM",
+   "test": "group 1-no-current-task: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 22,
+   "pcap": 22
+  },
+  {
+   "arch": "ARM",
+   "test": "group 2-download: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 7,
+   "pcap": 7
+  },
+  {
+   "arch": "ARM",
+   "test": "group 3-upload: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 16,
+   "pcap": 16
+  },
+  {
+   "arch": "ARM",
+   "test": "group 4-forbidden: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 28,
+   "pcap": 28
+  },
+  {
+   "arch": "ARM",
+   "test": "group 5-after-clear: allow_svc delta == pcap guest->10.200.0.1:8011 packets",
+   "ok": true,
+   "allow_svc": 7,
+   "pcap": 7
+  },
+  {
+   "arch": "ARM",
+   "test": "info: guest IP packets to destinations other than 10.200.0.1 (not probed in 06B-3A)",
+   "ok": true,
+   "count": 7
+  }
+ ],
+ "groups": [
+  {
+   "group": "1-no-current-task",
+   "t0": 1791297597.5066352,
+   "t1": 1791297598.621387,
+   "counter_delta": {
+    "sandbox_guest_l2.l2_bad_ethertype": 1,
+    "sandbox_guest_arp.arp_in_ok": 1,
+    "sandbox_guest_arp.arp_out_ok": 1,
+    "sandbox_guest.allow_svc": 22,
+    "sandbox_guest.drop_spoof": 1,
+    "sandbox_guest.allow_out_svc": 16
+   },
+   "pcap_guest_to_svc": 22
+  },
+  {
+   "group": "2-download",
+   "t0": 1791297598.634031,
+   "t1": 1791297599.3970623,
+   "counter_delta": {
+    "sandbox_guest_l2.l2_bad_ethertype": 1,
+    "sandbox_guest.allow_svc": 7,
+    "sandbox_guest.allow_out_svc": 5
+   },
+   "pcap_guest_to_svc": 7
+  },
+  {
+   "group": "3-upload",
+   "t0": 1791297599.4075496,
+   "t1": 1791297600.5016158,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 16,
+    "sandbox_guest.drop_public": 2,
+    "sandbox_guest.allow_out_svc": 12
+   },
+   "pcap_guest_to_svc": 16
+  },
+  {
+   "group": "4-forbidden",
+   "t0": 1791297600.513043,
+   "t1": 1791297601.723277,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 28,
+    "sandbox_guest.drop_spoof": 1,
+    "sandbox_guest.allow_out_svc": 20
+   },
+   "pcap_guest_to_svc": 28
+  },
+  {
+   "group": "5-after-clear",
+   "t0": 1791297601.7475965,
+   "t1": 1791297602.367467,
+   "counter_delta": {
+    "sandbox_guest.allow_svc": 7,
+    "sandbox_guest.drop_public": 2,
+    "sandbox_guest.allow_out_svc": 5
+   },
+   "pcap_guest_to_svc": 7
+  }
+ ],
+ "counters_at_boot": {
+  "sandbox_guest_l2.l2_bad_mac": 0,
+  "sandbox_guest_l2.l2_bad_ethertype": 0,
+  "sandbox_guest_arp.arp_in_ok": 0,
+  "sandbox_guest_arp.arp_in_drop": 0,
+  "sandbox_guest_arp.arp_out_ok": 0,
+  "sandbox_guest_arp.arp_out_drop": 0,
+  "sandbox_guest.allow_svc": 0,
+  "sandbox_guest.drop_spoof": 0,
+  "sandbox_guest.drop_non_ipv4": 0,
+  "sandbox_guest.drop_worker_other": 0,
+  "sandbox_guest.drop_private": 0,
+  "sandbox_guest.drop_bcast_mcast": 0,
+  "sandbox_guest.drop_public": 0,
+  "sandbox_guest.drop_input_backstop": 0,
+  "sandbox_guest.drop_forward": 0,
+  "sandbox_guest.allow_out_svc": 0,
+  "sandbox_guest.drop_out": 0
+ }
+}

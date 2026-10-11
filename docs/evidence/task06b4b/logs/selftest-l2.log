@@ -1,0 +1,179 @@
+== section A
+[PASS] A1 registry check() reports no problem
+[PASS] A2 every new probe port is outside the Linux ephemeral range
+[PASS] A3 plan ports T17-P1..P4 present and unique
+[PASS] A4 GUEST_LL6 is the EUI-64 address of the guest MAC
+[PASS] A5 check() catches a probe port inside the ephemeral range
+[PASS] A6 check() catches a duplicate ICMP size
+[PASS] A7 alert_any filter compiles on LINUX_SLL2 (tcpdump -i any)
+[PASS] A8 alert_eth filter compiles on Ethernet (veth)
+[PASS] A9 alert_eth filter does NOT compile on LINUX_SLL2 (why there are two alerts)
+[PASS] A10 alert_eth matches every Ethernet positive fixture
+[PASS] A11 alert_eth matches no negative fixture (incl. 06B-3G ctl port 42172)
+[PASS] A12 alert_any matches every network-layer positive on LINUX_SLL2
+[PASS] A14 alert_any does not match the MAC-only positives (the reason for the veth alert)
+[PASS] A13 alert_any matches no negative on LINUX_SLL2
+== section B
+[PASS] B1 pcap little-endian: frames and times
+[PASS] B2 pcap big-endian
+[PASS] B3 pcap nanosecond magic
+[PASS] B4 pcapng default microsecond resolution
+[PASS] B5 pcapng if_tsresol 9 (nanoseconds)
+[PASS] B6 pcapng big-endian section
+[PASS] B7 pcapng two sections
+[PASS] B8 empty file is a read error
+[PASS] B9 unknown magic is a read error
+[PASS] B10 truncated pcap record is a read error
+[PASS] B11 truncated pcapng block is a read error
+[PASS] B12 pcapng block trailer mismatch is a read error
+[PASS] B13 EPB for an undefined interface is a read error
+[PASS] B14 simple packet block (no timestamp) is a read error
+[PASS] B15 pcapng non-Ethernet interface is a read error
+[PASS] B16 pcap non-Ethernet link type is a read error
+[PASS] B17 missing file is a read error
+== section D
+[PASS] D1 guest frame -> guest
+[PASS] D2 chosen spoof MAC -> l2_bad_mac (any ethertype)
+[PASS] D3 TAP_MAC source -> worker direction
+[PASS] D4 other source MAC -> unknown_src / unmapped (never l2_bad_mac)
+[PASS] D5 TAP_MAC equal to the guest MAC is refused
+[PASS] D6 malformed TAP_MAC is refused
+[PASS] D7 frame shorter than Ethernet header -> unmapped
+[PASS] D8 IPv6 from guest -> l2_bad_ethertype (IPv6 recognised)
+[PASS] D9 LLDP from guest -> l2_bad_ethertype
+[PASS] D10 802.3 length field -> l2_bad_ethertype
+[PASS] D11 VLAN-tagged -> unmapped (not claimed)
+[PASS] D12 IPv6 decode: plen, next header, ICMPv6 type
+[PASS] D13 ARP request guest -> 10.200.0.1, broadcast -> arp_in_ok
+[PASS] D14 ARP reply to TAP_MAC -> arp_in_ok
+[PASS] D15 ARP target 192.168.60.2 -> arp_in_drop
+[PASS] D16 gratuitous (spa = tpa = 10.200.0.2) -> arp_in_drop
+[PASS] D17 spoofed sender IP 10.200.0.1 -> arp_in_drop
+[PASS] D18 sender MAC field differs from guest -> arp_in_drop
+[PASS] D19 opcode 3 -> arp_in_drop
+[PASS] D20 htype 6 -> arp_in_drop
+[PASS] D21 ptype 0x86dd -> arp_in_drop
+[PASS] D22 ARP to another unicast MAC (OTHERHOST) -> arp_not_hooked
+[PASS] D23 ARP to a multicast MAC is hooked
+[PASS] D24 ARP hlen 8 -> arp_not_hooked
+[PASS] D25 ARP plen 16 -> arp_not_hooked
+[PASS] D26 ARP payload shorter than 28 bytes -> arp_not_hooked
+[PASS] D27 ARP payload shorter than 8 bytes -> arp_not_hooked
+[PASS] D28 spoofed source wins over the allowed service -> drop_spoof
+[PASS] D29 tcp 10.200.0.1:8011 -> allow_svc
+[PASS] D30 udp 10.200.0.1:8011 -> drop_worker_other
+[PASS] D31 non-first fragment to 8011 -> drop_worker_other (no ports)
+[PASS] D32 subnet broadcast 10.200.0.3 -> drop_private
+[PASS] D33 255.255.255.255 -> drop_bcast_mcast
+[PASS] D34 224.0.0.1 -> drop_bcast_mcast
+[PASS] D35 DHCP 0.0.0.0 -> 255.255.255.255 -> drop_spoof
+[PASS] D36 192.168.60.10 -> drop_private
+[PASS] D37 1.1.1.1 -> drop_public
+[PASS] D38 IPv4 to another unicast MAC (OTHERHOST) -> ip_not_hooked
+[PASS] D39 IPv4 bad header checksum -> ip_not_hooked
+[PASS] D40 IPv4 total length beyond frame -> ip_not_hooked
+[PASS] D41 worker tcp sport 8011 -> allow_out_svc
+[PASS] D42 worker ICMP to guest -> worker_unexpected
+[PASS] D43 worker ARP outside the allow rule -> worker_unexpected
+[PASS] D44 every class produced is a counter class or a declared no-counter class
+== section E
+[PASS] E1 exact match -> PASS
+[PASS] E2 missing counter in read A -> ERROR, not 0
+[PASS] E3 missing counter in read B -> ERROR
+[PASS] E4 bool counter value -> ERROR
+[PASS] E5 counter decreased -> ERROR
+[PASS] E6 values missing entirely -> ERROR
+[PASS] E7 one frame too many -> FAIL
+[PASS] E8 edge frame -> UNVERIFIED
+[PASS] E9 not-hooked frame inside the window -> UNVERIFIED, listed
+[PASS] E10 unmapped frame inside the window -> UNVERIFIED
+[PASS] E11 no-counter frame outside the window does not count
+[PASS] E12 a real mismatch stays FAIL even with no-counter frames
+[PASS] E13 comparing an unobservable counter (arp_out_drop) -> ERROR even with the counter present
+[PASS] E14 invalid read times -> ERROR (counter_window.validate)
+[PASS] E15 worker_unexpected frame inside the window -> UNVERIFIED
+== section F
+[PASS] F1 live control alive + PASS -> ĐẠT
+[PASS] F2 live control dead -> CHƯA KIỂM CHỨNG
+[PASS] F3 rule check + PASS -> ĐẠT (kiểm quy tắc)
+[PASS] F4 rule check with a control value is refused
+[PASS] F5 live control without a bool is refused
+[PASS] F6 unknown control kind is refused
+[PASS] F7 rule check never hides a FAIL
+[PASS] F8 no-counter frames are named as the cause, not as an edge
+[PASS] F9 run_outcome counts ĐẠT (kiểm quy tắc) as passed
+== section G
+[PASS] G1 parse real busybox ip addr / ip route text
+[PASS] G2 /proc/net/arp: complete entry is dynamic, not static
+[PASS] G3 section with rc != 0 -> StateReadError
+[PASS] G4 missing section -> StateReadError
+[PASS] G5 bad interface name refused
+[PASS] G6 MAC change: restored, MAC back, default route re-added
+[PASS] G7 MAC change: lost dynamic neighbour is reported, not forced
+[PASS] G8 extra /32 address and on-link route removed
+[PASS] G9 static neighbour added by the probe is deleted
+[PASS] G10 pre-existing static neighbour flushed by link down is re-created
+[PASS] G11 pre-existing static neighbour with a changed MAC is set back
+[PASS] G12 arp_notify restored
+[PASS] G13 address added by netifd on link up is removed
+[PASS] G14 failed restore command -> restored False, MAC diff listed
+[PASS] G15 unreadable state during restore -> restored False, error kept
+[PASS] G16 GuestChange restores even when the probe raises
+[PASS] G17 nothing changed -> no command, restored
+== section H
+[PASS] H-pos frames = 8
+[PASS] H-pos guest_mac = 1
+[PASS] H-pos spoof_mac = 1
+[PASS] H-pos guest_net_ip = 2
+[PASS] H-pos arp_guest_sha = 1
+[PASS] H-pos arp_spoof_sha = 1
+[PASS] H-pos arp_guest_net = 2
+[PASS] H-pos arp_spoof_spa_manager = 1
+[PASS] H-pos ipv6_guest = 1
+[PASS] H-pos spoof_src_ip = 2
+[PASS] H-pos probe_port = 2
+[PASS] H-pos icmp_size = 2
+[PASS] H-pos probe_qname = 1
+[PASS] H-neg every signature key = 0 on look-alikes (06B-3G ctl port 42172, manager traffic, real manager ARP)
+[PASS] H6 shared spoofed source (192.168.60.10) is matched only with a probe SOURCE port
+[PASS] H1 --no-manager-mac reports the manager check as skipped, not 0
+[PASS] H2 empty file -> exit 2, nothing printed
+[PASS] H3 truncated file -> exit 2
+[PASS] H4 missing manager option -> usage error
+[PASS] H5 normal run -> exit 0 and one line per key
+== section I
+[PASS] I1 exactly one ens33 capture
+[PASS] I2 ens33 capture: snaplen and packet limit from the registry, no filter expression
+[PASS] I3 alert on any uses the registry filter
+[PASS] I4 Ethernet alert on the worker veth uses the registry filter
+[PASS] I5 no hard-coded alert filter left
+[PASS] I6 run script checks every sigscan_l2 key except frames
+[PASS] I7 harness path is the 06B-4B copy
+[PASS] I8 new modules are copied into the run evidence
+[PASS] I9 L2 self-test runs before anything touches a container
+[PASS] I10 ens33 packet limit reached is a failed check
+[PASS] I11 both alerts are listed as captures that must exit 0
+== section R
+[PASS] R0 TAP_MAC read from the 06B-3G netns record
+[PASS] R1 ARM: all 97 frames decoded
+[PASS] R2 ARM: time (within 1 us) and source MAC of every frame equal tcpdump's
+[PASS] R3 ARM: session window, 9 legacy classes: certain counts equal session.json
+[PASS] R4 ARM: session window, 13 frame-mapped classes (ARP and allow_out_svc added) -> PASS
+[PASS] R5 ARM: ARP frames equal the ARP counter deltas (arp_in_ok, arp_out_ok, arp_in_drop 0)
+[PASS] R6 ARM: per probe, 9 legacy classes: certain and edge frames equal matrix.json
+[PASS] R7 ARM: per probe verdicts equal matrix.json
+      ARM per-probe verdict with 13 classes (observation): [('internet-tcp', 'PASS'), ('lan-dns-udp', 'PASS'), ('lan-dns-tcp', 'PASS'), ('ssh-host-192.168.60.1', 'PASS'), ('ssh-host-192.168.177.128', 'PASS'), ('ssh-host-172.18.0.1', 'PASS'), ('manager', 'PASS'), ('mongodb', 'PASS'), ('worker-eth0', 'PASS'), ('tap0-other-port-listener', 'PASS')]
+[PASS] R1 MIPS: all 125 frames decoded
+[PASS] R2 MIPS: time (within 1 us) and source MAC of every frame equal tcpdump's
+[PASS] R3 MIPS: session window, 9 legacy classes: certain counts equal session.json
+[PASS] R4 MIPS: session window, 13 frame-mapped classes (ARP and allow_out_svc added) -> PASS
+[PASS] R5 MIPS: ARP frames equal the ARP counter deltas (arp_in_ok, arp_out_ok, arp_in_drop 0)
+[PASS] R6 MIPS: per probe, 9 legacy classes: certain and edge frames equal matrix.json
+[PASS] R7 MIPS: per probe verdicts equal matrix.json
+      MIPS per-probe verdict with 13 classes (observation): [('internet-tcp', 'PASS'), ('lan-dns-udp', 'PASS'), ('lan-dns-tcp', 'PASS'), ('ssh-host-192.168.60.1', 'UNVERIFIED'), ('ssh-host-192.168.177.128', 'PASS'), ('ssh-host-172.18.0.1', 'PASS'), ('manager', 'PASS'), ('mongodb', 'PASS'), ('worker-eth0', 'PASS'), ('tap0-other-port-listener', 'PASS')]
+[PASS] R8 veth.pcap (06B-3G): every sigscan_l2 signature = 0
+[PASS] R8 bridge.pcap (06B-3G): every sigscan_l2 signature = 0
+[PASS] R8 ens33.pcap (06B-3G): every sigscan_l2 signature = 0
+[PASS] R9 ARM tap0 (positive on real data): guest MAC, guest ARP and guest IPv6 found
+[PASS] R9 MIPS tap0 (positive on real data): guest MAC, guest ARP and guest IPv6 found
+SELFTEST-L2: 167/167 passed

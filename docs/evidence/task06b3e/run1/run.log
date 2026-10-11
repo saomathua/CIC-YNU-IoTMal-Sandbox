@@ -1,0 +1,330 @@
+f1d42562aac5f8b20a83cf535481acf3d700c4198fa0205af26cdbccf438b5a7  /home/dathq/projects/ct01-06b3c/out/harness-copy/counter_window.py
+4392b3974ca644abd4b229a40638cb32dd5d31159effb234ab06536dc7385340  /home/dathq/projects/ct01-06b3c/out/harness-copy/ctl_loop.py
+e148be6492d6a2a0f9117661f5efd1ec66c85665d66277366ca70763e850e071  /home/dathq/projects/ct01-06b3c/out/harness-copy/harness_lib.sh
+06852ac23d5e7b5526530afea8358b68b9e280411c1f7d9882a52a1ffe4b9f56  /home/dathq/projects/ct01-06b3c/out/harness-copy/independent_check.sh
+afb4d0157f982a43c46edb4f5990d60b81f7659a50d50ca1e4deec33ca6b29cf  /home/dathq/projects/ct01-06b3c/out/harness-copy/make_fixtures.py
+32e6653f2d2f93d9c16bfd013eea5dd8cde59e0fee58f192863e38cf77eea3bf  /home/dathq/projects/ct01-06b3c/out/harness-copy/mutation_test.sh
+c3d18072bc8b3b394c3c90de95b282b20cd0b97e391882da59caad486c3fcffd  /home/dathq/projects/ct01-06b3c/out/harness-copy/pcapng_stats.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b3c/out/harness-copy/poller.py
+7fefd40ca0dbd4de1cfe2d59e408f926cef19f2c70e60cafa98e53fc8c6a318f  /home/dathq/projects/ct01-06b3c/out/harness-copy/probe_matrix.py
+5227632f9293d631295216f8c5d50f937bd2c6fc619455805a62a72604f2f210  /home/dathq/projects/ct01-06b3c/out/harness-copy/run-06b3b.sh
+e07c93a67807e5a85bad793dcd8384fbbbec0066dc9eae7cc990ec8412b3e2e8  /home/dathq/projects/ct01-06b3c/out/harness-copy/selftest.sh
+f85f52115d4b4cfb4d491d27ad2ba0f81b0dd13a1bd758d28983f664ed78a74b  /home/dathq/projects/ct01-06b3c/out/harness-copy/sigscan.sh
+SELFTEST: ALL PASSED
+
+===== 1. preparation (05:33:22)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 13 hours ago
+mongo-db Up 2 hours
+sandboxnet=cic-ynu-iotmal-sandbox_sandboxnet bridge=br-1d86fe3e8bbe dbnet=cic-ynu-iotmal-sandbox_dbnet mongo=172.18.0.2 host-ips=192.168.60.1,192.168.177.128,172.18.0.1 lan-dns=192.168.177.2
+
+===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (05:33:23)
+manager before: state=exited id=494ae3d2e2eb startedAt=2026-10-06T16:42:05.519361312Z
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+manager started by this run (same container): will be stopped again
+[PASS] manager healthy (127.0.0.1:8011/healthcheck)
+manager: running ip=192.168.60.10
+
+===== 3. worker test container (05:33:24)
+worker test container: c34c3d7cd1a5a627172676515afa5bab5305110babc23ae321662f5d27bb7301
+[PASS] worker server ready
+[PASS] V0 passed
+worker eth0=192.168.60.2 host veth=veth554e592 (ifindex 9)
+[PASS] code and guest images in container equal working tree
+worker netns interfaces: eth0 lo tap0 
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+eth0@if9         UP             192.168.60.2/24 
+tap0             DOWN           10.200.0.1/30 
+default via 192.168.60.1 dev eth0 
+10.200.0.0/30 dev tap0 proto kernel scope link src 10.200.0.1 linkdown 
+192.168.60.0/24 dev eth0 proto kernel scope link src 192.168.60.2 
+[PASS] worker netns has exactly lo, eth0, tap0 (eth0 is the only way out besides tap0)
+
+===== 4. control container (sandboxnet + dbnet) (05:33:27)
+[PASS] control 'mongo 172.18.0.2:27017' alive
+[PASS] control 'worker-eth0 192.168.60.2:8011' alive
+[PASS] control 'manager 192.168.60.10:8011' alive
+
+===== 5. host captures on veth554e592, br-1d86fe3e8bbe, ens33 + leak alert (05:33:31)
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.0.13 30 Jan 2024
+capture dir: /tmp/ct01-06b3b-cap.BRDSb8
+[PASS] host tcpdump pid 157288 running
+[PASS] host tcpdump pid 157289 running
+[PASS] host tcpdump pid 157290 running
+[PASS] host tcpdump pid 157292 running
+[PASS] host capture veth: tcpdump reports listening
+[PASS] host capture bridge: tcpdump reports listening
+[PASS] host capture ens33: tcpdump reports listening
+[PASS] host capture veth.pcap being written
+[PASS] host capture bridge.pcap being written
+[PASS] capture watcher running with a fresh heartbeat
+capture watcher pid 157314 on veth:157288 bridge:157289 ens33:157290 alert:157292
+
+===== 6. guest ARM (05:33:34)
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+05:33:35 [PASS] ARM: host leak monitor running and empty before boot {}
+05:33:35 [PASS] ARM: temporary listener 10.200.0.1:18080 answers locally {}
+05:33:35 [PASS] ARM: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+05:33:36 [PASS] ARM: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+05:33:36 [PASS] ARM: tshark capturing on tap0 {}
+05:33:50 [PASS] ARM: guest booted and network configured {"qemu_pid": 173}
+05:33:52 [PASS] ARM: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["virtio-net-pci.0", "nic", []], ["virtio-net-pci.1", "nic", ["tap"]]], "probe_iface": "eth1", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+05:33:52 [PASS] ARM: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/bin/wget", "/bin/ping", "missing:arping"]}
+05:33:52 [PASS] ARM: allowed service link before probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0}
+05:33:52 --- probe internet-tcp: tcp 1.1.1.1:443 (expected block point: drop_public)
+05:33:58     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 3, 'drop_spoof': 2, 'drop_public': 7}; host alerts=0
+05:33:58 --- probe lan-dns-udp: udp 192.168.177.2:53 (expected block point: drop_private)
+05:34:04     guest rc=1 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 2, 'drop_spoof': 2, 'drop_private': 4}; host alerts=0
+05:34:04 --- probe lan-dns-tcp: tcp 192.168.177.2:53 (expected block point: drop_private)
+05:34:09     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 1, 'drop_spoof': 1, 'drop_private': 3}; host alerts=0
+05:34:09 --- probe ssh-host-192.168.60.1: tcp 192.168.60.1:22 (expected block point: drop_private)
+05:34:14     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:14 --- probe ssh-host-192.168.177.128: tcp 192.168.177.128:22 (expected block point: drop_private)
+05:34:19     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:19 --- probe ssh-host-172.18.0.1: tcp 172.18.0.1:22 (expected block point: drop_private)
+05:34:24     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 1, 'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:24 --- probe manager: tcp 192.168.60.10:8011 (expected block point: drop_private)
+05:34:30     guest rc=28 failed=True; control before=True after=True remote={'prefix': 'manager '}; counters={'drop_spoof': 1, 'drop_private': 3}; host alerts=0
+05:34:30 --- probe mongodb: tcp 172.18.0.2:27017 (expected block point: drop_private)
+05:34:35     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'mongo '}; counters={'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:35 --- probe worker-eth0: tcp 192.168.60.2:8011 (expected block point: drop_private)
+05:34:40     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'worker-eth0 '}; counters={'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 2, 'drop_private': 3}; host alerts=0
+05:34:40 --- probe tap0-other-port-listener: tcp 10.200.0.1:18080 (expected block point: drop_worker_other)
+05:34:45     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 1, 'drop_worker_other': 3}; host alerts=0
+05:34:45 [PASS] ARM: all planned probes executed with captures alive {"executed": 10, "planned": 10}
+05:34:45 [PASS] ARM: allowed service link after probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0}
+05:34:45 [PASS] ARM: QEMU exit confirmed {"exitstatus": 0}
+05:34:45 [PASS] ARM: tap0 capture stopped cleanly {"returncode": 0}
+05:34:45 [PASS] ARM: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 83}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 83}}}, "tshark_stderr_tail": "ous.\nCapturing on 'tap0'\n ** (tshark:150) 05:33:36.955817 [Main MESSAGE] -- Capture started.\n ** (tshark:150) 05:33:36.955859 [Main MESSAGE] -- File: \"/harness-out/ARM/tap0.pcapng\"\n83 packets captured", "verdict": "\u0110\u1ea0T"}
+05:34:45 [PASS] ARM: temporary listener stopped {}
+05:34:46 [PASS] ARM: fixture, marker and temporary guest disk removed {}
+05:34:46 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 83}
+05:34:50 [PASS] ARM: probe internet-tcp (tcp 1.1.1.1:443) -> ĐẠT {"counter": 7, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 7, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe lan-dns-udp (udp 192.168.177.2:53) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe lan-dns-tcp (tcp 192.168.177.2:53) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe ssh-host-192.168.60.1 (tcp 192.168.60.1:22) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe ssh-host-192.168.177.128 (tcp 192.168.177.128:22) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [FAIL] ARM: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_spoof": {"certain": 1, "delta": 2, "edge_end_t": [1791351264.9666772], "edge_start_t": [], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+05:34:50 [FAIL] ARM: probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_spoof": {"certain": 1, "delta": 1, "edge_end_t": [], "edge_start_t": [1791351264.9666772], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+05:34:50 [PASS] ARM: probe mongodb (tcp 172.18.0.2:27017) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe worker-eth0 (tcp 192.168.60.2:8011) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 [PASS] ARM: probe tap0-other-port-listener (tcp 10.200.0.1:18080) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_worker_other", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:34:50 == ARM: status=COMPLETED; 25/27 checks passed
+probe_matrix ARM exit=1
+ARM: probe_matrix outcome: UNVERIFIED: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[UNVERIFIED] ARM: UNVERIFIED: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[PASS] ARM: no qemu-system/tshark left in container
+[PASS] ARM: full verify after guest shutdown
+
+===== 6. guest MIPS (05:34:50)
+[PASS] MIPS: no QEMU running before start (sequential)
+[PASS] MIPS: all host captures alive before start
+[PASS] MIPS: capture watcher alive with a fresh heartbeat before start
+05:34:50 [PASS] MIPS: host leak monitor running and empty before boot {}
+05:34:50 [PASS] MIPS: temporary listener 10.200.0.1:18080 answers locally {}
+05:34:50 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+05:34:51 [PASS] MIPS: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+05:34:51 [PASS] MIPS: tshark capturing on tap0 {}
+05:35:15 [PASS] MIPS: guest booted and network configured {"qemu_pid": 295}
+05:35:16 [PASS] MIPS: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["pcnet.0", "nic", ["tap"]]], "probe_iface": "br-lan", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+05:35:16 [PASS] MIPS: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/usr/bin/wget", "/bin/ping", "missing:arping"]}
+05:35:16 [PASS] MIPS: allowed service link before probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0}
+05:35:16 --- probe internet-tcp: tcp 1.1.1.1:443 (expected block point: drop_public)
+05:35:22     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 2, 'drop_spoof': 2, 'drop_public': 8}; host alerts=0
+05:35:22 --- probe lan-dns-udp: udp 192.168.177.2:53 (expected block point: drop_private)
+05:35:28     guest rc=1 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+05:35:28 --- probe lan-dns-tcp: tcp 192.168.177.2:53 (expected block point: drop_private)
+05:35:33     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 1, 'drop_private': 4, 'drop_public': 6}; host alerts=0
+05:35:33 --- probe ssh-host-192.168.60.1: tcp 192.168.60.1:22 (expected block point: drop_private)
+05:35:38     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 2}; host alerts=0
+05:35:38 --- probe ssh-host-192.168.177.128: tcp 192.168.177.128:22 (expected block point: drop_private)
+05:35:43     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+05:35:43 --- probe ssh-host-172.18.0.1: tcp 172.18.0.1:22 (expected block point: drop_private)
+05:35:48     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 1, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+05:35:48 --- probe manager: tcp 192.168.60.10:8011 (expected block point: drop_private)
+05:35:54     guest rc=28 failed=True; control before=True after=True remote={'prefix': 'manager '}; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+05:35:54 --- probe mongodb: tcp 172.18.0.2:27017 (expected block point: drop_private)
+05:35:59     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'mongo '}; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 2}; host alerts=0
+05:35:59 --- probe worker-eth0: tcp 192.168.60.2:8011 (expected block point: drop_private)
+05:36:04     guest rc=28 failed=True; control before=None after=None remote={'prefix': 'worker-eth0 '}; counters={'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 1, 'drop_private': 4}; host alerts=0
+05:36:04 --- probe tap0-other-port-listener: tcp 10.200.0.1:18080 (expected block point: drop_worker_other)
+05:36:09     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_worker_other': 4}; host alerts=0
+05:36:09 [PASS] MIPS: all planned probes executed with captures alive {"executed": 10, "planned": 10}
+05:36:09 [PASS] MIPS: allowed service link after probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0}
+05:36:09 [PASS] MIPS: QEMU exit confirmed {"exitstatus": 0}
+05:36:09 [PASS] MIPS: tap0 capture stopped cleanly {"returncode": 0}
+05:36:09 [PASS] MIPS: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 125}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 125}}}, "tshark_stderr_tail": "s.\nCapturing on 'tap0'\n ** (tshark:272) 05:34:51.350037 [Main MESSAGE] -- Capture started.\n ** (tshark:272) 05:34:51.350093 [Main MESSAGE] -- File: \"/harness-out/MIPS/tap0.pcapng\"\n125 packets captured", "verdict": "\u0110\u1ea0T"}
+05:36:09 [PASS] MIPS: temporary listener stopped {}
+05:36:09 [PASS] MIPS: fixture, marker and temporary guest disk removed {}
+05:36:10 [PASS] MIPS: tap0 pcap readable by tshark (exit 0) {"frames": 125}
+05:36:14 [FAIL] MIPS: probe internet-tcp (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 8, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {"l2_bad_ethertype": {"certain": 2, "delta": 2, "edge_end_t": [], "edge_start_t": [1791351316.8419182], "status": "UNVERIFIED", "with_edges": 3}}, "pcap_certain": 8, "probe_packets": 4, "reconciliation": "UNVERIFIED"}
+05:36:14 [PASS] MIPS: probe lan-dns-udp (udp 192.168.177.2:53) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [FAIL] MIPS: probe lan-dns-tcp (tcp 192.168.177.2:53) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_public": {"certain": 5, "delta": 6, "edge_end_t": [1791351333.374486], "edge_start_t": [], "status": "UNVERIFIED", "with_edges": 6}}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "UNVERIFIED"}
+05:36:14 [PASS] MIPS: probe ssh-host-192.168.60.1 (tcp 192.168.60.1:22) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe ssh-host-192.168.177.128 (tcp 192.168.177.128:22) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe manager (tcp 192.168.60.10:8011) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe mongodb (tcp 172.18.0.2:27017) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe worker-eth0 (tcp 192.168.60.2:8011) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_private", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 [PASS] MIPS: probe tap0-other-port-listener (tcp 10.200.0.1:18080) -> ĐẠT {"counter": 4, "determined_failures": [], "expected": "drop_worker_other", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 4, "probe_packets": 4, "reconciliation": "PASS"}
+05:36:14 == MIPS: status=COMPLETED; 25/27 checks passed
+probe_matrix MIPS exit=1
+MIPS: probe_matrix outcome: UNVERIFIED: probe internet-tcp (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe lan-dns-tcp (tcp 192.168.177.2:53) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[UNVERIFIED] MIPS: UNVERIFIED: probe internet-tcp (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe lan-dns-tcp (tcp 192.168.177.2:53) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[PASS] MIPS: no qemu-system/tshark left in container
+[PASS] MIPS: full verify after guest shutdown
+[PASS] worker netns interfaces unchanged after the guests
+[PASS] worker netns addresses unchanged after the guests
+[PASS] worker netns main routes unchanged after the guests
+worker netns full record: differences in container/netns-diff.txt (reported, e.g. neighbor states)
+
+===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (05:36:14)
+[PASS] control container stopped after the guests
+[PASS] capture watcher still alive with a fresh heartbeat at the end
+[PASS] no host capture exited during the test (watcher marker empty)
+[PASS] all host captures exited on SIGINT within 10 s with exit 0
+1791351374.715445 05:36:14.716 guests finished (last probe_matrix returned)
+1791351374.998390 05:36:14.999 control container stopped (docker stop rc=0)
+1791351378.004859 05:36:18.010 drain period of 3 s ended
+1791351378.035316 05:36:18.037 capture watcher stopped
+1791351378.038737 05:36:18.040 veth pid 157288: SIGINT sent
+1791351378.040941 05:36:18.042 bridge pid 157289: SIGINT sent
+1791351378.042990 05:36:18.044 ens33 pid 157290: SIGINT sent
+1791351378.044893 05:36:18.046 alert pid 157292: SIGINT sent
+1791351378.063278 05:36:18.064 veth pid 157288: exited rc=0
+1791351378.080654 05:36:18.082 bridge pid 157289: exited rc=0
+1791351378.097357 05:36:18.098 ens33 pid 157290: exited rc=0
+1791351378.113644 05:36:18.115 alert pid 157292: exited rc=0
+veth 0
+bridge 0
+ens33 0
+alert 0
+[PASS] tcpdump veth: exit 0 on stop
+[PASS] tcpdump veth: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump veth: 0 packets dropped by kernel
+[PASS] tcpdump bridge: exit 0 on stop
+[PASS] tcpdump bridge: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump bridge: 0 packets dropped by kernel
+[PASS] tcpdump ens33: exit 0 on stop
+[PASS] tcpdump ens33: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump ens33: 0 packets dropped by kernel
+[PASS] tcpdump alert: exit 0 on stop
+[PASS] tcpdump alert: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump alert: 0 packets dropped by kernel
+[PASS] leak alert: no 10.200.0.0/30 packet line on any host interface
+0 packets captured
+0 packets received by filter
+[PASS] leak alert tcpdump: 0 packets captured
+veth: probe-signature packets=0 (tcpdump rc=0)
+[PASS] veth.pcap readable (tcpdump exit 0)
+[PASS] veth.pcap: 0 packets with guest MAC / 10.200.0.0/30
+veth sigscan (rc=0): frames=3822 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] veth.pcap: sigscan read OK (exit 0)
+[PASS] veth.pcap: guest_l2l3 = 0
+[PASS] veth.pcap: probe_sport = 0
+[PASS] veth.pcap: probe_qname = 0
+[PASS] veth.pcap: probe_url = 0
+bridge: probe-signature packets=0 (tcpdump rc=0)
+[PASS] bridge.pcap readable (tcpdump exit 0)
+[PASS] bridge.pcap: 0 packets with guest MAC / 10.200.0.0/30
+bridge sigscan (rc=0): frames=7444 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] bridge.pcap: sigscan read OK (exit 0)
+[PASS] bridge.pcap: guest_l2l3 = 0
+[PASS] bridge.pcap: probe_sport = 0
+[PASS] bridge.pcap: probe_qname = 0
+[PASS] bridge.pcap: probe_url = 0
+ens33: probe-signature packets=0 (tcpdump rc=0)
+[PASS] ens33.pcap readable (tcpdump exit 0)
+[PASS] ens33.pcap: 0 packets with guest MAC / 10.200.0.0/30
+ens33 sigscan (rc=0): frames=93 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] ens33.pcap: sigscan read OK (exit 0)
+[PASS] ens33.pcap: guest_l2l3 = 0
+[PASS] ens33.pcap: probe_sport = 0
+[PASS] ens33.pcap: probe_qname = 0
+[PASS] ens33.pcap: probe_url = 0
+[PASS] ens33.pcap: payload scan finds the control DNS queries (control_qname > 0)
+veth: control packets from worker=122 (rc=0)
+[PASS] veth capture live: worker control packets seen
+ens33: NATed control packets=93 (rc=0)
+[PASS] ens33 capture live: NATed control packets seen
+bridge: packets from worker=1606 (rc=0)
+[PASS] bridge capture live: worker packets seen
+[PASS] temporary capture dir removed
+
+===== 8. teardown (05:36:18)
+[PASS] no marker, fixture or guest disk left in worker container
+[PASS] normalized runtime ruleset identical to expected
+[PASS] all containers created by this run removed
+manager after: state=exited id=494ae3d2e2eb startedAt=2026-10-07T05:33:23.352264041Z (before: exited 494ae3d2e2eb 2026-10-06T16:42:05.519361312Z; started by this run: 1)
+[PASS] manager back to its initial state (exited; same container; not restarted if it was running)
+[PASS] no qemu-system on host
+[PASS] no capture process left on host
+-- host differences (all reported; evaluated in the summary):
+unchanged: capture-procs.txt
+CHANGED: docker-ps.txt
+--- /home/dathq/projects/ct01-06b3c/out/host-before/docker-ps.txt	2026-10-07 05:33:23.002472436 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/docker-ps.txt	2026-10-07 05:36:22.096640746 +0000
+@@ -1,2 +1,2 @@
+-cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 13 hours ago
++cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 2 seconds ago
+ mongo-db mongo:8.0.32 Up 2 hours
+unchanged: host-tap0.txt
+CHANGED: ip6-route.txt
+--- /home/dathq/projects/ct01-06b3c/out/host-before/ip6-route.txt	2026-10-07 05:33:22.909472632 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/ip6-route.txt	2026-10-07 05:36:22.005645447 +0000
+@@ -1,3 +1,4 @@
+ fe80::/64 dev ens33 proto kernel metric 256 pref medium
+ fe80::/64 dev veth84e5da2 proto kernel metric 256 pref medium
+ fe80::/64 dev br-09fed07bbb6b proto kernel metric 256 pref medium
++fe80::/64 dev br-1d86fe3e8bbe proto kernel metric 256 linkdown pref medium
+CHANGED: ip-addr.txt
+--- /home/dathq/projects/ct01-06b3c/out/host-before/ip-addr.txt	2026-10-07 05:33:22.906472638 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/ip-addr.txt	2026-10-07 05:36:21.998645809 +0000
+@@ -1,6 +1,6 @@
+ lo               UNKNOWN        127.0.0.1/8 ::1/128 
+ ens33            UP             192.168.177.128/24 metric 100 fe80::20c:29ff:fe42:ad4c/64 
+ br-09fed07bbb6b  UP             172.18.0.1/16 fe80::2c11:92ff:fe11:d0ed/64 
+-br-1d86fe3e8bbe  DOWN           192.168.60.1/24 
++br-1d86fe3e8bbe  DOWN           192.168.60.1/24 fe80::74f6:e0ff:feb4:bf8c/64 
+ docker0          DOWN           172.17.0.1/16 
+ veth84e5da2@if2  UP             fe80::ab:dcff:fe3b:4761/64 
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+CHANGED: lsmod-net.txt
+--- /home/dathq/projects/ct01-06b3c/out/host-before/lsmod-net.txt	2026-10-07 05:33:22.926472596 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/lsmod-net.txt	2026-10-07 05:36:22.027644310 +0000
+@@ -9,6 +9,7 @@
+ nf_tables
+ nft_chain_nat
+ nft_compat
++nft_ct
+ veth
+ x_tables
+ xt_addrtype
+unchanged: nft-ruleset-stateless.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+[PASS] host sysctl.txt unchanged
+[PASS] host nft-ruleset-stateless.txt unchanged
+[PASS] host ip-route.txt unchanged
+[PASS] host listen-tcp.txt unchanged
+[PASS] host qemu.txt unchanged
+[PASS] host capture-procs.txt unchanged
+[PASS] host host-tap0.txt unchanged
+created ids: c34c3d7cd1a5a627172676515afa5bab5305110babc23ae321662f5d27bb7301 3e084b8fcd0ae0e75286c1c36f1a5f4eca1aff8f54e0de12d04657cad6fc2952
+
+===== result (05:36:22)
+UNVERIFIED (could not be decided):
+ - ARM: UNVERIFIED: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+ - MIPS: UNVERIFIED: probe internet-tcp (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); probe lan-dns-tcp (tcp 192.168.177.2:53) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+NOT PASSED: no check failed, but some results are UNVERIFIED

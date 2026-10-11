@@ -1,0 +1,6 @@
+# 06B-4E: prepared T12/T13 cases (NOT executed). TAP_MAC is per run; example with the 06B-4C TAP_MAC 96:c1:56:82:5b:40, iface eth1 (ARM) / br-lan (MIPS)
+T12-B1 | expected drop_bcast_mcast | size 1201 | ping -c 3 -s 1201 -w 5 255.255.255.255 | ping -c 3 -s 1201 -w 5 255.255.255.255 
+T12-B2 | expected drop_bcast_mcast | size 1202 | ping -c 3 -s 1202 -w 5 224.0.0.1 | ping -c 3 -s 1202 -w 5 224.0.0.1 
+T12-B4 | expected drop_private | size 1204 | ping -c 3 -s 1204 -w 5 10.200.0.3 | ping -c 3 -s 1204 -w 5 10.200.0.3 
+T13-I1 | expected l2_bad_ethertype | size 1301 | ping6 -c 3 -s 1301 -w 5 -I eth1 ff02::1 | ping6 -c 3 -s 1301 -w 5 -I br-lan ff02::1 
+T13-I2 | expected l2_bad_ethertype | size 1302 | ping6 -c 3 -s 1302 -w 5 -I eth1 fe80::94c1:56ff:fe82:5b40 | ping6 -c 3 -s 1302 -w 5 -I br-lan fe80::94c1:56ff:fe82:5b40 | NS group ff02::1:ff82:5b40

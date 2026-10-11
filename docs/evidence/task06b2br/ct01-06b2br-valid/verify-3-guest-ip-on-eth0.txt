@@ -1,0 +1,2 @@
+ISOLATION FAIL (06B-2BR 3-guest-ip-on-eth0): link: eth0 address 10.200.0.3 inside guest network
+ISOLATION FAIL (06B-2BR 3-guest-ip-on-eth0): link: address 10.200.0.3/32 on eth0 is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)

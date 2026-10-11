@@ -1,0 +1,10 @@
+T14-A1: CHƯA KIỂM CHỨNG (hồ sơ thực thi không đầy đủ/không hợp lệ: guest baseline dynamic neighbour '10.200.0.9 eth1' has the PERMANENT flag (0x6): belongs to neigh_static)
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+RECORD: T14-A1: guest baseline dynamic neighbour '10.200.0.9 eth1' has the PERMANENT flag (0x6): belongs to neigh_static
+Traceback (most recent call last):
+  File "/home/dathq/projects/ct01-06b4hr2-work/codex-rerun-06b4hr2/static_flag_review.py", line 28, in <module>
+    assert cli==0 and result['exit']==0 and control['exit']==2
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

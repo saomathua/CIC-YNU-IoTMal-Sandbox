@@ -1,0 +1,4 @@
+table ip nat
+table netdev sandbox_guest_l2
+table arp sandbox_guest_arp
+table inet sandbox_guest

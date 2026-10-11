@@ -1,0 +1,72 @@
+baseline: 182/182 tests pass
+OK  V1   DETECTED           target='U4 ctl_window: one failure inside the span -> not ok, counted'
+OK  V2   DETECTED           target='U2 ctl_window: nothing after read B (yet) -> not ok'
+OK  V3   DETECTED           target='U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok'
+OK  V4   DETECTED           target='U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC unknown -> not ok'
+OK  V5   DETECTED           target='U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok'
+OK  V6   DETECTED           target='U11 control_a2: INCOMPLETE/FAILED/NOARP, other MAC, two rows, invalid row that may be it, not JSON -> not ok'
+OK  V7   DETECTED           target='U14 make_control: waits until the ctl log can hold a record after the span, then judges A1/A2'
+OK  V8   DETECTED           target='S32 marker-after-A2-ping: QEMU shut down and cleanup done after the stop; group record kept with the guard stop'
+OK  V9   DETECTED           target='U18 check_record: link before/after a restored case not HTTP 200 + fixture hash -> problem'
+OK  V10  DETECTED           target='U21 evaluate: arp_cases record problems are kept (prefixed) and block the group'
+OK  V11  DETECTED           target='R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL'
+OK  V12  DETECTED           target='R6 group_exit 2 in arp-eval.json -> FAIL; evaluation of another architecture -> FAIL'
+OK  V13  DETECTED           target='R2 the real ARP path records no other non-info, non-case check outside the required list'
+OK  V14  DETECTED           target='R4 a per-case confirmation missing (restore after S1 / link after A2) -> FAIL'
+OK  V15  DETECTED           target='S36 ctl-no-arp: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS'
+OK  V16  DETECTED           target='S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control'
+OK  V17  DETECTED           target='S30 marker-after-A2-ping: exit 98, the command that tripped the guard is the LAST one sent (no restore, no link)'
+OK  V18  DETECTED           target="S33 alert written during 'T15-S1 before' (read A): S1 setup NOT sent, exit 99, leak record when=before"
+OK  V19  DETECTED           target="S35 capture lost during 'T14-A2 before': A2 setup NOT sent, exit 98, the restore reaches no guest (not restored), A3/S1 not run"
+OK  V20  DETECTED           target="S34 alert file unreadable during 'T14-A2 before': never 'no alert'; A2 setup NOT sent; ERROR exit 1; FAIL"
+OK  V21  DETECTED           target='S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS'
+OK  V22  DETECTED           target='S29 restore fails after A2: run outcome FAIL (restore confirmation), no service link after A2, script FAIL'
+OK  V23  DETECTED           target='S18 collector fails (rc != 0) after A2: A2 LỖI PHÉP ĐO with the error kept, collector record FAIL, never PASS'
+OK  V24  DETECTED           target='S6 clean: neighbour collector = exactly `ip -j neigh show` in the worker, 2 per case + 1 for the A2 control'
+OK  V25  DETECTED           target='R1 the real ARP path records every required confirmation exactly once (static + per case)'
+OK  V26  DETECTED           target='S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS'
+OK  V27  DETECTED           target='S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS'
+OK  V28  DETECTED           target='S15 missing-case: never PASS; outcome FAIL naming the record problem; script FAIL; group record check FAIL in result.json'
+OK  V29  DETECTED           target='S13 imports in the fake container came only from the files run-06b4i.sh mounts'
+OK  V30  DETECTED           target='U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises'
+OK  V31  DETECTED           target='U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises'
+OK  V32  DETECTED           target='W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)'
+OK  V33  DETECTED           target='W5 every module probe_matrix imports in arp mode is mounted read-only'
+OK  V34  DETECTED           target='S36 ctl-no-arp: T14-A1 control not alive -> CHƯA KIỂM CHỨNG (không có đối chứng sống), T14-A2 still ĐẠT; UNVERIFIED, never PASS'
+OK  V35  DETECTED           target='W4 selftest_arp.py and selftest_arp_wiring.py (and the ICMP/L2 ones) run before any docker command and abort'
+OK  V36  DETECTED           target='W7 ctl started with --arp-worker; its ARP target is checked alive like the others'
+OK  V37  DETECTED           target='W8 manager MAC and ctl sandboxnet endpoint MAC passed to the worker in CT01_TARGETS'
+OK  V38  DETECTED           target='I1.1 boot-leak: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99'
+OK  V39  DETECTED           target='I1.10 after the stop every later send raises without reaching the console, even once the alert is gone (latched)'
+OK  V40  DETECTED           target='I1.1 boot-leak: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99'
+OK  V41  DETECTED           target='I1.3 topology-leak: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 99'
+OK  V42  DETECTED           target='I1.6 monitor-leak: the event during `monitor info network` stops before the ARP group (no service link, no case command); exit 99'
+OK  V43  DETECTED           target="I1.2 boot-leak-swallowed: no topology command, no monitor call, no ARP command after the event, no 'guest booted' record; QEMU exit and cleanup done; outcome/CLI/script FAIL"
+OK  V44  DETECTED           target='I1.10 after the stop every later send raises without reaching the console, even once the alert is gone (latched)'
+OK  V45  DETECTED           target='I1.5 topology-leak: leak record names the startup phase and the operation'
+OK  V46  DETECTED           target='I1.3 topology-capture: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 98'
+OK  V48  DETECTED           target='U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, reason kept'
+OK  V49  DETECTED           target='U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, reason kept'
+OK  V50  DETECTED           target='U33 I2 control_a1: ctl endpoint MAC unknown/invalid -> not ok, even with a perfect log'
+OK  V51  DETECTED           target='U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok'
+OK  V52  DETECTED           target='U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok'
+OK  V53  DETECTED           target='S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS'
+OK  V54  DETECTED           target='U28 ctl_loop arp_entry: complete entry -> MAC, flags, device'
+OK  V55  DETECTED           target='W12 ctl endpoint MAC from docker inspect of the ctl container on sandboxnet, after it is created (I2)'
+OK  V56  DETECTED           target='U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)'
+OK  V57  DETECTED           target="U36 I3 ctl_window HTTP: OK with detail None / 'HTTP 500' / '' / object -> not ok; 'HTTP 200' -> ok"
+OK  V58  DETECTED           target='U37 I3 ctl_window: the same record twice (same target and ts) -> not ok, reported as duplicate, not removed'
+OK  V59  DETECTED           target="U41 I3 control_a2: manager HTTP record without payload / 'HTTP 500' -> not ok"
+OK  V60  DETECTED           target='U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)'
+OK  V61  DETECTED           target='U39 I3 ctl_window: a failed record without a string detail -> problem (still not ok)'
+OK  V62  DETECTED           target="R1.2 ipv4-handoff-capture: event right after the topology gate -> NO guest command after the handoff (the service link 'before probes' is not sent); exit 98"
+OK  V63  DETECTED           target="R1.5 ipv4: alert during the first probe -> that probe is the last guest command; leak record phase 'ipv4 group'; exit 99"
+OK  V64  DETECTED           target="R1.2 ipv4-handoff-capture: event right after the topology gate -> NO guest command after the handoff (the service link 'before probes' is not sent); exit 98"
+OK  V65  DETECTED           target='R2.1 zero-mac-both: A1 control not alive (endpoint MAC cannot identify the interface), reason and raw MAC kept; A2 ĐẠT; never PASS (function, CLI, Bash)'
+OK  V66  DETECTED           target='R2.1 broadcast-mac-both: A1 control not alive (endpoint MAC cannot identify the interface), reason and raw MAC kept; A2 ĐẠT; never PASS (function, CLI, Bash)'
+OK  V67  DETECTED           target='U43 IR1-R2 control_a1: zero/group MAC equal in config and payload -> not ok; payload zero with a valid config -> not ok (reason names the payload)'
+OK  V68  DETECTED           target='R2.1 zero-mac-cfg: A1 control not alive (endpoint MAC cannot identify the interface), reason and raw MAC kept; A2 ĐẠT; never PASS (function, CLI, Bash)'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP-WIRING: 69 OK, 0 not as expected; harness unchanged
+exit=0

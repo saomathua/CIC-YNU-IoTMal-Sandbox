@@ -1,0 +1,186 @@
+{
+ "host_ip_j_neigh": {
+  "source": "host netns, iproute2-6.1.0 (not the worker image)",
+  "rows": 5,
+  "problems": [],
+  "unknown": [],
+  "states": [
+   "REACHABLE",
+   "STALE"
+  ],
+  "keys_per_row": [
+   [
+    "dev",
+    "dst",
+    "lladdr",
+    "state"
+   ]
+  ],
+  "bindings": 5
+ },
+ "host_neigh_check_self": {
+  "fail": [
+   "tap0 neighbour 10.200.0.2 missing after the case (valid table)"
+  ],
+  "invalid": [],
+  "inconclusive": []
+ },
+ "06b4g_netns-before.txt_ip_neigh_text": {
+  "text": [
+   "10.200.0.2 dev tap0 lladdr 52:54:00:c7:00:02 PERMANENT"
+  ],
+  "json_parser": "NeighReadError: not JSON: Extra data: line 1 column 7 (char 6)"
+ },
+ "06b4g_netns-after.txt_ip_neigh_text": {
+  "text": [
+   "192.168.60.3 dev eth0 lladdr 0a:74:80:85:98:3e REACHABLE",
+   "192.168.60.10 dev eth0 lladdr 8a:d3:09:b5:72:af DELAY",
+   "192.168.60.1 dev eth0 lladdr fe:69:25:9f:7e:e9 DELAY",
+   "10.200.0.2 dev tap0 lladdr 52:54:00:c7:00:02 PERMANENT"
+  ],
+  "json_parser": "NeighReadError: not JSON: Extra data: line 1 column 8 (char 7)"
+ },
+ "ctl_loop_arp_entry_on_host_proc_net_arp": {
+  "172.18.0.2": {
+   "ip": "172.18.0.2",
+   "hw": "92:95:79:0b:84:90",
+   "flags": "0x2",
+   "device": "br-09fed07bbb6b",
+   "device_mac": "82:4a:11:8a:0f:1e"
+  },
+  "192.168.177.2": {
+   "ip": "192.168.177.2",
+   "hw": "00:50:56:f9:4d:40",
+   "flags": "0x2",
+   "device": "ens33",
+   "device_mac": "00:0c:29:42:ad:4c"
+  },
+  "192.168.60.2": "RuntimeError: 0 ARP row(s) for 192.168.60.2"
+ },
+ "endpoint_mac_problem_on_observed_macs": {
+  "br-09fed07bbb6b": {
+   "mac": "82:4a:11:8a:0f:1e",
+   "operstate": "up",
+   "endpoint_mac_problem": null
+  },
+  "br-1d86fe3e8bbe": {
+   "mac": "fe:69:25:9f:7e:e9",
+   "operstate": "down",
+   "endpoint_mac_problem": null
+  },
+  "docker0": {
+   "mac": "8e:8e:a6:21:c4:46",
+   "operstate": "down",
+   "endpoint_mac_problem": null
+  },
+  "ens33": {
+   "mac": "00:0c:29:42:ad:4c",
+   "operstate": "up",
+   "endpoint_mac_problem": null
+  },
+  "lo": {
+   "mac": "00:00:00:00:00:00",
+   "operstate": "unknown",
+   "endpoint_mac_problem": "00:00:00:00:00:00 is the all-zero MAC (no endpoint address)"
+  },
+  "vethaf24531": {
+   "mac": "d6:09:86:20:44:41",
+   "operstate": "up",
+   "endpoint_mac_problem": null
+  },
+  "neigh 192.168.177.254": {
+   "mac": "00:50:56:e1:b2:d9",
+   "endpoint_mac_problem": null
+  },
+  "neigh 172.18.0.2": {
+   "mac": "92:95:79:0b:84:90",
+   "endpoint_mac_problem": null
+  },
+  "neigh 192.168.177.2": {
+   "mac": "00:50:56:f9:4d:40",
+   "endpoint_mac_problem": null
+  },
+  "neigh 172.18.0.3": {
+   "mac": "aa:ca:ff:36:1f:7c",
+   "endpoint_mac_problem": null
+  },
+  "neigh 192.168.177.1": {
+   "mac": "00:50:56:c0:00:08",
+   "endpoint_mac_problem": null
+  }
+ },
+ "06b4g_guest_ARM": {
+  "ip_addr_link_states": [
+   [
+    "lo",
+    "UNKNOWN"
+   ],
+   [
+    "eth0",
+    "UP"
+   ],
+   [
+    "eth1",
+    "UP"
+   ],
+   [
+    "br-lan",
+    "UP"
+   ]
+  ],
+  "ifaces_mac": [
+   "br-lan 52:54:00:12:34:56",
+   "eth0 52:54:00:12:34:56",
+   "eth1 52:54:00:c7:00:02",
+   "lo 00:00:00:00:00:00",
+   ""
+  ],
+  "guest_state_OPERSTATES": [
+   "dormant",
+   "down",
+   "lowerlayerdown",
+   "notpresent",
+   "testing",
+   "unknown",
+   "up"
+  ],
+  "note": "ip addr prints the link state in upper case; guest_state reads /sys/class/net/IF/operstate (lower case): no sysfs value saved"
+ },
+ "06b4g_guest_MIPS": {
+  "ip_addr_link_states": [
+   [
+    "lo",
+    "UNKNOWN"
+   ],
+   [
+    "eth0",
+    "UNKNOWN"
+   ],
+   [
+    "hwsim0",
+    "DOWN"
+   ],
+   [
+    "br-lan",
+    "DOWN"
+   ]
+  ],
+  "ifaces_mac": [
+   "br-lan 52:54:00:c7:00:02",
+   "eth0 52:54:00:c7:00:02",
+   "hwsim0 12:00:00:00:00:00",
+   "lo 00:00:00:00:00:00",
+   ""
+  ],
+  "guest_state_OPERSTATES": [
+   "dormant",
+   "down",
+   "lowerlayerdown",
+   "notpresent",
+   "testing",
+   "unknown",
+   "up"
+  ],
+  "note": "ip addr prints the link state in upper case; guest_state reads /sys/class/net/IF/operstate (lower case): no sysfs value saved"
+ }
+}

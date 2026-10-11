@@ -1,0 +1,16 @@
+ARM: frames=156; IPv4 frames to guest with source other than 10.200.0.1: 0
+    80 guest IPv4 -> 10.200.0.1:8011
+    58 to guest from MAC e2:8e:40:82:25:b6 ethertype 0x0800
+     9 guest ethertype 0x86dd
+     4 guest IPv4 10.200.0.2 -> 8.8.8.8 proto=17 dport=53
+     3 guest IPv4 0.0.0.0 -> 255.255.255.255 proto=17 dport=67
+     1 guest ARP op=1 spa=10.200.0.2 tpa=10.200.0.1
+     1 to guest from MAC e2:8e:40:82:25:b6 ethertype 0x0806
+MIPS: frames=149; IPv4 frames to guest with source other than 10.200.0.1: 0
+    77 guest IPv4 -> 10.200.0.1:8011
+    55 to guest from MAC e2:8e:40:82:25:b6 ethertype 0x0800
+     7 guest ethertype 0x86dd
+     6 guest IPv4 10.200.0.2 -> 8.8.8.8 proto=17 dport=53
+     2 guest IPv4 0.0.0.0 -> 255.255.255.255 proto=17 dport=67
+     1 guest ARP op=1 spa=10.200.0.2 tpa=10.200.0.1
+     1 to guest from MAC e2:8e:40:82:25:b6 ethertype 0x0806

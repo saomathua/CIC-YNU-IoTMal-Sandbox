@@ -1,0 +1,184 @@
+{
+ "verdict": "PASS",
+ "reasons": [],
+ "guard_s": 0.02,
+ "classes_compared": [
+  "allow_svc",
+  "drop_spoof",
+  "drop_non_ipv4",
+  "drop_worker_other",
+  "drop_private",
+  "drop_bcast_mcast",
+  "drop_public",
+  "l2_bad_ethertype",
+  "l2_bad_mac"
+ ],
+ "reads": {
+  "before": {
+   "t_start": 50.0,
+   "t_end": 50.01,
+   "values": {
+    "allow_svc": 100,
+    "drop_spoof": 100,
+    "drop_non_ipv4": 100,
+    "drop_worker_other": 100,
+    "drop_private": 100,
+    "drop_bcast_mcast": 100,
+    "drop_public": 100,
+    "l2_bad_ethertype": 100,
+    "l2_bad_mac": 100
+   }
+  },
+  "finals": [
+   {
+    "t_start": 600.5,
+    "t_end": 600.51,
+    "values": {
+     "allow_svc": 100,
+     "drop_spoof": 100,
+     "drop_non_ipv4": 100,
+     "drop_worker_other": 100,
+     "drop_private": 100,
+     "drop_bcast_mcast": 100,
+     "drop_public": 115,
+     "l2_bad_ethertype": 102,
+     "l2_bad_mac": 100
+    }
+   },
+   {
+    "t_start": 601.0,
+    "t_end": 601.01,
+    "values": {
+     "allow_svc": 100,
+     "drop_spoof": 100,
+     "drop_non_ipv4": 100,
+     "drop_worker_other": 100,
+     "drop_private": 100,
+     "drop_bcast_mcast": 100,
+     "drop_public": 115,
+     "l2_bad_ethertype": 102,
+     "l2_bad_mac": 100
+    }
+   }
+  ],
+  "required_finals": 2,
+  "final_read_error": null
+ },
+ "qemu": {
+  "no_qemu_before": true,
+  "pids_before": [],
+  "pids_before_error": null,
+  "exit_confirmed": true,
+  "exit_confirmed_t": 600.0,
+  "pids_after_exit": [],
+  "pids_after_exit_error": null
+ },
+ "capture": {
+  "tshark_rc": 0,
+  "drop_verdict": "PASS",
+  "pcap_readable": true
+ },
+ "reconciliation": {
+  "verdict": "PASS",
+  "per_class": {
+   "allow_svc": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_spoof": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_non_ipv4": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_worker_other": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_private": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_bcast_mcast": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_public": {
+    "certain": 15,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 15,
+    "lo": 15,
+    "hi": 15,
+    "status": "PASS"
+   },
+   "l2_bad_ethertype": {
+    "certain": 2,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 2,
+    "lo": 2,
+    "hi": 2,
+    "status": "PASS"
+   },
+   "l2_bad_mac": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   }
+  },
+  "guard_s": 0.02,
+  "not_compared": {},
+  "reads": {
+   "before": {
+    "t_start": 50.0,
+    "t_end": 50.01
+   },
+   "after": {
+    "t_start": 600.5,
+    "t_end": 600.51
+   }
+  }
+ },
+ "not_compared": {},
+ "guest_frames_before_window": [],
+ "unstable_after_exit": {},
+ "guest_frames_after_exit": [],
+ "assumption": "guard 0.020 s covers the delay from capture timestamp to nft counter hit; NOT measured"
+}

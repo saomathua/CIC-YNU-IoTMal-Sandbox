@@ -1,0 +1,133 @@
+== section U
+[PASS] U1 link: HTTP 200 + right hash + rc 0 -> ok
+[PASS] U2 link: HTTP 000 with the right hash (stale file) -> not ok
+[PASS] U3 link: HTTP 200, other hash -> not ok
+[PASS] U4 link: HTTP 200, no hash line -> not ok
+[PASS] U5 link: two HTTP lines -> not ok
+[PASS] U6 link: rc != 0 -> not ok
+[PASS] U7 link: HTTP=2000 is not 200
+[PASS] U8 link: CRLF console output parsed; detail has code and hash
+[PASS] U9 link command removes the old response first and asks for code + hash
+[PASS] U10 link_valid needs ok True, code 200 and hash == fixture
+[PASS] U11 GuardedRunner: a failing check stops the group; later commands never reach the guest
+[PASS] U12 GuardedRunner: a failing after-check raises even though the command ran, and stops the group
+[PASS] U13 GuardedRunner: a guest timeout is an execution error of that command, not a stop
+[PASS] U14 run_suite: five cases in order, 10 counter reads, links recorded, annotated (arch, TAP, hash, rule_check)
+[PASS] U15 check_record: wrong architecture
+[PASS] U16 check_record: a missing case
+[PASS] U17 check_record: a duplicate case
+[PASS] U18 check_record: an unknown case id (and the missing one)
+[PASS] U19 check_record: a command that is not the reviewed one
+[PASS] U20 check_record: counter labels not the reviewed ones
+[PASS] U21 check_record: link after with another hash
+[PASS] U22 check_record: invalid record types are problems, never exceptions
+[PASS] U23 check_record: a stopped group
+[PASS] U24 evaluate: a record evaluate_group refuses -> no case, record problem, never raises
+[PASS] U25 arch_outcome: complete, all ok -> PASS
+[PASS] U26 arch_outcome: all cases ĐẠT but an infrastructure check failed -> FAIL
+[PASS] U27 arch_outcome: status not COMPLETED -> FAIL
+[PASS] U28 arch_outcome: evaluation missing -> FAIL
+[PASS] U29 arch_outcome: a case missing in the evaluation -> FAIL
+[PASS] U30 arch_outcome: a case twice in the evaluation -> FAIL
+[PASS] U31 arch_outcome: a case recorded twice in result.json -> FAIL
+[PASS] U32 arch_outcome: a case not recorded in result.json -> FAIL
+[PASS] U33 arch_outcome: record problem -> FAIL
+[PASS] U34 arch_outcome: evaluation of another architecture -> FAIL
+[PASS] U35 arch_outcome: result.json unreadable -> FAIL
+[PASS] U36 arch_outcome: one case not judged, all else fine -> UNVERIFIED
+[PASS] U37 run_check: same architecture twice is a problem
+[PASS] U38 CLI: bad usage -> exit 2
+== section S
+[PASS] S1 clean: exit 0, status COMPLETED, outcome PASS, run script maps it to PASS
+[PASS] S2 clean: the five reviewed cases, each exactly once, all ĐẠT (kiểm quy tắc), evidence rule_check
+[PASS] S3 clean: guest commands = service link, 5 pings in case order, service link; no IPv4 probe, no listener
+[PASS] S4 clean: ping commands are exactly icmp_cases.command() for the probe interface, in CASE_IDS order
+[PASS] S5 clean: service links before/after recorded with HTTP 200 and the fixture hash
+[PASS] S6 clean: link labelled as precondition, not a live control; group evidence rule_check
+[PASS] S7 clean: session-wide measurement still written separately (session.json), not in the case records
+[PASS] S8 clean: QEMU exit, tap0 stop/drop statistics, cleanup and capture-liveness records present and ok
+[PASS] S9 imports in the fake container came only from the files run-06b4f.sh mounts
+[PASS] S10 missing-case: never PASS; outcome FAIL with the record problem; script FAIL
+[PASS] S10 duplicate-case: never PASS; outcome FAIL with the record problem; script FAIL
+[PASS] S11 missing-case: the executed cases themselves pass, the group still does not
+[PASS] S12 marker-after-B4: exit 98, CAPTURE LOST, only 3 ping(s) reached the guest, no service link after
+[PASS] S13 marker-after-B4: outcome FAIL, script FAIL, no evaluation (no case judged)
+[PASS] S14 marker-after-B4: QEMU shut down and cleanup still done after the stop
+[PASS] S15 marker-after-B4: group record kept with the stop reason
+[PASS] S12 heartbeat-stale-after-B1: exit 98, CAPTURE LOST, only 1 ping(s) reached the guest, no service link after
+[PASS] S13 heartbeat-stale-after-B1: outcome FAIL, script FAIL, no evaluation (no case judged)
+[PASS] S14 heartbeat-stale-after-B1: QEMU shut down and cleanup still done after the stop
+[PASS] S15 heartbeat-stale-after-B1: group record kept with the stop reason
+[PASS] S12 tshark-exit-after-I1: exit 98, CAPTURE LOST, only 4 ping(s) reached the guest, no service link after
+[PASS] S13 tshark-exit-after-I1: outcome FAIL, script FAIL, no evaluation (no case judged)
+[PASS] S14 tshark-exit-after-I1: QEMU shut down and cleanup still done after the stop
+[PASS] S15 tshark-exit-after-I1: group record kept with the stop reason
+[PASS] S16 leak after T12-B2: exit 99, LEAK, no further ping, leak record, outcome FAIL
+[PASS] S17 ping6 missing (rc 127): T13 cases LOI_THUC_THI, T12 cases still ĐẠT; outcome UNVERIFIED, never PASS
+[PASS] S18 ping6 missing: the run script reports UNVERIFIED (not PASS, not a silent pass)
+[PASS] S19 console timeout on T12-B2: LOI_THUC_THI (timeout is not evidence of blocking); later cases still run
+[PASS] S20 broadcast refused locally (no frame): KHONG_TAO_DUOC_GOI, never ĐẠT; outcome UNVERIFIED
+[PASS] S21 counter read error on 'T12-B4 after': LOI_PHEP_DO, outcome FAIL (measurement error is never a pass)
+[PASS] S22 counter not incremented for T12-B4: FAIL
+[PASS] S23 a frame towards the guest during T13-I1: FAIL
+[PASS] S24 service link before fails: no ping sent, all cases CHƯA KIỂM CHỨNG, outcome FAIL
+[PASS] S25 link-after-bad-hash: link after not intact (HTTP code and hash both required): no case ĐẠT, outcome FAIL
+[PASS] S25 link-after-stale-file: link after not intact (HTTP code and hash both required): no case ĐẠT, outcome FAIL
+[PASS] S26 tap0-drops: every case ĐẠT, but the infrastructure check fails -> outcome FAIL, script FAIL
+[PASS] S26 qemu-not-exiting: every case ĐẠT, but the infrastructure check fails -> outcome FAIL, script FAIL
+[PASS] S26 cleanup-marker-left: every case ĐẠT, but the infrastructure check fails -> outcome FAIL, script FAIL
+[PASS] S27 tap0 capture unreadable: every case LOI_PHEP_DO, outcome FAIL
+[PASS] S33 capture lost between two cases (during the counter read): caught BEFORE the next ping, exit 98, 1 ping
+[PASS] S34 capture-liveness traffic from the worker fails: every case ĐẠT, outcome FAIL
+[PASS] S35 alert written during 'T12-B2 before' (read A): ping T12-B2 NOT sent, exit 99, LEAK before the command
+[PASS] S36 alert during read A: QEMU shut down and cleanup still done; no evaluation
+[PASS] S37 alert file unreadable during read A: never read as 'no alert'; ping T12-B2 NOT sent, run stops (ERROR)
+[PASS] S28 QEMU not exiting: no session final read (window not closed), recorded
+[PASS] S29 run-check: ARM and MIPS each with the five cases -> exit 0
+[PASS] S30 run-check: MIPS missing (e.g. loop stopped after ARM) -> exit 1
+[PASS] S31 CLI --outcome on the clean scenario prints PASS
+[PASS] S32 CLI --outcome with the wrong architecture -> FAIL
+[PASS] R1 every required confirmation is recorded exactly once by the real ICMP path (clean run)
+[PASS] R2 the real ICMP path records no other non-info, non-case check outside the required list
+[PASS] R3 clean real output -> PASS (arch_outcome and CLI); case labels unchanged
+[PASS] R4.1 required confirmation missing -> FAIL: host leak monitor running and empty before boot
+[PASS] R4.2 required confirmation missing -> FAIL: full isolation verify right before QEMU spawn (harness pre-b
+[PASS] R4.3 required confirmation missing -> FAIL: tshark capturing on tap0
+[PASS] R4.4 required confirmation missing -> FAIL: guest booted and network configured
+[PASS] R4.5 required confirmation missing -> FAIL: topology gate: only nic/tap, one tap0 backend, pinned MAC on
+[PASS] R4.6 required confirmation missing -> FAIL: capture liveness traffic from the worker before the ICMP gro
+[PASS] R4.7 required confirmation missing -> FAIL: allowed service link before the ICMP group: GET get-task/T/f
+[PASS] R4.8 required confirmation missing -> FAIL: allowed service link after the ICMP group: GET get-task/T/fi
+[PASS] R4.9 required confirmation missing -> FAIL: tap0 MAC unchanged during the ICMP group
+[PASS] R4.10 required confirmation missing -> FAIL: all five ICMP cases executed with captures alive
+[PASS] R4.11 required confirmation missing -> FAIL: capture liveness traffic from the worker after the ICMP grou
+[PASS] R4.12 required confirmation missing -> FAIL: QEMU exit confirmed
+[PASS] R4.13 required confirmation missing -> FAIL: tap0 capture stopped cleanly
+[PASS] R4.14 required confirmation missing -> FAIL: tap0 capture drop statistics (pcapng ISB from dumpcap): pres
+[PASS] R4.15 required confirmation missing -> FAIL: fixture, marker and temporary guest disk removed
+[PASS] R4.16 required confirmation missing -> FAIL: ICMP group record: each reviewed case exactly once, service 
+[PASS] R5 every required confirmation missing (only info and case records left) -> FAIL, all listed (CLI)
+[PASS] R6 no record at all -> FAIL
+[PASS] R7 required confirmation recorded twice (both ok) -> FAIL (CLI): QEMU exit confirmed
+[PASS] R7 required confirmation recorded twice (both ok) -> FAIL (CLI): tap0 capture stopped cleanly
+[PASS] R7 required confirmation recorded twice (both ok) -> FAIL (CLI): fixture, marker and temporary guest disk removed
+[PASS] R8 'ok' of a required confirmation is 'true' (not a boolean) -> FAIL (CLI)
+[PASS] R8 'ok' of a required confirmation is 1 (not a boolean) -> FAIL (CLI)
+[PASS] R8 'ok' of a required confirmation is None (not a boolean) -> FAIL (CLI)
+[PASS] R8 'ok' of a required confirmation is [] (not a boolean) -> FAIL (CLI)
+[PASS] R8 'ok' of a required confirmation is {'ok': True} (not a boolean) -> FAIL (CLI)
+[PASS] R9 'ok' key missing on a required confirmation -> FAIL (never a default success)
+[PASS] R10 'test' not a string -> FAIL
+[PASS] R11 a record that is not an object -> FAIL
+[PASS] R12 each required confirmation with ok=False -> FAIL (named as not passed)
+[PASS] R13 all five cases ĐẠT (kiểm quy tắc) do not hide a failed confirmation; labels unchanged
+== section W
+[PASS] W1 bash -n run-06b4f.sh
+[PASS] W2 H points to the 06B-4FR working copy
+[PASS] W3 exactly one probe_matrix call, with CT01_SUITE=icmp
+[PASS] W4 self-tests (incl. ICMP + wiring) run before any docker command and abort the run if they fail
+[PASS] W5 every module probe_matrix imports in icmp mode is mounted read-only
+[PASS] W6 per-architecture outcome comes from icmp_harness --outcome; run-check after the loop
+[PASS] W7 compared with run-06b3b.sh only the H path, the copy list end, the probe_matrix call and the outcome line are replaced (nothing else removed)
+[PASS] W8 run-06b3b.sh (IPv4 matrix) itself is unchanged from 06B-4E (SHA-256 of the 06B-4B/4E copy)
+SELFTEST-ICMP-WIRING: 129/129 passed

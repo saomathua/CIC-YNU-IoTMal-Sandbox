@@ -1,0 +1,8 @@
+T14-A1: CHƯA KIỂM CHỨNG (hồ sơ thực thi không đầy đủ/không hợp lệ: restore says restored but the re-read state differs from the baseline: ["mac: '52:54:00:c7:00:02' -> '52:54:00:de:ad:01'"])
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+RECORD: T14-A1: restore says restored but the re-read state differs from the baseline: ["mac: '52:54:00:c7:00:02' -> '52:54:00:de:ad:01'"]
+Restore contradiction CLI exit: 2
+Required neighbour parsed binding: True
+Unstarted + capture error result: {'id': 'T14-A2', 'category': 'FAIL', 'verdict': 'FAIL', 'ok': False, 'probe_frames': 0, 'probe_frames_certain': 0, 'probe_frame_classes': [], 'failure_evidence': ["tap0 neighbour 10.200.0.2 is not a usable PERMANENT 52:54:00:c7:00:02 after the case: [{'dst': '10.200.0.2', 'dev': 'tap0', 'lladdr': '8a:d3:09:b5:72:af', 'states': ['PERMANENT'], 'binding': True}]", "tap0 neighbours changed: [('10.200.0.2', '52:54:00:c7:00:02', True, True)] -> [('10.200.0.2', '8a:d3:09:b5:72:af', True, True)]"], 'measurement_errors': ["capture read error: cannot read /home/dathq/projects/ct01-06b4hr2-work/codex-rerun-06b4hr1/fixtures/does-not-exist.pcapng: [Errno 2] No such file or directory: '/home/dathq/projects/ct01-06b4hr2-work/codex-rerun-06b4hr1/fixtures/does-not-exist.pcapng'; invalid measurement data: /home/dathq/projects/ct01-06b4hr2-work/codex-rerun-06b4hr1/fixtures/unstarted_actual.jsonl: no counter read"], 'execution_problems': [], 'neighbour_inconclusive': [], 'arp_out_drop_delta': None, 'reconciliation': None, 'not_started': True, 'steps': [], 'restore': None, 'evidence_kind': 'live_control', 'not_run': False}

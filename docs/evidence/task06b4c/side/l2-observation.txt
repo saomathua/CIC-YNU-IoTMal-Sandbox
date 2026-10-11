@@ -1,0 +1,57 @@
+TAP_MAC (netns-before.txt) = 96:c1:56:82:5b:40
+== ARM: 100 frames; truncated (snaplen) = 0
+   by direction/class: {('guest', 'l2_bad_ethertype'): 15, ('guest', 'drop_spoof'): 20, ('guest', 'arp_in_ok'): 3, ('worker', 'arp_out_ok'): 3, ('guest', 'allow_svc'): 14, ('worker', 'allow_out_svc'): 10, ('guest', 'drop_public'): 7, ('guest', 'drop_private'): 25, ('guest', 'drop_worker_other'): 3}
+   session window, 13 frame-mapped classes: PASS 
+      allow_svc          frames(certain)= 14 delta= 14 PASS
+      drop_spoof         frames(certain)= 20 delta= 20 PASS
+      drop_non_ipv4      frames(certain)=  0 delta=  0 PASS
+      drop_worker_other  frames(certain)=  3 delta=  3 PASS
+      drop_private       frames(certain)= 25 delta= 25 PASS
+      drop_bcast_mcast   frames(certain)=  0 delta=  0 PASS
+      drop_public        frames(certain)=  7 delta=  7 PASS
+      l2_bad_ethertype   frames(certain)= 15 delta= 15 PASS
+      l2_bad_mac         frames(certain)=  0 delta=  0 PASS
+      arp_in_ok          frames(certain)=  3 delta=  3 PASS
+      arp_in_drop        frames(certain)=  0 delta=  0 PASS
+      arp_out_ok         frames(certain)=  3 delta=  3 PASS
+      allow_out_svc      frames(certain)= 10 delta= 10 PASS
+      frames without a counter in the window: []
+   9 legacy classes: certain counts equal session.json: True
+   probe internet-tcp               13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe lan-dns-udp                13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe lan-dns-tcp                13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe ssh-host-192.168.60.1      13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe ssh-host-192.168.177.128   13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (1, 1), 'arp_in_drop': (0, 0), 'arp_out_ok': (1, 1)}
+   probe ssh-host-172.18.0.1        13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe manager                    13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe mongodb                    13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe worker-eth0                13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe tap0-other-port-listener   13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (1, 1), 'arp_in_drop': (0, 0), 'arp_out_ok': (1, 1)}
+== MIPS: 133 frames; truncated (snaplen) = 0
+   by direction/class: {('guest', 'l2_bad_ethertype'): 7, ('guest', 'arp_in_ok'): 2, ('worker', 'arp_out_ok'): 2, ('guest', 'drop_public'): 40, ('guest', 'drop_spoof'): 20, ('guest', 'allow_svc'): 15, ('worker', 'allow_out_svc'): 11, ('guest', 'drop_private'): 32, ('guest', 'drop_worker_other'): 4}
+   session window, 13 frame-mapped classes: PASS 
+      allow_svc          frames(certain)= 15 delta= 15 PASS
+      drop_spoof         frames(certain)= 20 delta= 20 PASS
+      drop_non_ipv4      frames(certain)=  0 delta=  0 PASS
+      drop_worker_other  frames(certain)=  4 delta=  4 PASS
+      drop_private       frames(certain)= 32 delta= 32 PASS
+      drop_bcast_mcast   frames(certain)=  0 delta=  0 PASS
+      drop_public        frames(certain)= 40 delta= 40 PASS
+      l2_bad_ethertype   frames(certain)=  7 delta=  7 PASS
+      l2_bad_mac         frames(certain)=  0 delta=  0 PASS
+      arp_in_ok          frames(certain)=  2 delta=  2 PASS
+      arp_in_drop        frames(certain)=  0 delta=  0 PASS
+      arp_out_ok         frames(certain)=  2 delta=  2 PASS
+      allow_out_svc      frames(certain)= 11 delta= 11 PASS
+      frames without a counter in the window: []
+   9 legacy classes: certain counts equal session.json: True
+   probe internet-tcp               13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe lan-dns-udp                13-class UNVERIFIED (recorded 9-class UNVERIFIED); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}; edges {'drop_public': [1791434010.7872336, 1791434010.7881038]}
+   probe lan-dns-tcp                13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe ssh-host-192.168.60.1      13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe ssh-host-192.168.177.128   13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe ssh-host-172.18.0.1        13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe manager                    13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe mongodb                    13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (1, 1), 'arp_in_drop': (0, 0), 'arp_out_ok': (1, 1)}
+   probe worker-eth0                13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}
+   probe tap0-other-port-listener   13-class PASS       (recorded 9-class PASS); ARP (frames, delta) {'arp_in_ok': (0, 0), 'arp_in_drop': (0, 0), 'arp_out_ok': (0, 0)}

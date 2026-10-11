@@ -1,0 +1,6 @@
+SYSCTL REPORT (06B-2AR exec): net.ipv4.ip_forward=0
+SYSCTL REPORT (06B-2AR exec): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+SYSCTL REPORT (06B-2AR exec): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+SYSCTL REPORT (06B-2AR exec): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+SYSCTL REPORT (06B-2AR exec): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+SYSCTL REPORT (06B-2AR exec): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0

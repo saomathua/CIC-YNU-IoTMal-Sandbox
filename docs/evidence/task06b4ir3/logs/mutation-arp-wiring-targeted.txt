@@ -1,0 +1,11 @@
+baseline: 196/196 tests pass
+OK  V69  DETECTED           target="PC1.3 QEMU already running before ARM: no harness call at all (not 'guest did not boot'), stop reason names it, exit 1"
+OK  V70  DETECTED           target='PC1.2 arm-fail: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 1 keeps the cause'
+OK  V71  DETECTED           target='PC1.2 arm-unverified: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 4 keeps the cause'
+OK  V72  DETECTED           target='PC1.5 MIPS fails after a clean ARM: both called, no stop needed, run-level check run, exit 1'
+OK  V73  DETECTED           target='PC1.2 arm-fail: MIPS harness NOT called (only ARM), loop stopped and reported, run-level check skipped, control continues after the loop (teardown), exit 1 keeps the cause'
+OK  V74  DETECTED           target='PC1.1 both architectures pass: harness called for ARM then MIPS, run-level check run, no stop, exit 0'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-ARP-WIRING: 8 OK, 0 not as expected; harness unchanged
+exit=0

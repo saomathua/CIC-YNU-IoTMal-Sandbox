@@ -1,0 +1,390 @@
+diff -ruN ct01-06b4f/icmp_harness.py ct01-06b4fr/icmp_harness.py
+--- ct01-06b4f/icmp_harness.py	2026-10-08 07:23:18.377609064 +0000
++++ ct01-06b4fr/icmp_harness.py	2026-10-08 08:12:15.245668108 +0000
+@@ -13,6 +13,9 @@
+ The guest-worker service link (GET get-task/T/file) is checked before and after the group with its HTTP
+ code AND the fixture hash. It is a precondition only: it is NOT a live control for the ICMP destinations
+ (none exists), so a pass stays "ĐẠT (kiểm quy tắc)" and evidence_kind "rule_check".
++
++06B-4FR: --outcome also requires every infrastructure confirmation of the real ICMP path (REQUIRED_RECORDS)
++exactly once with a boolean ok == True; records must be objects with a string test and a boolean ok.
+ """
+ import collections
+ import json
+@@ -183,14 +186,71 @@
+ 
+ 
+ # ------------------------------------------------------------------ host side
++# 06B-4FR: confirmations that probe_matrix.py records on the real ICMP path (main() + run_icmp() +
++# evaluate_icmp()) and that a PASS needs. Each must be present EXACTLY ONCE with "ok" exactly True; a missing,
++# duplicated, malformed or failed one is a hard failure. Nothing defaults to success. ("info: ..." records and
++# the per-case records are not in this list; the cases are checked separately.)
++REQUIRED_RECORDS = (
++    "host leak monitor running and empty before boot",
++    "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
++    "tshark capturing on tap0",
++    "guest booted and network configured",
++    "topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface",
++    "capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP "
++    "destinations)",
++    "allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash",
++    "allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash",
++    "tap0 MAC unchanged during the ICMP group",
++    "all five ICMP cases executed with captures alive",
++    "capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP "
++    "destinations)",
++    "QEMU exit confirmed",
++    "tap0 capture stopped cleanly",
++    "tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
++    "fixture, marker and temporary guest disk removed",
++    "ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash",
++)
++
++
++def malformed_records(results):
++    """06B-4FR: indexes of records that are not an object with a string "test" and a boolean "ok"."""
++    return [i for i, r in enumerate(results)
++            if not isinstance(r, dict) or not isinstance(r.get("test"), str) or not isinstance(r.get("ok"), bool)]
++
++
++def record_problems(results):
++    """06B-4FR: every required confirmation must appear exactly once and be ok (exactly True).
++    -> list of problems (empty = complete). Malformed records are reported by malformed_records()."""
++    p = []
++    by_name = collections.defaultdict(list)
++    for r in results:
++        if isinstance(r, dict) and isinstance(r.get("test"), str):
++            by_name[r["test"]].append(r)
++    for name in REQUIRED_RECORDS:
++        recs = by_name.get(name, [])
++        if not recs:
++            p.append(f"required confirmation missing: {name}")
++        elif len(recs) > 1:
++            p.append(f"required confirmation recorded {len(recs)} times: {name}")
++        elif recs[0].get("ok") is not True:
++            p.append(f"required confirmation not passed (ok={recs[0].get('ok')!r}): {name}")
++    return p
++
++
+ def arch_outcome(result, icmp_eval, arch):
+     """One architecture -> "PASS" | "UNVERIFIED: ..." | "FAIL: ...". counter_window.run_outcome() on every
+     record (infrastructure checks included: captures, heartbeat, QEMU exit, cleanup, drop statistics ...),
+     plus: status COMPLETED, an evaluation for this architecture whose five cases each appear exactly once,
+-    in result.json too, and no record problem. A passed case never hides any other failed check."""
++    in result.json too, and no record problem. 06B-4FR: every record well-formed (string test, boolean ok) and
++    each REQUIRED_RECORDS confirmation present exactly once with ok True. A passed case never hides any other
++    failed or missing check, and the case labels are unchanged."""
+     hard = []
+     if not isinstance(result, dict) or not isinstance(result.get("results"), list):
+         return "FAIL: result.json unreadable or without results"
++    bad = malformed_records(result["results"])   # 06B-4FR: run_outcome() must never see these
++    if bad:
++        return f"FAIL: result record(s) {bad[:5]} not an object with a string 'test' and a boolean 'ok'"
++    hard += record_problems(result["results"])   # 06B-4FR: required infrastructure confirmations
+     if result.get("status") != "COMPLETED":
+         hard.append(f"status {result.get('status')!r}")
+     if not isinstance(icmp_eval, dict):
+diff -ruN ct01-06b4f/mutation_icmp_wiring.py ct01-06b4fr/mutation_icmp_wiring.py
+--- ct01-06b4f/mutation_icmp_wiring.py	2026-10-08 07:35:04.446758071 +0000
++++ ct01-06b4fr/mutation_icmp_wiring.py	2026-10-08 08:15:26.109308882 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4F — mutation test of the ICMP wiring (icmp_harness.py, probe_matrix.py icmp branch, run-06b4f.sh),
++"""06B-4F (+ 06B-4FR W28-W34) — mutation test of the ICMP wiring (icmp_harness.py, probe_matrix.py icmp branch, run-06b4f.sh),
+ offline. Each mutant runs selftest_icmp_wiring.py in its own mktemp copy of every harness file; every
+ replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID / ERROR
+ as in mutation_icmp.py. Baseline must pass; harness hash checked before/after.
+@@ -49,8 +49,8 @@
+     # ---- probe_matrix.py (icmp branch only)
+     ("W16", PM, [('    if runner.stop is not None:\n        raise runner.stop', '    if False:\n        raise runner.stop')],
+      "S12 marker-after-B4: exit 98, CAPTURE LOST, only 3 ping(s) reached the guest, no service link after"),
+-    ("W17", PM, [('        if alerts:\n            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd',
+-                  '        if False:\n            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd')],
++    ("W17", PM, [('        if alerts:\n            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd, when=when',
++                  '        if False:\n            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd, when=when')],
+      "S16 leak after T12-B2: exit 99, LEAK, no further ping, leak record, outcome FAIL"),
+     ("W18", PM, [('        captures_alive(tshark, f"before guest command {cmd!r}")', '        pass')],
+      "S33 capture lost between two cases (during the counter read): caught BEFORE the next ping, exit 98, 1 ping"),
+@@ -73,6 +73,22 @@
+      "S18 ping6 missing: the run script reports UNVERIFIED (not PASS, not a silent pass)"),
+     ("W27", RS, [('python3 "$H/selftest_icmp_wiring.py" > "$OUT/selftest-icmp-wiring.txt" 2>&1 || { cat "$OUT/selftest-icmp-wiring.txt"; echo "ABORT: ICMP wiring self-test failed"; exit 3; }\n', '')],
+      "W4 self-tests (incl. ICMP + wiring) run before any docker command and abort the run if they fail"),
++    # ---- 06B-4FR
++    ("W28", PM, [('        check_alerts(cmd, "before")\n', '')],
++     "S35 alert written during 'T12-B2 before' (read A): ping T12-B2 NOT sent, exit 99, LEAK before the command"),
++    ("W29", PM, [('        alerts = alert_lines()\n        if alerts:',
++                  '        try:\n            alerts = alert_lines()\n        except Exception:\n            alerts = []\n        if alerts:')],
++     "S37 alert file unreadable during read A: never read as 'no alert'; ping T12-B2 NOT sent, run stops (ERROR)"),
++    ("W30", IH, [('            p.append(f"required confirmation missing: {name}")', '            pass')],
++     "R5 every required confirmation missing (only info and case records left) -> FAIL, all listed (CLI)"),
++    ("W31", IH, [('        elif len(recs) > 1:', '        elif False:')],
++     "R7 required confirmation recorded twice (both ok) -> FAIL (CLI): QEMU exit confirmed"),
++    ("W32", IH, [('or not isinstance(r.get("ok"), bool)]', ']')],
++     "R8 'ok' of a required confirmation is 'true' (not a boolean) -> FAIL (CLI)"),
++    ("W33", IH, [('    "QEMU exit confirmed",\n', '')],
++     "R2 the real ICMP path records no other non-info, non-case check outside the required list"),
++    ("W34", IH, [('    hard += record_problems(result["results"])', '    pass')],
++     "R4.15 required confirmation missing -> FAIL: fixture, marker and temporary guest disk removed"),
+     ("X1", IH, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_icmp_wiring.py", [("import collections\n", "import collections(\n")], None),
+ ]
+diff -ruN ct01-06b4f/probe_matrix.py ct01-06b4fr/probe_matrix.py
+--- ct01-06b4f/probe_matrix.py	2026-10-08 07:23:53.876309352 +0000
++++ ct01-06b4fr/probe_matrix.py	2026-10-08 08:10:13.861894814 +0000
+@@ -29,6 +29,7 @@
+ icmp_cases.py (T12-B1, T12-B2, T12-B4, T13-I1, T13-I2) through icmp_harness.py, with the same boot,
+ topology gate, tap0 capture, host capture/heartbeat/alert checks, counter reads, session measurement,
+ QEMU shutdown and cleanup. Without CT01_SUITE (or "ipv4") nothing changes.
++06B-4FR: the leak alerts are also checked before every guest command of the ICMP group.
+ """
+ import ipaddress
+ import json
+@@ -673,9 +674,9 @@
+ 
+ def run_icmp(g, cfg, fixture, tshark):
+     """The five reviewed cases, once, through icmp_cases.run_group(). Every guest command (service links
+-    and pings) goes through a GuardedRunner: captures/heartbeat checked before, leak alerts and captures
+-    after; the first failure stops the group (no further command reaches the guest) and is re-raised here,
+-    so the existing LeakDetected (99) / CaptureLost (98) handling applies unchanged."""
++    and pings) goes through a GuardedRunner: leak alerts and captures/heartbeat checked before AND after
++    (06B-4FR: alerts also before); the first failure stops the group (no further command reaches the guest)
++    and is re-raised here, so the existing LeakDetected (99) / CaptureLost (98) handling applies unchanged."""
+     import hashlib
+     tap_mac = read_tap_mac()
+     sha = hashlib.sha256(fixture).hexdigest()
+@@ -684,14 +685,23 @@
+            probe_iface=cfg.net_iface, fixture_sha256=sha, service_link_role=icmp_harness.LINK_ROLE)
+     capture_liveness("before the ICMP group")
+ 
++    def check_alerts(cmd, when):
++        # 06B-4FR: alert_lines() raises when the alert file is missing or unreadable; that exception stops the
++        # group like any guard failure (status ERROR), it is never read as "no alert".
++        alerts = alert_lines()
++        if alerts:
++            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd, when=when,
++                   alerts=alerts[:5])
++            raise LeakDetected(f"{when} {cmd!r}: {len(alerts)} signature packet(s) seen on host interfaces")
++
+     def before(cmd):
++        # 06B-4FR: alerts are checked BEFORE every command too, so that an alert that appeared after the previous
++        # check (e.g. during the next case's counter read A) stops the group before that command is sent.
++        check_alerts(cmd, "before")
+         captures_alive(tshark, f"before guest command {cmd!r}")
+ 
+     def after(cmd):
+-        alerts = alert_lines()
+-        if alerts:
+-            record("NO probe packet seen on host interfaces (leak monitor)", False, command=cmd, alerts=alerts[:5])
+-            raise LeakDetected(f"after {cmd!r}: {len(alerts)} signature packet(s) seen on host interfaces")
++        check_alerts(cmd, "after")
+         captures_alive(tshark, f"after guest command {cmd!r}")
+ 
+     runner = icmp_harness.GuardedRunner(g, before, after)
+diff -ruN ct01-06b4f/run-06b4f.sh ct01-06b4fr/run-06b4f.sh
+--- ct01-06b4f/run-06b4f.sh	2026-10-08 07:24:23.661760492 +0000
++++ ct01-06b4fr/run-06b4f.sh	2026-10-08 08:12:15.244668110 +0000
+@@ -12,8 +12,10 @@
+ # Boot, topology gate, captures, watcher/heartbeat, leak alerts, scanners, counter reads, session
+ # measurement, QEMU shutdown, cleanup and host-state checks are those of run-06b3b.sh, unchanged.
+ # Guard 20 ms: unmeasured assumption. A pass is only "ĐẠT (kiểm quy tắc)".
++# 06B-4FR: only H changes in this script; the fixes are in probe_matrix.py (leak alerts also checked
++# before every guest command) and icmp_harness.py (required infrastructure confirmations in --outcome).
+ #
+-#   sudo bash /home/dathq/projects/ct01-06b4f/run-06b4f.sh
++#   sudo bash /home/dathq/projects/ct01-06b4fr/run-06b4f.sh   (06B-4FR: H = ct01-06b4fr)
+ #
+ # ---- original header of run-06b3b.sh:
+ # Nhiệm vụ 06B-3B — IPv4 block matrix from real guests (ARM, then MIPS) with live controls.
+@@ -55,7 +57,7 @@
+ set -uo pipefail
+ 
+ EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+-H=/home/dathq/projects/ct01-06b4f
++H=/home/dathq/projects/ct01-06b4fr
+ OUT=$H/out
+ REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+ IMAGE=sandbox-worker:latest
+diff -ruN ct01-06b4f/selftest_icmp_wiring.py ct01-06b4fr/selftest_icmp_wiring.py
+--- ct01-06b4f/selftest_icmp_wiring.py	2026-10-08 07:35:04.446758071 +0000
++++ ct01-06b4fr/selftest_icmp_wiring.py	2026-10-08 08:15:26.108308884 +0000
+@@ -19,6 +19,7 @@
+ """
+ import collections
+ import contextlib
++import copy
+ import hashlib
+ import io
+ import json
+@@ -78,6 +79,9 @@
+     "cleanup-marker-left": {"marker_left": True},
+     "marker-before-B2": {"nft_event": ("T12-B2 before", "marker")},   # capture dies between two cases
+     "liveness-fails": {"liveness_fail": True},
++    # 06B-4FR (P1): an alert / an unreadable alert file appears during the next case's counter read A
++    "leak-before-B2": {"nft_event": ("T12-B2 before", "leak")},
++    "alert-unreadable-before-B2": {"nft_event": ("T12-B2 before", "alert_dir")},
+ }
+ 
+ 
+@@ -177,7 +181,14 @@
+ 
+ def fake_run_checked(cmd):
+     if cmd[:3] == ["nft", "-j", "list"] and W.spec.get("nft_event", (None,))[0] == W.label:
+-        open(W.pm.CAPTURE_DEAD, "a").write("12:00:00 capture bridge pid 78 exited during the test\n")
++        kind = W.spec["nft_event"][1]
++        if kind == "marker":
++            open(W.pm.CAPTURE_DEAD, "a").write("12:00:00 capture bridge pid 78 exited during the test\n")
++        elif kind == "leak":
++            open(W.pm.ALERT, "a").write("12:00:02 IP 10.200.0.2 > 255.255.255.255: ICMP echo request, length 1209\n")
++        elif kind == "alert_dir":       # unreadable even as root (the run script runs this test as root)
++            os.remove(W.pm.ALERT)
++            os.mkdir(W.pm.ALERT)
+     if cmd[:3] == ["nft", "-j", "list"]:
+         if W.spec.get("nft_fail") and W.label == W.spec["nft_fail"]:
+             raise RuntimeError("command failed rc=1: nft -j list counters: simulated")
+@@ -539,6 +550,19 @@
+     t("S34 capture-liveness traffic from the worker fails: every case ĐẠT, outcome FAIL",
+       lambda: set(cats(x).values()) == {"DAT_KIEM_QUY_TAC"} and x["outcome"].startswith("FAIL")
+       and "capture liveness traffic" in x["outcome"])
++    x = g("leak-before-B2")
++    t("S35 alert written during 'T12-B2 before' (read A): ping T12-B2 NOT sent, exit 99, LEAK before the command",
++      lambda: x["rc"] == 99 and len(pings(x)) == 1 and x["result"]["status"].startswith("LEAK: before 'ping -c 3 -s 1202")
++      and x["outcome"].startswith("FAIL") and x["script"] == "FAIL"
++      and any(r["test"] == "NO probe packet seen on host interfaces (leak monitor)" and r.get("when") == "before"
++              for r in x["result"]["results"]))
++    t("S36 alert during read A: QEMU shut down and cleanup still done; no evaluation",
++      lambda: x["eval"] is None and all(any(r["test"] == p and r["ok"] for r in x["result"]["results"])
++                                        for p in ("QEMU exit confirmed", "fixture, marker and temporary guest disk removed")))
++    x = g("alert-unreadable-before-B2")
++    t("S37 alert file unreadable during read A: never read as 'no alert'; ping T12-B2 NOT sent, run stops (ERROR)",
++      lambda: len(pings(x)) == 1 and x["rc"] == 1 and x["result"]["status"].startswith("ERROR: IsADirectoryError")
++      and x["eval"] is None and x["outcome"].startswith("FAIL") and x["script"] == "FAIL")
+     x = g("qemu-not-exiting")
+     t("S28 QEMU not exiting: no session final read (window not closed), recorded", lambda: x["session"]["verdict"] != "PASS")
+ 
+@@ -564,6 +588,81 @@
+                         os.path.join(c["dir"], "out", "ARM", "result.json"),
+                         os.path.join(c["dir"], "out", "ARM", "icmp-eval.json"), "MIPS"], capture_output=True, text=True)
+     t("S32 CLI --outcome with the wrong architecture -> FAIL", lambda: p.stdout.startswith("FAIL"))
++    try:
++        sec_R(c, tmp)
++    except Exception:
++        t("R-INFRA section crashed", lambda: False)
++        traceback.print_exc()
++
++
++# ------------------------------------------------------------------ R. 06B-4FR: required infrastructure records
++def sec_R(c, tmp):
++    """P2 on the REAL clean output of probe_matrix.main(): records removed, duplicated, retyped or failed,
++    judged by icmp_harness.arch_outcome() and by the CLI that run-06b4f.sh calls."""
++    import icmp_harness as H
++    res0 = json.load(open(os.path.join(c["dir"], "out", "ARM", "result.json")))
++    ev = json.load(open(os.path.join(c["dir"], "out", "ARM", "icmp-eval.json")))
++    names = collections.Counter(r["test"] for r in res0["results"])
++    other = sorted(n for n in names if n not in H.REQUIRED_RECORDS and not n.startswith("info: ")
++                   and not n.startswith("probe T1"))
++    t("R1 every required confirmation is recorded exactly once by the real ICMP path (clean run)",
++      lambda: all(names[n] == 1 for n in H.REQUIRED_RECORDS))
++    t("R2 the real ICMP path records no other non-info, non-case check outside the required list", lambda: other == [])
++    A = lambda r: H.arch_outcome(r, ev, "ARM")
++
++    def without(pred):
++        r = copy.deepcopy(res0)
++        r["results"] = [x for x in r["results"] if not pred(x)]
++        return r
++
++    def edit(name, **kw):
++        r = copy.deepcopy(res0)
++        for x in r["results"]:
++            if x["test"] == name:
++                x.update(kw)
++        return r
++
++    def cli(r):
++        f = os.path.join(tmp, "R-result.json")
++        json.dump(r, open(f, "w"))
++        e = os.path.join(c["dir"], "out", "ARM", "icmp-eval.json")
++        return subprocess.run([sys.executable, os.path.join(HERE, "icmp_harness.py"), "--outcome", f, e, "ARM"],
++                              capture_output=True, text=True).stdout.strip()
++    t("R3 clean real output -> PASS (arch_outcome and CLI); case labels unchanged",
++      lambda: A(res0) == "PASS" and cli(res0) == "PASS"
++      and {x["verdict"] for x in ev["cases"]} == {"ĐẠT (kiểm quy tắc)"})
++    for i, n in enumerate(H.REQUIRED_RECORDS):
++        t(f"R4.{i + 1} required confirmation missing -> FAIL: {n[:60]}",
++          lambda n=n: A(without(lambda x: x["test"] == n)).startswith("FAIL: required confirmation missing: " + n[:20]))
++    allinfra = without(lambda x: x["test"] in H.REQUIRED_RECORDS)
++    t("R5 every required confirmation missing (only info and case records left) -> FAIL, all listed (CLI)",
++      lambda: cli(allinfra).startswith("FAIL") and all(n in A(allinfra) for n in H.REQUIRED_RECORDS))
++    t("R6 no record at all -> FAIL", lambda: cli(without(lambda x: True)).startswith("FAIL"))
++    for n in ("QEMU exit confirmed", "tap0 capture stopped cleanly", "fixture, marker and temporary guest disk removed"):
++        r = copy.deepcopy(res0)
++        r["results"].append({"test": n, "ok": True})
++        t(f"R7 required confirmation recorded twice (both ok) -> FAIL (CLI): {n}",
++          lambda r=r, n=n: cli(r).startswith("FAIL") and f"recorded 2 times: {n}" in A(r))
++    for v in ("true", 1, None, [], {"ok": True}):
++        t(f"R8 'ok' of a required confirmation is {v!r} (not a boolean) -> FAIL (CLI)",
++          lambda v=v: cli(edit("QEMU exit confirmed", ok=v)).startswith("FAIL")
++          and "boolean" in A(edit("QEMU exit confirmed", ok=v)))
++    r = copy.deepcopy(res0)
++    del [x for x in r["results"] if x["test"] == "tap0 capture stopped cleanly"][0]["ok"]
++    t("R9 'ok' key missing on a required confirmation -> FAIL (never a default success)",
++      lambda: cli(r).startswith("FAIL") and "boolean" in A(r))
++    r = copy.deepcopy(res0)
++    [x for x in r["results"] if x["test"] == "QEMU exit confirmed"][0]["test"] = ["QEMU exit confirmed"]
++    t("R10 'test' not a string -> FAIL", lambda: cli(r).startswith("FAIL"))
++    r = copy.deepcopy(res0)
++    r["results"].insert(3, "QEMU exit confirmed")
++    t("R11 a record that is not an object -> FAIL", lambda: cli(r).startswith("FAIL"))
++    t("R12 each required confirmation with ok=False -> FAIL (named as not passed)",
++      lambda: all(A(edit(n, ok=False)).startswith("FAIL") and f"not passed (ok=False): {n}" in A(edit(n, ok=False))
++                  for n in H.REQUIRED_RECORDS))
++    rr = edit("tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped", ok=False)
++    t("R13 all five cases ĐẠT (kiểm quy tắc) do not hide a failed confirmation; labels unchanged",
++      lambda: A(rr).startswith("FAIL") and all(x["ok"] for x in rr["results"] if x["test"].startswith("probe T1")))
+ 
+ 
+ # ------------------------------------------------------------------ U. icmp_harness units
+@@ -651,7 +750,6 @@
+       and (rec["arch"], rec["tap_mac"], rec["fixture_sha256"], rec["evidence_kind"]) == ("ARM", TAP, sha, "rule_check")
+       and H.check_record(rec, "ARM", TAP, sha) == [])
+     t("U15 check_record: wrong architecture", lambda: any("arch" in p for p in H.check_record(rec, "MIPS", TAP, sha)))
+-    import copy
+     r2 = copy.deepcopy(rec)
+     r2["cases"].pop(1)
+     t("U16 check_record: a missing case", lambda: any("missing: ['T12-B2']" in p for p in H.check_record(r2, "ARM", TAP, sha)))
+@@ -683,7 +781,8 @@
+ 
+     ok_cases = [{"id": i, "category": "DAT_KIEM_QUY_TAC", "verdict": "ĐẠT (kiểm quy tắc)", "ok": True} for i in I.CASE_IDS]
+     good_ev = {"arch": "ARM", "record_problems": [], "group_complete": True, "cases": ok_cases}
+-    infra = [{"test": "QEMU exit confirmed", "ok": True}]
++    infra = [{"test": n, "ok": True} for n in H.REQUIRED_RECORDS]   # 06B-4FR: every required confirmation
++    n0 = len(infra)                                                   # index of the first case record
+     good_res = {"status": "COMPLETED", "results": infra + [{"test": H.case_test_name(c), "ok": True} for c in ok_cases]}
+     A = H.arch_outcome
+     t("U25 arch_outcome: complete, all ok -> PASS", lambda: A(good_res, good_ev, "ARM") == "PASS")
+@@ -701,7 +800,7 @@
+     e2["cases"].append(copy.deepcopy(e2["cases"][0]))
+     t("U30 arch_outcome: a case twice in the evaluation -> FAIL", lambda: A(good_res, e2, "ARM").startswith("FAIL"))
+     r3 = copy.deepcopy(good_res)
+-    r3["results"].append(copy.deepcopy(r3["results"][1]))
++    r3["results"].append(copy.deepcopy(r3["results"][n0]))
+     t("U31 arch_outcome: a case recorded twice in result.json -> FAIL", lambda: A(r3, good_ev, "ARM").startswith("FAIL"))
+     r3 = copy.deepcopy(good_res)
+     r3["results"].pop()
+@@ -714,7 +813,7 @@
+     e2, r3 = copy.deepcopy(good_ev), copy.deepcopy(good_res)
+     e2["cases"][0].update(category="KHONG_TAO_DUOC_GOI", ok=False,
+                           verdict="CHƯA KIỂM CHỨNG (không tạo được gói probe; ping rc 2 không phải bằng chứng chặn)")
+-    r3["results"][1] = {"test": H.case_test_name(e2["cases"][0]), "ok": False}
++    r3["results"][n0] = {"test": H.case_test_name(e2["cases"][0]), "ok": False}
+     t("U36 arch_outcome: one case not judged, all else fine -> UNVERIFIED", lambda: A(r3, e2, "ARM").startswith("UNVERIFIED"))
+     t("U37 run_check: same architecture twice is a problem", lambda: H.run_check("/nonexistent", ["ARM", "ARM"]))
+     with contextlib.redirect_stderr(io.StringIO()):
+@@ -726,7 +825,7 @@
+     p = os.path.join(HERE, "run-06b4f.sh")
+     s = open(p).read()
+     t("W1 bash -n run-06b4f.sh", lambda: subprocess.run(["bash", "-n", p]).returncode == 0)
+-    t("W2 H points to the 06B-4F working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4f\n" in s)
++    t("W2 H points to the 06B-4FR working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4fr\n" in s)
+     calls = [l for l in s.splitlines() if "probe_matrix.py $ARCH" in l]
+     t("W3 exactly one probe_matrix call, with CT01_SUITE=icmp", lambda: len(calls) == 1 and "-e CT01_SUITE=icmp " in calls[0])
+     first_docker = min(i for i in (s.find("\ndocker "), s.find("$(docker "), s.find(" docker ")) if i >= 0)

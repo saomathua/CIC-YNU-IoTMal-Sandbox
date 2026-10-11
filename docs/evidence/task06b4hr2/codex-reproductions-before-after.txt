@@ -1,0 +1,22 @@
+Codex 06B-4HR1 review scripts, unmodified, re-run on the 06B-4HR1 and 06B-4HR2 arp_cases.py (fixture helpers: 06B-4HR2 selftest_arp.py).
+Inputs: review sha256 05ccfad6af518047f9706648a15920aa58a515e6f13472fd7ce953aa062f2aec
+        bundle sha256 377d133215a5aec0ac52d67f71f3b307c2215e44ed9999f6a10f9582de0b41f2
+        reproduce.py 7e78363cb5e8ae0e22fe237ed7f7162dd92673d462698a9c24628cad3b42d641
+        extra_stubs.py a40803afbe71c9c2bd7ee3ee367867c0231b9cfcf8371d600912a50ccced5675
+        extended_review.py e6c6e5c33f8911b1735ca326024281798e0a3d406497c730420b5dfdad87069c
+        verify_extended_paths.py 6b1a3fef660d85d5530f9a5791cba5e8fbe731d1f3136093e76298e915035037
+        additional_review.py 83f7dd3dee3c762f0cabd227bab97777f54ed26a8f19b3756023e787010b5058
+        static_flag_review.py 3d140244998baa1e49a661b51fda486c203c4b7eae7b646c2def07a63044f806
+06B-4HR1 re-run == Codex bundle logs: reproduce, extra_stubs, extended_review, additional_review, static_flag_review identical;
+  verify_extended_paths differs only in the absolute fixture path printed inside one message.
+
+=== static_flag_review (R1)
+06B-4HR1 : flags 6 in neigh_dynamic, lost after restore -> group exit 0 | CLI exit 0 | T14-A1 DAT | record_problems [] | proper-static control exit 2
+06B-4HR2 : flags 6 in neigh_dynamic, lost after restore -> group exit 2 | CLI exit 2 | T14-A1 CHUA_KIEM_CHUNG | record_problems ["T14-A1: guest baseline dynamic neighbour '10.200.0.9 eth1' has the PERMANENT flag (0x6): belongs to neigh_static"] | proper-static control exit 2
+  (06B-4HR2: the script's final assert, which expects the bug, raises AssertionError after writing its JSON: rc 1)
+
+=== other scripts: 06B-4HR1 vs 06B-4HR2 logs
+  identical: reproduce (F1-F5 cases, clean group exit 0, restore matrix 40 cases / 0 diffs)
+  identical: extra_stubs (ping rc 2, control payloads, restore errors)
+  identical: extended_review (HR1-HR5 cases)
+  identical: additional_review (NUD combinations, real-record 'after' changes incl. valid dynamic change -> exit 0, schema)

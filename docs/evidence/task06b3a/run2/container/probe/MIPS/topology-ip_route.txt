@@ -1,0 +1,2 @@
+default via 10.200.0.1 dev br-lan 
+10.200.0.0/30 dev br-lan scope link  src 10.200.0.2 

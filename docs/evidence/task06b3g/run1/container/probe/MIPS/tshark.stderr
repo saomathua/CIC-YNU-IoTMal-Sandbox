@@ -1,0 +1,5 @@
+Running as user "root" and group "root". This could be dangerous.
+Capturing on 'tap0'
+ ** (tshark:278) 16:14:08.107825 [Main MESSAGE] -- Capture started.
+ ** (tshark:278) 16:14:08.107859 [Main MESSAGE] -- File: "/harness-out/MIPS/tap0.pcapng"
+125 packets captured

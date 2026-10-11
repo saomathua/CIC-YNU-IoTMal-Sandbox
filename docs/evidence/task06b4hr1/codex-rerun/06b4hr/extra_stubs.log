@@ -1,0 +1,8 @@
+restore_console_exception False
+ping_rc2_actual_run_group 4
+run_group_control_1 CHUA_KIEM_CHUNG
+run_group_control_true CHUA_KIEM_CHUNG
+run_group_control_False CHUA_KIEM_CHUNG
+run_group_control_None CHUA_KIEM_CHUNG
+run_group_control_True DAT
+restore_snapshot_read_error False

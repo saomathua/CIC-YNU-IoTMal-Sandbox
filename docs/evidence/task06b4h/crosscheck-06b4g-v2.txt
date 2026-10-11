@@ -1,0 +1,32 @@
+== ARM: TAP_MAC 26:b3:9f:a4:8c:01, T13-I2 target fe80::24b3:9fff:fea4:8c01, group ff02::1:ffa4:8c01; tap0 frames from guest 66
+case    probe(all) certain edge  expected-class delta  guest-IPv6 in window (certain/edge) vs l2_bad_ethertype delta  harness verdict
+T12-B1           5       5    0  drop_bcast_mcast=5   all deltas={'l2_bad_ethertype': 2, 'drop_spoof': 2, 'drop_bcast_mcast': 5, 'drop_public': 4}  v6 2/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T12-B2           5       5    0  drop_bcast_mcast=5   all deltas={'l2_bad_ethertype': 3, 'drop_spoof': 2, 'drop_bcast_mcast': 5}  v6 3/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T12-B4           5       5    0  drop_private=5   all deltas={'l2_bad_ethertype': 1, 'drop_spoof': 1, 'drop_private': 5}  v6 1/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T13-I1           3       2    1  l2_bad_ethertype=3   all deltas={'l2_bad_ethertype': 3, 'drop_spoof': 1}  v6 2/1  replies-to-guest=0  -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+        edge probe frame t=1791448983.574760: read A end 1791448981.483361 , read B start 1791448983.590512 (-guard 1791448983.570512); zone edge_end
+        independent counts == harness icmp-eval.json: True
+T13-I2           4       4    0  l2_bad_ethertype=4   all deltas={'l2_bad_ethertype': 4, 'drop_spoof': 2}  v6 4/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+   service link before: ok=True http=200 sha256==fixture: True
+   service link after: ok=True http=200 sha256==fixture: True
+
+== MIPS: TAP_MAC 26:b3:9f:a4:8c:01, T13-I2 target fe80::24b3:9fff:fea4:8c01, group ff02::1:ffa4:8c01; tap0 frames from guest 101
+case    probe(all) certain edge  expected-class delta  guest-IPv6 in window (certain/edge) vs l2_bad_ethertype delta  harness verdict
+T12-B1           3       3    0  drop_bcast_mcast=3   all deltas={'l2_bad_ethertype': 4, 'drop_spoof': 4, 'drop_bcast_mcast': 3, 'drop_public': 10}  v6 4/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T12-B2           3       3    0  drop_bcast_mcast=3   all deltas={'drop_spoof': 4, 'drop_bcast_mcast': 3, 'drop_public': 8}  v6 0/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T12-B4           3       3    0  drop_private=3   all deltas={'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 4, 'drop_private': 3, 'drop_public': 10}  v6 0/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T13-I1           3       3    0  l2_bad_ethertype=3   all deltas={'l2_bad_ethertype': 3, 'drop_spoof': 4, 'drop_public': 2}  v6 3/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+T13-I2           3       3    0  l2_bad_ethertype=3   all deltas={'l2_bad_ethertype': 3, 'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 4, 'drop_public': 6}  v6 3/0  replies-to-guest=0  -> ĐẠT (kiểm quy tắc)
+        independent counts == harness icmp-eval.json: True
+   service link before: ok=True http=200 sha256==fixture: True
+   service link after: ok=True http=200 sha256==fixture: True
+
+INDEPENDENT CROSS-CHECK: counts agree with the harness

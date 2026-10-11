@@ -1,0 +1,84 @@
+ Image sandbox-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 613B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.43kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/ubuntu:22.04
+#3 DONE 16.8s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 438B done
+#4 DONE 0.0s
+
+#5 [ 1/16] FROM docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
+#5 resolve docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 17.29kB done
+#6 DONE 0.0s
+
+#7 [ 3/16] WORKDIR /app
+#7 CACHED
+
+#8 [ 8/16] COPY ./service ./service
+#8 CACHED
+
+#9 [ 6/16] COPY ./config ./config
+#9 CACHED
+
+#10 [ 5/16] RUN pip install --no-cache-dir -r requirements.txt
+#10 CACHED
+
+#11 [ 7/16] COPY ./router ./router
+#11 CACHED
+
+#12 [ 4/16] COPY requirements.txt .
+#12 CACHED
+
+#13 [ 2/16] RUN apt-get update &&     apt-get --no-install-recommends -y install         qemu-system-arm qemu-system-mips qemu-system-x86         python3-dev python3-pip         net-tools iproute2 uml-utilities iptables         nftables=1.0.2-1ubuntu3.1 libnftables1=1.0.2-1ubuntu3.1         libnftnl11=1.2.1-1build1 libjansson4=2.13.1-1.1build3         procps sysstat         file         ca-certificates &&     DEBIAN_FRONTEND=noninteractive apt-get install -y tshark &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+#13 CACHED
+
+#14 [ 9/16] COPY ./util ./util
+#14 CACHED
+
+#15 [10/16] COPY ./isolation ./isolation
+#15 DONE 0.0s
+
+#16 [11/16] COPY ./ARM ./ARM
+#16 DONE 0.0s
+
+#17 [12/16] COPY ./MIPS ./MIPS
+#17 DONE 0.1s
+
+#18 [13/16] COPY ./MIPSEL ./MIPSEL
+#18 DONE 0.1s
+
+#19 [14/16] COPY ./x86 ./x86
+#19 DONE 0.1s
+
+#20 [15/16] COPY server.py ./poller.py ./run.sh ./
+#20 DONE 0.1s
+
+#21 [16/16] RUN mkdir data
+#21 DONE 0.3s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 0.7s done
+#22 exporting manifest sha256:980f45bce0e949104361a4a48e211d88205780d6f9fa4f7b7addfec613ae67c1 done
+#22 exporting config sha256:5f4d99997745afb5d05f645fc529d1031fcd99c7dc5fc1767bd010f7a9f8d032 done
+#22 exporting attestation manifest sha256:216d35933db83928ce8e5046b67332ed1037caca44ea4256b48e3ea2f75ef6c3 0.0s done
+#22 exporting manifest list sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 done
+#22 naming to docker.io/library/sandbox-worker:latest done
+#22 unpacking to docker.io/library/sandbox-worker:latest
+#22 unpacking to docker.io/library/sandbox-worker:latest 0.3s done
+#22 DONE 1.0s
+
+#23 resolving provenance for metadata file
+#23 DONE 0.0s
+ Image sandbox-worker Built 

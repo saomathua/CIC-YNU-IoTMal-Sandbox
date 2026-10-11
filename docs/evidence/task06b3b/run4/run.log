@@ -1,0 +1,58 @@
+4392b3974ca644abd4b229a40638cb32dd5d31159effb234ab06536dc7385340  /home/dathq/projects/ct01-06b3b/out/harness-copy/ctl_loop.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b3b/out/harness-copy/poller.py
+4d7391d8e2e305652485693b5416f7738dbd8a638fc1ba97228b4abac13de457  /home/dathq/projects/ct01-06b3b/out/harness-copy/probe_matrix.py
+d25995ed7f06d70ade805a8e1b80632cb0756db1a4290e6b9f6a87db3f5df246  /home/dathq/projects/ct01-06b3b/out/harness-copy/run-06b3b.sh
+
+===== 1. preparation (15:22:21)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 2 minutes ago
+mongo-db Up 53 minutes
+manager state before: exited
+sandboxnet=cic-ynu-iotmal-sandbox_sandboxnet bridge=br-1d86fe3e8bbe dbnet=cic-ynu-iotmal-sandbox_dbnet mongo=172.18.0.2 host-ips=192.168.60.1,192.168.177.128,172.18.0.1 lan-dns=192.168.177.2
+
+===== 2. start existing manager for controls (--no-deps --no-build) (15:22:21)
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+[PASS] manager healthy (127.0.0.1:8011/healthcheck)
+manager: running ip=192.168.60.10
+
+===== 3. worker test container (15:22:23)
+worker test container: 8119ead51801c3f3dc899824cac8f0f5d510574b40c8cf8ba4fdb3178f09ac80
+[PASS] worker server ready
+[PASS] V0 passed
+worker eth0=192.168.60.2 host veth=veth8178311 (ifindex 43)
+[PASS] code and guest images in container equal working tree
+
+===== 4. control container (sandboxnet + dbnet) (15:22:24)
+[PASS] control 'mongo 172.18.0.2:27017' alive
+[PASS] control 'worker-eth0 192.168.60.2:8011' alive
+[PASS] control 'manager 192.168.60.10:8011' alive
+
+===== 5. host captures on veth8178311, br-1d86fe3e8bbe, ens33 + leak alert (15:22:29)
+capture dir: /tmp/ct01-06b3b-cap.Yjojyl
+[PASS] host tcpdump pid 10160 running
+[PASS] host tcpdump pid 10161 running
+[PASS] host tcpdump pid 10162 running
+[PASS] host tcpdump pid 10164 running
+[FAIL] host capture veth: tcpdump reports listening
+[FAIL] host capture bridge: tcpdump reports listening
+[FAIL] host capture ens33: tcpdump reports listening
+[PASS] host capture veth.pcap being written
+[PASS] host capture bridge.pcap being written
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.0.13 30 Jan 2024
+variant [-w /tmp/ct01-06b3b-cap.Yjojyl/d1.pcap] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196: 10185 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w /tmp/ct01-06b3b-cap.Yjojyl/d2.pcap] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-w -] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196: 10202 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w -] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-Z root -l] rc=124 stderr: tcpdump: verbose output suppressed, use -v[v]... for full protocol decode listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+Oct 06 15:22:35 hq kernel: tcpdump[10186]: segfault at 0 ip 00007f561536a55d sp 00007ffc96929de0 error 4 in libc.so.6[7f5615228000+189000] likely on CPU 2 (core 2, socket 0)
+Oct 06 15:22:38 hq kernel: tcpdump[10203]: segfault at 0 ip 0000779133b6a55d sp 00007ffeaa05c7c0 error 4 in libc.so.6[779133a28000+189000] likely on CPU 2 (core 2, socket 0)
+ABORT: host-side capture not running; no guest is booted without it

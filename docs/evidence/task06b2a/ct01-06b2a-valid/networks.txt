@@ -1,0 +1,1 @@
+network=cic-ynu-iotmal-sandbox_sandboxnet ip=192.168.60.2 gw=192.168.60.1

@@ -1,0 +1,2489 @@
+{
+ "classes": [
+  "drop_public",
+  "l2_bad_ethertype",
+  "drop_spoof"
+ ],
+ "cases": [
+  {
+   "name": "clean",
+   "expected": "PASS",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "edge-start",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 100.005,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "edge-end",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 300.485,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.49,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "real-mismatch",
+   "expected": "FAIL",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 14
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 14
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "capture-incomplete-counter-above",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 14
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 14
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "UNVERIFIED",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "capture-incomplete-counter-below",
+   "expected": "FAIL",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 12
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 12
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "UNVERIFIED",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "pcap-unreadable",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": false
+   }
+  },
+  {
+   "name": "tshark-exit-nonzero",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 1,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "exit-after-final-read",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.6,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "final-before-read-before",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 99.0,
+     "t_end": 99.01,
+     "values": {
+      "drop_public": 13,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "arp_in_ok": 2
+     }
+    },
+    {
+     "t_start": 99.5,
+     "t_end": 99.51,
+     "values": {
+      "drop_public": 13,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "arp_in_ok": 2
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "final-time-nan",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": NaN,
+     "values": {
+      "drop_public": 13,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "arp_in_ok": 2
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "drop_public": 13,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "arp_in_ok": 2
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "qemu-running-before",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": false,
+    "pids_before": [
+     42
+    ],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "exit-not-confirmed",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": false,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "no-final-read",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "counter-decreased",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 9
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 9
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "unstable-after-exit",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 14
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "late-guest-frame",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 300.2,
+     "cls": "l2_bad_ethertype"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 8,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "pre-window-guest-frame",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 90.0,
+     "cls": "drop_public"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "pre-window-arp",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 90.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "arp-in-start-edge",
+   "expected": "UNVERIFIED",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 100.005,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "pre-window-non-guest-frame",
+   "expected": "PASS",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    },
+    {
+     "t": 90.0,
+     "cls": null
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "qemu-left-after-exit",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [
+     4242
+    ],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "qemu-state-unverifiable",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": null,
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "qemu-state-scan-error",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": "OSError: /proc"
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "qemu-pids-before-inconsistent",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [
+     7
+    ],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "missing-F2",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "drop_public": 13,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "arp_in_ok": 2
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "final-read-error",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": "RuntimeError: nft failed",
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "class-missing-in-A",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "class-missing-in-F1",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "class-missing-in-F2",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": 0,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  },
+  {
+   "name": "counter-value-bool",
+   "expected": "ERROR",
+   "frames": [
+    {
+     "t": 150.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 160.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 170.0,
+     "cls": "drop_public"
+    },
+    {
+     "t": 155.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 165.0,
+     "cls": "l2_bad_ethertype"
+    },
+    {
+     "t": 120.0,
+     "cls": null
+    },
+    {
+     "t": 158.0,
+     "cls": "arp"
+    }
+   ],
+   "read_before": {
+    "t_start": 100.0,
+    "t_end": 100.01,
+    "values": {
+     "drop_public": 10,
+     "l2_bad_ethertype": 5,
+     "drop_spoof": false,
+     "arp_in_ok": 1
+    }
+   },
+   "finals": [
+    {
+     "t_start": 300.5,
+     "t_end": 300.51,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    },
+    {
+     "t_start": 301.0,
+     "t_end": 301.01,
+     "values": {
+      "arp_in_ok": 2,
+      "l2_bad_ethertype": 7,
+      "drop_spoof": 0,
+      "drop_public": 13
+     }
+    }
+   ],
+   "qemu": {
+    "no_qemu_before": true,
+    "pids_before": [],
+    "exit_confirmed": true,
+    "exit_confirmed_t": 300.0,
+    "pids_after_exit": [],
+    "pids_after_exit_error": null
+   },
+   "final_read_error": null,
+   "capture": {
+    "tshark_rc": 0,
+    "drop_verdict": "PASS",
+    "pcap_readable": true
+   }
+  }
+ ]
+}

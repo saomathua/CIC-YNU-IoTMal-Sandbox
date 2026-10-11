@@ -1,0 +1,1 @@
+08:42:00 capture p2 pid 254463 exited during the test

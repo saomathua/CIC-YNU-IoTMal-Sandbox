@@ -1,0 +1,24 @@
+{
+  "schema": "ct01-flow-fixtures/1",
+  "what": "the guest OS's own /bin/busybox, dumped read-only with debugfs from root.ext4 of the pinned worker image zip; executed as ./exec it prints 'exec: applet not found' and exits; no network, no write",
+  "fixtures": {
+    "ARM": {
+      "file": "busybox-ARM",
+      "sha256": "6a5345419891afe9102f1285c841e820c177795843df33fd5ad46fb105dbf6a5",
+      "size": 393257,
+      "source_image_zip": "/home/dathq/projects/ct01-t1617-r5/repo/sandbox-worker/ARM/image.zip",
+      "source_image_zip_sha256": "1775e3285b3975dd6fe12ab17047fb2270b65a0876037028e3975917d66d7095",
+      "source_path_in_image": "/bin/busybox",
+      "detect_arch": "ELF 32-bit LSB executable, ARM, EABI5 ... (file(1) in the pinned worker image)"
+    },
+    "MIPS": {
+      "file": "busybox-MIPS",
+      "sha256": "3b06c11b9675ab7813a8e0a7b5f67bacad1f711ee2560b29e4d618f6c3818488",
+      "size": 327717,
+      "source_image_zip": "/home/dathq/projects/ct01-t1617-r5/repo/sandbox-worker/MIPS/image.zip",
+      "source_image_zip_sha256": "0aa4928e2c35dcf986443cfe58bd48525f0a68fde8d2366ebdf7d6eaaa6733a6",
+      "source_path_in_image": "/bin/busybox",
+      "detect_arch": "ELF 32-bit MSB executable, MIPS, MIPS32 rel2 ... (file(1) in the pinned worker image)"
+    }
+  }
+}

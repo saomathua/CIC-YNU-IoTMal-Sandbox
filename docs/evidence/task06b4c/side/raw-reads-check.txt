@@ -1,0 +1,12 @@
+== ARM: 23 raw reads
+   session before boot: raw nft JSON == session.json values and times: True
+   session final 1: raw nft JSON == session.json values and times: True
+   session final 2: raw nft JSON == session.json values and times: True
+   nft read duration ms: min 4.9 median 9.5 max 20.1 (n=23)
+   F1 -> F2 gap: 0.501 s
+== MIPS: 23 raw reads
+   session before boot: raw nft JSON == session.json values and times: True
+   session final 1: raw nft JSON == session.json values and times: True
+   session final 2: raw nft JSON == session.json values and times: True
+   nft read duration ms: min 4.3 median 8.4 max 16.8 (n=23)
+   F1 -> F2 gap: 0.501 s

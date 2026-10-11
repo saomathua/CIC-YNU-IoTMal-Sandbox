@@ -1,0 +1,6 @@
+fd1c:848b:7b0f::/64 dev br-lan  metric 1024 
+unreachable fd1c:848b:7b0f::/48 dev lo  metric 2147483647  error -113
+fe80::/64 dev eth1  metric 256 
+fe80::/64 dev br-lan  metric 256 
+ff00::/8 dev br-lan  metric 256 
+ff00::/8 dev eth1  metric 256 

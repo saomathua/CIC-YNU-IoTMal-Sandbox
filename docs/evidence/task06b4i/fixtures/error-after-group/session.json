@@ -1,0 +1,245 @@
+{
+ "verdict": "PASS",
+ "reasons": [],
+ "guard_s": 0.02,
+ "classes_compared": [
+  "allow_svc",
+  "drop_spoof",
+  "drop_non_ipv4",
+  "drop_worker_other",
+  "drop_private",
+  "drop_bcast_mcast",
+  "drop_public",
+  "l2_bad_ethertype",
+  "l2_bad_mac"
+ ],
+ "reads": {
+  "before": {
+   "label": "session before boot",
+   "t_start": 1791463621.756473,
+   "t_end": 1791463621.7566164,
+   "values": {
+    "arp_in_ok": 5,
+    "arp_in_drop": 0,
+    "arp_out_ok": 4,
+    "allow_svc": 0,
+    "drop_spoof": 0,
+    "drop_non_ipv4": 0,
+    "drop_worker_other": 0,
+    "drop_private": 0,
+    "drop_bcast_mcast": 0,
+    "drop_public": 9,
+    "l2_bad_ethertype": 2,
+    "l2_bad_mac": 0,
+    "allow_out_svc": 0,
+    "arp_out_drop": 0,
+    "drop_out": 0,
+    "drop_input_backstop": 0,
+    "drop_forward": 0
+   }
+  },
+  "finals": [
+   {
+    "label": "session final 1",
+    "t_start": 1791463629.8092237,
+    "t_end": 1791463629.8094451,
+    "values": {
+     "arp_in_ok": 5,
+     "arp_in_drop": 13,
+     "arp_out_ok": 4,
+     "allow_svc": 0,
+     "drop_spoof": 0,
+     "drop_non_ipv4": 0,
+     "drop_worker_other": 0,
+     "drop_private": 0,
+     "drop_bcast_mcast": 0,
+     "drop_public": 9,
+     "l2_bad_ethertype": 2,
+     "l2_bad_mac": 0,
+     "allow_out_svc": 0,
+     "arp_out_drop": 0,
+     "drop_out": 0,
+     "drop_input_backstop": 0,
+     "drop_forward": 0
+    }
+   },
+   {
+    "label": "session final 2",
+    "t_start": 1791463630.310448,
+    "t_end": 1791463630.3106785,
+    "values": {
+     "arp_in_ok": 5,
+     "arp_in_drop": 13,
+     "arp_out_ok": 4,
+     "allow_svc": 0,
+     "drop_spoof": 0,
+     "drop_non_ipv4": 0,
+     "drop_worker_other": 0,
+     "drop_private": 0,
+     "drop_bcast_mcast": 0,
+     "drop_public": 9,
+     "l2_bad_ethertype": 2,
+     "l2_bad_mac": 0,
+     "allow_out_svc": 0,
+     "arp_out_drop": 0,
+     "drop_out": 0,
+     "drop_input_backstop": 0,
+     "drop_forward": 0
+    }
+   }
+  ],
+  "required_finals": 2,
+  "final_read_error": null
+ },
+ "qemu": {
+  "no_qemu_before": true,
+  "pids_before": [],
+  "pids_before_error": null,
+  "exit_confirmed": true,
+  "exit_confirmed_t": 1791463629.308624,
+  "pids_after_exit": [],
+  "pids_after_exit_error": null
+ },
+ "capture": {
+  "tshark_rc": 0,
+  "drop_verdict": "PASS",
+  "drop_reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets",
+  "pcap_readable": true
+ },
+ "reconciliation": {
+  "verdict": "PASS",
+  "per_class": {
+   "allow_svc": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_spoof": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_non_ipv4": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_worker_other": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_private": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_bcast_mcast": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "drop_public": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "l2_bad_ethertype": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   },
+   "l2_bad_mac": {
+    "certain": 0,
+    "edge_start": [],
+    "edge_end": [],
+    "delta": 0,
+    "lo": 0,
+    "hi": 0,
+    "status": "PASS"
+   }
+  },
+  "guard_s": 0.02,
+  "not_compared": {},
+  "reads": {
+   "before": {
+    "t_start": 1791463621.756473,
+    "t_end": 1791463621.7566164
+   },
+   "after": {
+    "t_start": 1791463629.8092237,
+    "t_end": 1791463629.8094451
+   }
+  }
+ },
+ "not_compared": {
+  "allow_out_svc": {
+   "delta": 0,
+   "reason": "output towards the guest: not a guest frame"
+  },
+  "arp_in_drop": {
+   "delta": 13,
+   "reason": "ARP table (family arp): no pcap mapping in the harness"
+  },
+  "arp_in_ok": {
+   "delta": 0,
+   "reason": "ARP table (family arp): no pcap mapping in the harness"
+  },
+  "arp_out_drop": {
+   "delta": 0,
+   "reason": "ARP output towards the guest: not a guest frame"
+  },
+  "arp_out_ok": {
+   "delta": 0,
+   "reason": "ARP output towards the guest: not a guest frame"
+  },
+  "drop_forward": {
+   "delta": 0,
+   "reason": "forward hook (after prerouting): no pcap mapping in the harness"
+  },
+  "drop_input_backstop": {
+   "delta": 0,
+   "reason": "input hook (after prerouting): no pcap mapping in the harness"
+  },
+  "drop_out": {
+   "delta": 0,
+   "reason": "output towards the guest: not a guest frame"
+  }
+ },
+ "guest_frames_before_window": [],
+ "unstable_after_exit": {},
+ "guest_frames_after_exit": [],
+ "assumption": "guard 0.020 s covers the delay from capture timestamp to nft counter hit; NOT measured"
+}

@@ -1,0 +1,2 @@
+manager before: state=paused id=cid1 startedAt=T0
+manager in state 'paused': refused before any change

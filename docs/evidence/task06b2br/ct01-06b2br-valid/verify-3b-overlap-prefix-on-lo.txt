@@ -1,0 +1,1 @@
+ISOLATION FAIL (06B-2BR 3b-overlap-prefix-on-lo): link: address 10.200.1.5/16 on lo is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)

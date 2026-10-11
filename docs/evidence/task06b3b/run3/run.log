@@ -1,0 +1,67 @@
+4392b3974ca644abd4b229a40638cb32dd5d31159effb234ab06536dc7385340  /home/dathq/projects/ct01-06b3b/out/harness-copy/ctl_loop.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b3b/out/harness-copy/poller.py
+4d7391d8e2e305652485693b5416f7738dbd8a638fc1ba97228b4abac13de457  /home/dathq/projects/ct01-06b3b/out/harness-copy/probe_matrix.py
+80d23230fc89ddd357eb3f3f5d1b9e8db6e54f9e1cd6be6e7963ecb434d32337  /home/dathq/projects/ct01-06b3b/out/harness-copy/run-06b3b.sh
+
+===== 1. preparation (15:19:25)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 3 minutes ago
+mongo-db Up 50 minutes
+manager state before: exited
+sandboxnet=cic-ynu-iotmal-sandbox_sandboxnet bridge=br-1d86fe3e8bbe dbnet=cic-ynu-iotmal-sandbox_dbnet mongo=172.18.0.2 host-ips=192.168.60.1,192.168.177.128,172.18.0.1 lan-dns=192.168.177.2
+
+===== 2. start existing manager for controls (--no-deps --no-build) (15:19:26)
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+[PASS] manager healthy (127.0.0.1:8011/healthcheck)
+manager: running ip=192.168.60.10
+
+===== 3. worker test container (15:19:27)
+worker test container: 5fac949cf4bef47e874a29f66092a004853bf5c8a26376337935f079571f776d
+[PASS] worker server ready
+[PASS] V0 passed
+worker eth0=192.168.60.2 host veth=vethf88167f (ifindex 33)
+[PASS] code and guest images in container equal working tree
+
+===== 4. control container (sandboxnet + dbnet) (15:19:29)
+[PASS] control 'mongo 172.18.0.2:27017' alive
+[PASS] control 'worker-eth0 192.168.60.2:8011' alive
+[PASS] control 'manager 192.168.60.10:8011' alive
+
+===== 5. host captures on vethf88167f, br-1d86fe3e8bbe, ens33 + leak alert (15:19:33)
+capture dir: /tmp/ct01-06b3b-cap.GHGQSA
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 183:  9107 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i "$VETH" -w - > "$CAPD/veth.pcap" 2> "$OUT/hostcap/veth.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 183:  9108 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i "$BR" -w - > "$CAPD/bridge.pcap" 2> "$OUT/hostcap/bridge.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 183:  9109 Segmentation fault      (core dumped) tcpdump -Z root -U -n -i ens33 -w - "ether host $GUEST_MAC or net 10.200.0.0/30 or host 1.1.1.1 or host $LAN_DNS" > "$CAPD/ens33.pcap" 2> "$OUT/hostcap/ens33.err"
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (9107) - No such process
+[FAIL] host tcpdump pid 9107 running
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (9108) - No such process
+[FAIL] host tcpdump pid 9108 running
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 44: kill: (9109) - No such process
+[FAIL] host tcpdump pid 9109 running
+[PASS] host tcpdump pid 9111 running
+[FAIL] host capture veth: tcpdump reports listening
+[FAIL] host capture bridge: tcpdump reports listening
+[FAIL] host capture ens33: tcpdump reports listening
+[FAIL] host capture veth.pcap being written
+[FAIL] host capture bridge.pcap being written
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.0.13 30 Jan 2024
+variant [-w /tmp/ct01-06b3b-cap.GHGQSA/d1.pcap] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196:  9136 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w /tmp/ct01-06b3b-cap.GHGQSA/d2.pcap] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-w -] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196:  9152 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w -] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-Z root -l] rc=124 stderr: tcpdump: verbose output suppressed, use -v[v]... for full protocol decode listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+Oct 06 15:19:33 hq kernel: tcpdump[9109]: segfault at 0 ip 000078369756a55d sp 00007ffe3335fa80 error 4 in libc.so.6[783697428000+189000] likely on CPU 0 (core 0, socket 0)
+Oct 06 15:19:33 hq kernel: tcpdump[9107]: segfault at 0 ip 00007e99ab76a55d sp 00007ffd25582840 error 4 in libc.so.6[7e99ab628000+189000] likely on CPU 3 (core 3, socket 0)
+Oct 06 15:19:33 hq kernel: tcpdump[9108]: segfault at 0 ip 00007ab5b916a55d sp 00007ffcfa8f26e0 error 4 in libc.so.6[7ab5b9028000+189000] likely on CPU 3 (core 3, socket 0)
+Oct 06 15:19:39 hq kernel: tcpdump[9137]: segfault at 0 ip 000074de6e36a55d sp 00007ffd9e21fd00 error 4 in libc.so.6[74de6e228000+189000] likely on CPU 3 (core 3, socket 0)
+Oct 06 15:19:42 hq kernel: tcpdump[9153]: segfault at 0 ip 00007fd7b536a55d sp 00007ffd1ac17e80 error 4 in libc.so.6[7fd7b5228000+189000] likely on CPU 2 (core 2, socket 0)
+ABORT: host-side capture not running; no guest is booted without it

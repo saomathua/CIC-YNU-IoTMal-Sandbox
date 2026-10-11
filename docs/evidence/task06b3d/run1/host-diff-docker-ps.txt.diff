@@ -1,0 +1,6 @@
+--- /home/dathq/projects/ct01-06b3c/out/host-before/docker-ps.txt	2026-10-06 16:42:05.310120909 +0000
++++ /home/dathq/projects/ct01-06b3c/out/host-after/docker-ps.txt	2026-10-06 16:45:00.298033252 +0000
+@@ -1,2 +1,2 @@
+-cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) About an hour ago
++cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 2 seconds ago
+ mongo-db mongo:8.0.32 Up 2 hours

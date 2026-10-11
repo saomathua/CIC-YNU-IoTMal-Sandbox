@@ -1,0 +1,12 @@
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.0.13 30 Jan 2024
+variant [-w /tmp/ct01-06b3b-cap.Yjojyl/d1.pcap] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196: 10185 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w /tmp/ct01-06b3b-cap.Yjojyl/d2.pcap] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-w -] rc=124 stderr: tcpdump: listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+/home/dathq/projects/ct01-06b3b/run-06b3b.sh: line 196: 10202 Segmentation fault      timeout -s INT 3 tcpdump -n -i lo $v > "$CAPD/diag.out" 2> "$CAPD/diag.err"
+variant [-Z root -w -] rc=139 stderr: timeout: the monitored command dumped core 
+variant [-Z root -l] rc=124 stderr: tcpdump: verbose output suppressed, use -v[v]... for full protocol decode listening on lo, link-type EN10MB (Ethernet), snapshot length 262144 bytes 0 packets captured 0 packets received by filter 0 packets dropped by kernel 
+Oct 06 15:22:35 hq kernel: tcpdump[10186]: segfault at 0 ip 00007f561536a55d sp 00007ffc96929de0 error 4 in libc.so.6[7f5615228000+189000] likely on CPU 2 (core 2, socket 0)
+Oct 06 15:22:38 hq kernel: tcpdump[10203]: segfault at 0 ip 0000779133b6a55d sp 00007ffeaa05c7c0 error 4 in libc.so.6[779133a28000+189000] likely on CPU 2 (core 2, socket 0)

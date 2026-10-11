@@ -1,0 +1,3 @@
+fe80::/64 dev ens33 proto kernel metric 256 pref medium
+fe80::/64 dev veth73c0f10 proto kernel metric 256 pref medium
+fe80::/64 dev br-09fed07bbb6b proto kernel metric 256 pref medium

@@ -1,0 +1,252 @@
+{
+ "status": "COMPLETED",
+ "results": [
+  {
+   "arch": "MIPS",
+   "test": "host leak monitor running and empty before boot",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "full isolation verify right before QEMU spawn (harness pre-boot, not V1)",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: tshark version",
+   "ok": true,
+   "version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"
+  },
+  {
+   "arch": "MIPS",
+   "test": "tshark capturing on tap0",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "guest booted and network configured",
+   "ok": true,
+   "qemu_pid": 284
+  },
+  {
+   "arch": "MIPS",
+   "test": "topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface",
+   "ok": true,
+   "problems": [],
+   "entries": [
+    [
+     "pcnet.0",
+     "nic",
+     [
+      "tap"
+     ]
+    ]
+   ],
+   "probe_iface": "br-lan",
+   "probe_iface_mac": "52:54:00:c7:00:02"
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: guest network tools",
+   "ok": true,
+   "tools": [
+    "/usr/bin/nslookup",
+    "/usr/bin/nc",
+    "/usr/bin/wget",
+    "/bin/ping",
+    "missing:arping"
+   ]
+  },
+  {
+   "arch": "MIPS",
+   "test": "info: ICMP suite (06B-4F): five reviewed cases, rule check only",
+   "ok": true,
+   "tap_mac": "26:b3:9f:a4:8c:01",
+   "probe_iface": "br-lan",
+   "fixture_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations"
+  },
+  {
+   "arch": "MIPS",
+   "test": "capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP destinations)",
+   "ok": true,
+   "lan_dns_udp": {
+    "ts": 1791449017.1571105,
+    "ok": true,
+    "detail": "DNS response rcode=3"
+   },
+   "manager_http": {
+    "ts": 1791449017.168694,
+    "ok": true,
+    "detail": "HTTP 200"
+   }
+  },
+  {
+   "arch": "MIPS",
+   "test": "allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  },
+  {
+   "arch": "MIPS",
+   "test": "allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash",
+   "ok": true,
+   "rc": 0,
+   "http_code": "200",
+   "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a",
+   "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out"
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 MAC unchanged during the ICMP group",
+   "ok": true,
+   "before": "26:b3:9f:a4:8c:01",
+   "after": "26:b3:9f:a4:8c:01"
+  },
+  {
+   "arch": "MIPS",
+   "test": "all five ICMP cases executed with captures alive",
+   "ok": true,
+   "planned": [
+    "T12-B1",
+    "T12-B2",
+    "T12-B4",
+    "T13-I1",
+    "T13-I2"
+   ],
+   "executed": [
+    "T12-B1",
+    "T12-B2",
+    "T12-B4",
+    "T13-I1",
+    "T13-I2"
+   ],
+   "skipped": null
+  },
+  {
+   "arch": "MIPS",
+   "test": "capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP destinations)",
+   "ok": true,
+   "lan_dns_udp": {
+    "ts": 1791449078.1852956,
+    "ok": true,
+    "detail": "DNS response rcode=3"
+   },
+   "manager_http": {
+    "ts": 1791449078.1927588,
+    "ok": true,
+    "detail": "HTTP 200"
+   }
+  },
+  {
+   "arch": "MIPS",
+   "test": "QEMU exit confirmed",
+   "ok": true,
+   "exitstatus": 0
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 capture stopped cleanly",
+   "ok": true,
+   "returncode": 0
+  },
+  {
+   "arch": "MIPS",
+   "test": "tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped",
+   "ok": true,
+   "verdict": "\u0110\u1ea0T",
+   "reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets",
+   "stats": {
+    "interfaces": 1,
+    "epb": {
+     "0": 115
+    },
+    "isb": {
+     "0": {
+      "comment": "Counters provided by dumpcap",
+      "isb_ifrecv": 115,
+      "isb_ifdrop": 0
+     }
+    }
+   },
+   "tshark_stderr_tail": "s.\nCapturing on 'tap0'\n ** (tshark:260) 08:43:11.400466 [Main MESSAGE] -- Capture started.\n ** (tshark:260) 08:43:11.400514 [Main MESSAGE] -- File: \"/harness-out/MIPS/tap0.pcapng\"\n115 packets captured"
+  },
+  {
+   "arch": "MIPS",
+   "test": "fixture, marker and temporary guest disk removed",
+   "ok": true
+  },
+  {
+   "arch": "MIPS",
+   "test": "ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash",
+   "ok": true,
+   "problems": []
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe T12-B1 (icmp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "replies_to_guest": 0,
+   "failed": null,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe T12-B2 (icmp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "replies_to_guest": 0,
+   "failed": null,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe T12-B4 (icmp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "replies_to_guest": 0,
+   "failed": null,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe T13-I1 (icmp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "replies_to_guest": 0,
+   "failed": null,
+   "reconciliation": "PASS"
+  },
+  {
+   "arch": "MIPS",
+   "test": "probe T13-I2 (icmp, rule check) -> \u0110\u1ea0T (ki\u1ec3m quy t\u1eafc)",
+   "ok": true,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "replies_to_guest": 0,
+   "failed": null,
+   "reconciliation": "PASS"
+  }
+ ],
+ "probes": []
+}

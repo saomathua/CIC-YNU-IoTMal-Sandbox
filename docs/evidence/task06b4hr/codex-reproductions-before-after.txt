@@ -1,0 +1,56 @@
+Codex reproduction scripts (unmodified) re-run on 06B-4H and 06B-4HR arp_cases.py (fixture helpers: 06B-4HR selftest_arp.py).
+Inputs: review sha256 aabe3b3497dd30d906c2a547ac78a3b270354bc05fe054416ce706ad2287b9a1
+        bundle sha256 efd880cbaaccc10b7494a59565f0236dad2a00b5f992b0bcddf0677d46778abe
+        reproduce.py 7e78363cb5e8ae0e22fe237ed7f7162dd92673d462698a9c24628cad3b42d641, extra_stubs.py a40803afbe71c9c2bd7ee3ee367867c0231b9cfcf8371d600912a50ccced5675
+06B-4H re-run identical to Codex's own logs: yes
+
+case                                          06B-4H                                                     06B-4HR
+clean_s1                                      DAT_KIEM_QUY_TAC                                           DAT_KIEM_QUY_TAC
+s1_wrong_opcode_2                             DAT_KIEM_QUY_TAC                                           KHONG_TAO_DUOC_GOI
+s1_wrong_opcode_99                            DAT_KIEM_QUY_TAC                                           KHONG_TAO_DUOC_GOI
+a2_wrong_sha                                  KHONG_TAO_DUOC_GOI                                         KHONG_TAO_DUOC_GOI
+a2_wrong_spa                                  KHONG_TAO_DUOC_GOI                                         KHONG_TAO_DUOC_GOI
+a2_wrong_tpa                                  KHONG_TAO_DUOC_GOI                                         KHONG_TAO_DUOC_GOI
+a2_reply                                      KHONG_TAO_DUOC_GOI                                         KHONG_TAO_DUOC_GOI
+manager_removed                               DAT_KIEM_QUY_TAC                                           CHUA_KIEM_CHUNG
+manager_moved_interface_changed_mac           DAT_KIEM_QUY_TAC                                           FAIL
+manager_bad_lladdr_NoneType                   DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_bad_lladdr_int                        DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_bad_lladdr_bool                       DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_bad_lladdr_list                       DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_bad_lladdr_dict                       DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_missing_state                         DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_bad_state_items                       DAT_KIEM_QUY_TAC                                           LOI_PHEP_DO
+manager_failed_state                          DAT_KIEM_QUY_TAC                                           CHUA_KIEM_CHUNG
+duplicate_hides_abnormal_guest_mac            DAT_KIEM_QUY_TAC                                           FAIL
+abnormal_guest_mac_detected                   FAIL                                                       FAIL
+manager_changed_mac_detected                  FAIL                                                       FAIL
+neighbor_read_error                           LOI_PHEP_DO                                                LOI_PHEP_DO
+known_violation_clean_reads                   FAIL                                                       FAIL
+known_violation_and_read_error                LOI_PHEP_DO                                                FAIL
+known_neighbor_violation_and_read_error       LOI_PHEP_DO                                                FAIL
+clean_group                                   exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_empty_steps                             exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG']
+group_setup_only                              exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG']
+group_wrong_rc                                exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG']
+group_wrong_phase                             exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG']
+group_missing_guest_baseline                  exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC'] exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG']
+control_None                                  CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+control_False                                 CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+control_1                                     CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+control_true                                  CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+control_{}                                    CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+control_True                                  DAT                                                        DAT
+clean_a3                                      DAT_KIEM_QUY_TAC                                           DAT_KIEM_QUY_TAC
+edge_s1                                       KHONG_TAO_DUOC_GOI                                         KHONG_TAO_DUOC_GOI
+s1_all_edge                                   CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+restore                                       matrix 40 nonempty diffs 0                                 matrix 40 nonempty diffs 0
+scope                                         28 unchanged; added ['arp_cases.py', 'mutation_arp.py', 'selftest_arp.py'] changed [] 28 unchanged; added ['arp_cases.py', 'mutation_arp.py', 'selftest_arp.py'] changed []
+restore_console_exception                     False                                                      False
+ping_rc2_actual_run_group                     0                                                          4
+run_group_control_1                           CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+run_group_control_true                        CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+run_group_control_False                       CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+run_group_control_None                        CHUA_KIEM_CHUNG                                            CHUA_KIEM_CHUNG
+run_group_control_True                        DAT                                                        DAT
+restore_snapshot_read_error                   False                                                      False

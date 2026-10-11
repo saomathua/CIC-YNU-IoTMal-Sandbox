@@ -1,0 +1,6 @@
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+ens33            UP             00:0c:29:42:ad:4c <BROADCAST,MULTICAST,UP,LOWER_UP> 
+docker0          DOWN           8e:8e:a6:21:c4:46 <NO-CARRIER,BROADCAST,MULTICAST,UP> 
+br-09fed07bbb6b  UP             82:4a:11:8a:0f:1e <BROADCAST,MULTICAST,UP,LOWER_UP> 
+br-1d86fe3e8bbe  DOWN           fe:69:25:9f:7e:e9 <NO-CARRIER,BROADCAST,MULTICAST,UP> 
+vethaf24531@if2  UP             d6:09:86:20:44:41 <BROADCAST,MULTICAST,UP,LOWER_UP> 

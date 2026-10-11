@@ -1,0 +1,186 @@
+diff -ruN ct01-06b4hr1/arp_cases.py ct01-06b4hr2/arp_cases.py
+--- ct01-06b4hr1/arp_cases.py	2026-10-08 10:25:34.314613190 +0000
++++ ct01-06b4hr2/arp_cases.py	2026-10-08 11:09:27.439504078 +0000
+@@ -413,12 +413,21 @@
+         if not _neigh_key(k) or not isinstance(v, (list, tuple)) or len(v) != 2 or not isinstance(v[0], str) \
+                 or not _MAC.fullmatch(v[0]) or not isinstance(v[1], int) or isinstance(v[1], bool) or v[1] < 0:
+             return f"guest baseline dynamic neighbour {k!r}: {v!r} invalid"
++        # 06B-4HR2 (R1): guest_state puts every /proc/net/arp row with ATF_PERM (0x4) in neigh_static; a "dynamic"
++        # entry with that bit is a contradictory record (diff() would skip a lost permanent neighbour). Rejected,
++        # never moved to the other group.
++        if v[1] & GS_ATF_PERM:
++            return f"guest baseline dynamic neighbour {k!r} has the PERMANENT flag ({v[1]:#x}): belongs to neigh_static"
++    both = sorted(set(before["neigh_static"]) & set(before["neigh_dynamic"]))
++    if both:
++        return f"guest baseline neighbour(s) {both} in both neigh_static and neigh_dynamic"
+     if before["arp_notify"] < 0:
+         return f"guest baseline arp_notify {before['arp_notify']} negative"
+     return None
+ 
+ 
+ _MAC = re.compile(r"([0-9a-f]{2}:){5}[0-9a-f]{2}")
++GS_ATF_PERM = 0x4     # the flag guest_state.parse_snapshot() uses to put a neighbour in neigh_static
+ OPERSTATES = {"unknown", "notpresent", "down", "lowerlayerdown", "testing", "dormant", "up"}
+ 
+ 
+diff -ruN ct01-06b4hr1/mutation_arp.py ct01-06b4hr2/mutation_arp.py
+--- ct01-06b4hr1/mutation_arp.py	2026-10-08 10:34:46.402963325 +0000
++++ ct01-06b4hr2/mutation_arp.py	2026-10-08 11:10:42.139365398 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4H/06B-4HR/06B-4HR1 — mutation test of arp_cases.py (offline). Each mutant runs selftest_arp.py in its own mktemp copy;
++"""06B-4H/06B-4HR/06B-4HR1/06B-4HR2 — mutation test of arp_cases.py (offline). Each mutant runs selftest_arp.py in its own mktemp copy;
+ every replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID /
+ ERROR as in mutation_icmp.py. Baseline must pass; harness hash checked before/after.
+     python3 mutation_arp.py
+@@ -185,6 +185,15 @@
+     # ---- every JSON branch
+     ("C23", AC, [('        out.setdefault(k, t())', '        pass')],
+      "H6 JSON branch 'not_run' has every evidence/error field with the right type"),
++    # ---- 06B-4HR2: R1 static/dynamic consistency
++    ("D1", AC, [('        if v[1] & GS_ATF_PERM:', '        if False:')],
++     "R1.1 baseline neigh_dynamic entry with flags 0x6 (PERMANENT bit), lost after restore -> rejected (exit != 0)"),
++    ("D2", AC, [('    if both:\n        return f"guest baseline neighbour(s)', '    if False:\n        return f"guest baseline neighbour(s)')],
++     "R1.3 same neighbour key in neigh_static AND neigh_dynamic -> rejected (evaluate_group and CLI)"),
++    ("D3", AC, [('GS_ATF_PERM = 0x4 ', 'GS_ATF_PERM = 0x8 ')],
++     "R1.1 baseline neigh_dynamic entry with flags 0x4 (PERMANENT bit), lost after restore -> rejected (exit != 0)"),
++    ("D4", AC, [('    bad = baseline_problem(after)\n', '    bad = None\n')],
++     "R1.4 restore 'after' contradictory (dynamic entry with the PERMANENT flag), baseline clean -> rejected"),
+     ("X1", AC, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_arp.py", [("import contextlib\n", "import contextlib(\n")], None),
+ ]
+diff -ruN ct01-06b4hr1/selftest_arp.py ct01-06b4hr2/selftest_arp.py
+--- ct01-06b4hr1/selftest_arp.py	2026-10-08 10:34:46.402963325 +0000
++++ ct01-06b4hr2/selftest_arp.py	2026-10-08 11:16:38.658613991 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4H/06B-4HR/06B-4HR1 — offline tests of arp_cases.py (T14 A1/A2/A3, T15 S1) on SYNTHETIC captures/counter files and a
++"""06B-4H/06B-4HR/06B-4HR1/06B-4HR2 — offline tests of arp_cases.py (T14 A1/A2/A3, T15 S1) on SYNTHETIC captures/counter files and a
+ SIMULATED guest (selftest_l2.FakeGuest, extended with ping/sleep and frame emission). Sends nothing.
+ 
+     python3 selftest_arp.py [--json FILE]
+@@ -16,6 +16,8 @@
+      run_group, F5 failure evidence vs measurement errors) and the 40-case restore matrix
+   H  06B-4HR1: HR1 baseline/restore content, HR2 mandatory binding, HR3 not-started branch, HR4 unreadable
+      neighbour rows, HR5 control callback payloads, and the evidence fields of every JSON branch
++  R1 06B-4HR2: neigh_static/neigh_dynamic consistency of baseline and restore 'after' (PERMANENT flag in the dynamic
++     group, a key in both groups), static loss blocked, valid dynamic changes not forced
+   C  CLI
+ """
+ import contextlib
+@@ -783,7 +785,7 @@
+           ("restore command rc 'x'", lambda c: c["guest_state"]["restore"].update(commands=[{"step": "routes", "cmd": "ip route del x", "rc": "x", "out": ""}])),
+           ("baseline addrs [42]", lambda c: c["guest_state"]["before"].update(addrs=[42])),
+           ("baseline route object", lambda c: c["guest_state"]["before"].update(routes=[{"invalid": "route"}])),
+-          ("baseline static neighbour not a MAC", lambda c: c["guest_state"]["before"].update(neigh_static={"10.200.0.1 eth1": "not a MAC"})),
++          ("baseline static neighbour not a MAC", lambda c: c["guest_state"]["before"].update(neigh_static={"10.200.0.77 eth1": "not a MAC"})),
+           ("baseline static neighbour bad key", lambda c: c["guest_state"]["before"].update(neigh_static={"invalid": "00:11:22:33:44:55"})),
+           ("baseline dynamic neighbour malformed", lambda c: c["guest_state"]["before"].update(neigh_dynamic={"10.200.0.1 eth1": ["x"]})),
+           ("baseline operstate ''", lambda c: c["guest_state"]["before"].update(operstate="")),
+@@ -796,7 +798,7 @@
+         return f
+     H1 += [("baseline AND after addrs [42]", both(lambda st: st.update(addrs=[42]))),
+            ("baseline AND after route object", both(lambda st: st.update(routes=[{"invalid": "route"}]))),
+-           ("baseline AND after static neighbour not a MAC", both(lambda st: st.update(neigh_static={"10.200.0.1 eth1": "not a MAC"}))),
++           ("baseline AND after static neighbour not a MAC", both(lambda st: st.update(neigh_static={"10.200.0.77 eth1": "not a MAC"}))),
+            ("baseline AND after operstate 'weird'", both(lambda st: st.update(operstate="weird"))),
+            ("baseline AND after arp_notify -1", both(lambda st: st.update(arp_notify=-1))),
+            ("restore 'after' with a malformed dynamic neighbour (diff() ignores dynamic)",
+@@ -909,6 +911,88 @@
+         return A.main(["--pcap", pc, "--counters", cf, "--tap-mac", TAP, "--record", rp])
+ 
+ 
++# ------------------------------------------------------------------ R1 (06B-4HR2: static/dynamic consistency)
++def sec_R1(tmp):
++    g, rec, pc, cf = run_sim(tmp, "r1")
++    K, MACX = "10.200.0.9 eth1", "00:11:22:33:44:99"
++
++    def grp(change):
++        r = copy.deepcopy(rec)
++        change(r["cases"][0]["guest_state"])
++        res = A.evaluate_group(pc, cf, TAP, r)
++        return res, A.group_exit(res), r
++
++    def cli(change):
++        r = copy.deepcopy(rec)
++        change(r["cases"][0]["guest_state"])
++        return _cli_exit(tmp, pc, cf, r, lambda c: None)
++    bad = lambda res, e: e != 0 and not res["cases"][0]["ok"] and res["record_problems"]   # noqa: E731
++
++    def dyn_perm(flags):
++        def ch(gs):
++            gs["before"]["neigh_dynamic"][K] = [MACX, flags]       # baseline claims a permanent row is dynamic
++            gs["restore"]["after"]["neigh_dynamic"].pop(K, None)   # ... and it is gone after the restore
++        return ch
++    for fl in (6, 4, 0xC):
++        t(f"R1.1 baseline neigh_dynamic entry with flags {fl:#x} (PERMANENT bit), lost after restore -> rejected (exit != 0)",
++          lambda fl=fl: bad(*grp(dyn_perm(fl))[:2]))
++    t("R1.2 same record through the CLI -> exit 2", lambda: cli(dyn_perm(6)) == 2)
++
++    def overlap(gs):
++        gs["before"]["neigh_static"][K] = MACX
++        gs["before"]["neigh_dynamic"][K] = [MACX, 2]
++        gs["restore"]["after"]["neigh_static"][K] = MACX
++        gs["restore"]["after"]["neigh_dynamic"][K] = [MACX, 2]
++    t("R1.3 same neighbour key in neigh_static AND neigh_dynamic -> rejected (evaluate_group and CLI)",
++      lambda: bad(*grp(overlap)[:2]) and cli(overlap) == 2)
++
++    def after_contradictory(gs):
++        gs["restore"]["after"]["neigh_dynamic"][K] = [MACX, 6]
++    t("R1.4 restore 'after' contradictory (dynamic entry with the PERMANENT flag), baseline clean -> rejected",
++      lambda: bad(*grp(after_contradictory)[:2]) and cli(after_contradictory) == 2)
++
++    def after_overlap(gs):
++        gs["restore"]["after"]["neigh_static"][K] = MACX
++        gs["restore"]["after"]["neigh_dynamic"][K] = [MACX, 2]
++        gs["before"]["neigh_static"][K] = MACX
++    t("R1.5 restore 'after' with a key in both groups -> rejected", lambda: bad(*grp(after_overlap)[:2]))
++
++    def static_lost(gs):
++        gs["before"]["neigh_static"][K] = MACX                     # properly static, missing after
++    t("R1.6 static neighbour (proper group) lost after the restore -> rejected (evaluate_group and CLI)",
++      lambda: bad(*grp(static_lost)[:2]) and cli(static_lost) == 2)
++
++    def dyn_changed(gs):
++        gs["before"]["neigh_dynamic"][K] = [MACX, 2]                # valid dynamic entry (no PERMANENT bit)...
++        gs["restore"]["after"]["neigh_dynamic"].pop(K, None)        # ...gone after: kernel-managed, not forced
++    t("R1.7 valid dynamic neighbour (flags 0x2) changed/removed after the restore -> still exit 0 (not forced)",
++      lambda: (lambda res, e, r: e == 0 and res["record_problems"] == [])(*grp(dyn_changed))
++      and cli(dyn_changed) == 0)
++    r = copy.deepcopy(rec)
++    dyn_perm(6)(r["cases"][0]["guest_state"])
++    snap = copy.deepcopy(r)
++    A.evaluate_group(pc, cf, TAP, r)
++    t("R1.8 contradictory record is reported, never repaired: the input is unchanged, the entry is not moved",
++      lambda: r == snap and any("belongs to neigh_static" in p for p in A.evaluate_group(pc, cf, TAP, r)["record_problems"]))
++    fg = B.FakeGuest()
++    fg.neigh[("10.200.0.9", "eth1")] = (MACX, 6)
++    st = GS.read_state(fg, "eth1")
++    t("R1.9 guest_state contract (real read_state on the simulated /proc/net/arp): flags 6 -> neigh_static, never dynamic;"
++      " the validator accepts that state",
++      lambda: st["neigh_static"][("10.200.0.9", "eth1")] == MACX and ("10.200.0.9", "eth1") not in st["neigh_dynamic"]
++      and A.baseline_problem(A._jsonable(st)) is None)
++
++    class StaticGuest(SimGuest):
++        def __init__(self, *a, **kw):
++            super().__init__(*a, **kw)
++            self.neigh[("10.200.0.9", self.iface)] = (MACX, 0x6)
++    g2, rec2, pc2, cf2 = run_sim(tmp, "r1e", guest_cls=StaticGuest)
++    res2 = A.evaluate_group(pc2, cf2, TAP, rec2)
++    t("R1.10 end to end: guest with a static neighbour on IF (flags 6), run_group + evaluate_group -> exit 0, labels unchanged",
++      lambda: A.group_exit(res2) == 0 and res2["record_problems"] == []
++      and [c["category"] for c in res2["cases"]] == ["DAT", "DAT", "DAT_KIEM_QUY_TAC", "DAT_KIEM_QUY_TAC"])
++
++
+ # ------------------------------------------------------------------ C (CLI)
+ def sec_C(tmp):
+     g, rec, pc, cf = run_sim(tmp, "c1")
+@@ -941,7 +1025,7 @@
+     jpath = argv[argv.index("--json") + 1] if "--json" in argv else None
+     with tempfile.TemporaryDirectory(prefix="selftest-arp.") as tmp:
+         for name, fn in (("D", sec_D), ("N", sec_N), ("P", lambda: sec_P(tmp)), ("X", lambda: sec_X(tmp)),
+-                         ("E", lambda: sec_E(tmp)), ("F", lambda: sec_F(tmp)), ("H", lambda: sec_H(tmp)), ("C", lambda: sec_C(tmp))):
++                         ("E", lambda: sec_E(tmp)), ("F", lambda: sec_F(tmp)), ("H", lambda: sec_H(tmp)), ("R1", lambda: sec_R1(tmp)), ("C", lambda: sec_C(tmp))):
+             print(f"== section {name}")
+             try:
+                 fn()

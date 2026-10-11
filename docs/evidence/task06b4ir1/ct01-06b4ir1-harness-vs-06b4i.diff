@@ -1,0 +1,1092 @@
+diff -ruN ct01-06b4i/arp_harness.py ct01-06b4ir1/arp_harness.py
+--- ct01-06b4i/arp_harness.py	2026-10-08 12:03:25.943650648 +0000
++++ ct01-06b4ir1/arp_harness.py	2026-10-08 13:22:03.145995353 +0000
+@@ -26,12 +26,19 @@
+          failure; then the worker calls the manager (HTTP 200) and its own neighbour table must hold exactly one
+          usable entry 192.168.60.10 dev eth0 with the manager's MAC (from the run script), and the case target
+          must equal the manager address.
+-  Anything missing, unreadable or different -> the control is not alive -> the case is at best CHƯA KIỂM CHỨNG
+-  (arp_cases rule). A control says nothing about the guest; it only shows that the same IP answers ARP on
++  06B-4IR1: the ARP payload must be exactly {ip, hw, flags, device, device_mac} with ip = worker address, complete
++  flag, hw = worker eth0 MAC, and device_mac = ctl's sandboxnet endpoint MAC (docker inspect in the run script,
++  CT01_TARGETS.ctl_mac): the interface is identified by that MAC, its name is NOT assumed; one device in the window.
++  Every ctl line must have exactly the producer's keys; an OK HTTP record must carry "HTTP 200"; duplicate records
++  (same target and ts) or a ts not after the previous one of that target are reported, never removed.
++  (Corrected in 06B-4IR1: in 06B-4I a wrong/missing device, duplicate lines and HTTP records without a payload
++  were accepted.) Anything missing, unreadable, malformed or different -> the control is not alive -> the case is
++  at best CHƯA KIỂM CHỨNG (arp_cases rule); this holds for the conditions checked here and tested offline. A control says nothing about the guest; it only shows that the same IP answers ARP on
+   sandboxnet while the guest's request is dropped at tap0.
+ """
+ import collections
+ import json
++import math
+ import os
+ import re
+ import sys
+@@ -69,33 +76,55 @@
+     return f"manager {ip}:8011"
+ 
+ 
++CTL_KEYS = {"ts", "target", "ok", "detail"}                  # ctl_loop.py writes exactly these keys
++HTTP_OK_DETAIL = "HTTP 200"                                    # ctl_loop.http_health() return value on success
++ARP_DETAIL_KEYS = {"ip", "hw", "flags", "device", "device_mac"}  # ctl_loop.arp_entry() (06B-4IR1)
++_IFNAME = re.compile(r"[A-Za-z0-9_.@-]{1,15}")
++
++
+ def ctl_records(text):
+-    """ctl.jsonl -> list of {"ts", "target", "ok", "detail"}. A malformed line raises ValueError (never skipped)."""
++    """ctl.jsonl -> list of {"ts", "target", "ok", "detail"}. 06B-4IR1: every line must be an object with exactly
++    the producer's keys, a finite numeric ts, a string target and a boolean ok; anything else raises ValueError
++    (never skipped). Payloads are checked per target type by ctl_window()."""
+     out = []
+     for i, line in enumerate((text or "").splitlines()):
+         if not line.strip():
+             continue
+         r = json.loads(line)
+-        if not isinstance(r, dict) or not isinstance(r.get("target"), str) or not isinstance(r.get("ok"), bool) \
+-                or not isinstance(r.get("ts"), (int, float)) or isinstance(r.get("ts"), bool):
++        if not isinstance(r, dict) or set(r) != CTL_KEYS or not isinstance(r["target"], str) \
++                or not isinstance(r["ok"], bool) or not isinstance(r["ts"], (int, float)) or isinstance(r["ts"], bool) \
++                or not math.isfinite(r["ts"]):
+             raise ValueError(f"ctl line {i + 1} malformed: {line[:120]!r}")
+         out.append(r)
+     return out
+ 
+ 
++def http_detail_check(d):
++    """06B-4IR1: an OK HTTP control record carries exactly the producer's success payload."""
++    return None if d == HTTP_OK_DETAIL else f"HTTP control detail {d!r} != {HTTP_OK_DETAIL!r}"
++
++
+ def ctl_window(records, target, t0, t1, slack, check=None):
+     """One exact ctl target around the case window [t0, t1]: an OK record in [t0 - slack, t0] and one in
+     [t1, t1 + slack], no failed record in [t0 - slack, t1 + slack]; check(detail) -> problem or None for every
+-    OK record in that span. Same rule as probe_matrix.ctl_log_window (06B-3B) plus the per-record check."""
++    OK record in that span. Same rule as probe_matrix.ctl_log_window (06B-3B) plus the per-record check.
++    06B-4IR1: a failed record must carry a string detail (the producer's repr of the error); two records of the
++    target with the same ts (duplicate identity) or a ts not after the previous one of that target, in file order,
++    are reported and never removed: the window is then not ok."""
+     before = after = False
+-    fails, problems = 0, []
++    fails, problems, last = 0, [], None
+     for r in records:
+         if r["target"] != target or not (t0 - slack <= r["ts"] <= t1 + slack):
+             continue
++        if last is not None and r["ts"] <= last:
++            problems.append(f"t={r['ts']:.6f}: {'duplicate record (same target and ts)' if r['ts'] == last else 'ts not after the previous record of this target'}")
++        last = r["ts"] if last is None else max(last, r["ts"])
+         if not r["ok"]:
+             fails += 1
++            if not isinstance(r["detail"], str):
++                problems.append(f"t={r['ts']:.3f}: failed record without a string detail: {r['detail']!r}")
+             continue
+-        p = check(r.get("detail")) if check else None
++        p = check(r["detail"]) if check else None
+         if p:
+             problems.append(f"t={r['ts']:.3f}: {p}")
+             continue
+@@ -104,38 +133,59 @@
+         elif r["ts"] >= t1:
+             after = True
+     return {"target": target, "ok_before": before, "ok_after": after, "fails_in_window": fails,
+-            "problems": problems[:5], "ok": before and after and fails == 0 and not problems}
++            "problems": problems[:5], "problem_count": len(problems),
++            "ok": before and after and fails == 0 and not problems}
+ 
+ 
+-def _arp_detail_check(mac):
++def _arp_detail_check(mac, ip, ctl_mac, devices):
++    """ctl_loop.arp_entry() payload: exactly ip/hw/flags/device/device_mac; the entry of the worker address, complete
++    (ATF_COM), with the worker eth0 MAC, on the ctl interface whose MAC is ctl's sandboxnet endpoint MAC (from
++    docker inspect, run script) - the interface NAME is not assumed. `devices` collects the names seen."""
+     def check(d):
+-        if not isinstance(d, dict):
+-            return f"ARP detail {d!r} is not an object"
++        if not isinstance(d, dict) or set(d) != ARP_DETAIL_KEYS:
++            return f"ARP detail {d!r} is not an object with exactly {sorted(ARP_DETAIL_KEYS)}"
++        if d["ip"] != ip:
++            return f"ARP entry for {d['ip']!r} != worker address {ip!r}"
+         try:
+-            flags = int(d.get("flags"), 16) if isinstance(d.get("flags"), str) else None
++            flags = int(d["flags"], 16) if isinstance(d["flags"], str) else None
+         except ValueError:
+             flags = None
+         if flags is None or not flags & ATF_COM:
+-            return f"ARP entry not complete (flags {d.get('flags')!r})"
+-        if d.get("hw") != mac:
+-            return f"ARP entry MAC {d.get('hw')!r} != worker eth0 MAC {mac!r}"
++            return f"ARP entry not complete (flags {d['flags']!r})"
++        if d["hw"] != mac:
++            return f"ARP entry MAC {d['hw']!r} != worker eth0 MAC {mac!r}"
++        if not isinstance(d["device"], str) or not _IFNAME.fullmatch(d["device"]):
++            return f"ARP entry device {d['device']!r} missing or invalid"
++        if d["device_mac"] != ctl_mac:
++            return (f"ARP entry device {d['device']!r} has MAC {d['device_mac']!r}, not ctl's sandboxnet endpoint MAC "
++                    f"{ctl_mac!r}")
++        devices.add(d["device"])
+         return None
+     return check
+ 
+ 
+-def control_a1(case, records, t0, t1, slack, worker_ip, eth0_mac):
++def control_a1(case, records, t0, t1, slack, worker_ip, eth0_mac, ctl_mac=None):
+     problems = []
+     if case.get("dst") != worker_ip:
+         problems.append(f"case target {case.get('dst')} is not the worker eth0 address {worker_ip!r}")
+     if not isinstance(eth0_mac, str) or not _MAC.fullmatch(eth0_mac):
+         problems.append(f"worker eth0 MAC {eth0_mac!r} unknown or invalid")
+-    http = ctl_window(records, ctl_target_http_worker(worker_ip), t0, t1, slack)
+-    arp = ctl_window(records, ctl_target_arp_worker(worker_ip), t0, t1, slack, _arp_detail_check(eth0_mac))
++    cmac = ctl_mac.lower() if isinstance(ctl_mac, str) else None
++    if cmac is None or not _MAC.fullmatch(cmac):
++        problems.append(f"ctl sandboxnet endpoint MAC {ctl_mac!r} unknown or invalid: the ctl interface cannot be "
++                        "identified")
++    devices = set()
++    http = ctl_window(records, ctl_target_http_worker(worker_ip), t0, t1, slack, http_detail_check)
++    arp = ctl_window(records, ctl_target_arp_worker(worker_ip), t0, t1, slack,
++                     _arp_detail_check(eth0_mac, worker_ip, cmac, devices))
++    if len(devices) > 1:
++        problems.append(f"ctl ARP entries on more than one device in the window: {sorted(devices)}")
+     ok = not problems and http["ok"] and arp["ok"]
+-    return ok, {"control": "T14-A1: ctl on sandboxnet resolves the worker eth0 address by ARP (ctl /proc/net/arp) "
+-                           "and reaches it (HTTP 200), before and after the case",
+-                "worker_ip": worker_ip, "worker_eth0_mac": eth0_mac, "window": [t0, t1], "ctl_http": http,
+-                "ctl_arp": arp, "problems": problems}
++    return ok, {"control": "T14-A1: ctl on sandboxnet resolves the worker eth0 address by ARP (ctl /proc/net/arp, on "
++                           "its sandboxnet interface) and reaches it (HTTP 200), before and after the case",
++                "worker_ip": worker_ip, "worker_eth0_mac": eth0_mac, "ctl_sandboxnet_mac": cmac,
++                "ctl_devices": sorted(devices), "window": [t0, t1], "ctl_http": http, "ctl_arp": arp,
++                "problems": problems}
+ 
+ 
+ def control_a2(case, records, t0, t1, slack, manager_ip, manager_mac, worker_http, read_neigh):
+@@ -145,7 +195,7 @@
+     mac = manager_mac.lower() if isinstance(manager_mac, str) else None
+     if mac is None or not _MAC.fullmatch(mac):
+         problems.append(f"manager MAC {manager_mac!r} unknown or invalid")
+-    ctl = ctl_window(records, ctl_target_http_manager(manager_ip), t0, t1, slack)
++    ctl = ctl_window(records, ctl_target_http_manager(manager_ip), t0, t1, slack, http_detail_check)
+     try:
+         wh = worker_http()
+     except Exception as e:                                       # noqa: BLE001
+@@ -192,7 +242,7 @@
+         except Exception as e:                                   # noqa: BLE001
+             return False, {"problems": [f"ctl log not readable: {type(e).__name__}: {e}"], "window": [t0, t1]}
+         if case.get("id") == "T14-A1":
+-            return control_a1(case, records, t0, t1, slack, cfg.get("worker_ip"), eth0_mac)
++            return control_a1(case, records, t0, t1, slack, cfg.get("worker_ip"), eth0_mac, cfg.get("ctl_mac"))
+         if case.get("id") == "T14-A2":
+             return control_a2(case, records, t0, t1, slack, cfg.get("manager_ip"), cfg.get("manager_mac"),
+                               worker_http, read_neigh)
+diff -ruN ct01-06b4i/ctl_loop.py ct01-06b4ir1/ctl_loop.py
+--- ct01-06b4i/ctl_loop.py	2026-10-08 12:03:37.980555746 +0000
++++ ct01-06b4ir1/ctl_loop.py	2026-10-08 13:22:13.824042840 +0000
+@@ -9,6 +9,7 @@
+ 06B-4I: with the optional 5th argument --arp-worker, right after the worker check it also logs its own ARP
+ entry for the worker (target "arp worker-eth0 <worker_ip>", read-only /proc/net/arp of this container): the live
+ control of T14-A1 (ARP for 192.168.60.2 resolved on sandboxnet). Without it nothing changes.
++06B-4IR1: the ARP payload also carries the entry's IP and the MAC of its device (read-only /sys/class/net).
+ """
+ import http.client
+ import json
+@@ -22,6 +23,7 @@
+ if sys.argv[5:] and not ARP_WORKER:
+     sys.exit(f"unknown argument(s) {sys.argv[5:]}")
+ PROC_ARP = "/proc/net/arp"
++SYS_NET = "/sys/class/net"
+ running = True
+ signal.signal(signal.SIGTERM, lambda *a: globals().__setitem__("running", False))
+ 
+@@ -42,9 +44,11 @@
+     return "HTTP 200"
+ 
+ 
+-def arp_entry(ip, path=None):
+-    """06B-4I: this container's ARP entry for ip -> {"hw", "flags", "device"}; raises unless exactly one row with
+-    the complete flag (ATF_COM 0x2) and a non-zero MAC exists."""
++def arp_entry(ip, path=None, sys_net=None):
++    """06B-4I: this container's ARP entry for ip -> {"ip", "hw", "flags", "device", "device_mac"}; raises unless
++    exactly one row with the complete flag (ATF_COM 0x2) and a non-zero MAC exists. 06B-4IR1: also the entry's IP
++    and the MAC of its device (/sys/class/net/<device>/address, read only), so that the consumer can bind the device
++    to ctl's sandboxnet endpoint by MAC instead of assuming an interface name."""
+     rows = []
+     with open(path or PROC_ARP) as f:
+         lines = f.read().splitlines()
+@@ -61,7 +65,11 @@
+     r = rows[0]
+     if not int(r["flags"], 16) & 0x2 or r["hw"] == "00:00:00:00:00:00":
+         raise RuntimeError(f"ARP entry for {ip} not complete: {r}")
+-    return r
++    if "/" in r["device"] or r["device"] in (".", ".."):
++        raise RuntimeError(f"unexpected device name {r['device']!r}")
++    with open(f"{sys_net or SYS_NET}/{r['device']}/address") as f:
++        dmac = f.read().strip().lower()
++    return {"ip": ip, **r, "device_mac": dmac}
+ 
+ 
+ checks = [(f"mongo {mongo_ip}:27017", lambda: tcp(mongo_ip, 27017)),
+diff -ruN ct01-06b4i/mutation_arp_wiring.py ct01-06b4ir1/mutation_arp_wiring.py
+--- ct01-06b4i/mutation_arp_wiring.py	2026-10-08 12:31:10.717657556 +0000
++++ ct01-06b4ir1/mutation_arp_wiring.py	2026-10-08 13:57:30.379197069 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""06B-4I — mutation test of the ARP wiring (arp_harness.py, probe_matrix.py arp branch, ctl_loop.py --arp-worker,
++"""06B-4I (+ 06B-4IR1 V38-V61) — mutation test of the ARP wiring (arp_harness.py, probe_matrix.py arp branch, ctl_loop.py --arp-worker,
+ run-06b4i.sh), offline. Each mutant runs selftest_arp_wiring.py in its own mktemp copy of every harness file; every
+ replacement must occur exactly once (else INVALID). DETECTED / DETECTED-ELSEWHERE / MISSED / INVALID / ERROR as in
+ mutation_icmp_wiring.py. Baseline must pass; harness hash checked before/after.
+@@ -23,7 +23,7 @@
+      "U4 ctl_window: one failure inside the span -> not ok, counted"),
+     ("V2", AH, [('"ok": before and after and fails == 0 and not problems}', '"ok": before and fails == 0 and not problems}')],
+      "U2 ctl_window: nothing after read B (yet) -> not ok"),
+-    ("V3", AH, [('        if d.get("hw") != mac:', '        if False:')],
++    ("V3", AH, [('        if d["hw"] != mac:', '        if False:')],
+      "U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok"),
+     ("V4", AH, [('    if case.get("dst") != worker_ip:', '    if False:')],
+      "U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC unknown -> not ok"),
+@@ -99,8 +99,62 @@
+      "W4 selftest_arp.py and selftest_arp_wiring.py (and the ICMP/L2 ones) run before any docker command and abort"),
+     ("V36", RS, [('/ctl/ctl.jsonl --arp-worker)', '/ctl/ctl.jsonl)')],
+      "W7 ctl started with --arp-worker; its ARP target is checked alive like the others"),
+-    ("V37", RS, [('"$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW"', '"$MANAGER_IP" "" "$SANDBOX_GW"')],
+-     "W8 manager MAC passed to the worker in CT01_TARGETS"),
++    ("V37", RS, [('"$MANAGER_IP" "$MANAGER_MAC" "$CTL_MAC" "$SANDBOX_GW"', '"$MANAGER_IP" "" "$CTL_MAC" "$SANDBOX_GW"')],
++     "W8 manager MAC and ctl sandboxnet endpoint MAC passed to the worker in CT01_TARGETS"),
++    # ---- 06B-4IR1: I1 startup/topology guard (probe_matrix.py)
++    ("V38", PM, [('        an._configure_network(console, cfg)', '        an._configure_network(proc, cfg)')],
++     "I1.1 boot-leak: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99"),
++    ("V39", PM, [('        self._guard.check("before", f"sendline {s!r}")\n', '')],
++     "I1.10 after the stop every later send raises without reaching the console, even once the alert is gone (latched)"),
++    ("V40", PM, [('            self._guard.check("after", "expect")', '            pass')],
++     "I1.1 boot-leak: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; exit 99"),
++    ("V41", PM, [('        topo = {k: startup.run(g, c)[1] for k, c in (', '        topo = {k: g.run(c)[1] for k, c in (')],
++     "I1.3 topology-leak: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 99"),
++    ("V42", PM, [('        topo["info_network"] = startup.monitor(g, "info network")', '        topo["info_network"] = g.monitor("info network")')],
++     "I1.6 monitor-leak: the event during `monitor info network` stops before the ARP group (no service link, no case command); exit 99"),
++    ("V43", PM, [('        if startup.stop is not None:         # an exception swallowed', '        if False:         # an exception swallowed')],
++     "I1.2 boot-leak-swallowed: no topology command, no monitor call, no ARP command after the event, no 'guest booted' record; QEMU exit and cleanup done; outcome/CLI/script FAIL"),
++    ("V44", PM, [('        if self.stop is not None:\n            raise self.stop\n        self.checks += 1',
++                  '        self.checks += 1')],
++     "I1.10 after the stop every later send raises without reaching the console, even once the alert is gone (latched)"),
++    ("V45", PM, [('            found = alert_lines()\n            if found:\n                record("NO probe packet seen on host interfaces (leak monitor)", False, phase="startup"',
++                  '            found = []\n            if found:\n                record("NO probe packet seen on host interfaces (leak monitor)", False, phase="startup"')],
++     "I1.5 topology-leak: leak record names the startup phase and the operation"),
++    ("V46", PM, [('            captures_alive(self.tshark, f"startup: {when} {what!r}")', '            pass')],
++     "I1.3 topology-capture: the topology command that saw the event is the last guest operation (no further command, no monitor); exit 98"),
++    # ---- 06B-4IR1: I2 ctl interface (arp_harness.py, ctl_loop.py, run script)
++    ("V48", AH, [('        if d["device_mac"] != ctl_mac:', '        if False:')],
++     "U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, reason kept"),
++    ("V49", AH, [('        if not isinstance(d, dict) or set(d) != ARP_DETAIL_KEYS:', '        if not isinstance(d, dict):')],
++     "U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, reason kept"),
++    ("V50", AH, [('    if cmac is None or not _MAC.fullmatch(cmac):', '    if False:')],
++     "U33 I2 control_a1: ctl endpoint MAC unknown/invalid -> not ok, even with a perfect log"),
++    ("V51", AH, [('    if len(devices) > 1:', '    if False:')],
++     "U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok"),
++    ("V52", AH, [('        if d["ip"] != ip:', '        if False:')],
++     "U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok"),
++    ("V53", AH, [('cfg.get("worker_ip"), eth0_mac, cfg.get("ctl_mac"))', 'cfg.get("worker_ip"), eth0_mac, eth0_mac)')],
++     "S1 clean: exit 0, status COMPLETED, outcome PASS (function and CLI), run script maps it to PASS"),
++    ("V54", CL, [('    return {"ip": ip, **r, "device_mac": dmac}', '    return {"ip": ip, **r}')],
++     "U28 ctl_loop arp_entry: complete entry -> MAC, flags, device"),
++    ("V55", RS, [('CTL_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \\"$SANDBOXNET\\").MacAddress}}" "$CID")',
++                  'CTL_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \\"$DBNET\\").MacAddress}}" "$CID")')],
++     "W12 ctl endpoint MAC from docker inspect of the ctl container on sandboxnet, after it is created (I2)"),
++    # ---- 06B-4IR1: I3 ctl log quality (arp_harness.py)
++    ("V56", AH, [('        if not isinstance(r, dict) or set(r) != CTL_KEYS or not isinstance(r["target"], str) \\',
++                  '        if not isinstance(r, dict) or not CTL_KEYS - {"detail"} <= set(r) or not isinstance(r["target"], str) \\')],
++     "U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)"),
++    ("V57", AH, [('    return None if d == HTTP_OK_DETAIL else', '    return None if True else')],
++     "U36 I3 ctl_window HTTP: OK with detail None / 'HTTP 500' / '' / object -> not ok; 'HTTP 200' -> ok"),
++    ("V58", AH, [('        if last is not None and r["ts"] <= last:', '        if last is not None and r["ts"] < last:')],
++     "U37 I3 ctl_window: the same record twice (same target and ts) -> not ok, reported as duplicate, not removed"),
++    ("V59", AH, [('    ctl = ctl_window(records, ctl_target_http_manager(manager_ip), t0, t1, slack, http_detail_check)',
++                  '    ctl = ctl_window(records, ctl_target_http_manager(manager_ip), t0, t1, slack)')],
++     "U41 I3 control_a2: manager HTTP record without payload / 'HTTP 500' -> not ok"),
++    ("V60", AH, [('                or not math.isfinite(r["ts"]):', '                or False:')],
++     "U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)"),
++    ("V61", AH, [('            if not isinstance(r["detail"], str):', '            if False:')],
++     "U39 I3 ctl_window: a failed record without a string detail -> problem (still not ok)"),
+     # ---- controls
+     ("X1", AH, [("THIS TEXT IS NOT IN THE FILE", "x")], None),
+     ("X2", "selftest_arp_wiring.py", [("import ast\n", "import ast(\n")], None),
+diff -ruN ct01-06b4i/probe_matrix.py ct01-06b4ir1/probe_matrix.py
+--- ct01-06b4i/probe_matrix.py	2026-10-08 12:04:38.806087322 +0000
++++ ct01-06b4ir1/probe_matrix.py	2026-10-08 13:21:17.685787602 +0000
+@@ -34,7 +34,15 @@
+ (T14-A1, T14-A2, T14-A3, T15-S1) through arp_harness.py: same boot, topology gate, captures, guard (alerts and
+ captures/heartbeat before AND after every guest command, guest_state snapshot/restore included), counter reads,
+ session measurement, QEMU shutdown and cleanup; plus the worker neighbour collector (ip -j neigh show in this
+-netns) and the live controls of T14-A1/A2. Prepared and tested offline only.
++netns) and the live controls of T14-A1/A2. Prepared and tested offline only. (Corrected in 06B-4IR1: in 06B-4I the
++guard covered only the ARP group's guest commands; the boot network configuration and the topology gate were not
++guarded.)
++06B-4IR1 (all suites): a startup guard (StartupGuard + GuardedConsole, local adapters; service/analysis.py is not
++changed) covers the guest operations between QEMU boot and the end of the topology gate: every keystroke/command
++sent by Analysis._configure_network and by the topology commands, Guest.monitor included, is preceded by a check
++(leak alerts, then captures/heartbeat), and every wait for the guest's answer is followed by one. The first failure
++latches: nothing more is sent to the guest; QEMU shutdown (raw console) and cleanup are unchanged. After the
++topology gate the guard is disarmed: the IPv4 loop and the ICMP/ARP GuardedRunner keep their own checks.
+ """
+ import ipaddress
+ import json
+@@ -224,6 +232,79 @@
+         raise RuntimeError("host alert file missing: host-side leak monitor not running")
+ 
+ 
++# ------------------------------------------------------------------ 06B-4IR1: startup guard
++class StartupGuard:
++    """Leak alerts, then captures/heartbeat, before and after every startup guest operation (boot network
++    configuration, topology gate). The first failure is kept in `stop` and re-raised by every later check, so that
++    nothing more reaches the guest. A missing/unreadable alert file raises (never read as "no alert")."""
++
++    def __init__(self, tshark):
++        self.tshark, self.stop, self.armed, self.checks, self.sent = tshark, None, True, 0, []
++
++    def check(self, when, what):
++        if not self.armed:
++            return
++        if self.stop is not None:
++            raise self.stop
++        self.checks += 1
++        try:
++            found = alert_lines()
++            if found:
++                record("NO probe packet seen on host interfaces (leak monitor)", False, phase="startup", when=when,
++                       operation=what, alerts=found[:5])
++                raise LeakDetected(f"startup: {when} {what!r}: {len(found)} signature packet(s) seen on host interfaces")
++            captures_alive(self.tshark, f"startup: {when} {what!r}")
++        except Exception as e:
++            self.stop = e
++            raise
++
++    def run(self, guest, cmd):
++        """One topology command through the guest console object, checked before and after."""
++        self.check("before", cmd)
++        self.sent.append(cmd)
++        try:
++            return guest.run(cmd)
++        finally:
++            self.check("after", cmd)
++
++    def monitor(self, guest, command):
++        self.check("before", f"monitor {command}")
++        self.sent.append(f"monitor {command}")
++        try:
++            return guest.monitor(command)
++        finally:
++            self.check("after", f"monitor {command}")
++
++
++class GuardedConsole:
++    """Adapter around the pexpect console given to Analysis._configure_network and Guest: StartupGuard.check before
++    every send/sendline and after every expect, so that an event between two commands of one function (e.g. after
++    `ip addr add` and before `route add`, or between the keystrokes of Guest.monitor) stops before the next one.
++    Everything else is forwarded unchanged. QEMU shutdown keeps using the raw console."""
++
++    def __init__(self, proc, guard):
++        self._proc, self._guard = proc, guard
++
++    def send(self, s):
++        self._guard.check("before", f"send {s!r}")
++        self._guard.sent.append(f"send {s!r}")
++        return self._proc.send(s)
++
++    def sendline(self, s=""):
++        self._guard.check("before", f"sendline {s!r}")
++        self._guard.sent.append(f"sendline {s!r}")
++        return self._proc.sendline(s)
++
++    def expect(self, *a, **kw):
++        try:
++            return self._proc.expect(*a, **kw)
++        finally:
++            self._guard.check("after", "expect")
++
++    def __getattr__(self, name):
++        return getattr(self._proc, name)
++
++
+ # ------------------------------------------------------------------ guest console
+ class Guest:
+     def __init__(self, proc):
+@@ -478,17 +559,26 @@
+         cmd = cfg.qemu_cmd_template.format(kernel=an.kernel_path, rootfs=an.rootfs_path, mac=C.GUEST_MAC)
+         open(os.path.join(OUT, "qemu-command.txt"), "w").write(cmd + "\n")
+         proc = an._start_qemu(cfg)
+-        an._configure_network(proc, cfg)
+-        g = Guest(proc)
++        # 06B-4IR1: startup guard from here to the end of the topology gate (raw `proc` stays for the shutdown)
++        startup = StartupGuard(tshark)
++        startup.check("after", "QEMU boot (console activated)")
++        console = GuardedConsole(proc, startup)
++        an._configure_network(console, cfg)
++        if startup.stop is not None:         # an exception swallowed inside _configure_network still stops here
++            raise startup.stop
++        g = Guest(console)
+         record("guest booted and network configured", True, qemu_pid=proc.pid)
+ 
+         # ------------------------------------------------ strict topology gate
+-        topo = {k: g.run(c)[1] for k, c in (
++        topo = {k: startup.run(g, c)[1] for k, c in (
+             ("ip_addr", "ip addr"), ("ip_route", "ip route"),
+             ("ifaces_mac", "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done"),
+             ("tools", "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done"),
+             ("curl", "curl --version | head -1"))}
+-        topo["info_network"] = g.monitor("info network")
++        topo["info_network"] = startup.monitor(g, "info network")
++        if startup.stop is not None:
++            raise startup.stop
++        startup.armed = False                # group phases keep their own guards (IPv4 loop, GuardedRunner)
+         json.dump(topo, open(os.path.join(OUT, "topology.json"), "w"), indent=1)
+         entries, perr = parse_info_network(topo["info_network"])
+         json.dump(entries, open(os.path.join(OUT, "info-network-parsed.json"), "w"), indent=1)
+diff -ruN ct01-06b4i/run-06b4i.sh ct01-06b4ir1/run-06b4i.sh
+--- ct01-06b4i/run-06b4i.sh	2026-10-08 12:05:29.477710199 +0000
++++ ct01-06b4ir1/run-06b4i.sh	2026-10-08 13:22:31.113118723 +0000
+@@ -1,8 +1,8 @@
+ #!/bin/bash
+ # Nhiệm vụ 06B-4I — ARP group (T14-A1, T14-A2, T14-A3, T15-S1) from real guests, ARM then MIPS.
+-# PREPARED AND TESTED OFFLINE ONLY in 06B-4I (selftest_arp_wiring.py); NOT run. Copy of run-06b4f.sh with only
+-# these changes (selftest_arp_wiring.py W-tests list them):
+-#  * H = ct01-06b4i; the worker runs probe_matrix.py with CT01_SUITE=arp: ONLY the four reviewed ARP cases of
++# PREPARED AND TESTED OFFLINE ONLY in 06B-4I/06B-4IR1 (selftest_arp_wiring.py); NOT run. Copy of run-06b4f.sh
++# with only these changes (selftest_arp_wiring.py W-tests list them):
++#  * H = ct01-06b4ir1 (06B-4IR1); the worker runs probe_matrix.py with CT01_SUITE=arp: ONLY the four reviewed ARP cases of
+ #    arp_cases.py (06B-4HR2, unchanged) through arp_harness.py; no IPv4 probe, no ICMP case, no case added;
+ #  * arp_cases.py, arp_harness.py, guest_state.py mounted read-only in /harness (with the ICMP modules that
+ #    arp_harness reuses: icmp_harness.py, icmp_cases.py, l2frames.py, l2eval.py, signatures.py);
+@@ -10,15 +10,17 @@
+ #    ones are kept: arp_harness reuses icmp_harness);
+ #  * the control container also logs its ARP entry for the worker (ctl_loop.py --arp-worker), checked alive like
+ #    the other controls; the manager's sandboxnet MAC is passed to the worker (CT01_TARGETS manager_mac): both are
+-#    inputs of the T14-A1/A2 live controls;
++#    inputs of the T14-A1/A2 live controls; 06B-4IR1: ctl's own sandboxnet endpoint MAC is passed too
++#    (CT01_TARGETS ctl_mac): it identifies the ctl interface of the ARP entry (no interface name is assumed);
+ #  * per-architecture outcome from arp_harness.py --outcome, run level from arp_harness.py --run-check.
+-# Everything else (boot, topology gate, captures, watcher/heartbeat, leak alerts, scanners, counter reads,
+-# session measurement, QEMU shutdown, cleanup, host-state checks, exit codes) is run-06b4f.sh unchanged.
+-# Guard 20 ms: unmeasured assumption.
++# Everything else in this script (captures, watcher/heartbeat, leak alerts, scanners, host-state checks, exit
++# codes) is run-06b4f.sh unchanged. Inside the worker, probe_matrix.py 06B-4IR1 also guards the boot network
++# configuration and the topology gate (startup guard, all suites). Guard 20 ms: unmeasured assumption.
+ #
+-#   sudo bash /home/dathq/projects/ct01-06b4i/run-06b4i.sh   (only when the reviewer allows the run)
++#   sudo bash /home/dathq/projects/ct01-06b4ir1/run-06b4i.sh   (only when the reviewer allows the run)
+ #
+-# ---- header of run-06b4f.sh:
++# ---- HISTORICAL header of run-06b4f.sh (the ICMP script this one was copied from; it does NOT describe what this
++# ---- script runs: here the suite is CT01_SUITE=arp and the outcome comes from arp_harness.py):
+ # Nhiệm vụ 06B-4F — ICMP group (T12-B1, T12-B2, T12-B4, T13-I1, T13-I2) from real guests, ARM then MIPS.
+ # PREPARED AND TESTED OFFLINE ONLY in 06B-4F (selftest_icmp_wiring.py); NOT run. Copy of run-06b3b.sh
+ # (06B-4B/4C harness) with only these changes:
+@@ -77,7 +79,7 @@
+ set -uo pipefail
+ 
+ EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+-H=/home/dathq/projects/ct01-06b4i
++H=/home/dathq/projects/ct01-06b4ir1
+ OUT=$H/out
+ REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+ IMAGE=sandbox-worker:latest
+@@ -271,6 +273,10 @@
+     "$IMAGE" /ctl_loop.py "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" /ctl/ctl.jsonl --arp-worker) || { echo "ABORT: ctl run failed"; exit 3; }
+ CREATED_IDS+=("$CID")
+ docker network connect "$DBNET" "$CID"
++# 06B-4IR1: ctl's endpoint MAC on sandboxnet, so that the T14-A1 control can bind the ctl ARP entry's interface to
++# sandboxnet by MAC (the interface name inside ctl is not assumed)
++CTL_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").MacAddress}}" "$CID")
++echo "ctl sandboxnet endpoint MAC=$CTL_MAC" | tee -a "$OUT/targets-env.txt"
+ sleep 4
+ for t in "mongo $MONGO_IP:27017" "worker-eth0 $WORKER_IP:8011" "arp worker-eth0 $WORKER_IP" "manager $MANAGER_IP:8011"; do
+     check "control '$t' alive" bash -c "grep -F '\"target\": \"$t\"' '$OUT/ctl/ctl.jsonl' | tail -3 | grep -q '\"ok\": true'"
+@@ -330,8 +336,8 @@
+ echo "capture watcher pid $WATCH_PID on ${W[*]}"
+ 
+ # ------------------------------------------------------------------ 6. guests, one at a time
+-TARGETS=$(printf '{"worker_ip":"%s","mongo_ip":"%s","manager_ip":"%s","manager_mac":"%s","ssh_ips":["%s","%s","%s"],"lan_dns":"%s"}' \
+-    "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW" "$ENS_IP" "$DB_GW" "$LAN_DNS")
++TARGETS=$(printf '{"worker_ip":"%s","mongo_ip":"%s","manager_ip":"%s","manager_mac":"%s","ctl_mac":"%s","ssh_ips":["%s","%s","%s"],"lan_dns":"%s"}' \
++    "$WORKER_IP" "$MONGO_IP" "$MANAGER_IP" "$MANAGER_MAC" "$CTL_MAC" "$SANDBOX_GW" "$ENS_IP" "$DB_GW" "$LAN_DNS")
+ echo "$TARGETS" > "$OUT/targets.json"
+ LEAK=0
+ for ARCH in ARM MIPS; do
+diff -ruN ct01-06b4i/selftest_arp_wiring.py ct01-06b4ir1/selftest_arp_wiring.py
+--- ct01-06b4i/selftest_arp_wiring.py	2026-10-08 12:30:16.154947375 +0000
++++ ct01-06b4ir1/selftest_arp_wiring.py	2026-10-08 14:21:16.134095938 +0000
+@@ -49,10 +49,12 @@
+ ETH0_MAC = "02:42:c0:a8:3c:02"
+ OTHER_MAC = "02:42:c0:a8:3c:99"
+ MANAGER_MAC = "8a:d3:09:b5:72:af"  # selftest_arp.MANAGER_MAC (manager row of selftest_arp.NEIGH)
++CTL_MAC = "02:42:c0:a8:3c:05"      # ctl's sandboxnet endpoint MAC (docker inspect in the run script; fake here)
++ANALYSIS_SRC = "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/sandbox-worker/service/analysis.py"
+ CASE_IDS = ("T14-A1", "T14-A2", "T14-A3", "T15-S1")
+ RS, RS_OLD = "run-06b4i.sh", "run-06b4f.sh"
+ CFG = {"worker_ip": "192.168.60.2", "mongo_ip": "172.18.0.2", "manager_ip": "192.168.60.10",
+-       "manager_mac": MANAGER_MAC, "ssh_ips": [], "lan_dns": "192.168.177.2"}
++       "manager_mac": MANAGER_MAC, "ctl_mac": CTL_MAC, "ssh_ips": [], "lan_dns": "192.168.177.2"}
+ 
+ 
+ def t(name, fn):
+@@ -113,6 +115,29 @@
+     "liveness-fails": {"liveness_fail": True},
+     "error-after-group": {"events": [("ip link set dev eth1 up", "tap0_gone")]},
+     "callback-errors": {"ctl": "dir", "worker_http_fail": True, "neigh": {("T14-A3 after", 0): "keyerror"}},
++    # 06B-4IR1 (I1): events during the startup (real Analysis._configure_network body) and the topology gate
++    "boot-leak": {"boot": "leak"},
++    "boot-capture": {"boot": "marker"},
++    "boot-leak-swallowed": {"boot": "leak", "boot_swallow": True},
++    "unit-console": {"unit": "console"},
++    "icmp-topology-leak": {"suite": "icmp", "events": [("ip addr", "leak")], "exact_event": True},
++    "topology-leak": {"events": [("ip addr", "leak")], "exact_event": True},
++    "topology-capture": {"events": [("ip addr", "marker")], "exact_event": True},
++    "topology-heartbeat": {"events": [("ip route", "stale")], "exact_event": True},
++    "monitor-leak": {"monitor_event": "leak"},
++    "startup-alert-unreadable": {"events": [("curl --version | head -1", "alert_dir")], "exact_event": True},
++    # 06B-4IR1 (I2): interface of the ctl ARP entry
++    "a1-wrong-interface": {"ctl": "arp_wrong_device_mac"},
++    "a1-missing-interface": {"ctl": "arp_missing_device"},
++    "a1-other-name-same-endpoint": {"ctl": "arp_other_name"},
++    "a1-two-devices": {"ctl": "arp_two_devices"},
++    "a1-entry-other-ip": {"ctl": "arp_other_ip"},
++    "cfg-no-ctl-mac": {"cfg": {"ctl_mac": None}},
++    # 06B-4IR1 (I3): quality of the ctl log
++    "duplicate-control": {"ctl": "duplicate"},
++    "http-missing-detail": {"ctl": "http_missing_detail"},
++    "http-wrong-detail": {"ctl": "http_wrong_detail"},
++    "ctl-extra-key": {"ctl": "extra_key"},
+ }
+ 
+ 
+@@ -261,11 +286,22 @@
+ 
+         def monitor(self, command, timeout=20):
+             W.commands.append(("monitor", command))
++            if W.spec.get("monitor_event"):
++                fire(W.spec["monitor_event"])
+             return ("info network\nnet0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:c7:00:02\n"
+                     " \\ hostnet0: index=0,type=tap,ifname=tap0,script=no,downscript=no\n")
+ 
+         def run(self, cmd, timeout=60):
+             W.commands.append(("run", cmd))
++            rc, out = self._answer(cmd, timeout)
++            for sub, ev in W.spec.get("events", []):
++                hit = cmd == sub if W.spec.get("exact_event") else sub in cmd
++                if hit and (sub, ev) not in W.fired:
++                    W.fired.add((sub, ev))
++                    fire(ev)
++            return rc, out
++
++        def _answer(self, cmd, timeout):
+             if cmd == "ip addr":
+                 return 0, "2: eth1: <UP>\n    inet 10.200.0.2/30 brd 10.200.0.3 scope global eth1\n"
+             if cmd == "ip route":
+@@ -288,12 +324,7 @@
+             if W.snap_fail and cmd == GS.snapshot_cmd("eth1"):
+                 W.snap_fail = False
+                 return 0, "@@S mac\n52:54:00:c7:00:02\n@@RC 0\n"           # sections missing: unreadable state
+-            rc, out = super().run(cmd, timeout)
+-            for sub, ev in W.spec.get("events", []):
+-                if sub in cmd and (sub, ev) not in W.fired:
+-                    W.fired.add((sub, ev))
+-                    fire(ev)
+-            return rc, out
++            return super().run(cmd, timeout)
+     return FakeGuest
+ 
+ 
+@@ -308,6 +339,9 @@
+         W.tshark_dead = True
+     elif ev == "leak":
+         open(W.pm.ALERT, "a").write("12:00:01 ARP, Request who-has 10.200.0.6 tell 10.200.0.2, length 28\n")
++    elif ev == "alert_dir":
++        os.remove(W.pm.ALERT)
++        os.mkdir(W.pm.ALERT)
+     elif ev == "tap0_gone":
+         os.remove(os.path.join(W.pm.SYS_NET, "tap0", "address"))
+ 
+@@ -325,15 +359,36 @@
+             f.write("{not json\n")
+         while not stop.is_set():
+             ts = time.time()
++            W.ctl_cycle = getattr(W, "ctl_cycle", 0) + 1
+             recs = [{"ts": ts, "target": "mongo 172.18.0.2:27017", "ok": True, "detail": "connected"},
+                     {"ts": ts, "target": f"worker-eth0 {CFG['worker_ip']}:8011", "ok": True, "detail": "HTTP 200"}]
+             if mode == "worker_fail_A1" and W.label in ("T14-A1 before", "T14-A1 after"):
+                 recs[1] = {**recs[1], "ok": False, "detail": "TimeoutError('timed out')"}
+             if mode != "no_arp":
+                 hw = OTHER_MAC if mode == "arp_wrong_mac" else ETH0_MAC
+-                recs.append({"ts": ts, "target": f"arp worker-eth0 {CFG['worker_ip']}", "ok": True,
+-                             "detail": {"hw": hw, "flags": "0x2", "device": "eth0"}})
++                det = {"ip": CFG["worker_ip"], "hw": hw, "flags": "0x2", "device": "eth0", "device_mac": CTL_MAC}
++                if mode == "arp_wrong_device_mac":           # another interface of ctl (e.g. its dbnet endpoint)
++                    det.update(device="eth9", device_mac="02:42:ac:12:00:09")
++                elif mode == "arp_missing_device":
++                    det.pop("device")
++                elif mode == "arp_other_name":               # same sandboxnet endpoint under another name: accepted
++                    det["device"] = "eth7"
++                elif mode == "arp_two_devices" and W.ctl_cycle % 2:
++                    det["device"] = "eth7"
++                elif mode == "arp_other_ip":
++                    det["ip"] = "192.168.60.3"
++                recs.append({"ts": ts, "target": f"arp worker-eth0 {CFG['worker_ip']}", "ok": True, "detail": det})
+             recs.append({"ts": ts, "target": f"manager {mip}:8011", "ok": True, "detail": "HTTP 200"})
++            if mode == "duplicate":                          # every line written twice (same target, ts, payload)
++                recs = [r for r in recs for _ in (0, 1)]
++            if mode == "http_missing_detail":
++                recs = [{k: v for k, v in r.items() if k != "detail"} if not r["target"].startswith(("arp ", "mongo "))
++                        else r for r in recs]
++            if mode == "http_wrong_detail":
++                recs = [dict(r, detail="HTTP 500") if r["target"].startswith(("worker-eth0 ", "manager ")) else r
++                        for r in recs]
++            if mode == "extra_key":
++                recs = [dict(r, replayed=True) for r in recs]
+             for r in recs:
+                 f.write(json.dumps(r) + "\n")
+             stop.wait(0.15)
+@@ -352,6 +407,113 @@
+     return rows
+ 
+ 
++def install_real_configure_network(A, spec):
++    """06B-4IR1: the REAL body of Analysis._configure_network (extracted with ast from the repository's
++    sandbox-worker/service/analysis.py, unchanged) on a fake pexpect console: every keystroke is logged; the startup
++    event (leak alert / capture marker) is written while `ip addr add` is being sent. With boot_swallow the call is
++    wrapped so that it swallows every exception (the main path must still stop)."""
++    import ast as _ast
++    import types
++    src = open(ANALYSIS_SRC).read()
++    W.analysis_sha = hashlib.sha256(src.encode()).hexdigest()
++    tree = _ast.parse(src)
++    cls = next(n for n in tree.body if isinstance(n, _ast.ClassDef) and n.name == "Analysis")
++    fn = next(n for n in cls.body if isinstance(n, _ast.FunctionDef) and n.name == "_configure_network")
++    ns = {"pexpect": types.SimpleNamespace(TIMEOUT="TIMEOUT", EOF="EOF", spawn=object),
++          "guestnet": types.SimpleNamespace(GUEST_PREFIX=30), "ArchConfig": object,
++          "logger": types.SimpleNamespace(info=lambda *a: None)}
++    exec(compile(_ast.Module(body=[fn], type_ignores=[]), ANALYSIS_SRC, "exec"), ns)
++    real = ns["_configure_network"]
++
++    def sendline(self, cmd=""):
++        W.boot_console.append(cmd)
++        if cmd.startswith("ip addr add "):
++            fire(spec["boot"])
++    A.FakeProc.sendline = sendline
++    A.FakeProc.send = lambda self, s: W.boot_console.append(s)
++    A.FakeProc.expect = lambda self, *a, **k: 1
++
++    def configure(self, proc, cfg):
++        self.qemu_ip, self.qemu_gw = "10.200.0.2", "10.200.0.1"
++        cfg.boot_ready_prompt, cfg.network_ready_prompt_optional, cfg.extra_prompt_after_dns = "# ", False, True
++        if spec.get("boot_swallow"):
++            try:
++                return real(self, proc, cfg)
++            except Exception:                                     # noqa: BLE001  a careless caller
++                return None
++        return real(self, proc, cfg)
++    A.Analysis._configure_network = configure
++
++
++def unit_console(d):
++    """06B-4IR1: StartupGuard + GuardedConsole around the REAL probe_matrix.Guest on a fake pexpect object."""
++    out = {}
++
++    class P:
++        def __init__(self):
++            self.log, self.before, self.match = [], "", None
++
++        def send(self, s):
++            self.log.append(("send", s))
++            if s == "\x01c" and W.fire_on_first_escape and len([x for x in self.log if x == ("send", "\x01c")]) == 1:
++                fire("leak")
++
++        def sendline(self, s=""):
++            self.log.append(("sendline", s))
++            m = re.search(r"echo (@@B\d+); (.*); echo (@@E\d+) rc", s)
++            if m:
++                self.before = f"{m.group(1)}\nout\n"
++                self.match = re.match(r"(\d+)", "0")
++
++        def expect(self, pat, timeout=None):
++            self.log.append(("expect", pat))
++            return 0
++
++    class TS:
++        returncode = None
++
++        def poll(self):
++            return None
++    pm = W.pm
++    W.fire_on_first_escape = True
++    p = P()
++    guard = pm.StartupGuard(TS())
++    g = W.RealGuest(pm.GuardedConsole(p, guard))
++    try:
++        g.monitor("info network")
++        out["monitor_raised"] = None
++    except Exception as e:                                       # noqa: BLE001
++        out["monitor_raised"] = type(e).__name__
++    out["monitor_log"] = p.log[:]
++    open(pm.ALERT, "w").close()          # the alert is gone again: only the latch can still stop the next command
++    try:
++        g.run("ip addr")
++        out["after_stop"] = "sent"
++    except Exception as e:                                       # noqa: BLE001
++        out["after_stop"] = type(e).__name__
++    out["log_after_stop"] = p.log[len(out["monitor_log"]):]
++    # a clean console: real Guest.run goes through; disarmed guard does no check
++    open(pm.ALERT, "w").close()
++    W.fire_on_first_escape = False
++    p2, guard2 = P(), pm.StartupGuard(TS())
++    g2 = W.RealGuest(pm.GuardedConsole(p2, guard2))
++    try:
++        out["clean_run"] = list(g2.run("ip addr"))
++    except Exception as e:                                       # noqa: BLE001
++        out["clean_run"] = f"{type(e).__name__}: {e}"
++    out["clean_checks"] = guard2.checks
++    guard2.armed = False
++    n = guard2.checks
++    open(pm.ALERT, "a").write("late alert\n")
++    try:
++        g2.run("ip route")
++        out["disarmed_run"] = "sent"
++    except Exception as e:                                       # noqa: BLE001
++        out["disarmed_run"] = type(e).__name__
++    out["disarmed_checks"] = guard2.checks - n
++    json.dump(out, open(os.path.join(d, "unit-console.json"), "w"), indent=1, default=str)
++
++
+ def scenario_main(name, d):
+     spec = SCENARIOS[name]
+     hdir, sb, out = os.path.join(d, "harness"), os.path.join(d, "stubs"), os.path.join(d, "out")
+@@ -373,7 +535,7 @@
+         else:
+             cfg[k] = v
+     os.environ["CT01_TARGETS"] = json.dumps(cfg)
+-    os.environ["CT01_SUITE"] = "arp"
++    os.environ["CT01_SUITE"] = spec.get("suite", "arp")
+     sys.path[:0] = [hdir, sb]
+     sys.argv = ["probe_matrix.py", "ARM", out]
+     import importlib.util
+@@ -390,10 +552,14 @@
+     import selftest_l2eval as V
+     import selftest_arp as SA
+     from service import analysis as A
+-    W.pm, W.B, W.V, W.SA, W.L = pm, B, V, SA, pm.arp_harness.A.L
++    W.pm, W.B, W.V, W.SA = pm, B, V, SA
++    W.L = pm.arp_harness.A.L if hasattr(pm, "arp_harness") else pm.icmp_harness.I.L
+     W.spec, W.frames, W.commands, W.links, W.label, W.cfg = spec, [], [], 0, None, cfg
+     W.counters, W.tshark_dead, W.worker_cmds, W.neigh_n, W.snap_fail, W.fired = dict(V.BASE), False, [], {}, False, set()
+     A.STUCK[0] = spec.get("qemu_stuck", False)
++    W.boot_console = []
++    if spec.get("boot"):
++        install_real_configure_network(A, spec)
+     A.ARCH_CONFIGS["ARM"] = type("Cfg", (), {"image_zip_path": os.path.join(d, "image.zip"), "image_kernel_path": "/kernel",
+                                              "image_rootfs_path": "/rootfs", "net_iface": "eth1",
+                                              "qemu_cmd_template": "qemu-system-arm -k {kernel} -r {rootfs} -m {mac}"})
+@@ -410,6 +576,7 @@
+     open(pm.ALERT, "w").close()
+     pm.CTL, pm.DATA, pm.WORK = os.path.join(d, "ctl.jsonl"), os.path.join(d, "data") + "/", os.path.join(d, "work")
+     pm.SYS_NET, pm.PROC_ROOT = os.path.join(d, "sys"), os.path.join(d, "proc")
++    W.RealGuest = pm.Guest
+     pm.Guest, pm.run_checked, pm.guest_frames = guest_class(SA, guest_state), fake_run_checked, guest_rows
+     pm.subprocess = type("SP", (), {"Popen": FakeTshark, "DEVNULL": subprocess.DEVNULL,
+                                     "TimeoutExpired": subprocess.TimeoutExpired, "run": subprocess.run})
+@@ -445,12 +612,22 @@
+     ctl_t = threading.Thread(target=ctl_loop_thread, args=(pm.CTL, spec.get("ctl"), ctl_stop), daemon=True)
+     ctl_t.start()
+     time.sleep(0.2)
++    if spec.get("unit"):
++        with contextlib.redirect_stdout(io.StringIO()):
++            unit_console(d)
++        W.hb_stop.set()
++        ctl_stop.set()
++        json.dump({"rc": None, "commands": [], "worker_cmds": [], "http_calls": [], "boot_console": [],
++                   "mounted": [], "modules": modules, "fixture_sha": None, "out": os.path.join(out, "ARM")},
++                  open(os.path.join(d, "scenario.json"), "w"), indent=1)
++        return 0
+     with contextlib.redirect_stdout(io.StringIO()):
+         rc = pm.main()
+     W.hb_stop.set()
+     ctl_stop.set()
+     final = rc if rc else (1 if [r for r in pm.results if not r["ok"]] else 0)
+     json.dump({"rc": final, "commands": W.commands, "worker_cmds": W.worker_cmds, "http_calls": W.http_calls,
++               "boot_console": W.boot_console, "analysis_sha": getattr(W, "analysis_sha", None),
+                "mounted": mounted_files(os.path.join(HERE, RS)), "modules": modules,
+                "fixture_sha": hashlib.sha256(f"06B-3B ARM harmless text fixture - not an ELF\n".encode()).hexdigest(),
+                "out": os.path.join(out, "ARM")},
+@@ -771,13 +948,104 @@
+       "error recorded, no case ĐẠT through them, QEMU/cleanup done, FAIL",
+       lambda: cats(x)["T14-A1"] == "CHUA_KIEM_CHUNG" and cats(x)["T14-A2"] == "CHUA_KIEM_CHUNG"
+       and cats(x)["T14-A3"] == "LOI_PHEP_DO" and infra_ok(x) and x["outcome"].startswith("FAIL"))
+-    t("S42 no scenario other than clean passes", lambda: [n for n in SCENARIOS if n != "clean" and S[n]
+-                                                         and (S[n]["outcome"] == "PASS" or S[n]["script"] == "PASS")] == [])
++    t("S42 no scenario other than clean (and the same-endpoint control) passes",
++      lambda: [n for n in SCENARIOS if n not in ("clean", "a1-other-name-same-endpoint") and S[n]
++               and (S[n]["outcome"] == "PASS" or S[n]["script"] == "PASS")] == [])
+     t("S43 function and CLI outcome agree in every scenario",
+       lambda: all(S[n]["outcome"] == S[n]["cli"] for n in SCENARIOS if S[n]))
++    sec_S_ir1(g, H)
+     return S
+ 
+ 
++def monitors(sc):
++    return [c for k, c in sc["commands"] if k == "monitor"]
++
++
++def sec_S_ir1(g, H):
++    """06B-4IR1: I1 startup/topology guard, I2 ctl interface, I3 ctl log quality, through probe_matrix.main()."""
++    boot_first = "ip addr add 10.200.0.2/30 brd + dev eth1"
++    for n, rc, why in (("boot-leak", 99, "LEAK: startup: after 'expect'"), ("boot-capture", 98, "CAPTURE LOST: startup"),
++                       ("boot-leak-swallowed", 99, "LEAK: startup")):
++        x = g(n)
++        t(f"I1.1 {n}: real _configure_network body: the event during `ip addr add` stops BEFORE `route add`/DNS; "
++          f"exit {rc}",
++          lambda x=x, rc=rc, why=why: x["boot_console"] == [boot_first] and x["rc"] == rc
++          and x["result"]["status"].startswith(why) and x["analysis_sha"])
++        t(f"I1.2 {n}: no topology command, no monitor call, no ARP command after the event, no 'guest booted' "
++          "record; QEMU exit and cleanup done; outcome/CLI/script FAIL",
++          lambda x=x: runs(x) == [] and monitors(x) == [] and infra_ok(x) and x["outcome"].startswith("FAIL")
++          and not rec_of(x, "guest booted and network configured")
++          and x["cli"].startswith("FAIL") and x["script"] == "FAIL")
++    for n, rc, sent in (("topology-leak", 99, ["ip addr"]), ("topology-capture", 98, ["ip addr"]),
++                        ("topology-heartbeat", 98, ["ip addr", "ip route"])):
++        x = g(n)
++        t(f"I1.3 {n}: the topology command that saw the event is the last guest operation (no further command, no "
++          f"monitor); exit {rc}",
++          lambda x=x, rc=rc, sent=sent: runs(x) == sent and monitors(x) == [] and x["rc"] == rc
++          and "startup" in x["result"]["status"])
++        t(f"I1.4 {n}: QEMU exit and cleanup done; no group record, no evaluation; outcome/CLI/script FAIL",
++          lambda x=x: infra_ok(x) and x["group"] is None and x["eval"] is None and x["outcome"].startswith("FAIL")
++          and x["cli"].startswith("FAIL") and x["script"] == "FAIL")
++    x = g("topology-leak")
++    t("I1.5 topology-leak: leak record names the startup phase and the operation",
++      lambda: any(r["test"] == "NO probe packet seen on host interfaces (leak monitor)" and r.get("phase") == "startup"
++                  and r.get("operation") == "ip addr" for r in x["result"]["results"]))
++    x = g("monitor-leak")
++    t("I1.6 monitor-leak: the event during `monitor info network` stops before the ARP group (no service link, no "
++      "case command); exit 99",
++      lambda: x["rc"] == 99 and monitors(x) == ["info network"] and not any("/get-task/" in c for c in runs(x))
++      and x["result"]["status"].startswith("LEAK: startup: after 'monitor info network'")
++      and len(runs(x)) == 5 and infra_ok(x) and x["script"] == "FAIL")
++    x = g("startup-alert-unreadable")
++    t("I1.7 alert file unreadable during the topology gate: never 'no alert'; monitor not sent; ERROR exit 1; FAIL",
++      lambda: x["rc"] == 1 and "IsADirectoryError" in x["result"]["status"] and monitors(x) == []
++      and infra_ok(x) and x["outcome"].startswith("FAIL"))
++    x = g("icmp-topology-leak")
++    t("I1.8 shared path, ICMP suite: the same startup guard stops after `ip addr` (no ping, no link); exit 99",
++      lambda: x["rc"] == 99 and runs(x) == ["ip addr"] and monitors(x) == [] and infra_ok(x))
++    try:
++        u = json.load(open(os.path.join(g("unit-console")["dir"], "unit-console.json")))
++    except (OSError, KeyError, ValueError):
++        u = {}                                   # the unit scenario did not run: its tests fail below
++    t("I1.9 real Guest.monitor over the guarded console: an event after the first escape keystroke stops before "
++      "`info network` is typed (inside one multi-keystroke function)",
++      lambda: u.get("monitor_raised") == "LeakDetected" and [x[0] for x in u["monitor_log"]] == ["send", "expect"]
++      and not any(x[1] == "info network" for x in u["monitor_log"]))
++    t("I1.10 after the stop every later send raises without reaching the console, even once the alert is gone "
++      "(latched)",
++      lambda: u["after_stop"] == "LeakDetected" and u["log_after_stop"] == [])
++    t("I1.11 clean console: real Guest.run goes through with checks; a disarmed guard does no check",
++      lambda: isinstance(u["clean_run"], list) and u["clean_run"][0] == 0 and u["clean_checks"] >= 3
++      and u["disarmed_run"] == "sent" and u["disarmed_checks"] == 0)
++    c = g("clean")
++    t("I1.12 clean: the startup guard changes no result: PASS, A1 ctl device eth0 bound by the endpoint MAC",
++      lambda: c["script"] == "PASS" and gcase(c, "T14-A1")["control"]["detail"]["ctl_devices"] == ["eth0"]
++      and gcase(c, "T14-A1")["control"]["detail"]["ctl_sandboxnet_mac"] == CTL_MAC)
++    # I2
++    for n, why in (("a1-wrong-interface", "not ctl's sandboxnet endpoint MAC"),
++                   ("a1-missing-interface", "is not an object with exactly"),
++                   ("a1-two-devices", "more than one device"), ("a1-entry-other-ip", "!= worker address"),
++                   ("cfg-no-ctl-mac", "cannot be identified")):
++        x = g(n)
++        t(f"I2.1 {n}: A1 control not alive -> CHƯA KIỂM CHỨNG, reason and raw entries kept; A2 ĐẠT; never PASS "
++          "(function, CLI, Bash)",
++          lambda x=x, why=why: cats(x)["T14-A1"] == "CHUA_KIEM_CHUNG" and cats(x)["T14-A2"] == "DAT"
++          and gcase(x, "T14-A1")["control"]["ok"] is False and why in json.dumps(gcase(x, "T14-A1")["control"])
++          and x["outcome"].startswith("UNVERIFIED") and x["cli"] == x["outcome"] and x["script"] == "UNVERIFIED")
++    x = g("a1-other-name-same-endpoint")
++    t("I2.2 the same sandboxnet endpoint under another interface name (eth7) is accepted: PASS",
++      lambda: x["script"] == "PASS" and gcase(x, "T14-A1")["control"]["detail"]["ctl_devices"] == ["eth7"])
++    # I3
++    for n, why in (("duplicate-control", "duplicate record"), ("http-missing-detail", "ctl log not readable"),
++                   ("http-wrong-detail", "HTTP 500"), ("ctl-extra-key", "ctl log not readable")):
++        x = g(n)
++        t(f"I3.1 {n}: A1 and A2 controls not alive -> CHƯA KIỂM CHỨNG, reason kept; A3/S1 unchanged; never PASS",
++          lambda x=x, why=why: cats(x) == {"T14-A1": "CHUA_KIEM_CHUNG", "T14-A2": "CHUA_KIEM_CHUNG",
++                                           "T14-A3": "DAT_KIEM_QUY_TAC", "T15-S1": "DAT_KIEM_QUY_TAC"}
++          and why in json.dumps(gcase(x, "T14-A1")["control"]) and why in json.dumps(gcase(x, "T14-A2")["control"])
++          and x["outcome"].startswith("UNVERIFIED") and x["script"] == "UNVERIFIED")
++
++
+ # ====================================================================== R: required confirmations, R1 through the wiring
+ def sec_R(S, tmp):
+     import arp_harness as H
+@@ -868,19 +1136,21 @@
+ 
+     def recs(target, times, ok=True, detail=None):
+         return [{"ts": x, "target": target, "ok": ok, "detail": detail} for x in times]
+-    arp_ok = {"hw": ETH0_MAC, "flags": "0x2", "device": "eth0"}
++    arp_ok = {"ip": "192.168.60.2", "hw": ETH0_MAC, "flags": "0x2", "device": "eth0", "device_mac": CTL_MAC}
+     wt, at, mt = H.ctl_target_http_worker("192.168.60.2"), H.ctl_target_arp_worker("192.168.60.2"), \
+         H.ctl_target_http_manager("192.168.60.10")
+-    good = recs(wt, [T0 - 1, T0 + 5, T1 + 1]) + recs(at, [T0 - 1, T0 + 5, T1 + 1], detail=arp_ok) \
+-        + recs(mt, [T0 - 1, T1 + 1])
++    good = recs(wt, [T0 - 1, T0 + 5, T1 + 1], detail="HTTP 200") + recs(at, [T0 - 1, T0 + 5, T1 + 1], detail=arp_ok) \
++        + recs(mt, [T0 - 1, T1 + 1], detail="HTTP 200")
+     t("U1 ctl_window: OK before and after, no failure -> ok",
+       lambda: H.ctl_window(good, wt, T0, T1, 3.0)["ok"] is True)
+     t("U2 ctl_window: nothing after read B (yet) -> not ok", lambda: not H.ctl_window(recs(wt, [T0 - 1]), wt, T0, T1, 3.0)["ok"])
+     t("U3 ctl_window: OK records only outside the slack -> not ok",
+       lambda: not H.ctl_window(recs(wt, [T0 - 5, T1 + 5]), wt, T0, T1, 3.0)["ok"])
+     t("U4 ctl_window: one failure inside the span -> not ok, counted",
+-      lambda: H.ctl_window(good + recs(wt, [T0 + 2], ok=False), wt, T0, T1, 3.0)["fails_in_window"] == 1
+-      and not H.ctl_window(good + recs(wt, [T0 + 2], ok=False), wt, T0, T1, 3.0)["ok"])
++      lambda: (lambda rr: H.ctl_window(rr, wt, T0, T1, 3.0)["fails_in_window"] == 1
++               and H.ctl_window(rr, wt, T0, T1, 3.0)["problems"] == []
++               and not H.ctl_window(rr, wt, T0, T1, 3.0)["ok"])(
++          sorted(good + recs(wt, [T0 + 2], ok=False, detail="TimeoutError('timed out')"), key=lambda r: r["ts"])))
+     t("U5 ctl_window: another target (prefix of it) never counts",
+       lambda: not H.ctl_window(recs(wt + "0", [T0 - 1, T1 + 1]), wt, T0, T1, 3.0)["ok"])
+     t("U6 ctl_records: a malformed line raises (never skipped); ok must be a boolean",
+@@ -889,19 +1159,22 @@
+                    json.dumps({"ts": True, "target": "a", "ok": True}) + "\n")))
+     case = {c["id"]: c for c in A.build_cases()}
+     t("U7 control_a1: clean -> ok; ARP entry with another MAC / incomplete flag / not an object -> not ok",
+-      lambda: H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", ETH0_MAC)[0] is True
++      lambda: H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", ETH0_MAC, CTL_MAC)[0] is True
+       and all(not H.control_a1(case["T14-A1"], [r if r["target"] != at else dict(r, detail=d) for r in good], T0, T1,
+-                               3.0, "192.168.60.2", ETH0_MAC)[0]
++                               3.0, "192.168.60.2", ETH0_MAC, CTL_MAC)[0]
+               for d in ({**arp_ok, "hw": OTHER_MAC}, {**arp_ok, "flags": "0x0"}, {**arp_ok, "flags": "zz"}, "x", None)))
+-    good3 = [dict(r, target=r["target"].replace("192.168.60.2", "192.168.60.3")) for r in good]
++    good3 = [dict(r, target=r["target"].replace("192.168.60.2", "192.168.60.3"),
++                  detail=dict(r["detail"], ip="192.168.60.3") if isinstance(r["detail"], dict) else r["detail"])
++             for r in good]
+     t("U8 control_a1: worker address differs from the case target (ctl log of that address all OK) / eth0 MAC "
+       "unknown -> not ok",
+-      lambda: H.control_a1(dict(case["T14-A1"], dst="192.168.60.3"), good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC)[0]
+-      and not H.control_a1(case["T14-A1"], good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC)[0]
+-      and not H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", None)[0])
++      lambda: H.control_a1(dict(case["T14-A1"], dst="192.168.60.3"), good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC,
++                           CTL_MAC)[0]
++      and not H.control_a1(case["T14-A1"], good3, T0, T1, 3.0, "192.168.60.3", ETH0_MAC, CTL_MAC)[0]
++      and not H.control_a1(case["T14-A1"], good, T0, T1, 3.0, "192.168.60.2", None, CTL_MAC)[0])
+     t("U9 control_a1: HTTP of ctl missing after the case -> not ok",
+       lambda: not H.control_a1(case["T14-A1"], [r for r in good if not (r["target"] == wt and r["ts"] > T1)],
+-                               T0, T1, 3.0, "192.168.60.2", ETH0_MAC)[0])
++                               T0, T1, 3.0, "192.168.60.2", ETH0_MAC, CTL_MAC)[0])
+     neigh_ok = json.dumps([{"dst": "192.168.60.10", "dev": "eth0", "lladdr": MANAGER_MAC, "state": ["REACHABLE"]}])
+     http_ok = lambda: {"ok": True, "detail": "HTTP 200"}  # noqa: E731
+ 
+@@ -1004,14 +1277,17 @@
+     ns = {"PROC_ARP": "/nonexistent"}
+     exec(compile(ast.Module(body=[fn], type_ignores=[]), "ctl_loop.py", "exec"), ns)
+     hdr = "IP address       HW type     Flags       HW address            Mask     Device\n"
++    sysn = os.path.join(tmp, "ctl-sys-net")
++    os.makedirs(os.path.join(sysn, "eth0"))
++    open(os.path.join(sysn, "eth0", "address"), "w").write(CTL_MAC.upper() + "\n")
+ 
+     def entry(body, ip="192.168.60.2"):
+         p = os.path.join(tmp, "arp-%d" % abs(hash(body)))
+         open(p, "w").write(body)
+-        return ns["arp_entry"](ip, p)
++        return ns["arp_entry"](ip, p, sysn)
+     t("U28 ctl_loop arp_entry: complete entry -> MAC, flags, device",
+       lambda: entry(hdr + "192.168.60.2     0x1         0x2         02:42:C0:A8:3C:02     *        eth0\n")
+-      == {"hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0"})
++      == {"ip": "192.168.60.2", "hw": "02:42:c0:a8:3c:02", "flags": "0x2", "device": "eth0", "device_mac": CTL_MAC})
+     t("U29 ctl_loop arp_entry: incomplete (0x0), zero MAC, no row, two rows, bad header/row -> raises",
+       lambda: all(raises(Exception, lambda b=b: entry(b)) for b in (
+           hdr + "192.168.60.2     0x1         0x0         00:00:00:00:00:00     *        eth0\n",
+@@ -1019,13 +1295,66 @@
+           hdr + "192.168.60.2     0x1         0x2         00:00:00:00:00:00     *        eth0\n",
+           hdr + "192.168.60.3     0x1         0x2         02:42:c0:a8:3c:02     *        eth0\n",
+           hdr + ("192.168.60.2     0x1         0x2         02:42:c0:a8:3c:02     *        eth0\n" * 2),
+-          "garbage\n", hdr + "192.168.60.2 0x1 0x2\n")))
++          "garbage\n", hdr + "192.168.60.2 0x1 0x2\n",
++          hdr + "192.168.60.2     0x1         0x2         02:42:c0:a8:3c:02     *        eth5\n",   # no such device
++          hdr + "192.168.60.2     0x1         0x2         02:42:c0:a8:3c:02     *        ..\n")))
+     t("U30 ctl_loop: the ARP check is added only with --arp-worker, right after the worker HTTP check; any other "
+       "extra argument stops the loop",
+       lambda: 'ARP_WORKER = sys.argv[5:] == ["--arp-worker"]' in src
+       and "if ARP_WORKER:" in src and 'checks.insert(2, (f"arp worker-eth0 {worker_ip}"' in src
+       and 'sys.exit(f"unknown argument(s)' in src)
+ 
++    # 06B-4IR1 I2: the ctl interface is identified by ctl's sandboxnet endpoint MAC, never by its name
++    def a1(records, ctl_mac=CTL_MAC):
++        return H.control_a1(case["T14-A1"], records, T0, T1, 3.0, "192.168.60.2", ETH0_MAC, ctl_mac)
++
++    def with_arp(**chg):
++        return [r if r["target"] != at else dict(r, detail={**arp_ok, **chg}) for r in good]
++    t("U31 I2 control_a1: device on another endpoint MAC (e.g. dbnet) / device missing / device_mac missing -> not ok, "
++      "reason kept",
++      lambda: all(not a1(rr)[0] and a1(rr)[1]["ctl_arp"]["problems"] for rr in (
++          with_arp(device="eth9", device_mac="02:42:ac:12:00:09"),
++          [r if r["target"] != at else dict(r, detail={k: v for k, v in arp_ok.items() if k != "device"}) for r in good],
++          [r if r["target"] != at else dict(r, detail={k: v for k, v in arp_ok.items() if k != "device_mac"})
++           for r in good])))
++    t("U32 I2 control_a1: same endpoint MAC under another interface name -> ok (the name is not assumed)",
++      lambda: a1(with_arp(device="eth7"))[0] is True and a1(with_arp(device="eth7"))[1]["ctl_devices"] == ["eth7"])
++    t("U33 I2 control_a1: ctl endpoint MAC unknown/invalid -> not ok, even with a perfect log",
++      lambda: not a1(good, None)[0] and not a1(good, "zz")[0] and "cannot be identified" in " ".join(a1(good, None)[1]["problems"]))
++    t("U34 I2 control_a1: entry of another IP / two devices in the window / invalid device name / extra key -> not ok",
++      lambda: not a1(with_arp(ip="192.168.60.3"))[0] and not a1(with_arp(device="eth 0"))[0]
++      and not a1([r if not (r["target"] == at and r["ts"] == T0 + 5) else dict(r, detail={**arp_ok, "device": "eth7"})
++                  for r in good])[0]
++      and not a1([r if r["target"] != at else dict(r, detail={**arp_ok, "extra": 1}) for r in good])[0])
++    # 06B-4IR1 I3: schema, payload per target type, duplicates
++    hrec = lambda ts, d="HTTP 200", ok=True: {"ts": ts, "target": wt, "ok": ok, "detail": d}  # noqa: E731
++    t("U35 I3 ctl_records: missing detail / extra key / NaN or infinite ts -> malformed (raises)",
++      lambda: all(raises(ValueError, lambda x=x: H.ctl_records(x)) for x in (
++          json.dumps({"ts": 1.0, "target": wt, "ok": True}) + "\n",
++          json.dumps({"ts": 1.0, "target": wt, "ok": True, "detail": "HTTP 200", "x": 1}) + "\n",
++          '{"ts": NaN, "target": "a", "ok": true, "detail": "x"}\n',
++          '{"ts": Infinity, "target": "a", "ok": true, "detail": "x"}\n')))
++    t("U36 I3 ctl_window HTTP: OK with detail None / 'HTTP 500' / '' / object -> not ok; 'HTTP 200' -> ok",
++      lambda: all(not H.ctl_window([hrec(T0 - 1, d), hrec(T1 + 1, d)], wt, T0, T1, 3.0, H.http_detail_check)["ok"]
++                  for d in (None, "HTTP 500", "", {"status": 200}))
++      and H.ctl_window([hrec(T0 - 1), hrec(T1 + 1)], wt, T0, T1, 3.0, H.http_detail_check)["ok"])
++    t("U37 I3 ctl_window: the same record twice (same target and ts) -> not ok, reported as duplicate, not removed",
++      lambda: (lambda w: not w["ok"] and "duplicate" in w["problems"][0] and w["problem_count"] == 1)(
++          H.ctl_window([hrec(T0 - 1), hrec(T0 - 1), hrec(T1 + 1)], wt, T0, T1, 3.0, H.http_detail_check)))
++    t("U38 I3 ctl_window: a ts going back in file order -> not ok; independent valid reads (distinct ts) -> ok",
++      lambda: not H.ctl_window([hrec(T0 - 1), hrec(T1 + 1), hrec(T0 - 0.5)], wt, T0, T1, 3.0, H.http_detail_check)["ok"]
++      and H.ctl_window([hrec(T0 - 2), hrec(T0 - 1), hrec(T0 + 4), hrec(T1 + 1), hrec(T1 + 2)], wt, T0, T1, 3.0,
++                       H.http_detail_check)["ok"])
++    t("U39 I3 ctl_window: a failed record without a string detail -> problem (still not ok)",
++      lambda: H.ctl_window([hrec(T0 - 1), hrec(T0 + 1, None, False), hrec(T1 + 1)], wt, T0, T1, 3.0,
++                           H.http_detail_check)["problems"])
++    t("U40 I3 duplicate check keeps the time rule: an old record (60 s before) never counts as 'after read B'",
++      lambda: not H.ctl_window([hrec(T0 - 1), hrec(T0 - 60)], wt, T0, T1, 3.0, H.http_detail_check)["ok"])
++    t("U41 I3 control_a2: manager HTTP record without payload / 'HTTP 500' -> not ok",
++      lambda: all(not H.control_a2(case["T14-A2"], [r if r["target"] != mt else dict(r, detail=d) for r in good],
++                                   T0, T1, 3.0, "192.168.60.10", MANAGER_MAC, http_ok, lambda: neigh_ok)[0]
++                  for d in (None, "HTTP 500")))
++
+ 
+ def _rc_fixture(tmp, H):
+     d = os.path.join(tmp, "runcheck")
+@@ -1052,7 +1381,7 @@
+     s = open(os.path.join(HERE, RS)).read()
+     old = open(os.path.join(HERE, RS_OLD)).read()
+     t("W1 run-06b4i.sh: bash -n", lambda: subprocess.run(["bash", "-n", os.path.join(HERE, RS)]).returncode == 0)
+-    t("W2 H is the 06B-4I working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4i\n" in s)
++    t("W2 H is the 06B-4IR1 working copy", lambda: "\nH=/home/dathq/projects/ct01-06b4ir1\n" in s)
+     calls = [l for l in s.splitlines() if "probe_matrix.py $ARCH" in l]
+     code = "\n".join(l for l in s.splitlines() if not l.lstrip().startswith("#"))
+     t("W3 exactly one probe_matrix call, with CT01_SUITE=arp (no icmp/ipv4 suite)",
+@@ -1072,8 +1401,13 @@
+       and 'python3 "$H/arp_harness.py" --run-check "$D/probe" ARM MIPS' in s and "icmp_harness.py --" not in code)
+     t("W7 ctl started with --arp-worker; its ARP target is checked alive like the others",
+       lambda: '/ctl/ctl.jsonl --arp-worker)' in s and '"arp worker-eth0 $WORKER_IP"' in s)
+-    t("W8 manager MAC passed to the worker in CT01_TARGETS",
+-      lambda: '"manager_mac":"%s"' in s and '"$MANAGER_IP" "$MANAGER_MAC" "$SANDBOX_GW"' in s)
++    t("W8 manager MAC and ctl sandboxnet endpoint MAC passed to the worker in CT01_TARGETS",
++      lambda: '"manager_mac":"%s","ctl_mac":"%s"' in s and '"$MANAGER_IP" "$MANAGER_MAC" "$CTL_MAC" "$SANDBOX_GW"' in s)
++    t("W12 ctl endpoint MAC from docker inspect of the ctl container on sandboxnet, after it is created (I2)",
++      lambda: 'CTL_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \\"$SANDBOXNET\\").MacAddress}}" "$CID")' in s
++      and s.index("CTL_MAC=$(") > s.index('CID=$(docker run') and s.index("CTL_MAC=$(") < s.index("TARGETS=$("))
++    t("W13 the inherited run-06b4f.sh header is marked historical (not a description of this script)",
++      lambda: "HISTORICAL header of run-06b4f.sh" in s and "it does NOT describe what this" in s)
+     removed = [l for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, old.splitlines(), lines, autojunk=False).get_opcodes()
+                if tag in ("replace", "delete") for l in old.splitlines()[i1:i2]]
+     allowed = (r"^#!/bin/bash$", r"^# Nhiệm vụ 06B-4F — ICMP group", r"^H=/home/dathq/projects/ct01-06b4fr$",

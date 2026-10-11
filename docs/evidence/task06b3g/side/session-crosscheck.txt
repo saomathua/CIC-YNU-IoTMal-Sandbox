@@ -1,0 +1,18 @@
+== ARM: tap0 frames=97 guest-sourced=85 (ARP 2) to-guest=12
+   sum of compared deltas A->F1 = 83; + arp_in = 85  -> MATCH
+   allow_out_svc + arp_out (+drop_out) = 12 -> MATCH
+   F1 == F2 on every counter: True
+   A.end=1791389573.054782  first guest frame=1791389585.703217 (+12.648 s after A.end)
+   last guest frame=1791389641.356199  QEMU exit confirmed=1791389641.522316  F1.start=1791389642.023975 (0.668 s after the last guest frame)
+   frames (any) before A.end: 0; frames at/after F1.start: 0
+   qemu: {'no_qemu_before': True, 'pids_before': [], 'pids_before_error': None, 'exit_confirmed': True, 'exit_confirmed_t': 1791389641.5223165, 'pids_after_exit': [], 'pids_after_exit_error': None}
+   cross-check: CONSISTENT (session.json verdict PASS)
+== MIPS: tap0 frames=125 guest-sourced=113 (ARP 2) to-guest=12
+   sum of compared deltas A->F1 = 111; + arp_in = 113  -> MATCH
+   allow_out_svc + arp_out (+drop_out) = 12 -> MATCH
+   F1 == F2 on every counter: True
+   A.end=1791389648.125638  first guest frame=1791389671.600680 (+23.475 s after A.end)
+   last guest frame=1791389725.372948  QEMU exit confirmed=1791389725.532911  F1.start=1791389726.034671 (0.662 s after the last guest frame)
+   frames (any) before A.end: 0; frames at/after F1.start: 0
+   qemu: {'no_qemu_before': True, 'pids_before': [], 'pids_before_error': None, 'exit_confirmed': True, 'exit_confirmed_t': 1791389725.5329108, 'pids_after_exit': [], 'pids_after_exit_error': None}
+   cross-check: CONSISTENT (session.json verdict PASS)

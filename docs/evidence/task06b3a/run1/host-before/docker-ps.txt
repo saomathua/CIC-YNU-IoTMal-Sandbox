@@ -1,0 +1,2 @@
+cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 5 hours ago
+mongo-db mongo:8.0.32 Up 7 minutes

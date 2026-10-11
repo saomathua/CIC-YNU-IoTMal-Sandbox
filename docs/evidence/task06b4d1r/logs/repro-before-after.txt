@@ -1,0 +1,37 @@
+== reviewer's four inputs: 06B-4D1 (before) vs 06B-4D1R (after)
+-- before
+classes=[]: verdict=PASS per_class=0 reason=['every compared class: counter delta equals the certain frames, no edge frame, no frame without a counter inside the window']
+{"nftables":[{"counter":null}]}: EXCEPTION AttributeError: 'NoneType' object has no attribute 'get'
+{"nftables":null}: EXCEPTION TypeError: 'NoneType' object is not iterable
+{"nftables":[{"counter":[]}]}: EXCEPTION AttributeError: 'list' object has no attribute 'get'
+-- after
+classes=[]: verdict=ERROR per_class=0 reason=['invalid argument: empty list of classes: nothing would be compared']
+{"nftables":[{"counter":null}]}: verdict=ERROR per_class=0 reason=['invalid measurement data: <tmp>/c.jsonl:2: nftables[0].counter is NoneType, expected an object']
+{"nftables":null}: verdict=ERROR per_class=0 reason=["invalid measurement data: <tmp>/c.jsonl:2: 'nftables' is NoneType, expected a list"]
+{"nftables":[{"counter":[]}]}: verdict=ERROR per_class=0 reason=['invalid measurement data: <tmp>/c.jsonl:2: nftables[0].counter is list, expected an object']
+
+== new tests (sections N, J, C6-C9) run against the 06B-4D1 analyzer (before)
+before: [FAIL] C6 --classes "" -> exit 2, JSON written with the reason  (returned False)
+before: [FAIL] C7 --classes "a,,b" (empty name) -> exit 2, not filtered  (returned False)
+before: [FAIL] C8 --classes with a duplicate -> exit 2  (returned False)
+before: [FAIL] N1 classes=[] -> ERROR (nothing compared is never PASS)  (returned False)
+before: [FAIL] N2 duplicate class name -> ERROR  (returned False)
+before: [FAIL] N3 empty class name -> ERROR  (returned False)
+before: [FAIL] N4 unobservable class (arp_out_drop) -> ERROR before reading anything  (returned False)
+before: [FAIL] N5 classes given as a string -> ERROR  (returned False)
+before: [FAIL] N6 non-string class name -> ERROR  (returned False)
+before: [FAIL] J1 nftables=[{counter: null}] -> ERROR with reason (evaluate)  (AttributeError: 'NoneType' object has no attribute 'get')
+before: [FAIL] J2 nftables=null -> ERROR with reason (evaluate)  (TypeError: 'NoneType' object is not iterable)
+before: [FAIL] J3 nftables=[{counter: []}] -> ERROR with reason (evaluate)  (AttributeError: 'list' object has no attribute 'get')
+before: [FAIL] J4 nft output is a list -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J5 nft output without nftables -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J6 a non-object element among valid counters (not skipped) -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J7 counter without packets -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J8 counter name not a string -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J12 counter name empty -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J9 record line is a JSON list -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J10 record without raw -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J11 raw is an object, not text -> ERROR with reason (evaluate)  (returned False)
+before: [FAIL] J-INFRA section crashed  (returned False)
+before: SELFTEST-L2EVAL: 41/63 passed; FAILED: ['C6 --classes "" -> exit 2, JSON written with the reason', 'C7 --classes "a,,b" (empty name) -> exit 2, not filtered', 'C8 --classes with a duplicate -> exit 2', 'N1 classes=[] -> ERROR (nothing compared is never PASS)', 'N2 duplicate class name -> ERROR', 'N3 empty class name -> ERROR', 'N4 unobservable class (arp_out_drop) -> ERROR before reading anything', 'N5 classes given as a string -> ERROR', 'N6 non-string class name -> ERROR', 'J1 nftables=[{counter: null}] -> ERROR with reason (evaluate)', 'J2 nftables=null -> ERROR with reason (evaluate)', 'J3 nftables=[{counter: []}] -> ERROR with reason (evaluate)', 'J4 nft output is a list -> ERROR with reason (evaluate)', 'J5 nft output without nftables -> ERROR with reason (evaluate)', 'J6 a non-object element among valid counters (not skipped) -> ERROR with reason (evaluate)', 'J7 counter without packets -> ERROR with reason (evaluate)', 'J8 counter name not a string -> ERROR with reason (evaluate)', 'J12 counter name empty -> ERROR with reason (evaluate)', 'J9 record line is a JSON list -> ERROR with reason (evaluate)', 'J10 record without raw -> ERROR with reason (evaluate)', 'J11 raw is an object, not text -> ERROR with reason (evaluate)', 'J-INFRA section crashed']
+after: SELFTEST-L2EVAL: 65/65 passed

@@ -1,0 +1,1388 @@
+[
+ {
+  "probe": "internet-tcp",
+  "dst": "tcp 1.1.1.1:443",
+  "verdict": "CH\u01afA KI\u1ec2M CH\u1ee8NG (g\u00f3i \u1edf bi\u00ean c\u1eeda s\u1ed5 b\u1ed9 \u0111\u1ebfm)",
+  "probe_packets": 4,
+  "expected_class": "drop_public",
+  "counter_delta": {
+   "l2_bad_ethertype": 2,
+   "drop_spoof": 2,
+   "drop_public": 8
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_public": 8,
+   "l2_bad_ethertype": 2
+  },
+  "mismatch": {
+   "l2_bad_ethertype": {
+    "delta": 2,
+    "certain": 2,
+    "with_edges": 3,
+    "status": "UNVERIFIED",
+    "edge_start_t": [
+     1791351316.8419182
+    ],
+    "edge_end_t": []
+   }
+  },
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "UNVERIFIED",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 8,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 8,
+     "lo": 8,
+     "hi": 8,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 2,
+     "edge_start": [
+      1791351316.8419182
+     ],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 3,
+     "status": "UNVERIFIED"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351316.8464909,
+     "t_end": 1791351316.8517
+    },
+    "after": {
+     "t_start": 1791351322.026858,
+     "t_end": 1791351322.0376837
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351316.783149,
+   "ok": true,
+   "detail": "connected"
+  },
+  "control_after": {
+   "ts": 1791351322.037918,
+   "ok": true,
+   "detail": "connected"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "lan-dns-udp",
+  "dst": "udp 192.168.177.2:53",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351322.1112635,
+     "t_end": 1791351322.1199334
+    },
+    "after": {
+     "t_start": 1791351328.211848,
+     "t_end": 1791351328.2279098
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 1,
+  "control_before": {
+   "ts": 1791351322.1035943,
+   "ok": true,
+   "detail": "DNS response rcode=3"
+  },
+  "control_after": {
+   "ts": 1791351328.2283604,
+   "ok": true,
+   "detail": "DNS response rcode=3"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "lan-dns-tcp",
+  "dst": "tcp 192.168.177.2:53",
+  "verdict": "CH\u01afA KI\u1ec2M CH\u1ee8NG (g\u00f3i \u1edf bi\u00ean c\u1eeda s\u1ed5 b\u1ed9 \u0111\u1ebfm)",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 1,
+   "drop_private": 4,
+   "drop_public": 6
+  },
+  "pcap_certain": {
+   "drop_spoof": 1,
+   "drop_private": 4,
+   "drop_public": 5
+  },
+  "mismatch": {
+   "drop_public": {
+    "delta": 6,
+    "certain": 5,
+    "with_edges": 6,
+    "status": "UNVERIFIED",
+    "edge_start_t": [],
+    "edge_end_t": [
+     1791351333.374486
+    ]
+   }
+  },
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "UNVERIFIED",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 1,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 1,
+     "lo": 1,
+     "hi": 1,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 5,
+     "edge_start": [],
+     "edge_end": [
+      1791351333.374486
+     ],
+     "delta": 6,
+     "lo": 5,
+     "hi": 6,
+     "status": "UNVERIFIED"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351328.2405968,
+     "t_end": 1791351328.2590334
+    },
+    "after": {
+     "t_start": 1791351333.3939333,
+     "t_end": 1791351333.4064453
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351328.23511,
+   "ok": true,
+   "detail": "connected"
+  },
+  "control_after": {
+   "ts": 1791351333.4066517,
+   "ok": true,
+   "detail": "connected"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "ssh-host-192.168.60.1",
+  "dst": "tcp 192.168.60.1:22",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 2
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 2
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351333.4243538,
+     "t_end": 1791351333.4293816
+    },
+    "after": {
+     "t_start": 1791351338.5533762,
+     "t_end": 1791351338.566428
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351333.4141276,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "control_after": {
+   "ts": 1791351338.566736,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "ssh-host-192.168.177.128",
+  "dst": "tcp 192.168.177.128:22",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351338.5838387,
+     "t_end": 1791351338.5888534
+    },
+    "after": {
+     "t_start": 1791351343.7038743,
+     "t_end": 1791351343.716457
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351338.576663,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "control_after": {
+   "ts": 1791351343.7167096,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "ssh-host-172.18.0.1",
+  "dst": "tcp 172.18.0.1:22",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 1,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 1,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 1,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 1,
+     "lo": 1,
+     "hi": 1,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351343.7366176,
+     "t_end": 1791351343.7419994
+    },
+    "after": {
+     "t_start": 1791351348.8630078,
+     "t_end": 1791351348.8762555
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351343.7291634,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "control_after": {
+   "ts": 1791351348.8765125,
+   "ok": true,
+   "detail": "connected, banner b'SSH-2.0-OpenSSH_9.6p'"
+  },
+  "remote_control": null
+ },
+ {
+  "probe": "manager",
+  "dst": "tcp 192.168.60.10:8011",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351348.8928492,
+     "t_end": 1791351348.8986332
+    },
+    "after": {
+     "t_start": 1791351354.021508,
+     "t_end": 1791351354.0314004
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351348.8899415,
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  "control_after": {
+   "ts": 1791351354.0317588,
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  "remote_control": {
+   "ok_before": true,
+   "ok_after": true,
+   "fails_in_window": 0,
+   "ok": true
+  }
+ },
+ {
+  "probe": "mongodb",
+  "dst": "tcp 172.18.0.2:27017",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 2
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_private": 4,
+   "drop_public": 2
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351354.0342066,
+     "t_end": 1791351354.042676
+    },
+    "after": {
+     "t_start": 1791351359.1646433,
+     "t_end": 1791351359.1778185
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": null,
+  "control_after": null,
+  "remote_control": {
+   "ok_before": true,
+   "ok_after": true,
+   "fails_in_window": 0,
+   "ok": true
+  }
+ },
+ {
+  "probe": "worker-eth0",
+  "dst": "tcp 192.168.60.2:8011",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_private",
+  "counter_delta": {
+   "arp_in_ok": 1,
+   "arp_out_ok": 1,
+   "drop_spoof": 1,
+   "drop_private": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 1,
+   "drop_private": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 1,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 1,
+     "lo": 1,
+     "hi": 1,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {
+    "arp_in_ok": 1,
+    "arp_out_ok": 1
+   },
+   "reads": {
+    "before": {
+     "t_start": 1791351359.178512,
+     "t_end": 1791351359.18727
+    },
+    "after": {
+     "t_start": 1791351364.3115919,
+     "t_end": 1791351364.3240178
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": null,
+  "control_after": null,
+  "remote_control": {
+   "ok_before": true,
+   "ok_after": true,
+   "fails_in_window": 0,
+   "ok": true
+  }
+ },
+ {
+  "probe": "tap0-other-port-listener",
+  "dst": "tcp 10.200.0.1:18080",
+  "verdict": "\u0110\u1ea0T",
+  "probe_packets": 4,
+  "expected_class": "drop_worker_other",
+  "counter_delta": {
+   "drop_spoof": 2,
+   "drop_worker_other": 4
+  },
+  "pcap_certain": {
+   "drop_spoof": 2,
+   "drop_worker_other": 4
+  },
+  "mismatch": {},
+  "checks": {
+   "guest_connection_failed": true,
+   "control_alive_same_dst_proto_port": true,
+   "probe_packets_in_tap0_pcap": true,
+   "probe_packets_hit_expected_counter": true,
+   "no_host_alert": true
+  },
+  "counter_reconciliation": {
+   "verdict": "PASS",
+   "per_class": {
+    "allow_svc": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_spoof": {
+     "certain": 2,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 2,
+     "lo": 2,
+     "hi": 2,
+     "status": "PASS"
+    },
+    "drop_non_ipv4": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_worker_other": {
+     "certain": 4,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 4,
+     "lo": 4,
+     "hi": 4,
+     "status": "PASS"
+    },
+    "drop_private": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_bcast_mcast": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "drop_public": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_ethertype": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    },
+    "l2_bad_mac": {
+     "certain": 0,
+     "edge_start": [],
+     "edge_end": [],
+     "delta": 0,
+     "lo": 0,
+     "hi": 0,
+     "status": "PASS"
+    }
+   },
+   "guard_s": 0.02,
+   "not_compared": {},
+   "reads": {
+    "before": {
+     "t_start": 1791351364.3266907,
+     "t_end": 1791351364.3331661
+    },
+    "after": {
+     "t_start": 1791351369.4354093,
+     "t_end": 1791351369.4477177
+    }
+   }
+  },
+  "determined_failures": [],
+  "guest_rc": 28,
+  "control_before": {
+   "ts": 1791351364.3247566,
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  "control_after": {
+   "ts": 1791351369.4479606,
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  "remote_control": null
+ }
+]

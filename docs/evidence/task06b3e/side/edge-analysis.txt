@@ -1,0 +1,18 @@
+== ARM: 20 nft reads; duration ms: min 4.8 median 10.2 max 14.0
+-- ssh-host-172.18.0.1: verdict CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); read A 1791351259.839277-1791351259.844530, read B 1791351264.962152-1791351264.972018
+   class drop_spoof: delta 2 certain 1 with_edges 2 status UNVERIFIED
+   edge_end frame t=1791351264.966677: inside the nft read; 52:54:00:c7:00:02 > ff:ff:ff:ff:ff:ff, ethertype IPv4 (0x0800), length 342: 0.0.0.0.68 > 255.255.255.255.67: BOO
+-- manager: verdict CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); read A 1791351264.982504-1791351264.987457, read B 1791351270.089149-1791351270.101878
+   class drop_spoof: delta 1 certain 1 with_edges 2 status UNVERIFIED
+   edge_start frame t=1791351264.966677: in the 20 ms guard before the read (15.8 ms before t_start); 52:54:00:c7:00:02 > ff:ff:ff:ff:ff:ff, ethertype IPv4 (0x0800), length 342: 0.0.0.0.68 > 255.255.255.255.67: BOO
+== MIPS: 20 nft reads; duration ms: min 5.0 median 10.4 max 18.4
+-- internet-tcp: verdict CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); read A 1791351316.846491-1791351316.851700, read B 1791351322.026858-1791351322.037684
+   class l2_bad_ethertype: delta 2 certain 2 with_edges 3 status UNVERIFIED
+   edge_start frame t=1791351316.841918: in the 20 ms guard before the read (4.6 ms before t_start); 52:54:00:c7:00:02 > 33:33:00:00:00:16, ethertype IPv6 (0x86dd), length 90: fe80::5054:ff:fec7:2 > ff02::16: HBH 
+-- lan-dns-tcp: verdict CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm); read A 1791351328.240597-1791351328.259033, read B 1791351333.393933-1791351333.406445
+   class drop_public: delta 6 certain 5 with_edges 6 status UNVERIFIED
+   edge_end frame t=1791351333.374486: in the 20 ms guard before the read (19.4 ms before t_start); 
+   [added after the run] the last frame above was not matched automatically: tshark gives 1791351333.374486,
+   tcpdump prints 1791351333.374485 (rounding). Looked up with tcpdump in the window 1791351333.37-.38:
+   1791351333.374485 52:54:00:c7:00:02 > ea:fb:3a:55:dc:70, IPv4: 10.200.0.2.58672 > 8.8.8.8.53: AAAA? 3.openwrt.pool.ntp.org.
+   (guest background DNS -> drop_public; the frame before it, .373402, is 20.5 ms before read B and therefore certain)

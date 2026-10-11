@@ -1,0 +1,2771 @@
+{
+  "restore_console_exception": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T15-S1",
+          "iface": "eth1",
+          "before": "T15-S1 before",
+          "after": "T15-S1 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 down",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 up",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": "TimeoutError: Timeout exceeded (simulated console)",
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "restored": false,
+              "commands": [],
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": "restore raised: TimeoutError: Timeout exceeded (simulated console)"
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": null,
+          "service_link_after": null,
+          "not_run": null
+        },
+        {
+          "id": "T14-A3",
+          "iface": "eth1",
+          "before": "T14-A3 before",
+          "after": "T14-A3 after",
+          "steps": [],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": null,
+          "neigh_before": null,
+          "neigh_after": null,
+          "control": null,
+          "service_link_after": null,
+          "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+    },
+    "log": [
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\"",
+      "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+      "ip addr add 10.200.0.1/32 dev eth1",
+      "ip addr add 192.168.60.10/32 dev eth1",
+      "ip addr add 192.168.60.1/32 dev eth1",
+      "ip link set dev eth1 down",
+      "ip link set dev eth1 up",
+      "sleep 3",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\"",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\"",
+      "ip addr del 10.200.0.1/32 dev eth1"
+    ],
+    "next_ping_sent": false
+  },
+  "ping_rc2_actual_run_group": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A1",
+          "iface": "eth1",
+          "before": "T14-A1 before",
+          "after": "T14-A1 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.2/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "exec_error": "trigger 'ping -c 1 -W 2 -s 1401 192.168.60.2': rc 2 outside the contract",
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.2/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "not_run": null
+        },
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "exec_error": "trigger 'ping -c 1 -W 2 -s 1402 192.168.60.10': rc 2 outside the contract",
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "not_run": null
+        },
+        {
+          "id": "T14-A3",
+          "iface": "eth1",
+          "before": "T14-A3 before",
+          "after": "T14-A3 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 10.200.0.6/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1403 10.200.0.6",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "exec_error": "trigger 'ping -c 1 -W 2 -s 1403 10.200.0.6': rc 2 outside the contract",
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 10.200.0.6/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": null,
+          "service_link_after": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "not_run": null
+        },
+        {
+          "id": "T15-S1",
+          "iface": "eth1",
+          "before": "T15-S1 before",
+          "after": "T15-S1 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 down",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 up",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 10.200.0.1/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 192.168.60.1/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "addrs",
+                  "cmd": "ip addr del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "routes",
+                  "cmd": "ip route add default via 10.200.0.1 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                },
+                {
+                  "step": "arp_notify",
+                  "cmd": "echo 0 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [
+                "neigh_dynamic 10.200.0.1 dev eth1: ('7a:93:2a:f1:47:47', 2) -> None"
+              ],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": null,
+          "service_link_after": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "stub"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "guard_s": 0.02,
+      "assumption": "guard covers the delay from capture timestamp to nft counter hit; NOT measured",
+      "record_problems": [],
+      "cases": [
+        {
+          "id": "T14-A1",
+          "category": "LOI_THUC_THI",
+          "verdict": "CHƯA KIỂM CHỨNG (lỗi thực thi: trigger 'ping -c 1 -W 2 -s 1401 192.168.60.2': rc 2 outside the contract)",
+          "ok": false,
+          "probe_frames": 3,
+          "probe_frames_certain": 0,
+          "probe_frame_classes": [
+            "arp_in_drop"
+          ],
+          "failure_evidence": [],
+          "measurement_errors": [],
+          "execution_problems": [],
+          "neighbour_inconclusive": [],
+          "arp_out_drop_delta": 0,
+          "reconciliation": {
+            "verdict": "UNVERIFIED",
+            "per_class": {
+              "allow_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_spoof": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_non_ipv4": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_worker_other": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_private": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_bcast_mcast": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_public": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_ethertype": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_mac": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_drop": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [
+                  1791456407.2223368,
+                  1791456407.2279317,
+                  1791456407.233365
+                ],
+                "delta": 3,
+                "lo": 0,
+                "hi": 3,
+                "status": "UNVERIFIED"
+              },
+              "arp_out_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "allow_out_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              }
+            },
+            "no_counter_frames": [],
+            "guard_s": 0.02
+          },
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.2/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "restore": true,
+          "evidence_kind": "live_control"
+        },
+        {
+          "id": "T14-A2",
+          "category": "LOI_THUC_THI",
+          "verdict": "CHƯA KIỂM CHỨNG (lỗi thực thi: trigger 'ping -c 1 -W 2 -s 1402 192.168.60.10': rc 2 outside the contract)",
+          "ok": false,
+          "probe_frames": 3,
+          "probe_frames_certain": 0,
+          "probe_frame_classes": [
+            "arp_in_drop"
+          ],
+          "failure_evidence": [],
+          "measurement_errors": [],
+          "execution_problems": [],
+          "neighbour_inconclusive": [],
+          "arp_out_drop_delta": 0,
+          "reconciliation": {
+            "verdict": "UNVERIFIED",
+            "per_class": {
+              "allow_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_spoof": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_non_ipv4": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_worker_other": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_private": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_bcast_mcast": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_public": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_ethertype": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_mac": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_drop": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [
+                  1791456407.3324192,
+                  1791456407.3378127,
+                  1791456407.3430786
+                ],
+                "delta": 3,
+                "lo": 0,
+                "hi": 3,
+                "status": "UNVERIFIED"
+              },
+              "arp_out_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "allow_out_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              }
+            },
+            "no_counter_frames": [],
+            "guard_s": 0.02
+          },
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "restore": true,
+          "evidence_kind": "live_control"
+        },
+        {
+          "id": "T14-A3",
+          "category": "LOI_THUC_THI",
+          "verdict": "CHƯA KIỂM CHỨNG (lỗi thực thi: trigger 'ping -c 1 -W 2 -s 1403 10.200.0.6': rc 2 outside the contract)",
+          "ok": false,
+          "probe_frames": 3,
+          "probe_frames_certain": 0,
+          "probe_frame_classes": [
+            "arp_in_drop"
+          ],
+          "failure_evidence": [],
+          "measurement_errors": [],
+          "execution_problems": [],
+          "neighbour_inconclusive": [],
+          "arp_out_drop_delta": 0,
+          "reconciliation": {
+            "verdict": "UNVERIFIED",
+            "per_class": {
+              "allow_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_spoof": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_non_ipv4": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_worker_other": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_private": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_bcast_mcast": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_public": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_ethertype": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_mac": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_drop": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [
+                  1791456407.4418094,
+                  1791456407.4471738,
+                  1791456407.4526637
+                ],
+                "delta": 3,
+                "lo": 0,
+                "hi": 3,
+                "status": "UNVERIFIED"
+              },
+              "arp_out_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "allow_out_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              }
+            },
+            "no_counter_frames": [],
+            "guard_s": 0.02
+          },
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 10.200.0.6/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1403 10.200.0.6",
+              "rc": 2,
+              "out": "ping: invalid option (stub with residual frames)"
+            }
+          ],
+          "restore": true,
+          "evidence_kind": "rule_check"
+        },
+        {
+          "id": "T15-S1",
+          "category": "DAT_KIEM_QUY_TAC",
+          "verdict": "ĐẠT (kiểm quy tắc)",
+          "ok": true,
+          "probe_frames": 4,
+          "probe_frames_certain": 4,
+          "probe_frame_classes": [
+            "arp_in_drop"
+          ],
+          "failure_evidence": [],
+          "measurement_errors": [],
+          "execution_problems": [],
+          "neighbour_inconclusive": [],
+          "arp_out_drop_delta": 0,
+          "reconciliation": {
+            "verdict": "PASS",
+            "per_class": {
+              "allow_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_spoof": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_non_ipv4": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_worker_other": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_private": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_bcast_mcast": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "drop_public": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_ethertype": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "l2_bad_mac": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "arp_in_drop": {
+                "certain": 4,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 4,
+                "lo": 4,
+                "hi": 4,
+                "status": "PASS"
+              },
+              "arp_out_ok": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              },
+              "allow_out_svc": {
+                "certain": 0,
+                "edge_start": [],
+                "edge_end": [],
+                "delta": 0,
+                "lo": 0,
+                "hi": 0,
+                "status": "PASS"
+              }
+            },
+            "no_counter_frames": [],
+            "guard_s": 0.02
+          },
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 down",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 up",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "restore": true,
+          "evidence_kind": "rule_check"
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "stub"
+      }
+    },
+    "exit": 4
+  },
+  "run_group_control_1": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 1,
+              "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": false,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "HTTP=200 + hash"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "id": "T14-A2",
+      "category": "CHUA_KIEM_CHUNG",
+      "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+      "ok": false,
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "failure_evidence": [],
+      "measurement_errors": [],
+      "execution_problems": [],
+      "neighbour_inconclusive": [],
+      "arp_out_drop_delta": 0,
+      "reconciliation": {
+        "verdict": "PASS",
+        "per_class": {
+          "allow_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 3,
+            "lo": 3,
+            "hi": 3,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "allow_out_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          }
+        },
+        "no_counter_frames": [],
+        "guard_s": 0.02
+      },
+      "steps": [
+        {
+          "phase": "setup",
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "rc": 0,
+          "out": ""
+        },
+        {
+          "phase": "trigger",
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "rc": 1,
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+        },
+        {
+          "phase": "settle",
+          "cmd": "sleep 3",
+          "rc": 0,
+          "out": ""
+        }
+      ],
+      "restore": true,
+      "evidence_kind": "live_control"
+    }
+  },
+  "run_group_control_true": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 1,
+              "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": false,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "HTTP=200 + hash"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "id": "T14-A2",
+      "category": "CHUA_KIEM_CHUNG",
+      "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+      "ok": false,
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "failure_evidence": [],
+      "measurement_errors": [],
+      "execution_problems": [],
+      "neighbour_inconclusive": [],
+      "arp_out_drop_delta": 0,
+      "reconciliation": {
+        "verdict": "PASS",
+        "per_class": {
+          "allow_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 3,
+            "lo": 3,
+            "hi": 3,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "allow_out_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          }
+        },
+        "no_counter_frames": [],
+        "guard_s": 0.02
+      },
+      "steps": [
+        {
+          "phase": "setup",
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "rc": 0,
+          "out": ""
+        },
+        {
+          "phase": "trigger",
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "rc": 1,
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+        },
+        {
+          "phase": "settle",
+          "cmd": "sleep 3",
+          "rc": 0,
+          "out": ""
+        }
+      ],
+      "restore": true,
+      "evidence_kind": "live_control"
+    }
+  },
+  "run_group_control_False": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 1,
+              "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": false,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "HTTP=200 + hash"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "id": "T14-A2",
+      "category": "CHUA_KIEM_CHUNG",
+      "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+      "ok": false,
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "failure_evidence": [],
+      "measurement_errors": [],
+      "execution_problems": [],
+      "neighbour_inconclusive": [],
+      "arp_out_drop_delta": 0,
+      "reconciliation": {
+        "verdict": "PASS",
+        "per_class": {
+          "allow_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 3,
+            "lo": 3,
+            "hi": 3,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "allow_out_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          }
+        },
+        "no_counter_frames": [],
+        "guard_s": 0.02
+      },
+      "steps": [
+        {
+          "phase": "setup",
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "rc": 0,
+          "out": ""
+        },
+        {
+          "phase": "trigger",
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "rc": 1,
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+        },
+        {
+          "phase": "settle",
+          "cmd": "sleep 3",
+          "rc": 0,
+          "out": ""
+        }
+      ],
+      "restore": true,
+      "evidence_kind": "live_control"
+    }
+  },
+  "run_group_control_None": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 1,
+              "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": false,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "HTTP=200 + hash"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "id": "T14-A2",
+      "category": "CHUA_KIEM_CHUNG",
+      "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)",
+      "ok": false,
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "failure_evidence": [],
+      "measurement_errors": [],
+      "execution_problems": [],
+      "neighbour_inconclusive": [],
+      "arp_out_drop_delta": 0,
+      "reconciliation": {
+        "verdict": "PASS",
+        "per_class": {
+          "allow_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 3,
+            "lo": 3,
+            "hi": 3,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "allow_out_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          }
+        },
+        "no_counter_frames": [],
+        "guard_s": 0.02
+      },
+      "steps": [
+        {
+          "phase": "setup",
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "rc": 0,
+          "out": ""
+        },
+        {
+          "phase": "trigger",
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "rc": 1,
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+        },
+        {
+          "phase": "settle",
+          "cmd": "sleep 3",
+          "rc": 0,
+          "out": ""
+        }
+      ],
+      "restore": true,
+      "evidence_kind": "live_control"
+    }
+  },
+  "run_group_control_True": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T14-A2",
+          "iface": "eth1",
+          "before": "T14-A2 before",
+          "after": "T14-A2 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "ip route add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+              "rc": 1,
+              "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [
+                {
+                  "step": "routes",
+                  "cmd": "ip route del 192.168.60.10/32 dev eth1",
+                  "rc": 0,
+                  "out": ""
+                }
+              ],
+              "restored": true,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": null,
+              "after": {
+                "mac": "52:54:00:c7:00:02",
+                "operstate": "up",
+                "addrs": [
+                  "10.200.0.2/30"
+                ],
+                "routes": [
+                  "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                  "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                  "default via 10.200.0.1 dev eth1"
+                ],
+                "neigh_static": {},
+                "neigh_dynamic": {
+                  "10.200.0.1 eth1": [
+                    "7a:93:2a:f1:47:47",
+                    2
+                  ],
+                  "192.168.1.5 br-lan": [
+                    "00:11:22:33:44:55",
+                    2
+                  ]
+                },
+                "arp_notify": 0
+              }
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": {
+            "ok": true,
+            "detail": "stub"
+          },
+          "service_link_after": {
+            "ok": true,
+            "detail": "HTTP=200 + hash"
+          },
+          "not_run": null
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "HTTP=200 + hash"
+      },
+      "stopped": null
+    },
+    "evaluation": {
+      "id": "T14-A2",
+      "category": "DAT",
+      "verdict": "ĐẠT",
+      "ok": true,
+      "probe_frames": 3,
+      "probe_frames_certain": 3,
+      "probe_frame_classes": [
+        "arp_in_drop"
+      ],
+      "failure_evidence": [],
+      "measurement_errors": [],
+      "execution_problems": [],
+      "neighbour_inconclusive": [],
+      "arp_out_drop_delta": 0,
+      "reconciliation": {
+        "verdict": "PASS",
+        "per_class": {
+          "allow_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_spoof": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_non_ipv4": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_worker_other": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_private": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_bcast_mcast": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "drop_public": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_ethertype": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "l2_bad_mac": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "arp_in_drop": {
+            "certain": 3,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 3,
+            "lo": 3,
+            "hi": 3,
+            "status": "PASS"
+          },
+          "arp_out_ok": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          },
+          "allow_out_svc": {
+            "certain": 0,
+            "edge_start": [],
+            "edge_end": [],
+            "delta": 0,
+            "lo": 0,
+            "hi": 0,
+            "status": "PASS"
+          }
+        },
+        "no_counter_frames": [],
+        "guard_s": 0.02
+      },
+      "steps": [
+        {
+          "phase": "setup",
+          "cmd": "ip route add 192.168.60.10/32 dev eth1",
+          "rc": 0,
+          "out": ""
+        },
+        {
+          "phase": "trigger",
+          "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+          "rc": 1,
+          "out": "1 packets transmitted, 0 packets received, 100% packet loss"
+        },
+        {
+          "phase": "settle",
+          "cmd": "sleep 3",
+          "rc": 0,
+          "out": ""
+        }
+      ],
+      "restore": true,
+      "evidence_kind": "live_control"
+    }
+  },
+  "restore_snapshot_read_error": {
+    "record": {
+      "iface": "eth1",
+      "cases": [
+        {
+          "id": "T15-S1",
+          "iface": "eth1",
+          "before": "T15-S1 before",
+          "after": "T15-S1 after",
+          "steps": [
+            {
+              "phase": "setup",
+              "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "setup",
+              "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 down",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "trigger",
+              "cmd": "ip link set dev eth1 up",
+              "rc": 0,
+              "out": ""
+            },
+            {
+              "phase": "settle",
+              "cmd": "sleep 3",
+              "rc": 0,
+              "out": ""
+            }
+          ],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": {
+            "before": {
+              "mac": "52:54:00:c7:00:02",
+              "operstate": "up",
+              "addrs": [
+                "10.200.0.2/30"
+              ],
+              "routes": [
+                "10.200.0.0/30 dev eth1 scope link src 10.200.0.2",
+                "192.168.1.0/24 dev br-lan scope link src 192.168.1.1",
+                "default via 10.200.0.1 dev eth1"
+              ],
+              "neigh_static": {},
+              "neigh_dynamic": {
+                "10.200.0.1 eth1": [
+                  "7a:93:2a:f1:47:47",
+                  2
+                ],
+                "192.168.1.5 br-lan": [
+                  "00:11:22:33:44:55",
+                  2
+                ]
+              },
+              "arp_notify": 0
+            },
+            "restore": {
+              "commands": [],
+              "restored": false,
+              "diffs": [],
+              "dynamic_changes": [],
+              "error": "state read failed: reading route failed in the guest (rc 1)"
+            }
+          },
+          "neigh_before": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "neigh_after": "[{\"dst\": \"10.200.0.2\", \"dev\": \"tap0\", \"lladdr\": \"52:54:00:c7:00:02\", \"state\": [\"PERMANENT\"]}, {\"dst\": \"192.168.60.10\", \"dev\": \"eth0\", \"lladdr\": \"8a:d3:09:b5:72:af\", \"state\": [\"REACHABLE\"]}, {\"dst\": \"192.168.60.1\", \"dev\": \"eth0\", \"lladdr\": \"fe:69:25:9f:7e:e9\", \"state\": [\"STALE\"]}]",
+          "control": null,
+          "service_link_after": null,
+          "not_run": null
+        },
+        {
+          "id": "T14-A3",
+          "iface": "eth1",
+          "before": "T14-A3 before",
+          "after": "T14-A3 after",
+          "steps": [],
+          "exec_error": null,
+          "read_error": null,
+          "guest_state": null,
+          "neigh_before": null,
+          "neigh_after": null,
+          "control": null,
+          "service_link_after": null,
+          "not_run": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+        }
+      ],
+      "service_link_before": {
+        "ok": true,
+        "detail": "stub"
+      },
+      "stopped": "CHƯA KIỂM CHỨNG (cấu hình guest chưa khôi phục ở ca trước: ca này không chạy)"
+    },
+    "log": [
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\"",
+      "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+      "ip addr add 10.200.0.1/32 dev eth1",
+      "ip addr add 192.168.60.10/32 dev eth1",
+      "ip addr add 192.168.60.1/32 dev eth1",
+      "ip link set dev eth1 down",
+      "ip link set dev eth1 up",
+      "sleep 3",
+      "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+    ],
+    "next_ping_sent": false
+  }
+}

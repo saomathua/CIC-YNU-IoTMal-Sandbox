@@ -1,0 +1,439 @@
+[
+ {
+  "test": "fixture created",
+  "ok": true,
+  "data_dir": [
+   "06b2b-other-0002",
+   "06b2b-task-0001"
+  ],
+  "fixture_sha256": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f",
+  "magic": "3036422d"
+ },
+ {
+  "test": "no current_task -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "no current_task -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "no current_task -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "no current_task: nothing written",
+  "ok": true
+ },
+ {
+  "test": "current_task set by isolation.current_task",
+  "ok": true,
+  "file": "/run/sandbox/current_task"
+ },
+ {
+  "test": "GET get-task/T/file",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "downloaded content hash",
+  "ok": true,
+  "got": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f",
+  "expected": "b9ee18e43d7d57174ca251fc203264de4b53910c9004e5936e91895591595c5f"
+ },
+ {
+  "test": "POST update-task/T/strace",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "received strace.log hash",
+  "ok": true,
+  "got": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382",
+  "expected": "22e6b9e6055144097208adbe06272f08ca5e325e98dd71fbf5092df91642f382"
+ },
+ {
+  "test": "POST update-task/T/sar",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "received sar.out hash",
+  "ok": true,
+  "got": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e",
+  "expected": "357ca3ee108a9b5ba7d93de1755ed8bc6ac02074d1753bd0ca81b75819ad261e"
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-other-0002/strace",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "HEAD",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/strace",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "PUT",
+  "path": "/api/v1/sandbox-worker/update-task/06b2b-task-0001/sar",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/stop",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/submit-task/06b2b-other-0002",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "POST",
+  "path": "/api/v1/sandbox-worker/submit-task/new-06b2b-task",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Content-Type": "multipart/form-data; boundary=06b2bboundary"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/docs",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/openapi.json",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest forbidden -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file/",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Forwarded-For": "192.168.60.2"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> other task still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Forwarded-For": "192.168.60.2"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Forwarded-For": "127.0.0.1"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> other task still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Forwarded-For": "127.0.0.1"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Forwarded": "for=192.168.60.2"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> other task still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "Forwarded": "for=192.168.60.2"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Real-IP": "127.0.0.1"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "guest + forwarding header -> other task still 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-other-0002/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {
+   "X-Real-IP": "127.0.0.1"
+  },
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "no stop file created",
+  "ok": true
+ },
+ {
+  "test": "no task created by forbidden routes",
+  "ok": true,
+  "data_dir": [
+   "06b2b-other-0002",
+   "06b2b-task-0001"
+  ]
+ },
+ {
+  "test": "other task not written",
+  "ok": true
+ },
+ {
+  "test": "loopback peer healthcheck -> 200",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "127.0.0.1",
+  "target": "127.0.0.1",
+  "headers": {},
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "eth0 peer healthcheck -> 200",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "192.168.60.2",
+  "target": "192.168.60.2",
+  "headers": {},
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "non-guest + XFF 10.200.0.2 -> still 200",
+  "ok": true,
+  "method": "GET",
+  "path": "/healthcheck",
+  "source": "127.0.0.1",
+  "target": "127.0.0.1",
+  "headers": {
+   "X-Forwarded-For": "10.200.0.2"
+  },
+  "expected": 200,
+  "status": 200
+ },
+ {
+  "test": "current_task cleared",
+  "ok": true
+ },
+ {
+  "test": "after clear: GET get-task/T/file -> 403",
+  "ok": true,
+  "method": "GET",
+  "path": "/api/v1/sandbox-worker/get-task/06b2b-task-0001/file",
+  "source": "10.200.0.2",
+  "target": "10.200.0.1",
+  "headers": {},
+  "expected": 403,
+  "status": 403
+ },
+ {
+  "test": "fixtures removed",
+  "ok": true,
+  "data_dir": []
+ }
+]

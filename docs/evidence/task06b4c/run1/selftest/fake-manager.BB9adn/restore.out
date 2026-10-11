@@ -1,0 +1,3 @@
+docker stop failed (rc=1)
+manager after: state=running id=cid1 startedAt=1791433869523380604 (before: exited cid1 T0; started by this run: 1)
+manager state differs

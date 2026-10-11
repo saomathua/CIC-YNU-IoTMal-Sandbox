@@ -1,0 +1,245 @@
+== 0. prerequisites
+tcpdump: tcpdump version 4.99.4; python3: Python 3.12.3
+== A. signature scanner
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/empty.pcap
+b2d7c429306ae8c8c1c0cd9f71ff9a7234f72b57cafb5f1f6ba605de8995988e  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/negative.pcap
+943503f3a5c6f7db98aec4f0cc572d8f612bc0858bc08fe5fac3c3c65fdd679c  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/positive.pcap
+537ea160db4175c729bca4a6e6ec64e7e27fa219b14246d26ef4f8e951725e61  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/truncated.pcap
+ebcc737cd88868b5c058a8212de8a5ae8d3cad93029a7a3dd57e352b90dc9344  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-drop0-bigendian.pcapng
+d3f4234b3a2c084b2031caa7a6700bbaaf1d7d42d00b6d3738a1d2f18a7c7ef2  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-drop0.pcapng
+8f604f004a27ceb83341db583ceafb86ae107218c132bbcd305f26a0743e9d2a  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-drop3.pcapng
+98bbd3b7b6755b3a30657fa4d2000476deec9997121609947e1a9b5cfceb4d28  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-drop3-recv6.pcapng
+1c0856b1b5b7a792e626a37be73c18850ef14a548845fbd364f58dc386b2b263  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-isb-without-ifdrop.pcapng
+ed9f48d0b6e899f87668421f7e95c68b9849496ae2a93a17d5c9e594d153caac  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-no-stats.pcapng
+10ed5d40683b77120aa6dae31d677f71a7ce75ec7ad1763828a4c4c234f8941d  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-not-pcapng.pcapng
+c132dfd828d9f499d5efbb99099c0f0faf617fe3e3ca6e3e91e65db2903df628  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-osdrop2.pcapng
+112c0d8c2ef9f0894d0be7fb60152db1b62259be92ffdc8b7a68ba9c30fbbb8f  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-recv-mismatch.pcapng
+162b2298c8e527de9cdc9848f0508b45e6d52986b47f2664cb4192d22aae02b8  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-truncated-in-packet.pcapng
+7b8d8c70fbde5572792c6da786e094963873b54aa471c94f3a6c3a295d80ea34  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/ng-truncated.pcapng
+-- positive.pcap (rc=0)
+frames=6
+guest_l2l3=2
+probe_sport=1
+probe_qname=1
+probe_url=2
+control_qname=0
+[PASS] positive.pcap: sigscan exit 0
+[PASS] positive.pcap: counts equal expected.json
+-- negative.pcap (rc=0)
+frames=8
+guest_l2l3=0
+probe_sport=0
+probe_qname=0
+probe_url=0
+control_qname=2
+[PASS] negative.pcap: sigscan exit 0
+[PASS] negative.pcap: counts equal expected.json
+-- truncated.pcap: rc=2 READ ERROR rc=1 file=/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/truncated.pcap: reading from file /tmp/claude-1000/-home-dathq-projects/92872fdb
+[PASS] truncated.pcap: read error reported (exit 2), never counted as 0 packets
+-- empty.pcap: rc=2 READ ERROR: /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/fx/empty.pcap is empty or missing
+[PASS] empty.pcap: read error reported (exit 2), never counted as 0 packets
+[PASS] missing file: read error reported (exit 2)
+probe names from probe_matrix.py: internet-tcp lan-dns-udp lan-dns-tcp manager mongodb worker-eth0 tap0-other-port-listener ssh-host-192.168.60.1 ssh-host-192.168.177.128 ssh-host-172.18.0.1
+[PASS] probe_matrix.py plan has 7 fixed names + 3 ssh-host
+[PASS] every real probe URL matches the scanner regex
+[PASS] 06B-3B regex /ct01-06b3b-[0-9] matched none of them (the defect fixed in 06B-3C)
+== A2. pcapng drop statistics (pcapng_stats.py)
+[PASS] ng-drop0.pcapng: expected PASS, got PASS (isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets)
+[PASS] ng-drop0-bigendian.pcapng: expected PASS, got PASS (isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets)
+[PASS] ng-drop3.pcapng: expected FAIL, got FAIL (interface 0: isb_ifdrop=3)
+[PASS] ng-drop3-recv6.pcapng: expected FAIL, got FAIL (interface 0: isb_ifdrop=3)
+[PASS] ng-osdrop2.pcapng: expected FAIL, got FAIL (interface 0: isb_osdrop=2)
+[PASS] ng-recv-mismatch.pcapng: expected FAIL, got FAIL (interface 0: isb_ifrecv=5 but 3 packets stored)
+[PASS] ng-no-stats.pcapng: expected UNVERIFIED, got UNVERIFIED (no interface statistics block: drop count unknown)
+[PASS] ng-isb-without-ifdrop.pcapng: expected UNVERIFIED, got UNVERIFIED (interface 0: statistics block without isb_ifdrop)
+[PASS] ng-truncated.pcapng: expected ERROR, got ERROR (truncated or invalid block (type 0x5, length 84) at offset 456)
+[PASS] ng-truncated-in-packet.pcapng: expected ERROR, got ERROR (truncated or invalid block (type 0x6, length 124) at offset 332)
+[PASS] ng-not-pcapng.pcapng: expected ERROR, got ERROR (not a pcapng file (no section header block))
+[PASS] real 06B-3B ARM tap0.pcapng: PASS, isb={'comment': 'Counters provided by dumpcap', 'isb_ifrecv': 97, 'isb_ifdrop': 0}, stored={0: 97}
+[PASS] real 06B-3B MIPS tap0.pcapng: PASS, isb={'comment': 'Counters provided by dumpcap', 'isb_ifrecv': 125, 'isb_ifdrop': 0}, stored={0: 125}
+[PASS] pcapng_stats verdicts as expected
+== B. capture watcher with heartbeat
+[PASS] watcher quiet while captures run
+[PASS] heartbeat present and fresh
+[PASS] heartbeat refreshed (1791352651.909939068 -> 1791352652.376706775)
+[PASS] captures still alive after the watcher was killed
+[PASS] heartbeat stale 1.6 s after the watcher died (limit 1 s)
+marker: 05:57:34 capture p2 pid 166198 exited during the test
+[PASS] watcher writes marker naming the dead capture
+[PASS] watcher ends after a capture died
+[PASS] precondition: pid 166306 is a zombie and kill -0 still succeeds on it
+[PASS] watcher treats a zombie capture as dead (marker written)
+[PASS] heartbeat_fresh: current -> fresh
+[PASS] heartbeat_fresh: 30 s old -> stale
+[PASS] heartbeat_fresh: unparsable -> stale
+[PASS] heartbeat_fresh: 60 s in the future -> stale
+[PASS] heartbeat_fresh: missing file -> stale
+== B2. probe_matrix.py captures_alive (extracted with ast; sleep stands in for tshark/tcpdump)
+[PASS] tshark alive, no marker, fresh heartbeat -> continue
+[PASS] empty marker file -> continue
+[PASS] host marker present -> CaptureLost (t: host capture lost: 12:00:00 capture ens33 pid 1 exited during the test)
+[PASS] marker unreadable (a directory) -> CaptureLost (t: host capture marker unreadable: [Errno 21] Is a directory: '/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st.p0nrDk/pm.sMZz7p/marker-dir')
+[PASS] heartbeat missing -> CaptureLost (t: host watcher heartbeat missing (watcher not running))
+[PASS] heartbeat 30 s old -> CaptureLost (t: host watcher heartbeat is 30.0 s old (limit 5.0 s))
+[PASS] heartbeat unparsable -> CaptureLost (t: host watcher heartbeat unreadable: could not convert string to float: 'xyz')
+[PASS] heartbeat in the future -> CaptureLost (t: host watcher heartbeat is -60.0 s old (limit 5.0 s))
+[PASS] real watcher running -> continue
+[PASS] real watcher killed while the capture still runs -> CaptureLost (t: host watcher heartbeat is 1.7 s old (limit 1.0 s))
+[PASS] tshark exited -> CaptureLost (t: tap0 tshark exited rc=-9)
+[PASS] tshark never started -> CaptureLost (t: tap0 tshark exited rc=None)
+[PASS] probe_matrix.py captures_alive behaves as specified
+== C. manager handling (fake docker)
+[PASS] C1 running: prepare 0, restore 0, still running
+[PASS] C1 running: no compose up and no stop (never restarted)
+[PASS] C2 exited: prepare 0, marked started, restore 0, exited again
+[PASS] C2 exited: exactly one compose up, then docker stop of the same id
+[PASS] C3 running, restarted during the test: restore fails, nothing stopped
+[PASS] C4 running, container replaced: restore fails, replacement not stopped
+[PASS] C5 running, stopped by someone else: restore fails
+[PASS] C6 compose up fails: prepare non-zero, NOT marked started
+[PASS] C6 compose up fails: restore 0, nothing stopped, still exited
+[PASS] C7 compose up fails after starting it: prepare non-zero, NOT marked started
+[PASS] C7 ... restore stops that same container and returns 0
+[PASS] C8 compose up replaced the container: prepare non-zero, NOT marked started
+[PASS] C8 ... restore fails and does not stop the replacement
+[PASS] C9 started by us, replaced during the test: restore fails, replacement not stopped
+[PASS] C10 docker stop fails: restore fails
+[PASS] C11 created: refused before any change (no docker call that changes state)
+[PASS] C12 paused: refused before any change
+== D. counter window reconciliation (counter_window.py, 06B-3DR)
+[PASS] counter window clean: expected PASS, got PASS (old method would say PASS)
+[PASS] counter window edge-start-counted: expected UNVERIFIED, got UNVERIFIED (old method would say FAIL)
+[PASS] counter window edge-start-not-counted: expected UNVERIFIED, got UNVERIFIED (old method would say PASS)
+[PASS] counter window edge-end: expected UNVERIFIED, got UNVERIFIED (old method would say PASS)
+[PASS] counter window guard-zone-before-read-b: expected UNVERIFIED, got UNVERIFIED (old method would say PASS)
+[PASS] counter window real-mismatch: expected FAIL, got FAIL (old method would say FAIL)
+[PASS] counter window real-mismatch-despite-edges: expected FAIL, got FAIL (old method would say FAIL)
+[PASS] counter window two-errors-cancel: expected UNVERIFIED, got UNVERIFIED (old method would say PASS)
+[PASS] counter window two-errors-cancel: old method gives a false PASS, new gives UNVERIFIED
+[PASS] counter window outside-frames-ignored: expected PASS, got PASS (old method would say PASS)
+[PASS] counter window class-not-compared-at-edge: expected PASS, got PASS (old method would say PASS)
+[PASS] counter window counter-without-frames: expected FAIL, got FAIL (old method would say FAIL)
+[PASS] counter window read-a-reversed: expected ERROR, got ERROR (error: read times out of order (need A.start <= A.end <= B.start <= B.end): [100.02, 100.0, 105.0, 105.02])
+[PASS] counter window reads-reversed: expected ERROR, got ERROR (error: read times out of order (need A.start <= A.end <= B.start <= B.end): [105.0, 105.02, 100.0, 100.02])
+[PASS] counter window reads-overlap: expected ERROR, got ERROR (error: read times out of order (need A.start <= A.end <= B.start <= B.end): [100.0, 100.02, 100.01, 105.02])
+[PASS] counter window read-time-nan: expected ERROR, got ERROR (error: read times not finite numbers: [nan, 100.02, 105.0, 105.02])
+[PASS] counter window read-time-infinity: expected ERROR, got ERROR (error: read times not finite numbers: [100.0, 100.02, 105.0, inf])
+[PASS] counter window read-time-missing: expected ERROR, got ERROR (error: read times missing: KeyError('t_end'))
+[PASS] counter window frame-time-nan: expected ERROR, got ERROR (error: frame time not a finite number: nan)
+[PASS] counter window guard-negative: expected ERROR, got ERROR (error: guard not a finite non-negative number: -0.001)
+[PASS] counter window guard-nan: expected ERROR, got ERROR (error: guard not a finite non-negative number: nan)
+[PASS] counter window guard-infinity: expected ERROR, got ERROR (error: guard not a finite non-negative number: inf)
+[PASS] counter window delta-negative: expected ERROR, got ERROR (error: counter delta of drop_spoof is not a non-negative integer: -1)
+[PASS] counter window reads-touching-guard-zero: expected PASS, got PASS (error: None)
+[PASS] counter_window reconciliation as expected
+== E. probe verdict and run outcome (counter_window.py)
+[PASS] probe verdict: all checks, reconciliation PASS -> ĐẠT (got ('ĐẠT', True))
+[PASS] probe verdict: reconciliation UNVERIFIED -> CHƯA KIỂM CHỨNG, not ok (got ('CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)', False))
+[PASS] probe verdict: expected class PASS but another class UNVERIFIED -> CHƯA KIỂM CHỨNG (got ('CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)', False))
+[PASS] probe verdict: reconciliation FAIL -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: failed check + UNVERIFIED -> FAIL (a real failure wins) (got ('FAIL', False))
+[PASS] probe verdict: expected counter did not move -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: tool missing -> CHƯA KIỂM CHỨNG (got ('CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)', False))
+[PASS] probe verdict: reconciliation FAIL + control missing -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: reconciliation FAIL + tool missing -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: host alert + tool missing -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: host alert + control missing -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: guest reached the target (tool present) + control missing -> FAIL (got ('FAIL', False))
+[PASS] probe verdict: only control missing (nothing failed) -> CHƯA KIỂM CHỨNG (đối chứng) (got ('CHƯA KIỂM CHỨNG (không có đối chứng sống)', False))
+[PASS] probe verdict: only tool missing (guest-side checks not performed) -> CHƯA KIỂM CHỨNG (công cụ) (got ('CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)', False))
+[PASS] probe verdict: tool missing + counter-window edges -> CHƯA KIỂM CHỨNG (công cụ) (got ('CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)', False))
+[PASS] probe verdict: measurement error -> LỖI PHÉP ĐO (not PASS, not CHƯA KIỂM CHỨNG) (got ('LỖI PHÉP ĐO (read times out of order)', False))
+[PASS] probe verdict: measurement error + host alert -> FAIL (got ('FAIL', False))
+[PASS] run outcome: all ok -> PASS (got PASS)
+[PASS] run outcome: one undecided probe -> UNVERIFIED (got UNVERIFIED: probe a (tcp) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm))
+[PASS] run outcome: one failed probe -> FAIL (got FAIL: probe a (tcp) -> FAIL)
+[PASS] run outcome: probe with a measurement error -> FAIL (got FAIL: probe a (tcp) -> LỖI PHÉP ĐO (read times out of order))
+[PASS] run outcome: failed non-probe check + undecided probe -> FAIL (got FAIL: tap0 capture stopped cleanly)
+[PASS] probe verdict and run outcome as expected
+== F. capture stop with deadline (harness_lib.sh stop_captures_deadline; python fakes)
+exit file: a 0 b 3 c KILLED_AT_DEADLINE ; rc=1; elapsed 2.08 s
+1791352659.371715 05:57:39.377 a pid 166659: SIGINT sent
+1791352659.378804 05:57:39.382 b pid 166660: SIGINT sent
+1791352659.383493 05:57:39.386 c pid 166661: SIGINT sent
+1791352659.691113 05:57:39.692 a pid 166659: exited rc=0
+1791352659.708884 05:57:39.710 b pid 166660: exited rc=3
+1791352661.441104 05:57:41.443 c pid 166661: still running at the 2 s deadline -> SIGKILL
+[PASS] stop_captures_deadline returned (no hang: not killed by timeout, ran to the end)
+[PASS] capture exiting 0 on SIGINT recorded as 'a 0'
+[PASS] capture exiting 3 on SIGINT recorded as 'b 3'
+[PASS] capture ignoring SIGINT killed at the deadline and recorded
+[PASS] stop_captures_deadline returns non-zero when a capture misbehaved
+[PASS] deadline respected (elapsed < 3.5 s for a 2 s deadline)
+[PASS] no fake capture left running
+[PASS] timeline has SIGINT, exit and SIGKILL entries
+[PASS] all captures well-behaved -> stop_captures_deadline returns 0
+== G. tcpdump statistics parsing (harness_lib.sh capture_stats)
+[PASS] statistics parsed exactly (10 12 0)
+[PASS] missing 'dropped by kernel' line -> failure, not 0
+[PASS] no statistics at all -> failure
+[PASS] dropped by kernel > 0 is reported as such (5 5 3)
+== H. probe_matrix.py evaluate() wiring, replayed offline with stub worker modules
+05:57:42 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 11}
+05:57:42 [PASS] ARM: probe clean (tcp 1.1.1.1:443) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:57:42 [FAIL] ARM: probe ipv6-during-read-a (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {"l2_bad_ethertype": {"certain": 1, "delta": 2, "edge_end_t": [], "edge_start_t": [200.025], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+05:57:42 [FAIL] ARM: probe real-mismatch (tcp 1.1.1.1:443) -> FAIL {"counter": 2, "determined_failures": ["counter_reconciliation"], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_public": {"certain": 3, "delta": 2, "edge_end_t": [], "edge_start_t": [], "status": "FAIL", "with_edges": 3}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "FAIL"}
+verdicts: {'clean': 'ĐẠT', 'ipv6-during-read-a': 'CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)', 'real-mismatch': 'FAIL'}
+[PASS] evaluate replay: clean probe -> ĐẠT
+[PASS] evaluate replay: IPv6 frame inside read A (06B-3D shape) -> CHƯA KIỂM CHỨNG
+[PASS] evaluate replay: real mismatch -> FAIL
+[PASS] evaluate replay: edge frame listed with its timestamp and class
+[PASS] evaluate replay: raw reads kept in the matrix row
+[PASS] evaluate replay: record of the undecided probe is not ok
+[PASS] evaluate replay: run outcome with a real mismatch -> FAIL
+05:57:42 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 17}
+05:57:42 [FAIL] ARM: probe reads-reversed (tcp 1.1.1.1:443) -> LỖI PHÉP ĐO (read times out of order (need A.start <= A.end <= B.start <= B.end): [405.0, 405.02, 400.0, 400.02]) {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": ["probe_packets_in_tap0_pcap", "probe_packets_hit_expected_counter"], "measurement_error": "read times out of order (need A.start <= A.end <= B.start <= B.end): [405.0, 405.02, 400.0, 400.02]", "mismatch": {}, "pcap_certain": 0, "probe_packets": 0, "reconciliation": "ERROR"}
+05:57:42 [FAIL] ARM: probe host-alert-no-control (tcp 1.1.1.1:443) -> FAIL {"counter": 3, "determined_failures": ["no_host_alert"], "expected": "drop_public", "failed_checks": ["control_alive_same_dst_proto_port", "no_host_alert"], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+verdicts: {'reads-reversed': 'LỖI PHÉP ĐO (read times out of order (need A.start <= A.end <= B.start <= B.end): [405.0, 405.02, 400.0, 400.02])', 'host-alert-no-control': 'FAIL'}
+[PASS] evaluate replay: reversed read times -> LỖI PHÉP ĐO
+[PASS] evaluate replay: host alert with no live control -> FAIL (not CHƯA KIỂM CHỨNG)
+[PASS] evaluate replay: determined failure recorded
+[PASS] evaluate replay: run outcome with a measurement error -> FAIL
+05:57:42 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 17}
+05:57:42 [PASS] ARM: probe clean (tcp 1.1.1.1:443) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:57:42 [FAIL] ARM: probe ipv6-during-read-a (tcp 1.1.1.1:443) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {"l2_bad_ethertype": {"certain": 1, "delta": 2, "edge_end_t": [], "edge_start_t": [200.025], "status": "UNVERIFIED", "with_edges": 2}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "UNVERIFIED"}
+[PASS] evaluate replay: run outcome with only an undecided probe -> UNVERIFIED (not PASS)
+[PASS] evaluate replay: matrix.md written with a reconciliation column
+05:57:42 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 17}
+05:57:42 [FAIL] ARM: probe real-mismatch (tcp 1.1.1.1:443) -> FAIL {"counter": 2, "determined_failures": ["counter_reconciliation"], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {"drop_public": {"certain": 3, "delta": 2, "edge_end_t": [], "edge_start_t": [], "status": "FAIL", "with_edges": 3}}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "FAIL"}
+05:57:42 == ARM: SESSION-WIDE reconciliation (reported separately; changes no probe verdict and not the exit code): PASS
+[PASS] evaluate replay: session: matching counters over the whole session -> PASS (session.json written)
+[PASS] evaluate replay: session result does not enter results (no probe or check record added)
+[PASS] evaluate replay: global PASS + one probe FAIL: the probe stays FAIL
+[PASS] evaluate replay: global PASS + one probe FAIL: run outcome stays FAIL
+[PASS] evaluate replay: session.json records the unmeasured guard assumption
+05:57:42 [PASS] ARM: tap0 pcap readable by tshark (exit 0) {"frames": 17}
+05:57:42 [PASS] ARM: probe clean (tcp 1.1.1.1:443) -> ĐẠT {"counter": 3, "determined_failures": [], "expected": "drop_public", "failed_checks": [], "measurement_error": null, "mismatch": {}, "pcap_certain": 3, "probe_packets": 3, "reconciliation": "PASS"}
+05:57:42 == ARM: SESSION-WIDE reconciliation (reported separately; changes no probe verdict and not the exit code): FAIL — counter delta outside [certain, certain + edges] for: drop_public
+[PASS] evaluate replay: session: one extra counted packet -> FAIL
+[PASS] evaluate replay: session FAIL is reported separately: run outcome of the probes unchanged (PASS)
+[PASS] probe_matrix.py evaluate() wiring as expected
+== I. session-wide reconciliation (counter_window.session_reconcile, 06B-3F)
+[PASS] session clean: expected PASS, got PASS ()
+[PASS] session clean: not-compared counters listed with delta and reason
+[PASS] session edge-start: expected UNVERIFIED, got UNVERIFIED (frames in the edge zones of the session window: l2_bad_ethertype)
+[PASS] session edge-end: expected UNVERIFIED, got UNVERIFIED (frames in the edge zones of the session window: l2_bad_ethertype)
+[PASS] session real-mismatch: expected FAIL, got FAIL (counter delta outside [certain, certain + edges] for: drop_public)
+[PASS] session capture-incomplete-counter-above: expected UNVERIFIED, got UNVERIFIED (capture not complete: {'tshark_rc': 0, 'drop_verdict': 'UNVERIFIED', 'pcap_readable': True}; counter/pcap mismatch, but the capture is not complete)
+[PASS] session capture-incomplete-counter-below: expected FAIL, got FAIL (counter delta outside [certain, certain + edges] for: drop_public)
+[PASS] session pcap-unreadable: expected UNVERIFIED, got UNVERIFIED (capture not complete: {'tshark_rc': 0, 'drop_verdict': 'PASS', 'pcap_readable': False})
+[PASS] session tshark-exit-nonzero: expected UNVERIFIED, got UNVERIFIED (capture not complete: {'tshark_rc': 1, 'drop_verdict': 'PASS', 'pcap_readable': True})
+[PASS] session exit-after-final-read: expected ERROR, got ERROR (times out of order (need read_before <= QEMU exit confirmed <= final reads, each read start <= end, final reads in order): [100.0, 100.01, 300.6, 300.)
+[PASS] session final-before-read-before: expected ERROR, got ERROR (times out of order (need read_before <= QEMU exit confirmed <= final reads, each read start <= end, final reads in order): [100.0, 100.01, 300.0, 99.0)
+[PASS] session final-time-nan: expected ERROR, got ERROR (counter read times not finite: 300.5, nan)
+[PASS] session qemu-running-before: expected ERROR, got ERROR (QEMU was already running when the session read before boot was taken)
+[PASS] session exit-not-confirmed: expected ERROR, got ERROR (QEMU exit was not confirmed before the final reads)
+[PASS] session no-final-read: expected ERROR, got ERROR (no final counter read after QEMU exit)
+[PASS] session counter-decreased: expected ERROR, got ERROR (measurement data invalid: counter delta of drop_public is not a non-negative integer: -1)
+[PASS] session unstable-after-exit: expected UNVERIFIED, got UNVERIFIED (compared counters still changed after QEMU exit: {'drop_public': [13, 14]})
+[PASS] session late-guest-frame: expected UNVERIFIED, got UNVERIFIED (1 guest frame(s) after QEMU exit was confirmed)
+[PASS] session-wide reconciliation as expected
+main() order: no QEMU check + session read before boot@414, QEMU spawned@420, QEMU shut down@539, final session reads@553, tshark stopped@557, session evaluated@592
+[PASS] session steps in order: read before boot < spawn < shutdown < final reads < tshark stop < evaluation
+[PASS] session step order in probe_matrix.main() as designed
+
+SELFTEST: ALL PASSED

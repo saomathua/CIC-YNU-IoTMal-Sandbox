@@ -1,0 +1,221 @@
+== section D
+[PASS] D1 four cases as planned (T14 A1/A2/A3, T15 S1), expected arp_in_drop
+[PASS] D2 T14 sizes come from signatures.py (T14-A1..A3)
+[PASS] D3 T14 commands: on-link /32 route, one ping, settle
+[PASS] D4 T15-S1 commands: arp_notify=1, three /32 spoofed addresses, link down/up, settle
+[PASS] D5 D1: only ip / ping / sleep / echo-to-proc; no arping, no raw-packet tool, no forged reply
+[PASS] D6 live control only for A1/A2; A3, S1 rule check
+[PASS] D7 bad interface name refused
+[PASS] D8 a registry change changes the command (single source)
+[PASS] D9 T14 targets are outside 10.200.0.0/30 (on-link route needed; 10.200.0.3 is the broadcast, plan L2)
+== section N
+[PASS] N1 parse ip -j neigh: rows kept with device, MAC, states, binding
+[PASS] N2 unchanged -> nothing
+[PASS] N3 dynamic state change of a kept binding (REACHABLE -> STALE) is normal, not reported
+[PASS] N4 new entry (unwatched IP) on tap0 -> fail
+[PASS] N5 tap0 permanent entry lost -> fail
+[PASS] N6 manager entry on eth0 now carries the guest MAC -> fail
+[PASS] N7 watched IP changes its MAC on eth0 -> fail
+[PASS] N8 unreadable neighbour output -> invalid (never 'unchanged')
+[PASS] N9 a NEW, unwatched eth0 entry carrying the guest MAC -> fail
+== section P
+[PASS] P1 T14-A1: clean fixture -> ĐẠT (live control)
+[PASS] P1 T14-A2: clean fixture -> ĐẠT (live control)
+[PASS] P1 T14-A3: clean fixture -> ĐẠT (kiểm quy tắc)
+[PASS] P1 T15-S1: clean fixture -> ĐẠT (kiểm quy tắc)
+[PASS] P2 clean with background (DHCP, MLD) reconciled -> still ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (sender MAC field not the guest) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (other target IP) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (opcode 2 (reply) instead of a request) -> no probe frame, never ĐẠT
+[PASS] P3 T14-A1 wrong ARP field (hlen 8 (not hooked)) -> no probe frame, never ĐẠT
+[PASS] P4 a unicast probe to a MAC other than TAP_MAC (OTHERHOST): arp_not_hooked -> CHƯA KIỂM CHỨNG, not ĐẠT
+[PASS] P5 T15: gratuitous only for 10.200.0.2 (no spoofed address announced) -> KHÔNG TẠO ĐƯỢC GÓI
+[PASS] P6 T15: one spoofed address missing -> KHÔNG TẠO ĐƯỢC GÓI naming it
+[PASS] P7 no frame at all (ping rc 1) -> KHÔNG TẠO ĐƯỢC GÓI, never evidence of blocking
+[PASS] P8 counter read failed during execution -> LỖI PHÉP ĐO
+[PASS] P9 counter read 'after' missing -> LỖI PHÉP ĐO
+[PASS] P10 counter decreased -> LỖI PHÉP ĐO
+[PASS] P11 arp_out_drop missing in a read -> LỖI PHÉP ĐO (never 0)
+[PASS] P12 capture unreadable -> every case LỖI PHÉP ĐO
+[PASS] P13 neighbour table not readable -> LỖI PHÉP ĐO
+[PASS] P14 probe frame at the edge of read A -> CHƯA KIỂM CHỨNG (gói ở biên)
+[PASS] P15 probe frame at the edge of read B -> CHƯA KIỂM CHỨNG
+[PASS] P16 route add failed (setup) -> LỖI THỰC THI, not ĐẠT, even with frames
+[PASS] P17 tool missing -> LỖI THỰC THI
+[PASS] P18 guest state unreadable before the case (nothing ran, no reads) -> LỖI THỰC THI (not LỖI PHÉP ĐO)
+[PASS] P19 restore failed -> CHƯA KIỂM CHỨNG (cấu hình guest không khôi phục được), never ĐẠT
+[PASS] P20 restore record missing -> CHƯA KIỂM CHỨNG
+[PASS] P21 case not run after an earlier restore failure -> CHƯA KIỂM CHỨNG (not run)
+[PASS] P22 service link after the case failed -> CHƯA KIỂM CHỨNG
+[PASS] P23 service link after missing -> CHƯA KIỂM CHỨNG
+[PASS] P24 service link before the group not ok (no 'skipped' marker) -> CHƯA KIỂM CHỨNG
+[PASS] P25 A1 live control not alive -> CHƯA KIỂM CHỨNG (đối chứng)
+[PASS] P26 A2 live control missing -> CHƯA KIỂM CHỨNG
+[PASS] P27 arp_out_drop increased in the window -> CHƯA KIỂM CHỨNG (not observable, not ĐẠT)
+[PASS] P28 worker ARP reply for the probed IP towards the guest -> FAIL
+[PASS] P29 probe ICMP packet seen (ARP was resolved) -> FAIL
+[PASS] P30 worker neighbour on tap0 changed -> FAIL
+[PASS] P31 manager entry on eth0 got the guest MAC -> FAIL
+[PASS] P32 counter delta lower than the probe frames -> FAIL
+[PASS] P33 a determined failure is reported even when the restore also failed
+[PASS] P34 a determined failure is reported even with an execution error
+[PASS] P35 worker ARP about a spoofed IP during T15 -> FAIL
+[PASS] P36 T15: ARP with a spoofed sender IP but another target (not gratuitous) is not a probe frame
+[PASS] P37 service link after with ok "true" (not the boolean) -> CHƯA KIỂM CHỨNG
+== section X
+[PASS] X1 run_group: order per case = state saved, setup, trigger, settle, restore; 4 cases, record is JSON
+[PASS] X2 every case restored, route/addresses/arp_notify back to the before-state
+[PASS] X3 T15 restore re-adds the default route lost by the link down; the flushed DYNAMIC neighbour is only reported
+[PASS] X4 service link checked before the group and after every case; neighbours before/after; control for A1/A2 only
+[PASS] X5 group record complete (each case once, reviewed commands)
+[PASS] X6 restore failure: the next case is not run (not_run), no service link after the failed case
+[PASS] X7 console timeout after 'link down': exec error recorded, read B taken, guest still restored (link up, addresses)
+[PASS] X8 setup failed: trigger not sent, exec error, still restored
+[PASS] X9 guest state unreadable: no command sent, exec error, nothing to restore, group not stopped
+[PASS] X10 service link before fails: no case run, group skipped
+[PASS] X11 worker neighbour read error recorded (never 'unchanged')
+[PASS] X12 control error -> control not ok (A1/A2)
+[PASS] X13 counter read failure recorded as read_error, case still restored
+[PASS] X18 link down failed (trigger): exec error, 'link up' not sent, still restored
+[PASS] X19 service link returning a truthy non-True value is not ok: group skipped
+[PASS] X14 record_problems: duplicate case
+[PASS] X15 record_problems: missing case
+[PASS] X16 record_problems: a guest command that is not the reviewed one
+[PASS] X17 record_problems: invalid structure
+== section E
+[PASS] E1 end to end clean: A1, A2 ĐẠT (live control), A3, S1 ĐẠT (kiểm quy tắc); exit 0
+[PASS] E2 end to end: probe frames = 3 per T14 case, 4 gratuitous for S1 (10.200.0.2 + 3 spoofed)
+[PASS] E3 end to end: kernel sends nothing -> all KHÔNG TẠO ĐƯỢC GÓI, exit 4 (never 0)
+[PASS] E4 end to end restore failure: S1 CHƯA KIỂM CHỨNG (khôi phục), A3 not run; record incomplete -> never exit 0
+[PASS] E5 end to end: manager neighbour gets the guest MAC during A2 -> A2 FAIL, exit 1
+== section F
+[PASS] F1.1 S1 clean gratuitous requests -> ĐẠT (kiểm quy tắc)
+[PASS] F1.2 S1 with gratuitous frames of opcode 2 only -> not a probe, KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT
+[PASS] F1.2 S1 with gratuitous frames of opcode 99 only -> not a probe, KHÔNG TẠO ĐƯỢC GÓI, never ĐẠT
+[PASS] F1.3 S1 gratuitous request sent unicast (not broadcast) -> not a probe
+[PASS] F1.4 S1 gratuitous request with htype 6 / ptype 0x86dd -> not a probe
+[PASS] F1.5 S1 mix: requests for two IPs + an opcode-2 frame for the third -> KHÔNG TẠO ĐƯỢC GÓI naming the third
+[PASS] F2 S1 worker neighbour after: manager entry removed after -> CHUA_KIEM_CHUNG
+[PASS] F2 S1 worker neighbour after: manager moved to eth9 with another MAC -> FAIL
+[PASS] F2 S1 worker neighbour after: manager moved to eth9 with the same MAC -> FAIL
+[PASS] F2 S1 worker neighbour after: manager entry FAILED (MAC kept) -> CHUA_KIEM_CHUNG
+[PASS] F2 S1 worker neighbour after: manager entry INCOMPLETE without MAC -> CHUA_KIEM_CHUNG
+[PASS] F2 S1 worker neighbour after: manager REACHABLE -> STALE (normal) -> DAT_KIEM_QUY_TAC
+[PASS] F2 S1 worker neighbour after: manager REACHABLE -> DELAY (normal) -> DAT_KIEM_QUY_TAC
+[PASS] F2 S1 worker neighbour after: manager lladdr None -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager lladdr 1 -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager lladdr True -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager lladdr [] -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager lladdr {} -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager state missing -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager state items [1, True, {}] -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager state empty -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: manager state unknown string -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: row with a bad dst -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: duplicate row hides a guest MAC (guest MAC row first) -> FAIL
+[PASS] F2 S1 worker neighbour after: duplicate identical normal rows -> LOI_PHEP_DO
+[PASS] F2 S1 worker neighbour after: guest MAC row + an invalid row: the valid abnormal row is kept -> FAIL
+[PASS] F2.b before-table invalid (lladdr null) -> LỖI PHÉP ĐO
+[PASS] F2.c A2 target entry lost -> CHƯA KIỂM CHỨNG (not ĐẠT)
+[PASS] F3.0 complete clean group -> exit 0, labels DAT/DAT/DAT_KIEM_QUY_TAC/DAT_KIEM_QUY_TAC
+[PASS] F3 group with empty steps -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with setup only -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with settle missing -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with phase renamed 'unknown' -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with every rc 2 -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with rc not an integer -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with steps reordered -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with guest baseline missing (restore says restored) -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with guest baseline incomplete -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with restore evidence missing -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with restore 'restored' not boolean -> never exit 0, no case ĐẠT, record problem
+[PASS] F3 group with restore says restored with diffs -> never exit 0, no case ĐẠT, record problem
+[PASS] F3.s a STOPPED case with a valid record (steps up to the failing one, exec_error, restore) -> LỖI THỰC THI, no record problem
+[PASS] F3.t a STOPPED case whose earlier step is outside the contract -> record problem
+[PASS] F4 run_group: ping rc 2 -> execution error recorded, read B taken, restored, settle not run
+[PASS] F4 run_group: ping rc 3 -> execution error recorded, read B taken, restored, settle not run
+[PASS] F4 run_group: ping rc 0 -> inside the contract
+[PASS] F4 run_group: ping rc 1 -> inside the contract
+[PASS] F4.e evaluate_group after ping rc 2 (frames present): T14 LỖI THỰC THI, no record problem, exit 4 (never 0)
+[PASS] F5.1 known frame violation, clean reads -> FAIL with the frame evidence
+[PASS] F5.2 known frame violation + read_error (raw rows kept) -> FAIL, JSON keeps BOTH the failure and the measurement error
+[PASS] F5.3 neighbour violation (valid rows) + read_error -> FAIL, both kept
+[PASS] F5.4 frame violation but read times overlap (A ends after B starts: window not valid) -> no FAIL inferred from frame positions; LỖI PHÉP ĐO
+[PASS] F5.5 neighbour violation with the capture unreadable -> FAIL (neighbour evidence kept), capture error kept
+[PASS] F5.6 neighbour violation with the counter file invalid -> FAIL, counter error kept
+[PASS] F5.7 group_exit: FAIL wins over LỖI PHÉP ĐO in the same group
+[PASS] F6 restore matrix with a pre-configured baseline: 40 console failures (before/after every step, both interfaces) -> state restored exactly, execution error recorded, record inside the contract
+== section H
+[PASS] H1.0 real run_group record (restore with its re-read 'after') -> exit 0, labels unchanged
+[PASS] H1 restore 'after' MAC differs from the baseline (restored=True, diffs=[]) -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore 'after' missing -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore 'after' with an invalid address -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore 'after' route missing vs baseline -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore 'after' arp_notify differs -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restored=True with an error -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore commands [42] -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore command rc 'x' -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline addrs [42] -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline route object -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline static neighbour not a MAC -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline static neighbour bad key -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline dynamic neighbour malformed -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline operstate '' -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline operstate 'weird' -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline arp_notify -1 -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline AND after addrs [42] -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline AND after route object -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline AND after static neighbour not a MAC -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline AND after operstate 'weird' -> not ĐẠT, record problem, never exit 0
+[PASS] H1 baseline AND after arp_notify -1 -> not ĐẠT, record problem, never exit 0
+[PASS] H1 restore 'after' with a malformed dynamic neighbour (diff() ignores dynamic) -> not ĐẠT, record problem, never exit 0
+[PASS] H1.d dynamic neighbours differing between baseline and 'after' are NOT forced (still exit 0)
+[PASS] H1.c CLI on a real record whose 'after' contradicts the baseline -> exit 2
+[PASS] H2.1 mandatory tap0 row with states ['PERMANENT', 'FAILED'] -> LỖI PHÉP ĐO, never ĐẠT
+[PASS] H2.1 mandatory tap0 row with states ['PERMANENT', 'INCOMPLETE'] -> LỖI PHÉP ĐO, never ĐẠT
+[PASS] H2.1 mandatory tap0 row with states ['PERMANENT', 'NONE'] -> LỖI PHÉP ĐO, never ĐẠT
+[PASS] H2.1 mandatory tap0 row with states ['PERMANENT', 'REACHABLE'] -> LỖI PHÉP ĐO, never ĐẠT
+[PASS] H2.2 contradictory row is not returned as a valid row (unknown instead)
+[PASS] H2.3 valid mandatory row REACHABLE (not PERMANENT) -> FAIL
+[PASS] H2.3 valid mandatory row FAILED with the guest MAC (no usable binding) -> FAIL
+[PASS] H2.3 valid mandatory row FAILED without MAC -> FAIL
+[PASS] H2.3 valid mandatory row another MAC -> FAIL
+[PASS] H2.4 mandatory row REACHABLE both before and after (no tap0 change) -> still FAIL (binding must be PERMANENT)
+[PASS] H3.1 not started (state unreadable) + valid mandatory neighbour change -> FAIL, not_started kept, no command sent
+[PASS] H3.2 same + capture missing -> FAIL with the capture error kept in measurement_errors
+[PASS] H3.3 not started + capture missing, neighbours clean -> LỖI PHÉP ĐO (precedence), not_started and exec_error kept
+[PASS] H3.4 not started, inputs readable, neighbours clean -> LỖI THỰC THI with every evidence field present
+[PASS] H3.5 not started, no counter window: frame positions are not used to infer a FAIL
+[PASS] H4.1 mandatory row unreadable (lladdr 1) after -> LỖI PHÉP ĐO, no FAIL inferred
+[PASS] H4.1 mandatory row unreadable (state missing) after -> LỖI PHÉP ĐO, no FAIL inferred
+[PASS] H4.1 mandatory row unreadable (state 'PERMANENT' (string)) after -> LỖI PHÉP ĐO, no FAIL inferred
+[PASS] H4.2 mandatory row unreadable BEFORE, after clean -> LỖI PHÉP ĐO, not 'tap0 changed'
+[PASS] H4.3 valid table truly without the mandatory row -> FAIL
+[PASS] H4.4 mandatory row unreadable + a valid row with the guest MAC on eth0 -> FAIL kept
+[PASS] H4.5 an unidentifiable row (no dst) -> LỖI PHÉP ĐO, no 'missing'/'changed' inferred for any entry
+[PASS] H4.6 watched IP row unreadable BEFORE, after valid with another MAC -> no FAIL from the comparison (LỖI PHÉP ĐO)
+[PASS] H4.7 watched IP: valid before, row unreadable after -> LỖI PHÉP ĐO and NOT reported as 'missing'
+[PASS] H5 control callback returns True -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns 1 -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns 'true' -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns {'ok': True} -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns [True] -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns [True, 'x', 3] -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns (1, 'x') -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns ('true', 'x') -> record kept, control not ok, case not ĐẠT
+[PASS] H5 control callback returns None -> record kept, control not ok, case not ĐẠT
+[PASS] H5.ok control callback returns (True, detail) -> control ok
+[PASS] H6 JSON branch 'normal' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'not_run' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'not_started' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'fail' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'unknown_id' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'skipped' has every evidence/error field with the right type
+[PASS] H6 JSON branch 'input_error' has every evidence/error field with the right type
+== section C
+[PASS] C1 CLI clean -> exit 0, JSON written
+[PASS] C2 CLI: a case missing in the record -> exit 2 even though the 3 others pass
+[PASS] C3 CLI: invalid record -> exit 2
+[PASS] C4 CLI: unreadable record -> exit 2
+[PASS] C5 CLI: missing arguments -> exit 2
+SELFTEST-ARP: 212/212 passed

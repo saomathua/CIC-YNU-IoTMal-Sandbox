@@ -1,0 +1,151 @@
+ Image sandbox-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 613B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.43kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/ubuntu:22.04
+#3 DONE 1.7s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 438B done
+#4 DONE 0.0s
+
+#5 [ 1/16] FROM docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
+#5 resolve docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 1.18kB done
+#6 DONE 0.0s
+
+#7 [ 2/16] RUN apt-get update &&     apt-get --no-install-recommends -y install         qemu-system-arm qemu-system-mips qemu-system-x86         python3-dev python3-pip         net-tools iproute2 uml-utilities iptables         nftables=1.0.2-1ubuntu3.1 libnftables1=1.0.2-1ubuntu3.1         libnftnl11=1.2.1-1build1 libjansson4=2.13.1-1.1build3         procps sysstat         file         ca-certificates &&     DEBIAN_FRONTEND=noninteractive apt-get install -y tshark &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+#7 CACHED
+
+#8 [ 3/16] WORKDIR /app
+#8 CACHED
+
+#9 [ 4/16] COPY requirements.txt .
+#9 CACHED
+
+#10 [ 5/16] RUN pip install --no-cache-dir -r requirements.txt
+#10 0.967 Collecting annotated-types==0.7.0
+#10 1.235   Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#10 1.338 Collecting anyio==4.7.0
+#10 1.386   Downloading anyio-4.7.0-py3-none-any.whl (93 kB)
+#10 1.449      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 93.1/93.1 KB 1.8 MB/s eta 0:00:00
+#10 1.542 Collecting certifi==2025.1.31
+#10 1.589   Downloading certifi-2025.1.31-py3-none-any.whl (166 kB)
+#10 1.643      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 166.4/166.4 KB 3.2 MB/s eta 0:00:00
+#10 2.125 Collecting charset-normalizer==3.4.1
+#10 2.177   Downloading charset_normalizer-3.4.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (146 kB)
+#10 2.201      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 146.1/146.1 KB 6.9 MB/s eta 0:00:00
+#10 2.290 Collecting click==8.1.7
+#10 2.351   Downloading click-8.1.7-py3-none-any.whl (97 kB)
+#10 2.368      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 97.9/97.9 KB 7.0 MB/s eta 0:00:00
+#10 2.448 Collecting dnspython==2.7.0
+#10 2.506   Downloading dnspython-2.7.0-py3-none-any.whl (313 kB)
+#10 2.566      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 313.6/313.6 KB 5.3 MB/s eta 0:00:00
+#10 2.641 Collecting exceptiongroup==1.2.2
+#10 2.686   Downloading exceptiongroup-1.2.2-py3-none-any.whl (16 kB)
+#10 2.866 Collecting fastapi==0.115.6
+#10 2.915   Downloading fastapi-0.115.6-py3-none-any.whl (94 kB)
+#10 2.935      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 94.8/94.8 KB 5.2 MB/s eta 0:00:00
+#10 3.014 Collecting h11==0.14.0
+#10 3.080   Downloading h11-0.14.0-py3-none-any.whl (58 kB)
+#10 3.089      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 58.3/58.3 KB 17.7 MB/s eta 0:00:00
+#10 3.174 Collecting idna==3.10
+#10 3.220   Downloading idna-3.10-py3-none-any.whl (70 kB)
+#10 3.231      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 70.4/70.4 KB 10.2 MB/s eta 0:00:00
+#10 3.304 Collecting pexpect==4.9.0
+#10 3.351   Downloading pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+#10 3.361      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.8/63.8 KB 8.0 MB/s eta 0:00:00
+#10 3.429 Collecting ptyprocess==0.7.0
+#10 3.474   Downloading ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+#10 3.867 Collecting pydantic==2.10.3
+#10 3.920   Downloading pydantic-2.10.3-py3-none-any.whl (456 kB)
+#10 4.005      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 457.0/457.0 KB 5.5 MB/s eta 0:00:00
+#10 4.092 Collecting pydantic-settings==2.7.0
+#10 4.146   Downloading pydantic_settings-2.7.0-py3-none-any.whl (29 kB)
+#10 6.416 Collecting pydantic_core==2.27.1
+#10 6.495   Downloading pydantic_core-2.27.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+#10 6.901      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 5.3 MB/s eta 0:00:00
+#10 7.789 Collecting pymongo==4.10.1
+#10 7.855   Downloading pymongo-4.10.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.4 MB)
+#10 8.071      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 6.6 MB/s eta 0:00:00
+#10 8.155 Collecting python-dotenv==1.0.1
+#10 8.202   Downloading python_dotenv-1.0.1-py3-none-any.whl (19 kB)
+#10 8.286 Collecting python-multipart==0.0.20
+#10 8.337   Downloading python_multipart-0.0.20-py3-none-any.whl (24 kB)
+#10 8.440 Collecting requests==2.32.3
+#10 8.486   Downloading requests-2.32.3-py3-none-any.whl (64 kB)
+#10 8.498      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 64.9/64.9 KB 11.8 MB/s eta 0:00:00
+#10 8.567 Collecting sniffio==1.3.1
+#10 8.627   Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#10 8.750 Collecting starlette==0.41.3
+#10 8.810   Downloading starlette-0.41.3-py3-none-any.whl (73 kB)
+#10 8.820      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.2/73.2 KB 16.3 MB/s eta 0:00:00
+#10 8.923 Collecting typing_extensions==4.12.2
+#10 8.970   Downloading typing_extensions-4.12.2-py3-none-any.whl (37 kB)
+#10 9.104 Collecting urllib3==2.3.0
+#10 9.165   Downloading urllib3-2.3.0-py3-none-any.whl (128 kB)
+#10 9.192      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 128.4/128.4 KB 8.5 MB/s eta 0:00:00
+#10 9.309 Collecting uvicorn==0.34.0
+#10 9.368   Downloading uvicorn-0.34.0-py3-none-any.whl (62 kB)
+#10 9.375      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.3/62.3 KB 14.8 MB/s eta 0:00:00
+#10 9.893 Installing collected packages: ptyprocess, urllib3, typing_extensions, sniffio, python-multipart, python-dotenv, pexpect, idna, h11, exceptiongroup, dnspython, click, charset-normalizer, certifi, annotated-types, uvicorn, requests, pymongo, pydantic_core, anyio, starlette, pydantic, pydantic-settings, fastapi
+#10 11.51 Successfully installed annotated-types-0.7.0 anyio-4.7.0 certifi-2025.1.31 charset-normalizer-3.4.1 click-8.1.7 dnspython-2.7.0 exceptiongroup-1.2.2 fastapi-0.115.6 h11-0.14.0 idna-3.10 pexpect-4.9.0 ptyprocess-0.7.0 pydantic-2.10.3 pydantic-settings-2.7.0 pydantic_core-2.27.1 pymongo-4.10.1 python-dotenv-1.0.1 python-multipart-0.0.20 requests-2.32.3 sniffio-1.3.1 starlette-0.41.3 typing_extensions-4.12.2 urllib3-2.3.0 uvicorn-0.34.0
+#10 11.51 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#10 DONE 12.1s
+
+#11 [ 6/16] COPY ./config ./config
+#11 DONE 0.0s
+
+#12 [ 7/16] COPY ./router ./router
+#12 DONE 0.0s
+
+#13 [ 8/16] COPY ./service ./service
+#13 DONE 0.0s
+
+#14 [ 9/16] COPY ./util ./util
+#14 DONE 0.0s
+
+#15 [10/16] COPY ./isolation ./isolation
+#15 DONE 0.0s
+
+#16 [11/16] COPY ./ARM ./ARM
+#16 DONE 0.0s
+
+#17 [12/16] COPY ./MIPS ./MIPS
+#17 DONE 0.0s
+
+#18 [13/16] COPY ./MIPSEL ./MIPSEL
+#18 DONE 0.0s
+
+#19 [14/16] COPY ./x86 ./x86
+#19 DONE 0.0s
+
+#20 [15/16] COPY server.py ./poller.py ./run.sh ./
+#20 DONE 0.0s
+
+#21 [16/16] RUN mkdir data
+#21 DONE 0.3s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 16.5s done
+#22 exporting manifest sha256:cf77b1e00fb2ead864c979066f6537a55681695f337406fd5f271a84480feca6 done
+#22 exporting config sha256:e4de5d9ecd450b389b63cc98f4e2e00f0ea28032db9c6dd7080fcfc2945a42cc 0.0s done
+#22 exporting attestation manifest sha256:9c021ced633500a1be32f9ee4737af9f5151b24479b92cd154e8d2d01f5f76ae done
+#22 exporting manifest list sha256:a526b0c7175258ce089ba0e15885d4dbf19c02ede35cde1eb0f9abcaf7c2d71e done
+#22 naming to docker.io/library/sandbox-worker:latest done
+#22 unpacking to docker.io/library/sandbox-worker:latest
+#22 unpacking to docker.io/library/sandbox-worker:latest 3.6s done
+#22 DONE 20.2s
+
+#23 resolving provenance for metadata file
+#23 DONE 0.0s
+ Image sandbox-worker Built 

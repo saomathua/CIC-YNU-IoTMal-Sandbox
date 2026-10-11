@@ -1,0 +1,17 @@
+baseline: 39/39 tests pass
+OK  V1   DETECTED           target='M2 duplicate label -> ERROR from the measurement-data check'
+OK  V2   DETECTED           target="M1 read label 'B' missing -> ERROR from the measurement-data check"
+OK  V3   DETECTED           target='M6 counter packets is a bool -> ERROR from the measurement-data check'
+OK  V4   DETECTED           target='M5 read time not finite -> ERROR from the measurement-data check'
+OK  V5   DETECTED           target='M8 read without any counter -> ERROR from the measurement-data check'
+OK  V6   DETECTED           target='M13 a NOT compared counter missing in one read is reported missing (delta null), never 0'
+OK  V7   DETECTED           target='X1 missing capture -> ERROR (capture read error), not 0 frames'
+OK  V8   DETECTED           target='C4 UNVERIFIED -> exit 4'
+OK  V9   DETECTED           target='S3 frames counted by direction/class inside the window; the outside frame is counted apart'
+OK  V10  DETECTED           target='S10 UNVERIFIED: a frame without a counter mapping inside the window, listed'
+OK  V11  DETECTED           target='C3 ERROR -> exit 2, JSON still written with the error'
+OK  V12  DETECTED           target='X5 malformed TAP MAC -> ERROR (invalid argument)'
+OK  V13  DETECTED           target='M16 a counter listed twice in one read -> ERROR'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-L2EVAL: 15 OK, 0 not as expected; harness unchanged

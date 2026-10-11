@@ -1,0 +1,46 @@
+== section C
+[PASS] C1 clean environment (manager exited, mongo running): collector exit 0, evaluator PASS
+[PASS] C2 every read keeps argv, rc, status and stdout/stderr files
+[PASS] C3 no docker verb other than version/info/image inspect/ps/network ls+inspect/inspect/exec; no Config.Env
+[PASS] C4 manager exited -> no docker exec at all (SKIPPED with the reason)
+[PASS] C5 permission-denied: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec skipped as 'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented
+[PASS] C5 daemon-down: harness containers UNKNOWN (never 'absent'), manager UNKNOWN (never 'not running'), exec skipped as 'state unknown', collector exit 3, evaluator UNKNOWN (2), no FAIL invented
+[PASS] C6 image id differs from the reviewed one -> FAIL (compared automatically), evaluator exit 1 path
+[PASS] C7 a harness container left over -> FAIL (PRESENT from the successful listing)
+[PASS] C8 network-missing: network not inspected (SKIPPED, reason kept), collector exit 3, evaluator UNKNOWN
+[PASS] C8 network-ambiguous: network not inspected (SKIPPED, reason kept), collector exit 3, evaluator UNKNOWN
+[PASS] C9 sandboxnet with another subnet -> FAIL
+[PASS] C10 manager running: read-only exec commands only (ip -V, ip -j neigh, /proc/net/arp, /sys/class/net), MAC usable -> PASS; neighbour JSON parsed (informational)
+[PASS] C11 manager running with an all-zero MAC -> FAIL (endpoint MAC unusable)
+[PASS] C12 manager inspect fails AND the successful listing has no manager -> FAIL 'ABSENT'
+[PASS] C13 manager inspect fails but the listing shows it -> UNKNOWN (not 'not running')
+[PASS] C14 pgrep-found: pgrep rc 1 = none, rc 0 = present (FAIL), other rc = read error (UNKNOWN), never 'none'
+[PASS] C14 pgrep-error: pgrep rc 1 = none, rc 0 = present (FAIL), other rc = read error (UNKNOWN), never 'none'
+[PASS] C15 nft read error -> UNKNOWN + collector exit 3
+[PASS] C16 nft ruleset differs from the 06B-4G reference -> FAIL
+[PASS] C17 an executable that cannot run -> status EXEC_ERROR kept, UNKNOWN
+[PASS] C18 a read that times out -> status TIMEOUT kept, UNKNOWN
+[PASS] C19 collector never states a verdict: its meta says 'NOT a precheck verdict' and the code has no PASS output
+== section E
+[PASS] E1 evaluator CLI exit 0 only for a complete PASS
+[PASS] E2 evaluator CLI exit 1 on a FAIL
+[PASS] E3 evaluator CLI exit 2 on missing/failed reads
+[PASS] E4 collector output without reads.json -> UNUSABLE, exit 3
+== section O
+[PASS] O1 output path that is a symlink -> refused (O_NOFOLLOW), nothing written to the target
+[PASS] O1b symlink to an EMPTY directory with the right owner/mode -> still refused (only O_NOFOLLOW stops it)
+[PASS] O2 output directory mode-0755 -> refused
+[PASS] O2 output directory not-empty -> refused
+[PASS] O2 output directory other-owner -> refused
+[PASS] O3 output path swapped for a symlink after the check: every file lands in the checked directory, the symlink target is untouched
+[PASS] O4 a symlink planted under an output name -> creation fails (O_EXCL|O_NOFOLLOW), target untouched
+[PASS] O5 trusted_bins: owner/mode checked for the file and its directory; group-writable or foreign-owned refused; relative path refused
+[PASS] O6 the real pinned executables on this host pass trusted_bins (root-owned, not group/other-writable)
+[PASS] O7 subprocess environment is exactly the fixed minimal one (nothing inherited)
+[PASS] O8 collector main as a normal user -> REFUSED, exit 2 (needs root), nothing collected
+== section L
+[PASS] L1 snippet with the right hash: fresh mktemp dir (0700), copy checked, `out` 0700, the COPY is run
+[PASS] L2 snippet with a wrong hash (file swapped/changed): nothing run, the copy removed, exit 1
+[PASS] L3 snippet: absolute executables only, no source, no tee, no chown, no redirection into the user tree
+SELFTEST-PRECHECK: 40/40 passed
+exit=0

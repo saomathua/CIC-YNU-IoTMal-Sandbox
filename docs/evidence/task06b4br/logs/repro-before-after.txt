@@ -1,0 +1,32 @@
+== repro: reviewer's case (sigscan_l2.scan)
+base-06b4b: full    frame 1747 B -> frames=1 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=1 probe_qname=0
+base-06b4b: cut512  frame 1747 B -> frames=1 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0
+.: full    frame 1747 B -> frames=1 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=1 probe_qname=0 truncated_frames=0 unscannable_truncated=0 unscannable_undecoded=0
+.: cut512  frame 1747 B -> frames=1 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=1 probe_qname=0 truncated_frames=1 unscannable_truncated=0 unscannable_undecoded=0
+
+== new section K run against the 06B-4B modules (before) and the 06B-4BR modules (after)
+before 06B-4B: [FAIL] K1 NATed ICMP 1705 B, full capture -> icmp_size 1  (KeyError: 'truncated_frames')
+before 06B-4B: [FAIL] K2 NATed ICMP 1705 B cut at 512 (orig kept) -> icmp_size 1 from the IPv4 header  (returned False)
+before 06B-4B: [FAIL] K3 same cut in pcapng (EPB original length) -> icmp_size 1, truncated_frames 1  (returned False)
+before 06B-4B: [FAIL] K4 NATed TCP probe port, full and cut at 512 -> probe_port 1 both  (returned False)
+before 06B-4B: [FAIL] K4 NATed UDP probe port, full and cut at 512 -> probe_port 1 both  (returned False)
+before 06B-4B: [FAIL] K5 DNS name found when captured in full  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K6 DNS payload cut before the name -> unscannable_truncated 1, not a silent 0  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K7 IPv4 header cut by snaplen -> unscannable_truncated 1, no signature claimed  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K8 TCP ports cut by snaplen -> unscannable_truncated 1  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K9 Ethernet header cut by snaplen -> unscannable_truncated 1  (KeyError: 'unscannable_truncated')Traceback (most recent call last):
+before 06B-4B: [FAIL] K10 ARP cut below 28 bytes -> unscannable_truncated 1, guest MAC still seen  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K11 ICMPv6 1301 cut by snaplen -> icmp_size 1 from the IPv6 header  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K12 IPv6 header cut by snaplen -> unscannable_truncated 1  (KeyError: 'unscannable_truncated')
+before 06B-4B: [FAIL] K13 malformed (total length beyond the wire frame): header read, not counted as truncated  (returned False)
+before 06B-4B: [FAIL] K14 IPv4 header shorter than 20 B on the wire -> unscannable_undecoded 1  (KeyError: 'unscannable_undecoded')
+before 06B-4B: [FAIL] K15 VLAN frame -> unscannable_undecoded 1  (KeyError: 'unscannable_undecoded')
+before 06B-4B: [FAIL] K16 pcap record with captured > original length -> read error  (returned False)
+before 06B-4B: [FAIL] K17 pcapng EPB with captured > original length -> read error  (returned False)
+before 06B-4B: [FAIL] K19 tap0: guest IPv4 cut by snaplen -> unmapped (not drop_public)  (TypeError: decode() takes 2 positional arguments but 3 were given)
+before 06B-4B: [FAIL] K20 tap0: guest ARP cut by snaplen -> unmapped  (TypeError: decode() takes 2 positional arguments but 3 were given)
+before 06B-4B: [FAIL] K21 tap0: spoofed-MAC frame cut by snaplen is still l2_bad_mac (L2 decision)  (TypeError: decode() takes 2 positional arguments but 3 were given)
+before 06B-4B: [FAIL] K22 tap0: worker frame cut by snaplen -> unmapped  (TypeError: decode() takes 2 positional arguments but 3 were given)
+before 06B-4B: [FAIL] K-INFRA section crashed  (returned False)
+before 06B-4B: SELFTEST-L2: 148/171 passed; FAILED: ['K1 NATed ICMP 1705 B, full capture -> icmp_size 1', 'K2 NATed ICMP 1705 B cut at 512 (orig kept) -> icmp_size 1 from the IPv4 header', 'K3 same cut in pcapng (EPB original length) -> icmp_size 1, truncated_frames 1', 'K4 NATed TCP probe port, full and cut at 512 -> probe_port 1 both', 'K4 NATed UDP probe port, full and cut at 512 -> probe_port 1 both', 'K5 DNS name found when captured in full', 'K6 DNS payload cut before the name -> unscannable_truncated 1, not a silent 0', 'K7 IPv4 header cut by snaplen -> unscannable_truncated 1, no signature claimed', 'K8 TCP ports cut by snaplen -> unscannable_truncated 1', 'K9 Ethernet header cut by snaplen -> unscannable_truncated 1', 'K10 ARP cut below 28 bytes -> unscannable_truncated 1, guest MAC still seen', 'K11 ICMPv6 1301 cut by snaplen -> icmp_size 1 from the IPv6 header', 'K12 IPv6 header cut by snaplen -> unscannable_truncated 1', 'K13 malformed (total length beyond the wire frame): header read, not counted as truncated', 'K14 IPv4 header shorter than 20 B on the wire -> unscannable_undecoded 1', 'K15 VLAN frame -> unscannable_undecoded 1', 'K16 pcap record with captured > original length -> read error', 'K17 pcapng EPB with captured > original length -> read error', 'K19 tap0: guest IPv4 cut by snaplen -> unmapped (not drop_public)', 'K20 tap0: guest ARP cut by snaplen -> unmapped', 'K21 tap0: spoofed-MAC frame cut by snaplen is still l2_bad_mac (L2 decision)', 'K22 tap0: worker frame cut by snaplen -> unmapped', 'K-INFRA section crashed']
+after 06B-4BR: K tests passing = 25

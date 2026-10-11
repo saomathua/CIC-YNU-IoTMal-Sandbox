@@ -1,0 +1,354 @@
+09613fedb5a38eb7dca6ba915d3632d7332a6f8a7563797fbd9b3097bd6088f7  /home/dathq/projects/ct01-06b4fr/out/harness-copy/counter_window.py
+4392b3974ca644abd4b229a40638cb32dd5d31159effb234ab06536dc7385340  /home/dathq/projects/ct01-06b4fr/out/harness-copy/ctl_loop.py
+b9d871110a3b3545728bef1561eff6108001267e8568f0a6e15e15261130d185  /home/dathq/projects/ct01-06b4fr/out/harness-copy/guest_state.py
+e148be6492d6a2a0f9117661f5efd1ec66c85665d66277366ca70763e850e071  /home/dathq/projects/ct01-06b4fr/out/harness-copy/harness_lib.sh
+f306f62f6f273b685b9edd39f095a5b849a7d5a3ed3127ad4cb40ffc8be1808e  /home/dathq/projects/ct01-06b4fr/out/harness-copy/icmp_cases.py
+9967afab00e214f60215a461b70a708ff1bcfc2d3c3af467bf40c16a389b377e  /home/dathq/projects/ct01-06b4fr/out/harness-copy/icmp_harness.py
+06852ac23d5e7b5526530afea8358b68b9e280411c1f7d9882a52a1ffe4b9f56  /home/dathq/projects/ct01-06b4fr/out/harness-copy/independent_check.sh
+38d0a8ac17e8b3bace400e0666fe2d63abc034ca210f6b5e9c0f86e1d9658958  /home/dathq/projects/ct01-06b4fr/out/harness-copy/l2eval.py
+eb75520a828696cce4e1a3dac2079ab80bb452a4fca6872d9b3f1eff86634bb6  /home/dathq/projects/ct01-06b4fr/out/harness-copy/l2frames.py
+2825156fc1e1c7cdcb07b8857d0377f4e6ff36491fbc2a396fa862a70607712e  /home/dathq/projects/ct01-06b4fr/out/harness-copy/make_fixtures.py
+f95b61c713297b46597e5b6f045768a48b77cf022752f6c5e243692baf8d117f  /home/dathq/projects/ct01-06b4fr/out/harness-copy/mutation_l2.py
+5b27dd2b3bb5ff71355df377f292a533b6476705bf08b1511f2dd2347d77a411  /home/dathq/projects/ct01-06b4fr/out/harness-copy/mutation_test.sh
+c3d18072bc8b3b394c3c90de95b282b20cd0b97e391882da59caad486c3fcffd  /home/dathq/projects/ct01-06b4fr/out/harness-copy/pcapng_stats.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b4fr/out/harness-copy/poller.py
+11b727b0f608de9d91b332d9c7c2d4077a79c65da197c5ba116958491c7a7e10  /home/dathq/projects/ct01-06b4fr/out/harness-copy/probe_matrix.py
+c83273d646a9f3e14ad8976b31dbe71ecf8075c1e40ad97810921eb6181a34a6  /home/dathq/projects/ct01-06b4fr/out/harness-copy/run-06b3b.sh
+5bc5ce4ed82ae0bba7c710d8554f5c73cab8c7bac91d1c81b576d9451d60db92  /home/dathq/projects/ct01-06b4fr/out/harness-copy/run-06b4f.sh
+ace687bb5322d04bfbed10c5efa6c31a8f0bd12a467f415e3511a822698e9221  /home/dathq/projects/ct01-06b4fr/out/harness-copy/selftest_icmp.py
+e06e21d28486a6a15ca3f3441cda1c09d7c4584c7d10c5f8a305b3d4154aa985  /home/dathq/projects/ct01-06b4fr/out/harness-copy/selftest_icmp_wiring.py
+de9ab9603f83e4399715eabf77793135eda7fc3c38e88db964bd94737156b92c  /home/dathq/projects/ct01-06b4fr/out/harness-copy/selftest_l2eval.py
+7675cca4415f3f61fe3893d549bb179b910dc40780606b1890d0c99aa29bee03  /home/dathq/projects/ct01-06b4fr/out/harness-copy/selftest_l2.py
+2247db1ef8846818b164300fc65210560b78b0a140cb9077dd9c24d2620c7ff4  /home/dathq/projects/ct01-06b4fr/out/harness-copy/selftest.sh
+0a8d62d0ba70f1881a21c249e395dd2f8fd5a92c6ee7432275b23fd287478218  /home/dathq/projects/ct01-06b4fr/out/harness-copy/signatures.py
+d5755d8907ce86fca0a63db3a8d11fa963e9150e6e886278f83b80aa586b67e8  /home/dathq/projects/ct01-06b4fr/out/harness-copy/sigscan_l2.py
+f85f52115d4b4cfb4d491d27ad2ba0f81b0dd13a1bd758d28983f664ed78a74b  /home/dathq/projects/ct01-06b4fr/out/harness-copy/sigscan.sh
+SELFTEST: ALL PASSED
+SELFTEST-L2: 175/175 passed
+SELFTEST-ICMP: 79/79 passed
+SELFTEST-ICMP-WIRING: 129/129 passed
+registry OK
+
+===== 1. preparation (08:42:16)
+host=hq user=dathq
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals reviewed full id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 4 hours ago
+mongo-db Up 7 hours
+sandboxnet=cic-ynu-iotmal-sandbox_sandboxnet bridge=br-1d86fe3e8bbe dbnet=cic-ynu-iotmal-sandbox_dbnet mongo=172.18.0.2 host-ips=192.168.60.1,192.168.177.128,172.18.0.1 lan-dns=192.168.177.2
+
+===== 2. existing manager for controls (start only if not running: --no-deps --no-build) (08:42:17)
+manager before: state=exited id=494ae3d2e2eb startedAt=2026-10-08T04:31:14.803522659Z
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Starting 
+ Container cic-ynu-iotmal-sandbox-sandbox-manager-1 Started 
+manager started by this run (same container): will be stopped again
+[PASS] manager healthy (127.0.0.1:8011/healthcheck)
+manager: running ip=192.168.60.10
+
+===== 3. worker test container (08:42:19)
+worker test container: 139280490a946b50330749128fb3958dad98dbb2acc85bff7818caf6e1dfebd1
+[PASS] worker server ready
+[PASS] V0 passed
+worker eth0=192.168.60.2 host veth=veth758078d (ifindex 19)
+[PASS] code and guest images in container equal working tree
+worker netns interfaces: eth0 lo tap0 
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+eth0@if19        UP             192.168.60.2/24 
+tap0             DOWN           10.200.0.1/30 
+default via 192.168.60.1 dev eth0 
+10.200.0.0/30 dev tap0 proto kernel scope link src 10.200.0.1 linkdown 
+192.168.60.0/24 dev eth0 proto kernel scope link src 192.168.60.2 
+[PASS] worker netns has exactly lo, eth0, tap0 (eth0 is the only way out besides tap0)
+
+===== 4. control container (sandboxnet + dbnet) (08:42:21)
+[PASS] control 'mongo 172.18.0.2:27017' alive
+[PASS] control 'worker-eth0 192.168.60.2:8011' alive
+[PASS] control 'manager 192.168.60.10:8011' alive
+
+===== 5. host captures on veth758078d, br-1d86fe3e8bbe, ens33 + leak alert (08:42:25)
+tcpdump version 4.99.4
+libpcap version 1.10.4 (with TPACKET_V3)
+OpenSSL 3.0.13 30 Jan 2024
+capture dir: /tmp/ct01-06b3b-cap.JaSAeQ
+[PASS] host tcpdump pid 256266 running
+[PASS] host tcpdump pid 256267 running
+[PASS] host tcpdump pid 256268 running
+[PASS] host tcpdump pid 256270 running
+[PASS] host tcpdump pid 256271 running
+[PASS] host capture veth: tcpdump reports listening
+[PASS] host capture bridge: tcpdump reports listening
+[PASS] host capture ens33: tcpdump reports listening
+[PASS] host capture alert: tcpdump reports listening
+[PASS] host capture alert_eth: tcpdump reports listening
+[PASS] host capture veth.pcap being written
+[PASS] host capture bridge.pcap being written
+[PASS] capture watcher running with a fresh heartbeat
+capture watcher pid 256283 on veth:256266 bridge:256267 ens33:256268 alert:256270 alert_eth:256271
+
+===== 6. guest ARM (08:42:28)
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+08:42:29 [PASS] ARM: host leak monitor running and empty before boot {}
+08:42:29 [PASS] ARM: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+08:42:29 [PASS] ARM: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+08:42:29 [PASS] ARM: tshark capturing on tap0 {}
+08:42:44 [PASS] ARM: guest booted and network configured {"qemu_pid": 172}
+08:42:45 [PASS] ARM: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["virtio-net-pci.0", "nic", []], ["virtio-net-pci.1", "nic", ["tap"]]], "probe_iface": "eth1", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+08:42:45 [PASS] ARM: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/bin/wget", "/bin/ping", "missing:arping"]}
+08:42:45 [PASS] ARM: info: ICMP suite (06B-4F): five reviewed cases, rule check only {"fixture_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f", "probe_iface": "eth1", "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations", "tap_mac": "26:b3:9f:a4:8c:01"}
+08:42:45 [PASS] ARM: capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791448965.8186252}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791448965.8296857}}
+08:42:45 --- ICMP group: T12-B1, T12-B2, T12-B4, T13-I1, T13-I2 on eth1
+08:42:46 [PASS] ARM: allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f", "http_code": "200", "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0, "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f"}
+08:43:08 [PASS] ARM: allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f", "http_code": "200", "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out", "rc": 0, "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f"}
+08:43:08     ICMP group record: 5 case(s), sent 7 guest command(s)
+08:43:08 [PASS] ARM: tap0 MAC unchanged during the ICMP group {"after": "26:b3:9f:a4:8c:01", "before": "26:b3:9f:a4:8c:01"}
+08:43:08 [PASS] ARM: all five ICMP cases executed with captures alive {"executed": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "planned": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "skipped": null}
+08:43:08 [PASS] ARM: capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791448988.853216}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791448988.856422}}
+08:43:09 [PASS] ARM: QEMU exit confirmed {"exitstatus": 0}
+08:43:10 [PASS] ARM: tap0 capture stopped cleanly {"returncode": 0}
+08:43:10 [PASS] ARM: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 78}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 78}}}, "tshark_stderr_tail": "ous.\nCapturing on 'tap0'\n ** (tshark:148) 08:42:29.893140 [Main MESSAGE] -- Capture started.\n ** (tshark:148) 08:42:29.893217 [Main MESSAGE] -- File: \"/harness-out/ARM/tap0.pcapng\"\n78 packets captured", "verdict": "\u0110\u1ea0T"}
+08:43:10 [PASS] ARM: fixture, marker and temporary guest disk removed {}
+08:43:10 == ARM: SESSION-WIDE reconciliation (reported separately; changes no probe verdict and not the exit code): PASS
+08:43:10 [PASS] ARM: ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash {"problems": []}
+08:43:10 [PASS] ARM: probe T12-B1 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 5, "probe_frames_certain": 5, "reconciliation": "PASS", "replies_to_guest": 0}
+08:43:10 [PASS] ARM: probe T12-B2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 5, "probe_frames_certain": 5, "reconciliation": "PASS", "replies_to_guest": 0}
+08:43:10 [PASS] ARM: probe T12-B4 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 5, "probe_frames_certain": 5, "reconciliation": "PASS", "replies_to_guest": 0}
+08:43:10 [FAIL] ARM: probe T13-I1 (icmp, rule check) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm) {"category": "CHUA_KIEM_CHUNG", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 2, "reconciliation": "UNVERIFIED", "replies_to_guest": 0}
+08:43:10 [PASS] ARM: probe T13-I2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 4, "probe_frames_certain": 4, "reconciliation": "PASS", "replies_to_guest": 0}
+08:43:10 == ARM: status=COMPLETED; 23/24 checks passed
+probe_matrix ARM exit=1
+ARM: probe_matrix outcome: UNVERIFIED: probe T13-I1 (icmp, rule check) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[UNVERIFIED] ARM: UNVERIFIED: probe T13-I1 (icmp, rule check) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+[SESSION] ARM: PASS
+[PASS] ARM: no qemu-system/tshark left in container
+[PASS] ARM: full verify after guest shutdown
+
+===== 6. guest MIPS (08:43:10)
+[PASS] MIPS: no QEMU running before start (sequential)
+[PASS] MIPS: all host captures alive before start
+[PASS] MIPS: capture watcher alive with a fresh heartbeat before start
+08:43:11 [PASS] MIPS: host leak monitor running and empty before boot {}
+08:43:11 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+08:43:11 [PASS] MIPS: info: tshark version {"version": "TShark (Wireshark) 3.6.2 (Git v3.6.2 packaged as 3.6.2-2)"}
+08:43:11 [PASS] MIPS: tshark capturing on tap0 {}
+08:43:35 [PASS] MIPS: guest booted and network configured {"qemu_pid": 284}
+08:43:37 [PASS] MIPS: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["pcnet.0", "nic", ["tap"]]], "probe_iface": "br-lan", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+08:43:37 [PASS] MIPS: info: guest network tools {"tools": ["/usr/bin/nslookup", "/usr/bin/nc", "/usr/bin/wget", "/bin/ping", "missing:arping"]}
+08:43:37 [PASS] MIPS: info: ICMP suite (06B-4F): five reviewed cases, rule check only {"fixture_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "probe_iface": "br-lan", "service_link_role": "guest-worker service link: precondition before/after the group, NOT a live control for the ICMP destinations", "tap_mac": "26:b3:9f:a4:8c:01"}
+08:43:37 [PASS] MIPS: capture liveness traffic from the worker before the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791449017.1571105}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791449017.168694}}
+08:43:37 --- ICMP group: T12-B1, T12-B2, T12-B4, T13-I1, T13-I2 on br-lan
+08:43:37 [PASS] MIPS: allowed service link before the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "http_code": "200", "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0, "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a"}
+08:44:38 [PASS] MIPS: allowed service link after the ICMP group: GET get-task/T/file HTTP 200 + fixture hash {"expected_sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a", "http_code": "200", "output_tail": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0, "sha256": "b13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a"}
+08:44:38     ICMP group record: 5 case(s), sent 7 guest command(s)
+08:44:38 [PASS] MIPS: tap0 MAC unchanged during the ICMP group {"after": "26:b3:9f:a4:8c:01", "before": "26:b3:9f:a4:8c:01"}
+08:44:38 [PASS] MIPS: all five ICMP cases executed with captures alive {"executed": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "planned": ["T12-B1", "T12-B2", "T12-B4", "T13-I1", "T13-I2"], "skipped": null}
+08:44:38 [PASS] MIPS: capture liveness traffic from the worker after the ICMP group (host captures; not a control for the ICMP destinations) {"lan_dns_udp": {"detail": "DNS response rcode=3", "ok": true, "ts": 1791449078.1852956}, "manager_http": {"detail": "HTTP 200", "ok": true, "ts": 1791449078.1927588}}
+08:44:38 [PASS] MIPS: QEMU exit confirmed {"exitstatus": 0}
+08:44:39 [PASS] MIPS: tap0 capture stopped cleanly {"returncode": 0}
+08:44:39 [PASS] MIPS: tap0 capture drop statistics (pcapng ISB from dumpcap): present and 0 dropped {"reason": "isb_ifdrop=0 on every interface; isb_ifrecv equals stored packets", "stats": {"epb": {"0": 115}, "interfaces": 1, "isb": {"0": {"comment": "Counters provided by dumpcap", "isb_ifdrop": 0, "isb_ifrecv": 115}}}, "tshark_stderr_tail": "s.\nCapturing on 'tap0'\n ** (tshark:260) 08:43:11.400466 [Main MESSAGE] -- Capture started.\n ** (tshark:260) 08:43:11.400514 [Main MESSAGE] -- File: \"/harness-out/MIPS/tap0.pcapng\"\n115 packets captured", "verdict": "\u0110\u1ea0T"}
+08:44:39 [PASS] MIPS: fixture, marker and temporary guest disk removed {}
+08:44:39 == MIPS: SESSION-WIDE reconciliation (reported separately; changes no probe verdict and not the exit code): PASS
+08:44:39 [PASS] MIPS: ICMP group record: each reviewed case exactly once, service link before/after HTTP 200 + fixture hash {"problems": []}
+08:44:39 [PASS] MIPS: probe T12-B1 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T12-B2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T12-B4 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T13-I1 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 [PASS] MIPS: probe T13-I2 (icmp, rule check) -> ĐẠT (kiểm quy tắc) {"category": "DAT_KIEM_QUY_TAC", "evidence_kind": "rule_check", "failed": null, "probe_frames": 3, "probe_frames_certain": 3, "reconciliation": "PASS", "replies_to_guest": 0}
+08:44:39 == MIPS: status=COMPLETED; 24/24 checks passed
+probe_matrix MIPS exit=0
+MIPS: probe_matrix outcome: PASS
+[PASS] MIPS: probe_matrix exit 0 (all checks and probes passed)
+[SESSION] MIPS: PASS
+[PASS] MIPS: no qemu-system/tshark left in container
+[PASS] MIPS: full verify after guest shutdown
+ICMP groups complete: ARM MIPS
+[PASS] ICMP group evaluated for ARM and MIPS, each case exactly once per architecture
+[PASS] worker netns interfaces unchanged after the guests
+[PASS] worker netns addresses unchanged after the guests
+[PASS] worker netns main routes unchanged after the guests
+worker netns full record: differences in container/netns-diff.txt (reported, e.g. neighbor states)
+
+===== 7. teardown of controls and captures (drain 3 s, capture deadline 10 s) (08:44:40)
+[PASS] control container stopped after the guests
+[PASS] capture watcher still alive with a fresh heartbeat at the end
+[PASS] no host capture exited during the test (watcher marker empty)
+[PASS] all host captures exited on SIGINT within 10 s with exit 0
+1791449080.309676 08:44:40.311 guests finished (last probe_matrix returned)
+1791449080.533894 08:44:40.535 control container stopped (docker stop rc=0)
+1791449083.538670 08:44:43.542 drain period of 3 s ended
+1791449083.570627 08:44:43.572 capture watcher stopped
+1791449083.573824 08:44:43.575 veth pid 256266: SIGINT sent
+1791449083.576130 08:44:43.577 bridge pid 256267: SIGINT sent
+1791449083.578198 08:44:43.579 ens33 pid 256268: SIGINT sent
+1791449083.580325 08:44:43.581 alert pid 256270: SIGINT sent
+1791449083.582298 08:44:43.583 alert_eth pid 256271: SIGINT sent
+1791449083.602399 08:44:43.604 veth pid 256266: exited rc=0
+1791449083.621334 08:44:43.623 bridge pid 256267: exited rc=0
+1791449083.639664 08:44:43.641 ens33 pid 256268: exited rc=0
+1791449083.658052 08:44:43.659 alert pid 256270: exited rc=0
+1791449083.677400 08:44:43.679 alert_eth pid 256271: exited rc=0
+veth 0
+bridge 0
+ens33 0
+alert 0
+alert_eth 0
+[PASS] tcpdump veth: exit 0 on stop
+[PASS] tcpdump veth: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump veth: 0 packets dropped by kernel
+[OPEN] tcpdump veth: received by filter 2995, captured 2987 (difference 8 not explained)
+[PASS] tcpdump bridge: exit 0 on stop
+[PASS] tcpdump bridge: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump bridge: 0 packets dropped by kernel
+[OPEN] tcpdump bridge: received by filter 5910, captured 5902 (difference 8 not explained)
+[PASS] tcpdump ens33: exit 0 on stop
+[PASS] tcpdump ens33: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump ens33: 0 packets dropped by kernel
+[OPEN] tcpdump ens33: received by filter 1283, captured 1275 (difference 8 not explained)
+[PASS] tcpdump alert: exit 0 on stop
+[PASS] tcpdump alert: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump alert: 0 packets dropped by kernel
+[PASS] tcpdump alert_eth: exit 0 on stop
+[PASS] tcpdump alert_eth: statistics present (captured, received by filter, dropped by kernel)
+[PASS] tcpdump alert_eth: 0 packets dropped by kernel
+[PASS] leak alerts: no signature packet line (any: network layer; veth: + MAC)
+alert: 0 packets captured
+alert: 0 packets received by filter
+[PASS] leak alert tcpdump alert: 0 packets captured
+alert_eth: 0 packets captured
+alert_eth: 0 packets received by filter
+[PASS] leak alert tcpdump alert_eth: 0 packets captured
+[PASS] ens33 capture did not reach its packet limit (200000)
+veth: probe-signature packets=0 (tcpdump rc=0)
+[PASS] veth.pcap readable (tcpdump exit 0)
+[PASS] veth.pcap: 0 packets with guest MAC / 10.200.0.0/30
+veth sigscan (rc=0): frames=2987 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] veth.pcap: sigscan read OK (exit 0)
+[PASS] veth.pcap: guest_l2l3 = 0
+[PASS] veth.pcap: probe_sport = 0
+[PASS] veth.pcap: probe_qname = 0
+[PASS] veth.pcap: probe_url = 0
+veth sigscan_l2 (rc=0): frames=2987 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=0 unscannable_truncated=0 unscannable_undecoded=0 
+[PASS] veth.pcap: sigscan_l2 read OK (exit 0)
+[PASS] veth.pcap: guest_mac = 0
+[PASS] veth.pcap: spoof_mac = 0
+[PASS] veth.pcap: guest_net_ip = 0
+[PASS] veth.pcap: arp_guest_sha = 0
+[PASS] veth.pcap: arp_spoof_sha = 0
+[PASS] veth.pcap: arp_guest_net = 0
+[PASS] veth.pcap: arp_spoof_spa_manager = 0
+[PASS] veth.pcap: ipv6_guest = 0
+[PASS] veth.pcap: spoof_src_ip = 0
+[PASS] veth.pcap: probe_port = 0
+[PASS] veth.pcap: icmp_size = 0
+[PASS] veth.pcap: probe_qname = 0
+[PASS] veth.pcap: unscannable_truncated = 0
+[PASS] veth.pcap: unscannable_undecoded = 0
+bridge: probe-signature packets=0 (tcpdump rc=0)
+[PASS] bridge.pcap readable (tcpdump exit 0)
+[PASS] bridge.pcap: 0 packets with guest MAC / 10.200.0.0/30
+bridge sigscan (rc=0): frames=5902 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] bridge.pcap: sigscan read OK (exit 0)
+[PASS] bridge.pcap: guest_l2l3 = 0
+[PASS] bridge.pcap: probe_sport = 0
+[PASS] bridge.pcap: probe_qname = 0
+[PASS] bridge.pcap: probe_url = 0
+bridge sigscan_l2 (rc=0): frames=5902 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=0 unscannable_truncated=0 unscannable_undecoded=0 
+[PASS] bridge.pcap: sigscan_l2 read OK (exit 0)
+[PASS] bridge.pcap: guest_mac = 0
+[PASS] bridge.pcap: spoof_mac = 0
+[PASS] bridge.pcap: guest_net_ip = 0
+[PASS] bridge.pcap: arp_guest_sha = 0
+[PASS] bridge.pcap: arp_spoof_sha = 0
+[PASS] bridge.pcap: arp_guest_net = 0
+[PASS] bridge.pcap: arp_spoof_spa_manager = 0
+[PASS] bridge.pcap: ipv6_guest = 0
+[PASS] bridge.pcap: spoof_src_ip = 0
+[PASS] bridge.pcap: probe_port = 0
+[PASS] bridge.pcap: icmp_size = 0
+[PASS] bridge.pcap: probe_qname = 0
+[PASS] bridge.pcap: unscannable_truncated = 0
+[PASS] bridge.pcap: unscannable_undecoded = 0
+ens33: probe-signature packets=0 (tcpdump rc=0)
+[PASS] ens33.pcap readable (tcpdump exit 0)
+[PASS] ens33.pcap: 0 packets with guest MAC / 10.200.0.0/30
+ens33 sigscan (rc=0): frames=1275 guest_l2l3=0 probe_sport=0 probe_qname=0 probe_url=0 control_qname=8 
+[PASS] ens33.pcap: sigscan read OK (exit 0)
+[PASS] ens33.pcap: guest_l2l3 = 0
+[PASS] ens33.pcap: probe_sport = 0
+[PASS] ens33.pcap: probe_qname = 0
+[PASS] ens33.pcap: probe_url = 0
+ens33 sigscan_l2 (rc=0): frames=1275 guest_mac=0 spoof_mac=0 guest_net_ip=0 arp_guest_sha=0 arp_spoof_sha=0 arp_guest_net=0 arp_spoof_spa_manager=0 ipv6_guest=0 spoof_src_ip=0 probe_port=0 icmp_size=0 probe_qname=0 truncated_frames=441 unscannable_truncated=0 unscannable_undecoded=0 
+[PASS] ens33.pcap: sigscan_l2 read OK (exit 0)
+[PASS] ens33.pcap: guest_mac = 0
+[PASS] ens33.pcap: spoof_mac = 0
+[PASS] ens33.pcap: guest_net_ip = 0
+[PASS] ens33.pcap: arp_guest_sha = 0
+[PASS] ens33.pcap: arp_spoof_sha = 0
+[PASS] ens33.pcap: arp_guest_net = 0
+[PASS] ens33.pcap: arp_spoof_spa_manager = 0
+[PASS] ens33.pcap: ipv6_guest = 0
+[PASS] ens33.pcap: spoof_src_ip = 0
+[PASS] ens33.pcap: probe_port = 0
+[PASS] ens33.pcap: icmp_size = 0
+[PASS] ens33.pcap: probe_qname = 0
+[PASS] ens33.pcap: unscannable_truncated = 0
+[PASS] ens33.pcap: unscannable_undecoded = 0
+[PASS] ens33.pcap: payload scan finds the control DNS queries (control_qname > 0)
+veth: control packets from worker=35 (rc=0)
+[PASS] veth capture live: worker control packets seen
+ens33: NATed control packets=54 (rc=0)
+[PASS] ens33 capture live: NATed control packets seen
+bridge: packets from worker=1230 (rc=0)
+[PASS] bridge capture live: worker packets seen
+[PASS] temporary capture dir removed
+
+===== 8. teardown (08:44:44)
+[PASS] no marker, fixture or guest disk left in worker container
+[PASS] normalized runtime ruleset identical to expected
+[PASS] all containers created by this run removed
+manager after: state=exited id=494ae3d2e2eb startedAt=2026-10-08T08:42:17.624923816Z (before: exited 494ae3d2e2eb 2026-10-08T04:31:14.803522659Z; started by this run: 1)
+[PASS] manager back to its initial state (exited; same container; not restarted if it was running)
+[PASS] no qemu-system on host
+[PASS] no capture process left on host
+-- host differences (all reported; evaluated in the summary):
+unchanged: capture-procs.txt
+CHANGED: docker-ps.txt
+--- /home/dathq/projects/ct01-06b4fr/out/host-before/docker-ps.txt	2026-10-08 08:42:17.371413434 +0000
++++ /home/dathq/projects/ct01-06b4fr/out/host-after/docker-ps.txt	2026-10-08 08:44:48.119184646 +0000
+@@ -1,2 +1,2 @@
+-cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 4 hours ago
++cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 2 seconds ago
+ mongo-db mongo:8.0.32 Up 7 hours
+unchanged: host-tap0.txt
+unchanged: ip6-route.txt
+unchanged: ip-addr.txt
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+unchanged: lsmod-net.txt
+unchanged: nft-ruleset-stateless.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+[PASS] host sysctl.txt unchanged
+[PASS] host nft-ruleset-stateless.txt unchanged
+[PASS] host ip-route.txt unchanged
+[PASS] host listen-tcp.txt unchanged
+[PASS] host qemu.txt unchanged
+[PASS] host capture-procs.txt unchanged
+[PASS] host host-tap0.txt unchanged
+created ids: 139280490a946b50330749128fb3958dad98dbb2acc85bff7818caf6e1dfebd1 13ae3555d1b5817f723e412d40092221cf5fbddda16508c2dc1a056a6aef0126
+
+===== result (08:44:48)
+OPEN ITEMS (reported, not explained):
+ - tcpdump veth: received by filter (2995) - captured (2987) = 8, not explained
+ - tcpdump bridge: received by filter (5910) - captured (5902) = 8, not explained
+ - tcpdump ens33: received by filter (1283) - captured (1275) = 8, not explained
+UNVERIFIED (could not be decided):
+ - ARM: UNVERIFIED: probe T13-I1 (icmp, rule check) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)
+SESSION-WIDE reconciliation (reported separately; does not change the exit code):
+ - ARM: PASS
+ - MIPS: PASS
+NOT PASSED: no check failed, but some results are UNVERIFIED

@@ -2,7 +2,7 @@
 
 Tài liệu này mô tả cách cấu hình, build và vận hành sandbox bằng `sudo docker compose` trên Ubuntu 24.04.
 
-> **Trạng thái kiểm chứng (cập nhật 06/10/2026):** cấu hình dưới đây mới được kiểm tra tĩnh (`docker compose config`, đối chiếu mã nguồn). **Chưa build image, chưa chạy stack, chưa kiểm chứng cô lập mạng.** Mục [Chưa kiểm thử](#chưa-kiểm-thử) liệt kê cụ thể.
+> **Trạng thái kiểm chứng (cập nhật 06/10/2026, NV06A):** đã build hai image (NV04); MongoDB + manager đã chạy và kiểm chứng (NV05). **Worker chưa chạy, cô lập mạng chưa triển khai và chưa kiểm chứng** — thiết kế tại [`network-isolation-design.md`](network-isolation-design.md). Mục [Chưa kiểm thử](#chưa-kiểm-thử) liệt kê cụ thể. Bằng chứng: [`../KQCaiTien.md`](../KQCaiTien.md).
 
 ## 1. Yêu cầu
 
@@ -96,6 +96,10 @@ Sau đó trên máy cá nhân:
 
 Kiểm thử cô lập (nhiệm vụ sau) phải dùng binary vô hại và có bằng chứng (pcap, iptables counters) trước khi chạy mẫu.
 
+**NV06A (06/10/2026):** đã phân tích đường đi gói **tiềm năng** từ mã và cấu hình (chưa thử nghiệm) và chọn phương án **tách mạng guest khỏi bridge** (subnet riêng trên `tap0`, `ip_forward=0`, nftables `netdev`/`arp`/`inet` mặc định drop, API allowlist bắt buộc, fail-closed; reviewer chấp nhận hướng, bản 2 đã sửa theo review). Chi tiết, ma trận kiểm thử và giả định: [`network-isolation-design.md`](network-isolation-design.md). **06B-1:** mã PA-2 đã được viết trên nhánh `feat/ct01-network-isolation`. `run.sh` mới không còn bridge, đặt sysctl, tạo `tap0` riêng, nạp nft, chạy V0 và fail-closed. Unit test và kiểm thử nft trong container `--network none` đã đạt. **Worker và guest chưa chạy lần nào; cô lập chưa được kiểm chứng. Không chạy worker với mẫu thật.**
+
+Lưu ý vận hành [KC 06A]: sau khi VM Ubuntu khởi động lại, `mongo-db` (`restart: always`) tự chạy lại nhưng `sandbox-manager` (`restart: on-failure`) **không** — cần `sudo docker compose up -d --no-deps --no-build sandbox-manager`.
+
 ## 8. Một worker
 
 Compose chỉ cấu hình `sandbox-worker-1` (`192.168.60.2`). VM lấy IP = IP worker + 1 (`sandbox-worker/service/analysis.py`), tức `192.168.60.3`, nên không thể gán `.3` cho worker thứ hai. Cần xem lại cách cấp IP trước khi mở rộng.
@@ -114,11 +118,11 @@ Ghim `mongo:8.0.32` kèm digest `sha256:d0d926f9…a9c` (Docker Hub, cập nhậ
 
 ## Chưa kiểm thử
 
-- [ ] `docker compose build` cho manager và worker (sau khi bỏ `COPY .env`).
-- [ ] Manager khởi động và kết nối MongoDB 8.0.32.
-- [ ] Bind mount `./data/manager/{output,uploads}` ghi được, dữ liệu còn sau `down`/`up`.
-- [ ] Cổng manager chỉ lắng nghe trên `127.0.0.1` của host (`ss -ltnp`).
-- [ ] SSH tunnel.
-- [ ] Worker khởi tạo `tap0`/`br0`, kết nối manager.
-- [ ] Cô lập mạng VM với `ALLOW_VM_INTERNET=false`.
+- [x] `docker compose build` cho manager và worker (sau khi bỏ `COPY .env`) — NV04.
+- [x] Manager khởi động và kết nối MongoDB 8.0.32 — NV05.
+- [ ] Bind mount `./data/manager/{output,uploads}` ghi được, dữ liệu còn sau `down`/`up` — *một phần*: ghi được và còn sau `--force-recreate` manager (NV05); chưa thử `down`/`up` và dữ liệu MongoDB.
+- [x] Cổng manager chỉ lắng nghe trên `127.0.0.1` của host (`ss -ltn`) — NV05.
+- [x] SSH tunnel — NV05.
+- [ ] Worker khởi tạo mạng guest và kết nối manager (thiết kế mới: `tap0` không bridge — NV06A, chưa triển khai).
+- [ ] Cô lập mạng VM theo ma trận T01–T21, F1–F6 trong `network-isolation-design.md` (bản 2).
 - [ ] Phân tích end-to-end với binary vô hại cho từng kiến trúc.

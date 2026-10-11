@@ -67,10 +67,10 @@ services:
 
   # ── Sandbox Worker ──────────────────────────────────
   # A single worker. The worker auto-detects the architecture of each
-  # binary at runtime. QEMU uses a tap interface bridged to the worker
-  # container's network, so the worker needs a fixed IP; the VM takes
-  # worker IP + 1 (service/analysis.py). Do not add more workers until
-  # that addressing is reviewed (see docs/deployment.md).
+  # binary at runtime. The QEMU guest is attached to a dedicated tap0 link
+  # (10.200.0.0/30) inside the worker's own network namespace; it is not
+  # bridged to sandboxnet (CT-01, docs/network-isolation-design.md).
+  # NOT YET VERIFIED with a running guest - do not analyse real samples.
   sandbox-worker-1:
     build: ./sandbox-worker
     image: sandbox-worker
@@ -83,8 +83,7 @@ services:
       SANDBOX_MANAGER_URI: http://sandbox-manager:8011/api/v1/sandbox-manager
       ANALYSIS_DURATION: ${ANALYSIS_DURATION:-30}
       POST_ANALYSIS_WAIT: ${POST_ANALYSIS_WAIT:-30}
-      # Requested default: no VM internet access. Enforcement (run.sh
-      # iptables rules) has NOT been verified yet.
+      # Only "false" is accepted; run.sh refuses to start otherwise (CT-01).
       ALLOW_VM_INTERNET: ${ALLOW_VM_INTERNET:-false}
     networks:
       sandboxnet:

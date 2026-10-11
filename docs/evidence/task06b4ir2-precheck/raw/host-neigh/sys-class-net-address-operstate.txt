@@ -1,0 +1,6 @@
+br-09fed07bbb6b 82:4a:11:8a:0f:1e up
+br-1d86fe3e8bbe fe:69:25:9f:7e:e9 down
+docker0 8e:8e:a6:21:c4:46 down
+ens33 00:0c:29:42:ad:4c up
+lo 00:00:00:00:00:00 unknown
+vethaf24531 d6:09:86:20:44:41 up

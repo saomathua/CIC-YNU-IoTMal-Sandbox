@@ -1,0 +1,1 @@
+04:31:05 capture p2 pid 141103 exited during the test

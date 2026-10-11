@@ -1,0 +1,1 @@
+08:42:01 capture z pid 254570 exited during the test

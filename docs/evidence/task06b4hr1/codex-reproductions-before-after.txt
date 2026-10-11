@@ -1,0 +1,152 @@
+Codex 06B-4HR review scripts (unmodified: reproduce.py, extra_stubs.py, extended_review.py, verify_extended_paths.py)
+re-run on the 06B-4HR and 06B-4HR1 arp_cases.py (fixture helpers: 06B-4HR1 selftest_arp.py).
+Inputs: review sha256 9246598cc5a6759812094ee9be9d53973b5dbcb0ee11f7b98236d69253a42725
+        bundle sha256 4476a3cef13f71a6f4c02fc2511376e015ee172ce39d2233fd66d787c14d3449
+        reproduce.py 7e78363cb5e8ae0e22fe237ed7f7162dd92673d462698a9c24628cad3b42d641
+        extra_stubs.py a40803afbe71c9c2bd7ee3ee367867c0231b9cfcf8371d600912a50ccced5675
+        extended_review.py e6c6e5c33f8911b1735ca326024281798e0a3d406497c730420b5dfdad87069c
+        verify_extended_paths.py 6b1a3fef660d85d5530f9a5791cba5e8fbe731d1f3136093e76298e915035037
+06B-4HR re-run identical to the four logs in Codex's bundle: yes (diff -q)
+
+=== reproduce
+case                                               06B-4HR                        06B-4HR1
+clean_s1                                           DAT_KIEM_QUY_TAC               DAT_KIEM_QUY_TAC
+s1_wrong_opcode_2                                  KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+s1_wrong_opcode_99                                 KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+a2_wrong_sha                                       KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+a2_wrong_spa                                       KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+a2_wrong_tpa                                       KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+a2_reply                                           KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+manager_removed                                    CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+manager_moved_interface_changed_mac                FAIL                           FAIL
+manager_bad_lladdr_NoneType                        LOI_PHEP_DO                    LOI_PHEP_DO
+manager_bad_lladdr_int                             LOI_PHEP_DO                    LOI_PHEP_DO
+manager_bad_lladdr_bool                            LOI_PHEP_DO                    LOI_PHEP_DO
+manager_bad_lladdr_list                            LOI_PHEP_DO                    LOI_PHEP_DO
+manager_bad_lladdr_dict                            LOI_PHEP_DO                    LOI_PHEP_DO
+manager_missing_state                              LOI_PHEP_DO                    LOI_PHEP_DO
+manager_bad_state_items                            LOI_PHEP_DO                    LOI_PHEP_DO
+manager_failed_state                               CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+duplicate_hides_abnormal_guest_mac                 FAIL                           FAIL
+abnormal_guest_mac_detected                        FAIL                           FAIL
+manager_changed_mac_detected                       FAIL                           FAIL
+neighbor_read_error                                LOI_PHEP_DO                    LOI_PHEP_DO
+known_violation_clean_reads                        FAIL                           FAIL
+known_violation_and_read_error                     FAIL                           FAIL
+known_neighbor_violation_and_read_error            FAIL                           FAIL
+clean_group                                        exit 0 ['DAT', 'DAT', 'DAT_KIE exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_empty_steps                                  exit 2 ['CHUA_KIEM_CHUNG', 'CH exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA
+group_setup_only                                   exit 2 ['CHUA_KIEM_CHUNG', 'CH exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA
+group_wrong_rc                                     exit 2 ['CHUA_KIEM_CHUNG', 'CH exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA
+group_wrong_phase                                  exit 2 ['CHUA_KIEM_CHUNG', 'CH exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA
+group_missing_guest_baseline                       exit 2 ['CHUA_KIEM_CHUNG', 'CH exit 2 ['CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA_KIEM_CHUNG', 'CHUA
+control_None                                       CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+control_False                                      CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+control_1                                          CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+control_true                                       CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+control_{}                                         CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+control_True                                       DAT                            DAT
+clean_a3                                           DAT_KIEM_QUY_TAC               DAT_KIEM_QUY_TAC
+edge_s1                                            KHONG_TAO_DUOC_GOI             KHONG_TAO_DUOC_GOI
+s1_all_edge                                        CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+restore                                            matrix 40 nonempty diffs 0     matrix 40 nonempty diffs 0
+scope                                              28 unchanged; added ['arp_case 28 unchanged; added ['arp_cases.py', 'mutation_arp.py', 'selftest_arp.
+
+=== extra_stubs
+case                                               06B-4HR                        06B-4HR1
+restore_console_exception                          False                          False
+ping_rc2_actual_run_group                          4                              4
+run_group_control_1                                CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+run_group_control_true                             CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+run_group_control_False                            CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+run_group_control_None                             CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+run_group_control_True                             DAT                            DAT
+restore_snapshot_read_error                        False                          False
+
+=== extended_review
+case                                               06B-4HR                        06B-4HR1
+dynamic_removed                                    CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+dynamic_incomplete                                 CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+dynamic_failed_no_mac                              CHUA_KIEM_CHUNG                CHUA_KIEM_CHUNG
+dynamic_stale                                      DAT_KIEM_QUY_TAC               DAT_KIEM_QUY_TAC
+mandatory_removed                                  FAIL                           FAIL
+mandatory_mac_changed                              FAIL                           FAIL
+mandatory_not_permanent                            FAIL                           FAIL
+mandatory_failed_no_mac                            FAIL                           FAIL
+mandatory_mac_invalid_type                         FAIL                           => LOI_PHEP_DO
+mandatory_state_missing                            FAIL                           => LOI_PHEP_DO
+mandatory_state_invalid_type                       FAIL                           => LOI_PHEP_DO
+mandatory_before_invalid_type                      FAIL                           => LOI_PHEP_DO
+mandatory_contradictory_states                     DAT_KIEM_QUY_TAC               => LOI_PHEP_DO
+group_clean                                        0                              0
+group_empty                                        2                              2
+group_missing                                      2                              2
+group_duplicate                                    2                              2
+group_unknown                                      2                              2
+group_reversed_steps                               2                              2
+group_rc_boolean                                   2                              2
+group_record_error_disguised_as_complete           2                              2
+group_restored_string                              2                              2
+group_restore_false                                4                              4
+group_baseline_addrs_invalid_contents              0                              => 2
+group_baseline_routes_invalid_contents             0                              => 2
+group_baseline_neigh_static_invalid_contents       0                              => 2
+group_baseline_operstate_empty                     0                              => 2
+group_baseline_arp_notify_negative                 0                              => 2
+group_restore_error_with_true                      0                              => 2
+group_restore_commands_invalid_contents            0                              => 2
+actual_restore_after_mismatch                      0                              => 2
+actual_restore_after_missing                       0                              => 2
+service_link_before_None                           4                              4
+service_link_before_False                          4                              4
+service_link_before_1                              4                              4
+service_link_before_true                           4                              4
+service_link_before_True                           0                              0
+service_link_before_[]                             4                              4
+service_link_before_{}                             4                              4
+service_link_after_None                            4                              4
+service_link_after_False                           4                              4
+service_link_after_1                               4                              4
+service_link_after_true                            4                              4
+service_link_after_True                            0                              0
+service_link_after_[]                              4                              4
+service_link_after_{}                              4                              4
+control_None                                       4                              4
+control_False                                      4                              4
+control_1                                          4                              4
+control_true                                       4                              4
+control_True                                       0                              0
+control_[]                                         4                              4
+control_{}                                         4                              4
+callback_control_True                              TypeError                      => record
+callback_control_1                                 TypeError                      => record
+callback_control_'true'                            record                         record
+callback_control_{'ok':                            True} KeyError                 => True} record
+callback_control_[True]                            IndexError                     => record
+callback_control_None                              record                         record
+callback_control_False                             record                         record
+callback_control_(True,                            'valid stub') record           'valid stub') record
+unstarted_case_known_neighbor_violation            LOI_THUC_THI                   => FAIL
+scope                                              record                         record
+
+=== verify_extended_paths (06B-4HR)
+T14-A1: ĐẠT
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+Restore contradiction CLI exit: 0
+Required neighbour parsed binding: False
+Unstarted + capture error result: {'id': 'T14-A2', 'category': 'LOI_THUC_THI', 'verdict': 'CHƯA KIỂM CHỨNG (lỗi thực thi: guest state not readable before the case: reading route failed in the guest (rc 1))', 'ok': False, 'evidence_kind': 'live_control'}
+
+=== verify_extended_paths (06B-4HR1)
+T14-A1: CHƯA KIỂM CHỨNG (hồ sơ thực thi không đầy đủ/không hợp lệ: restore says restored but the re-read state differs from the baseline: ["mac: '52:54:00:c7:00:02' -> '52:54:00:de:ad:01'"])
+T14-A2: ĐẠT
+T14-A3: ĐẠT (kiểm quy tắc)
+T15-S1: ĐẠT (kiểm quy tắc)
+RECORD: T14-A1: restore says restored but the re-read state differs from the baseline: ["mac: '52:54:00:c7:00:02' -> '52:54:00:de:ad:01'"]
+Restore contradiction CLI exit: 2
+Required neighbour parsed binding: True
+Unstarted + capture error result: {'id': 'T14-A2', 'category': 'FAIL', 'verdict': 'FAIL', 'ok': False, 'probe_frames': 0, 'probe_frames_certain': 0, 'probe_frame_classes': [], 'failure_evidence': ["tap0 neighbour 10.200.0.2 is not a usable PERMANENT 52:54:00:c7:00:02 after the case: [{'dst': '10.200.0.2', 'dev': 'tap0', 'lladdr': '8a:d3:09:b5:72:af', 'states': ['PERMANENT'], 'binding': True}]", "tap0 neighbours changed: [('10.200.0.2', '52:54:00:c7:00:02', True, True)] -> [('10.200.0.2', '8a:d3:09:b5:72:af', True, True)]"], 'measurement_errors': ["capture read error: cannot read /home/dathq/projects/ct01-06b4hr1-work/codex-rerun-06b4hr1/fixtures/does-not-exist.pcapng: [Errno 2] No such file or directory: '/home/dathq/projects/ct01-06b4hr1-work/codex-rerun-06b4hr1/fixtures/does-not-exist.pcapng'; invalid measurement data: /home/dathq/projects/ct01-06b4hr1-work/codex-rerun-06b4hr1/fixtures/unstarted_actual.jsonl: no counter read"], 'execution_problems': [], 'neighbour_inconclusive': [], 'arp_out_drop_delta': None, 'reconciliation': None, 'not_started': True, 'steps': [], 'restore': None, 'evidence_kind': 'live_control', 'not_run': False}
+
+Note: in 06B-4HR1 the contradictory row PERMANENT+FAILED is INVALID (kept as unknown), so parse_neigh()[0][0] printed above is
+another (valid) row; the mandatory row is not among the valid rows (selftest H2.2).

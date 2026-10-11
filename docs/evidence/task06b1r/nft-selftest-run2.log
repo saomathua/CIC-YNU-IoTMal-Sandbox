@@ -1,0 +1,57 @@
+== environment
+Tue Oct  6 13:07:41 UTC 2026
+6.8.0-146-generic
+nftables v1.0.2 (Lester Gooch)
+iproute2	5.15.0-1ubuntu2.2
+libjansson4:amd64	2.13.1-1.1build3
+libnftables1:amd64	1.0.2-1ubuntu3.1
+libnftnl11:amd64	1.2.1-1build1
+nftables	1.0.2-1ubuntu3.1
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+== guest link (container namespace only)
+2: tap0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN mode DEFAULT group default qlen 1000
+    link/ether c6:c1:bd:99:33:75 brd ff:ff:ff:ff:ff:ff promiscuity 0 minmtu 68 maxmtu 65521 
+    tun type tap pi off vnet_hdr off persist on addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 
+2: tap0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether c6:c1:bd:99:33:75 brd ff:ff:ff:ff:ff:ff
+    inet 10.200.0.1/30 scope global tap0
+       valid_lft forever preferred_lft forever
+10.200.0.2 lladdr 52:54:00:c7:00:02 PERMANENT
+10.200.0.0/30 dev tap0 proto kernel scope link src 10.200.0.1 linkdown 
+== first load via load.nft (single transaction, CT-01 tables absent)
+5892d2d74f97c446ffa0f72f3de06764148a79ff3b4e7b80f4d791662b7fdce4  /app/isolation/guest.nft
+0991fbdf89498c45853f076a3095acd2e8e6e33bdb8ecb43f6a23797156b54c8  /app/isolation/load.nft
+9fb32d7f7ec0e83d0440f7a9bce2e18021da6f9ee4557cfe26ac38eae8572b16  /out/generated-expected-ruleset.json
+== mutation tests
+[PASS] pristine ruleset matches baseline
+[PASS] counter drop_out increased — 0 -> 3
+[PASS] verify still passes after counter change
+[PASS] verify still passes after counter reset
+[PASS] add rule (append accept) — ruleset: table 'inet sandbox_guest' differs at item 21: expected={"chain": {"family": "inet", "hook": "input", "name": "input", "policy": "accept", "prio": -10, "table": "sandbox_guest", "type": "filter"}} actual={"rule"
+[PASS] insert rule at top — ruleset: table 'inet sandbox_guest' differs at item 13: expected={"rule": {"chain": "prerouting", "expr": [{"match": {"left": {"meta": {"key": "iifname"}}, "op": "!=", "right": "tap0"}}, {"accept": null}], "family": "ine
+[PASS] delete rule (drop_public) — ruleset: table 'inet sandbox_guest' differs at item 20: expected={"rule": {"chain": "prerouting", "expr": [{"counter": "drop_public"}, {"drop": null}], "family": "inet", "table": "sandbox_guest"}} actual={"chain": {"fami
+[PASS] delete arp rule (arp_in_drop) — ruleset: table 'arp sandbox_guest_arp' differs at item 8: expected={"rule": {"chain": "input", "expr": [{"counter": "arp_in_drop"}, {"drop": null}], "family": "arp", "table": "sandbox_guest_arp"}} actual={"chain": {"fami
+[PASS] add rule in arp output — ruleset: table 'arp sandbox_guest_arp' differs at item 10: expected={"rule": {"chain": "output", "expr": [{"match": {"left": {"meta": {"key": "oifname"}}, "op": "!=", "right": "tap0"}}, {"accept": null}], "family": "arp"
+[PASS] forward policy -> accept — ruleset: table 'inet sandbox_guest' differs at item 25: expected={"chain": {"family": "inet", "hook": "forward", "name": "forward", "policy": "drop", "prio": -10, "table": "sandbox_guest", "type": "filter"}} actual={"cha
+[PASS] delete table arp — ruleset: cannot list loaded ruleset: Command '['nft', '-j', 'list', 'table', 'arp', 'sandbox_guest_arp']' returned non-zero exit status 1.
+[PASS] delete table netdev — ruleset: cannot list loaded ruleset: Command '['nft', '-j', 'list', 'table', 'netdev', 'sandbox_guest_l2']' returned non-zero exit status 1.
+[PASS] extra base chain inside CT-01 table 'inet sandbox_guest' — ruleset: table 'inet sandbox_guest' differs at item 31: expected=null actual={"chain": {"family": "inet", "hook": "prerouting", "name": "extra", "policy": "accept", "prio": -400, "table": "sandbox_guest", "type": "filter
+[PASS] prio change prerouting -150 -> -100 — ruleset: table 'inet sandbox_guest' differs at item 12: expected={"chain": {"family": "inet", "hook": "prerouting", "name": "prerouting", "policy": "accept", "prio": -150, "table": "sandbox_guest", "type": "filter"}} act
+[PASS] hook change inet output -> postrouting — ruleset: table 'inet sandbox_guest' differs at item 27: expected={"chain": {"family": "inet", "hook": "output", "name": "output", "policy": "accept", "prio": -10, "table": "sandbox_guest", "type": "filter"}} actual={"cha
+[PASS] netdev device tap0 -> lo — ruleset: netdev sandbox_guest_l2 ingress devices [['lo']], expected [['tap0']]
+[PASS] service port 8011 -> 8012 — ruleset: table 'inet sandbox_guest' differs at item 16: expected={"rule": {"chain": "prerouting", "expr": [{"match": {"left": {"payload": {"field": "daddr", "protocol": "ip"}}, "op": "==", "right": "10.200.0.1"}}, {"matc
+[PASS] guest MAC changed — ruleset: table 'netdev sandbox_guest_l2' differs at item 4: expected={"rule": {"chain": "ingress", "expr": [{"match": {"left": {"payload": {"field": "saddr", "protocol": "ether"}}, "op": "!=", "right": "52:54:00:c7:00:02
+[PASS] private range narrowed — ruleset: table 'inet sandbox_guest' differs at item 18: expected={"rule": {"chain": "prerouting", "expr": [{"match": {"left": {"payload": {"field": "daddr", "protocol": "ip"}}, "op": "==", "right": {"set": [{"prefix": {"
+[PASS] drop -> accept on drop_private — ruleset: table 'inet sandbox_guest' differs at item 18: expected={"rule": {"chain": "prerouting", "expr": [{"match": {"left": {"payload": {"field": "daddr", "protocol": "ip"}}, "op": "==", "right": {"set": [{"prefix": {"
+[PASS] pristine reload matches baseline again
+[PASS] load.nft leaves unrelated table in place (no namespace flush) — table ip unrelated_test; table netdev sandbox_guest_l2; table arp sandbox_guest_arp; table inet sandbox_guest
+[PASS] load.nft replacing existing CT-01 tables matches baseline
+[PASS] failed transaction (syntax error) leaves previous CT-01 ruleset and counters intact — nft rc=1; drop_out 2 -> 2; stderr: /tmp/tmp39e94v03/guest.nft:90:24-24: Error: syntax error, unexpected '{', expecting string
+[PASS] failed transaction (undefined named counter) leaves previous CT-01 ruleset and counters intact — nft rc=1; drop_out 4 -> 4; stderr: /tmp/tmpj_ombhcx/guest.nft:65:18-34: Error: Could not process rule: No such file or directory
+[PASS] verify still passes after failed transactions
+[PASS] loaded ruleset matches expected-ruleset.json in image (working tree, not committed)
+[PASS] expected-ruleset.json (working tree) == generated candidate
+[INFO] scope: runtime verify compares ONLY the three CT-01 tables ['netdev sandbox_guest_l2', 'arp sandbox_guest_arp', 'inet sandbox_guest']; other tables in the namespace are not checked. Tables present now: ['table netdev sandbox_guest_l2', 'table arp sandbox_guest_arp', 'table inet sandbox_guest']
+[PASS] link/neighbor/route checks on the test tap0
+[INFO] sysctl check (not asserted; /proc/sys is read-only without --privileged): ["sysctl: net.ipv4.ip_forward='1', expected '0'", "sysctl: net.ipv4.conf.tap0.arp_ignore='0', expected '1'", "sysctl: net.ipv4.conf.tap0.arp_announce='0', expected '2'", "sysctl: net.ipv4.conf.tap0.rp_filter='2', expected '1'", "sysctl: net.ipv6.conf.tap0.disable_ipv6='0', expected '1'"]
+== 29/29 passed

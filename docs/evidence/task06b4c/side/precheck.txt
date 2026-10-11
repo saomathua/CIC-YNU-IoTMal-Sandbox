@@ -1,0 +1,8 @@
+Thu Oct  8 04:29:16 AM UTC 2026
+sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+cic-ynu-iotmal-sandbox-sandbox-manager-1 sandbox-manager Exited (0) 12 hours ago
+mongo-db mongo:8.0.32 Up 3 hours
+manager: status=exited id=494ae3d2e2eb1b7da1d4473b862de75269c21a345b4e05090e8de0da8a27f14b startedAt=2026-10-07T16:12:39.645814307Z
+no ct01-06b3b-guest
+no ct01-06b3b-ctl
+no qemu/capture processes

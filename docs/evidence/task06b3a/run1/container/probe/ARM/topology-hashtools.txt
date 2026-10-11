@@ -1,0 +1,3 @@
+echo @@B8; command -v sha256sum md5sum; echo @@E8 rc=$?
+@@B8
+/usr/bin/sha256sum

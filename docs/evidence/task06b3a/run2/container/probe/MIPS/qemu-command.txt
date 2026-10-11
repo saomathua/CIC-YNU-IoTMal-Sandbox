@@ -1,0 +1,1 @@
+qemu-system-mips -M malta -kernel /tmp/g-MIPS/image/vmlinux -hda /tmp/g-MIPS/image/root.ext4 -append "root=/dev/sda" -nographic -no-reboot -device pcnet,netdev=net0,mac=52:54:00:c7:00:02 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no

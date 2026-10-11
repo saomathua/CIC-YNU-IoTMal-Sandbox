@@ -1,0 +1,8 @@
+90f59172ca1112dc287f7c148a28a973a3458931c97299b32f8a8fd7eecb430e  ./ct01-06b4f-harness-vs-06b4e.diff
+9a072f57a25deab4412ebc35ea4cdd6473469fb708faae140da943d63b2d4320  ./harness-sha256.txt
+7b194ce2a4662f64dc3ab72d5696061538f33cde5cb6a98aeddd8629d3d435b2  ./logs/mutation-icmp-wiring.txt
+6763daf6aabecacc57de4fc2a29eba4ada92ecde1c739092a1816214b3d70d75  ./logs/mutation-test-sh.log
+d25611413d731cf9180790349e14e76266edcea9c32fb40eb01d70d2499f354c  ./logs/selftest-icmp.log
+bb9aca7502651f9214a5fa970d54f8043de58b5f004ce8105c7956323d0c3307  ./logs/selftest-icmp-wiring.log
+841b79938b5ce8b303b3720c18282fe871a84f7eb7f48d18c96e245136d1c678  ./logs/selftest-icmp-wiring-stability.txt
+731c35975de319412501f2d37c6f17aa309e075a11e6d47903c700f1266edb74  ./logs/selftest-sh.log

@@ -1,0 +1,14 @@
+06B-3FR regression cases: session_reconcile of 06B-3F (before) vs 06B-3FR (after)
+note: 06B-3F's function has no final_read_error/required_finals parameters and ignores pids_after_exit;
+      for final-read-error the 06B-3F evaluate_session only copied the error into session.json after the verdict
+pre-window-guest-frame       expected UNVERIFIED before=PASS         after=UNVERIFIED
+pre-window-arp               expected UNVERIFIED before=PASS         after=UNVERIFIED
+arp-in-start-edge            expected UNVERIFIED before=PASS         after=UNVERIFIED
+qemu-left-after-exit         expected ERROR      before=PASS         after=ERROR
+qemu-state-unverifiable      expected ERROR      before=PASS         after=ERROR
+qemu-state-scan-error        expected ERROR      before=PASS         after=ERROR
+missing-F2                   expected ERROR      before=PASS         after=ERROR
+final-read-error             expected ERROR      before=PASS         after=ERROR
+class-missing-in-A           expected ERROR      before=PASS         after=ERROR
+class-missing-in-F1          expected ERROR      before=PASS         after=ERROR
+class-missing-in-F2          expected ERROR      before=PASS         after=ERROR

@@ -1,0 +1,41 @@
+clean_s1 DAT_KIEM_QUY_TAC
+s1_wrong_opcode_2 DAT_KIEM_QUY_TAC
+s1_wrong_opcode_99 DAT_KIEM_QUY_TAC
+a2_wrong_sha KHONG_TAO_DUOC_GOI
+a2_wrong_spa KHONG_TAO_DUOC_GOI
+a2_wrong_tpa KHONG_TAO_DUOC_GOI
+a2_reply KHONG_TAO_DUOC_GOI
+manager_removed DAT_KIEM_QUY_TAC
+manager_moved_interface_changed_mac DAT_KIEM_QUY_TAC
+manager_bad_lladdr_NoneType DAT_KIEM_QUY_TAC
+manager_bad_lladdr_int DAT_KIEM_QUY_TAC
+manager_bad_lladdr_bool DAT_KIEM_QUY_TAC
+manager_bad_lladdr_list DAT_KIEM_QUY_TAC
+manager_bad_lladdr_dict DAT_KIEM_QUY_TAC
+manager_missing_state DAT_KIEM_QUY_TAC
+manager_bad_state_items DAT_KIEM_QUY_TAC
+manager_failed_state DAT_KIEM_QUY_TAC
+duplicate_hides_abnormal_guest_mac DAT_KIEM_QUY_TAC
+abnormal_guest_mac_detected FAIL
+manager_changed_mac_detected FAIL
+neighbor_read_error LOI_PHEP_DO
+known_violation_clean_reads FAIL
+known_violation_and_read_error LOI_PHEP_DO
+known_neighbor_violation_and_read_error LOI_PHEP_DO
+clean_group exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_empty_steps exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_setup_only exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_wrong_rc exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_wrong_phase exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+group_missing_guest_baseline exit 0 ['DAT', 'DAT', 'DAT_KIEM_QUY_TAC', 'DAT_KIEM_QUY_TAC']
+control_None CHUA_KIEM_CHUNG
+control_False CHUA_KIEM_CHUNG
+control_1 CHUA_KIEM_CHUNG
+control_true CHUA_KIEM_CHUNG
+control_{} CHUA_KIEM_CHUNG
+control_True DAT
+clean_a3 DAT_KIEM_QUY_TAC
+edge_s1 KHONG_TAO_DUOC_GOI
+s1_all_edge CHUA_KIEM_CHUNG
+restore matrix 40 nonempty diffs 0
+scope 28 unchanged; added ['arp_cases.py', 'mutation_arp.py', 'selftest_arp.py'] changed []

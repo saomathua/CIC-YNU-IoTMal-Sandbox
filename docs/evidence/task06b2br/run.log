@@ -1,0 +1,86 @@
+
+===== 1. preparation (14:19:16)
+feat/ct01-network-isolation
+3c54d55925b7471687b9be5b3cebcbb5b2e4bd43
+image id=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153 expected=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+[PASS] image id equals full expected id
+cic-ynu-iotmal-sandbox-sandbox-manager-1 Exited (0) 5 hours ago
+mongo-db Up 58 minutes
+d47b1fa13887801cdc1ff2f1fc48687378ef279123816399e379b9037bb80e05  /home/dathq/projects/ct01-06b2br/run-06b2br.sh
+517be1541e1c0b812f014fa84d93406d54aef7e56e3d1a1979de331faf0eeb20  /home/dathq/projects/ct01-06b2br/sentinel/server.py
+7e49a99bac3a1b5f277d0700b4250043a13fce15bbb6f5c58dd7d24d44a8ab26  /home/dathq/projects/ct01-06b2br/sentinel/poller.py
+
+===== 2. A: valid start (14:19:17)
+container id: b23aab4190431346fd08d1c0d6e4227a4956bad83e22b8e01f486543f54a1183
+state: running exit=0 restarts=0
+2026-10-06T14:19:17.429390357Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-06T14:19:17.445920014Z SENTINEL poller.py called (no real poller started)SENTINEL server.py called (no real server started)
+[PASS] A: container running, 0 restarts
+[PASS] A: V0 passed
+[PASS] A: both sentinels called
+[PASS] A: in-image verify.py equals working tree
+-- 1-correct: verify exit=0
+ISOLATION OK (06B-2BR 1-correct): ruleset,sysctl,link,neighbor,route
+[PASS] A/1-correct: verify passes
+-- 2-guest-ip-on-lo: verify exit=1
+ISOLATION FAIL (06B-2BR 2-guest-ip-on-lo): link: address 10.200.0.2/32 on lo is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)
+[PASS] A/2-guest-ip-on-lo: verify fails (exit 1)
+[PASS] A/2-guest-ip-on-lo: failure names the address
+[PASS] A/2-guest-ip-on-lo: 10.200.0.2/32 removed from lo
+-- 3-guest-ip-on-eth0: verify exit=1
+ISOLATION FAIL (06B-2BR 3-guest-ip-on-eth0): link: eth0 address 10.200.0.3 inside guest network
+ISOLATION FAIL (06B-2BR 3-guest-ip-on-eth0): link: address 10.200.0.3/32 on eth0 is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)
+[PASS] A/3-guest-ip-on-eth0: verify fails (exit 1)
+[PASS] A/3-guest-ip-on-eth0: failure names the address
+[PASS] A/3-guest-ip-on-eth0: 10.200.0.3/32 removed from eth0
+-- 3b-overlap-prefix-on-lo: verify exit=1
+ISOLATION FAIL (06B-2BR 3b-overlap-prefix-on-lo): link: address 10.200.1.5/16 on lo is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)
+[PASS] A/3b-overlap-prefix-on-lo: verify fails (exit 1)
+[PASS] A/3b-overlap-prefix-on-lo: failure names the address
+[PASS] A/3b-overlap-prefix-on-lo: 10.200.1.5/16 removed from lo
+-- 4-ordinary-on-lo: verify exit=0
+ISOLATION OK (06B-2BR 4-ordinary-on-lo): ruleset,sysctl,link,neighbor,route
+[PASS] A/4-ordinary-on-lo: verify passes
+[PASS] A/4-ordinary-on-lo: 192.0.2.10/32 removed from lo
+-- 5-final-correct: verify exit=0
+ISOLATION OK (06B-2BR 5-final-correct): ruleset,sysctl,link,neighbor,route
+[PASS] A/5-final-correct: verify passes
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.60.2/24 brd 192.168.60.255 scope global eth0\       valid_lft forever preferred_lft forever
+3: tap0    inet 10.200.0.1/30 scope global tap0\       valid_lft forever preferred_lft forever
+[PASS] A: only tap0 holds a 10.200.0.0/30 address at the end
+[PASS] A: no qemu/tshark in container
+[PASS] A: docker stop exit 0
+[PASS] A: docker rm exit 0
+
+===== 3. B: guest address on lo before run.sh (14:19:25)
+exit code: 1
+2026-10-06T14:19:25.523167462Z ISOLATION FAIL (V0 startup): link: address 10.200.0.2/32 on lo is inside/overlaps guest network 10.200.0.0/30 (only 10.200.0.1/30 on tap0 is allowed)
+[PASS] B: exit code exactly 1
+[PASS] B: V0 failed naming 10.200.0.2/32 on lo
+[PASS] B: no sentinel called
+[PASS] B: 0 restarts
+
+===== 4. host state and cleanup (14:19:25)
+[PASS] no qemu-system on host
+[PASS] all containers created by this run are removed
+unchanged: docker-ps.txt
+unchanged: host-tap0.txt
+unchanged: ip6-route.txt
+unchanged: ip-addr.txt
+unchanged: ip-link.txt
+unchanged: ip-route.txt
+unchanged: listen-tcp.txt
+unchanged: lsmod-net.txt
+unchanged: nft-ruleset-stateless.txt
+unchanged: qemu.txt
+unchanged: sysctl.txt
+[PASS] host sysctl.txt unchanged
+[PASS] host nft-ruleset-stateless.txt unchanged
+[PASS] host ip-route.txt unchanged
+[PASS] host ip-addr.txt unchanged
+[PASS] host listen-tcp.txt unchanged
+created ids: b23aab4190431346fd08d1c0d6e4227a4956bad83e22b8e01f486543f54a1183 82e3f729c57b647d8d9f7aaa9818bc13f2a1e4c439d968c47c36c3eb0a36208f
+
+===== result (14:19:27)
+ALL CHECKS PASSED

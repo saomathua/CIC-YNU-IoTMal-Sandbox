@@ -8,6 +8,7 @@ import time
 import requests
 
 from config.settings import app_settings
+from isolation import current_task
 from service.analysis import dynamic_analysis, clear_stop, AnalysisCancelled
 
 logging.basicConfig(
@@ -16,8 +17,75 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def startup_cleanup():
+    """Remove a current_task marker left over from a previous run (crash, kill)."""
+    current_task.clear()
+
+
+def run_analysis(fname, task_dir, worker):
+    """Run one analysis with the guest API allowlist bound to this task.
+
+    The current_task marker is written atomically before phase 1 and removed on
+    every exit path (success, failure, cancellation, unexpected exception).
+    Returns True on success, False if the task failed or was cancelled.
+    """
+    clear_stop()
+    try:
+        current_task.set_current(fname)
+        dynamic_analysis(fname, task_dir=task_dir, worker=worker)
+        return True
+    except AnalysisCancelled:
+        logger.warning(f"Task {fname} was cancelled")
+        shutil.rmtree(task_dir, ignore_errors=True)
+        return False
+    except Exception as e:
+        logger.exception(f"Analysis failed for task {fname}")
+        qemu_log = task_dir + app_settings.qemu_log_path
+        try:
+            with open(qemu_log, 'r', encoding='utf-8', errors='replace') as _lf:
+                logger.error(f"QEMU log for task {fname}:\n{_lf.read()}")
+        except FileNotFoundError:
+            logger.warning(f"No QEMU log found for task {fname}")
+        shutil.rmtree(task_dir, ignore_errors=True)
+        failure_url = app_settings.sandbox_manager_uri + "/submit-failure/" + fname
+        requests.post(failure_url, params={"reason": str(e)})
+        return False
+    finally:
+        current_task.clear()
+
+
+def submit_result(fname, task_dir):
+    time.sleep(0.5)
+
+    shutil.rmtree(task_dir + "/image")
+    shutil.make_archive(task_dir, 'zip', task_dir)
+
+    upload_url = app_settings.sandbox_manager_uri + "/submit-result/" + fname
+    with open(task_dir + ".zip", 'rb') as f:
+        resp2 = requests.post(upload_url, files={"file": f})
+    logger.info(f"Upload response: {resp2.status_code}")
+
+    if resp2.status_code == 200:
+        shutil.rmtree(task_dir)
+        os.remove(task_dir + ".zip")
+    else:
+        logger.warning(f"Result upload failed ({resp2.status_code}) for task {fname}, cleaning up")
+        shutil.rmtree(task_dir, ignore_errors=True)
+        try:
+            os.remove(task_dir + ".zip")
+        except FileNotFoundError:
+            pass
+        try:
+            failure_url = app_settings.sandbox_manager_uri + "/submit-failure/" + fname
+            requests.post(failure_url, params={"reason": f"result upload failed with status {resp2.status_code}"})
+        except Exception:
+            logger.exception(f"Failed to report upload failure to manager for task {fname}")
+
+
 if __name__ == '__main__':
     logger.info("Starting worker poller")
+    startup_cleanup()
 
     worker = {}
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -43,51 +111,8 @@ if __name__ == '__main__':
             with open(task_dir + "/" + fname, 'wb') as f:
                 f.write(resp.content)
 
-            clear_stop()
-            try:
-                dynamic_analysis(fname, task_dir=task_dir, worker=worker)
-            except AnalysisCancelled:
-                logger.warning(f"Task {fname} was cancelled")
-                shutil.rmtree(task_dir, ignore_errors=True)
-                continue
-            except Exception as e:
-                logger.exception(f"Analysis failed for task {fname}")
-                qemu_log = task_dir + app_settings.qemu_log_path
-                try:
-                    with open(qemu_log, 'r', encoding='utf-8', errors='replace') as _lf:
-                        logger.error(f"QEMU log for task {fname}:\n{_lf.read()}")
-                except FileNotFoundError:
-                    logger.warning(f"No QEMU log found for task {fname}")
-                shutil.rmtree(task_dir, ignore_errors=True)
-                failure_url = app_settings.sandbox_manager_uri + "/submit-failure/" + fname
-                requests.post(failure_url, params={"reason": str(e)})
-                continue
-
-            time.sleep(0.5)
-
-            shutil.rmtree(task_dir + "/image")
-            shutil.make_archive(task_dir, 'zip', task_dir)
-
-            upload_url = app_settings.sandbox_manager_uri + "/submit-result/" + fname
-            with open(task_dir + ".zip", 'rb') as f:
-                resp2 = requests.post(upload_url, files={"file": f})
-            logger.info(f"Upload response: {resp2.status_code}")
-
-            if resp2.status_code == 200:
-                shutil.rmtree(task_dir)
-                os.remove(task_dir + ".zip")
-            else:
-                logger.warning(f"Result upload failed ({resp2.status_code}) for task {fname}, cleaning up")
-                shutil.rmtree(task_dir, ignore_errors=True)
-                try:
-                    os.remove(task_dir + ".zip")
-                except FileNotFoundError:
-                    pass
-                try:
-                    failure_url = app_settings.sandbox_manager_uri + "/submit-failure/" + fname
-                    requests.post(failure_url, params={"reason": f"result upload failed with status {resp2.status_code}"})
-                except Exception:
-                    logger.exception(f"Failed to report upload failure to manager for task {fname}")
+            if run_analysis(fname, task_dir, worker):
+                submit_result(fname, task_dir)
         else:
             logger.debug("No tasks available, retrying in 5s")
             time.sleep(5)

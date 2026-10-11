@@ -1,0 +1,2 @@
+ISOLATION OK (06B-2A recheck): ruleset,sysctl,link,neighbor,route
+verify exit=0

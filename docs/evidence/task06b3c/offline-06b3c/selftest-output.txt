@@ -1,0 +1,54 @@
+== A. signature scanner
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/empty.pcap
+b2d7c429306ae8c8c1c0cd9f71ff9a7234f72b57cafb5f1f6ba605de8995988e  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/negative.pcap
+943503f3a5c6f7db98aec4f0cc572d8f612bc0858bc08fe5fac3c3c65fdd679c  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/positive.pcap
+537ea160db4175c729bca4a6e6ec64e7e27fa219b14246d26ef4f8e951725e61  /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/truncated.pcap
+-- positive.pcap (rc=0)
+frames=6
+guest_l2l3=2
+probe_sport=1
+probe_qname=1
+probe_url=2
+control_qname=0
+[PASS] positive.pcap: sigscan exit 0
+[PASS] positive.pcap: counts equal expected.json
+-- negative.pcap (rc=0)
+frames=8
+guest_l2l3=0
+probe_sport=0
+probe_qname=0
+probe_url=0
+control_qname=2
+[PASS] negative.pcap: sigscan exit 0
+[PASS] negative.pcap: counts equal expected.json
+-- truncated.pcap: rc=2 READ ERROR rc=1 file=/tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/truncated.pcap: reading from file /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-
+[PASS] truncated.pcap: read error reported (exit 2), never counted as 0 packets
+-- empty.pcap: rc=2 READ ERROR: /tmp/claude-1000/-home-dathq-projects/92872fdb-e0a0-4b71-9775-e5b265e6c34b/scratchpad/st4/fx/empty.pcap is empty or missing
+[PASS] empty.pcap: read error reported (exit 2), never counted as 0 packets
+[PASS] missing file: read error reported (exit 2)
+probe names from probe_matrix.py: internet-tcp lan-dns-udp lan-dns-tcp manager mongodb worker-eth0 tap0-other-port-listener ssh-host-192.168.60.1 ssh-host-192.168.177.128 ssh-host-172.18.0.1
+[PASS] probe_matrix.py plan has 7 fixed names + 3 ssh-host
+[PASS] every real probe URL matches the scanner regex
+[PASS] 06B-3B regex /ct01-06b3b-[0-9] matched none of them (the defect being fixed)
+== B. capture watcher
+[PASS] watcher quiet while captures run
+marker: 15:58:16 capture p2 pid 15700 exited during the test
+[PASS] watcher writes marker naming the dead capture
+[PASS] watcher stopped
+== B2. probe_matrix.py captures_alive (extracted with ast; a sleep process stands in for tshark)
+[PASS] tshark alive, no marker -> continue
+[PASS] host marker present -> CaptureLost (t2: host capture lost: 12:00:00 capture ens33 pid 1 exited during the test)
+[PASS] empty marker file -> continue
+[PASS] tshark exited -> CaptureLost (t4: tap0 tshark exited rc=-9)
+[PASS] tshark never started -> CaptureLost (t5: tap0 tshark exited rc=None)
+[PASS] probe_matrix.py captures_alive behaves as specified
+== C. manager handling (fake docker)
+[PASS] running before: kept running, rc=0
+[PASS] running before: no compose up/stop issued (not restarted)
+[PASS] exited before: started then stopped again, rc=0
+[PASS] exited before: exactly one up and one stop
+[PASS] running before but restarted during test -> restore reports failure
+[PASS] container replaced during test -> restore reports failure
+[PASS] running before but stopped by someone -> restore reports failure
+
+SELFTEST: ALL PASSED

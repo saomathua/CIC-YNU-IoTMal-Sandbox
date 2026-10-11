@@ -1,0 +1,2094 @@
+--- ct01-06b3c/run-06b3b.sh	2026-10-07 05:54:16.094888344 +0000
++++ ct01-06b4b/run-06b3b.sh	2026-10-08 02:12:56.934891903 +0000
+@@ -11,8 +11,14 @@
+ # results are PASS (exit 0), FAIL (1), UNVERIFIED (4) or passed-with-open-items (5).
+ # 06B-3F: a session-wide counter/pcap reconciliation per architecture (session.json) is reported in its
+ # own section; it does not change the per-probe verdicts or the exit code.
++# 06B-4B (harness copy in ct01-06b4b; the 06B-3FR1 copy in ct01-06b3c is unchanged), host side only,
++# same 20 probes: ens33 is captured WITHOUT a filter, bounded (snaplen, packet limit: reaching the limit
++# ends tcpdump, which the watcher reports as a dead capture); the leak alerts are built from
++# signatures.py (alert on `any`: network-layer signatures; alert_eth on the worker veth: + MAC
++# signatures, because `ether host` does not compile on LINUX_SLL2); host pcaps are also scanned by
++# sigscan_l2.py (guest/spoof MAC, ARP, IPv6, spoofed sources, probe ports/ICMP sizes/qname).
+ #
+-#   sudo bash /home/dathq/projects/ct01-06b3c/run-06b3b.sh
++#   sudo bash /home/dathq/projects/ct01-06b4b/run-06b3b.sh
+ #
+ #  * Worker test container ct01-06b3b-guest: reviewed image (full id pinned), real run.sh (V0),
+ #    REAL server.py, sentinel poller. sandboxnet, --privileged like compose, --restart no,
+@@ -32,7 +38,7 @@
+ set -uo pipefail
+ 
+ EXPECTED_IMAGE_ID=sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153
+-H=/home/dathq/projects/ct01-06b3c
++H=/home/dathq/projects/ct01-06b4b
+ OUT=$H/out
+ REPO=/home/dathq/projects/CIC-YNU-IoTMal-Sandbox
+ IMAGE=sandbox-worker:latest
+@@ -48,11 +54,17 @@
+ exec > >(tee "$OUT/run.log") 2>&1
+ cp "$0" "$H/probe_matrix.py" "$H/ctl_loop.py" "$H/sentinel/poller.py" "$H/harness_lib.sh" "$H/sigscan.sh" \
+     "$H/make_fixtures.py" "$H/selftest.sh" "$H/independent_check.sh" "$H/pcapng_stats.py" "$H/mutation_test.sh" \
+-    "$H/counter_window.py" "$OUT/harness-copy/"
++    "$H/counter_window.py" "$H/signatures.py" "$H/l2frames.py" "$H/guest_state.py" "$H/sigscan_l2.py" \
++    "$H/selftest_l2.py" "$H/mutation_l2.py" "$OUT/harness-copy/"
+ sha256sum "$OUT"/harness-copy/* | tee "$OUT/harness-sha256.txt"
+ # Offline self-test of the scanner, the capture watcher and the manager handling; nothing runs if it fails.
+ bash "$H/selftest.sh" "$OUT/selftest" > "$OUT/selftest.txt" 2>&1 || { cat "$OUT/selftest.txt"; echo "ABORT: harness self-test failed"; exit 3; }
+ tail -1 "$OUT/selftest.txt"
++# 06B-4B: offline self-test of the new modules (no regression section: that needs the 06B-3G evidence)
++python3 "$H/selftest_l2.py" --offline-only > "$OUT/selftest-l2.txt" 2>&1 || { cat "$OUT/selftest-l2.txt"; echo "ABORT: L2 self-test failed"; exit 3; }
++tail -1 "$OUT/selftest-l2.txt"
++python3 "$H/signatures.py" --check || { echo "ABORT: signature registry invalid"; exit 3; }
++eval "$(python3 "$H/signatures.py" --shell)" || { echo "ABORT: signature registry not loadable"; exit 3; }
+ source "$H/harness_lib.sh"   # alive, start/stop_capture_watch, manager_prepare/restore
+ 
+ CREATED_IDS=(); FAILS=(); UNVERIFIED=(); OPEN_ITEMS=(); SESSION_RESULTS=(); TCPDUMP_PIDS=(); TCPDUMP_NAMES=(); WATCH_PID=""
+@@ -148,6 +160,9 @@
+ check "manager healthy (127.0.0.1:8011/healthcheck)" test $ok -eq 1
+ docker inspect -f 'manager: {{.State.Status}} ip={{(index .NetworkSettings.Networks "'"$SANDBOXNET"'").IPAddress}}' "$MANAGER" | tee -a "$OUT/manager-state.txt"
+ MANAGER_IP=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").IPAddress}}" "$MANAGER")
++# 06B-4B: the manager's real MAC on sandboxnet, so that an ARP claiming 192.168.60.10 with another MAC
++# is a signature (sigscan_l2.py arp_spoof_spa_manager)
++MANAGER_MAC=$(docker inspect -f "{{(index .NetworkSettings.Networks \"$SANDBOXNET\").MacAddress}}" "$MANAGER")
+ 
+ # ------------------------------------------------------------------ 3. worker test container
+ log "3. worker test container"
+@@ -214,18 +229,22 @@
+ CAPD=$(mktemp -d /tmp/ct01-06b3b-cap.XXXXXX); chmod 700 "$CAPD"; echo "capture dir: $CAPD"
+ tcpdump -U -n -i "$VETH" -w - > "$CAPD/veth.pcap" 2>"$OUT/hostcap/veth.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(veth)
+ tcpdump -U -n -i "$BR" -w - > "$CAPD/bridge.pcap" 2>"$OUT/hostcap/bridge.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(bridge)
+-tcpdump -U -n -i ens33 -w - \
+-    "ether host $GUEST_MAC or net 10.200.0.0/30 or host 1.1.1.1 or host $LAN_DNS" > "$CAPD/ens33.pcap" 2>"$OUT/hostcap/ens33.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(ens33)
++# 06B-4B (D7): ens33 without a filter, bounded by snaplen and a packet limit (see signatures.py).
++tcpdump -U -n -i ens33 -s "$SIG_ENS33_SNAPLEN" -c "$SIG_ENS33_MAX_PACKETS" -w - \
++    > "$CAPD/ens33.pcap" 2>"$OUT/hostcap/ens33.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(ens33)
+ : > "$OUT/hostcap/alert.txt"; chmod 644 "$OUT/hostcap/alert.txt"
+-tcpdump -Z root -l -n -i any "net 10.200.0.0/30" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert)
++printf '%s\n' "$SIG_ALERT_ANY" > "$OUT/hostcap/alert-filter-any.txt"
++printf '%s\n' "$SIG_ALERT_ETH" > "$OUT/hostcap/alert-filter-eth.txt"
++tcpdump -Z root -l -n -i any "$SIG_ALERT_ANY" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert)
++tcpdump -Z root -l -n -e -i "$VETH" "$SIG_ALERT_ETH" >> "$OUT/hostcap/alert.txt" 2>"$OUT/hostcap/alert_eth.err" & TCPDUMP_PIDS+=($!); TCPDUMP_NAMES+=(alert_eth)
+ sleep 3
+ cap_ok=1
+ for p in "${TCPDUMP_PIDS[@]}"; do check "host tcpdump pid $p running" kill -0 "$p" || cap_ok=0; done
+-for f in veth bridge ens33; do
++for f in veth bridge ens33 alert alert_eth; do
+     check "host capture $f: tcpdump reports listening" grep -qE '^(tcpdump: )?listening on ' "$OUT/hostcap/$f.err" || cap_ok=0
+ done
+ # veth/bridge carry the control loop every 0.5 s, so their pcap must already hold data.
+-# ens33 is filtered and may legitimately be empty here; its liveness is checked after the run.
++# ens33 (unfiltered since 06B-4B) may still be empty this early; its liveness is checked after the run.
+ for f in veth bridge; do check "host capture $f.pcap being written" test -s "$CAPD/$f.pcap" || cap_ok=0; done
+ if [ $cap_ok -ne 1 ]; then
+     # Read-only diagnosis on lo (3 s each, no files outside $CAPD), then abort before any guest.
+@@ -317,7 +336,7 @@
+ check "all host captures exited on SIGINT within ${CAP_DEADLINE_S} s with exit 0" test $? -eq 0
+ cat "$TL" "$OUT/hostcap/tcpdump-exit.txt"
+ printf 'capture\tcaptured\treceived_by_filter\tdropped_by_kernel\n' > "$OUT/hostcap/capture-stats.tsv"
+-for f in veth bridge ens33 alert; do
++for f in veth bridge ens33 alert alert_eth; do
+     check "tcpdump $f: exit 0 on stop" grep -qx "$f 0" "$OUT/hostcap/tcpdump-exit.txt"
+     st=$(capture_stats "$OUT/hostcap/$f.err")
+     check "tcpdump $f: statistics present (captured, received by filter, dropped by kernel)" test -n "$st" || continue
+@@ -332,9 +351,13 @@
+     fi
+ done
+ # tcpdump prints a bare newline on SIGINT: only non-empty lines are packets
+-check "leak alert: no 10.200.0.0/30 packet line on any host interface" bash -c "! grep -q . '$OUT/hostcap/alert.txt'"
+-grep -E 'packets (captured|received by filter)' "$OUT/hostcap/alert.err" | tee -a "$OUT/hostcap/summary.txt"
+-check "leak alert tcpdump: 0 packets captured" grep -q '^0 packets captured' "$OUT/hostcap/alert.err"
++check "leak alerts: no signature packet line (any: network layer; veth: + MAC)" bash -c "! grep -q . '$OUT/hostcap/alert.txt'"
++for a in alert alert_eth; do
++    grep -E 'packets (captured|received by filter)' "$OUT/hostcap/$a.err" | sed "s/^/$a: /" | tee -a "$OUT/hostcap/summary.txt"
++    check "leak alert tcpdump $a: 0 packets captured" grep -q '^0 packets captured' "$OUT/hostcap/$a.err"
++done
++check "ens33 capture did not reach its packet limit ($SIG_ENS33_MAX_PACKETS)" \
++    bash -c "! grep -qE '^$SIG_ENS33_MAX_PACKETS packets captured' '$OUT/hostcap/ens33.err'"
+ count() {  # file filter -> echoes count, returns tcpdump exit code
+     local out rc
+     out=$(tcpdump -n -r "$1" "$2" 2>>"$OUT/hostcap/read.err"); rc=$?
+@@ -354,6 +377,14 @@
+     for k in guest_l2l3 probe_sport probe_qname probe_url; do
+         check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-$f.txt"
+     done
++    # 06B-4B: L2/ARP/IPv6/spoof signatures (sigscan_l2.py; a read error is exit 2, never 0)
++    python3 "$H/sigscan_l2.py" "$CAPD/$f.pcap" --manager-mac "$MANAGER_MAC" > "$OUT/hostcap/sigscan-l2-$f.txt" 2>&1; rc=$?
++    echo "$f sigscan_l2 (rc=$rc): $(tr '\n' ' ' < "$OUT/hostcap/sigscan-l2-$f.txt")" | tee -a "$OUT/hostcap/summary.txt"
++    check "$f.pcap: sigscan_l2 read OK (exit 0)" test $rc -eq 0
++    for k in guest_mac spoof_mac guest_net_ip arp_guest_sha arp_spoof_sha arp_guest_net arp_spoof_spa_manager \
++             ipv6_guest spoof_src_ip probe_port icmp_size probe_qname; do
++        check "$f.pcap: $k = 0" grep -qx "$k=0" "$OUT/hostcap/sigscan-l2-$f.txt"
++    done
+ done
+ # Positive on real data: the worker's control DNS queries (ct01-06b3b-ctl-<arch>) cross ens33, so the
+ # payload scan must find them; 0 here means the scan is blind and every 0 above proves nothing.
+--- ct01-06b3c/signatures.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/signatures.py	2026-10-08 02:12:15.421548903 +0000
+@@ -0,0 +1,184 @@
++"""06B-4B — single registry of probe ports, ICMP sizes, spoofed MAC/IP values and the host-side
++capture/alert filters derived from them. Offline module: nothing here sends a packet.
++
++Every port, size and address that a later L2/ARP/IPv6/T20 probe may use is listed ONCE here; the
++capture filters, the leak alerts, the post-run scanner (sigscan_l2.py) and the plan
++(docs/ct01-remaining-tests-plan.md, "Danh sách cổng và chữ ký") are all derived from / checked against
++this table. No probe is defined here (06B-4B prepares the measurement only).
++
++    python3 signatures.py --shell     shell assignments used by run-06b3b.sh
++    python3 signatures.py --check     validate the registry (exit 1 on any problem)
++"""
++import ipaddress
++import json
++import sys
++
++GUEST_MAC = "52:54:00:c7:00:02"
++GUEST_IP = "10.200.0.2"
++WORKER_GUEST_IP = "10.200.0.1"
++GUEST_NET = "10.200.0.0/30"
++# EUI-64 link-local of GUEST_MAC (U/L bit flipped): what the guest uses as IPv6 source on tap0.
++GUEST_LL6 = "fe80::5054:ff:fec7:2"
++
++# MAC chosen for the T16 MAC-change probe. Only THIS value is recognised as "guest with a spoofed
++# MAC". A guest that spoofs TAP_MAC (the worker's random tap0 MAC) cannot be told apart from the
++# worker's own frames in the tap0 pcap (no direction flags): that case is NOT covered (D5).
++SPOOF_MACS = ("52:54:00:de:ad:01",)
++
++# Spoofed IPv4 sources of T17 (the plan's P1..P5). 10.200.0.1 is reserved for P3, which is postponed.
++SPOOF_SRC_IPS = {"10.200.0.3": "T17-P1/P4", "192.168.60.10": "T17-P2/P5", "10.200.0.1": "T17-P3 (hoãn)"}
++# A spoofed source that also appears legitimately on sandboxnet: only matched together with a probe
++# port or a probe ICMP size, never alone.
++SPOOF_SRC_SHARED = ("192.168.60.10",)
++
++# Legacy IPv4 matrix (06B-3B): source port 41000 + n, scanned as a range.
++LEGACY_PORT_RANGE = (41000, 41020)
++# New probes: exact ports, all inside NEW_PORT_RANGE. Reserved even when the probe is postponed.
++# 06B-4B: the plan's 42000-42299 lies inside the Linux ephemeral range (32768-60999 on host, worker,
++# ctl and manager by default) and the 06B-3G bridge pcap really contains a control connection
++# 192.168.60.3:42172 -> manager:8011, i.e. a port-only signature there is a false positive.
++# New ports are therefore below 32768 (0 frames on 31000-31299 in every 06B-3G host pcap, no host
++# listener there). Old plan number -> new number: 420xx -> 310xx, 4217x -> 3117x, 4220x -> 3120x.
++EPHEMERAL_RANGE = (32768, 60999)
++NEW_PORT_RANGE = (31000, 31299)
++PROBE_PORTS = {
++    "T13-I3": 31013,          # curl -6 to the EUI-64 address of TAP_MAC (only NS expected on the wire)
++    "T16-M1": 31016,          # service link with the spoofed MAC
++    "T20-N3": 31020,          # UDP worker -> guest
++    "T17-P1": 31171,          # src 10.200.0.3 -> 10.200.0.1:8011
++    "T17-P2": 31172,          # src 192.168.60.10 -> 10.200.0.1:8011
++    "T17-P3": 31173,          # src 10.200.0.1 (POSTPONED, port reserved)
++    "T17-P4": 31174,          # src 10.200.0.3 -> 1.1.1.1:443
++    "T20-N2-22": 31201,       # worker -> guest tcp/22, fixed source port
++    "T20-N2-80": 31202,       # worker -> guest tcp/80, fixed source port
++}
++# ICMP payload sizes (ping -s). On the wire: IPv4 total length = size + 28, IPv6 payload length = size + 8.
++ICMP4_SIZES = {"T12-B1": 1201, "T12-B2": 1202, "T12-B4": 1204, "T14-A1": 1401, "T14-A2": 1402,
++               "T14-A3": 1403, "T17-P5": 1705}
++ICMP6_SIZES = {"T13-I1": 1301, "T13-I2": 1302}
++QNAME_PREFIX = "ct01-06b4-"     # nslookup names of new probes: ct01-06b4-<test>-<arch>-<n>
++
++# D7: ens33 is captured WITHOUT a filter, bounded. Reaching the packet limit makes tcpdump exit, which
++# the capture watcher reports as a dead capture (the probes stop; never a silent truncation).
++ENS33_SNAPLEN = 512
++ENS33_MAX_PACKETS = 200000
++
++
++def ip4_lens():
++    return sorted(s + 28 for s in ICMP4_SIZES.values())
++
++
++def ip6_plens():
++    return sorted(s + 8 for s in ICMP6_SIZES.values())
++
++
++def _hex_ip(ip):
++    return "0x%08x" % int(ipaddress.IPv4Address(ip))
++
++
++def _mac_words(mac):
++    b = bytes.fromhex(mac.replace(":", ""))
++    return "0x" + b[:4].hex(), "0x" + b[4:].hex()
++
++
++def _ports_expr(ports):
++    return " or ".join(f"port {p}" for p in sorted(ports))
++
++
++def _src_ports_expr(ports):
++    # a shared spoofed source (a real host) is only a signature with the probe's own SOURCE port
++    return " or ".join(f"src port {p}" for p in sorted(ports))
++
++
++def arp_sha_expr(mac):
++    hi, lo = _mac_words(mac)
++    return f"(arp and arp[8:4] = {hi} and arp[12:2] = {lo})"
++
++
++def alert_any_filter():
++    """Leak alert on `-i any` (link type LINUX_SLL2: `ether host` does not compile there, so only
++    network-layer signatures). Every clause is specific to the guest or to a spoofed value."""
++    parts = [f"net {GUEST_NET}"]                                   # IPv4 and ARP spa/tpa of the guest net
++    parts += [f"(ip6 and host {GUEST_LL6})"]
++    parts += [arp_sha_expr(m) for m in (GUEST_MAC,) + SPOOF_MACS]
++    # pcap-filter: `and` and `or` have EQUAL precedence (left to right), so every group is bracketed.
++    parts += [f"(src host {ip} and (((tcp or udp) and ({_src_ports_expr(PROBE_PORTS.values())})) or "
++              f"(icmp and ({' or '.join(f'ip[2:2] = {n}' for n in ip4_lens())}))))" for ip in SPOOF_SRC_SHARED]
++    parts += [f"(icmp and ({' or '.join(f'ip[2:2] = {n}' for n in ip4_lens())}))"]
++    parts += [f"(icmp6 and ({' or '.join(f'ip6[4:2] = {n}' for n in ip6_plens())}))"]
++    return " or ".join(parts)
++
++
++def alert_eth_filter():
++    """Leak alert on the worker's host-side veth (Ethernet): MAC signatures + everything above.
++    The veth is the only way out of the worker netns (checked by the harness), so a frame with the
++    guest or a spoofed MAC that leaves the worker crosses it."""
++    macs = " or ".join(f"ether host {m}" for m in (GUEST_MAC,) + SPOOF_MACS)
++    return f"{macs} or {alert_any_filter()}"
++
++
++def check():
++    """Registry consistency; returns a list of problems (empty = OK)."""
++    p = []
++    lo, hi = NEW_PORT_RANGE
++    for k, v in PROBE_PORTS.items():
++        if not lo <= v <= hi:
++            p.append(f"{k}: port {v} outside {lo}-{hi}")
++        if LEGACY_PORT_RANGE[0] <= v <= LEGACY_PORT_RANGE[1]:
++            p.append(f"{k}: port {v} inside the legacy range")
++        if EPHEMERAL_RANGE[0] <= v <= EPHEMERAL_RANGE[1]:
++            p.append(f"{k}: port {v} inside the Linux ephemeral range {EPHEMERAL_RANGE}")
++    if len(set(PROBE_PORTS.values())) != len(PROBE_PORTS):
++        p.append("duplicate probe port")
++    sizes = list(ICMP4_SIZES.values()) + list(ICMP6_SIZES.values())
++    if len(set(sizes)) != len(sizes):
++        p.append("duplicate ICMP size")
++    for m in SPOOF_MACS:
++        if m == GUEST_MAC:
++            p.append("spoof MAC equals guest MAC")
++        if int(m.split(":")[0], 16) & 1:
++            p.append(f"spoof MAC {m} is a multicast address")
++    for ip in SPOOF_SRC_IPS:
++        if ip == GUEST_IP:
++            p.append("spoofed source equals the guest IP")
++    if ipaddress.IPv6Address(GUEST_LL6) != _eui64_ll(GUEST_MAC):
++        p.append("GUEST_LL6 is not the EUI-64 address of GUEST_MAC")
++    return p
++
++
++def _eui64_ll(mac):
++    b = bytearray(bytes.fromhex(mac.replace(":", "")))
++    b[0] ^= 0x02
++    return ipaddress.IPv6Address(b"\xfe\x80" + b"\0" * 6 + bytes(b[:3]) + b"\xff\xfe" + bytes(b[3:]))
++
++
++def eui64_ll(mac):
++    """Link-local address the given MAC would have (used for T13-I2/I3 towards TAP_MAC)."""
++    return str(_eui64_ll(mac))
++
++
++def registry():
++    return {"guest_mac": GUEST_MAC, "spoof_macs": list(SPOOF_MACS), "guest_net": GUEST_NET,
++            "guest_ll6": GUEST_LL6, "spoof_src_ips": SPOOF_SRC_IPS, "legacy_port_range": LEGACY_PORT_RANGE,
++            "new_port_range": NEW_PORT_RANGE, "probe_ports": PROBE_PORTS, "icmp4_sizes": ICMP4_SIZES,
++            "icmp6_sizes": ICMP6_SIZES, "qname_prefix": QNAME_PREFIX, "ens33_snaplen": ENS33_SNAPLEN,
++            "ens33_max_packets": ENS33_MAX_PACKETS}
++
++
++if __name__ == "__main__":
++    if sys.argv[1:] == ["--shell"]:
++        def q(s):
++            return "'" + s.replace("'", "'\\''") + "'"
++        print(f"SIG_ALERT_ANY={q(alert_any_filter())}")
++        print(f"SIG_ALERT_ETH={q(alert_eth_filter())}")
++        print(f"SIG_ENS33_SNAPLEN={ENS33_SNAPLEN}")
++        print(f"SIG_ENS33_MAX_PACKETS={ENS33_MAX_PACKETS}")
++        print(f"SIG_SPOOF_MACS={q(' '.join(SPOOF_MACS))}")
++    elif sys.argv[1:] == ["--check"]:
++        probs = check()
++        print("\n".join(probs) if probs else "registry OK")
++        sys.exit(1 if probs else 0)
++    elif sys.argv[1:] == ["--json"]:
++        print(json.dumps(registry(), indent=1, sort_keys=True))
++    else:
++        sys.exit("usage: signatures.py --shell | --check | --json")
+--- ct01-06b3c/l2frames.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/l2frames.py	2026-10-08 02:17:11.638548317 +0000
+@@ -0,0 +1,421 @@
++"""06B-4B — tap0 frame decoder and classifier for the L2 / ARP / IPv6 measurements. Offline module.
++
++Reads pcap and pcapng (Ethernet only) with the standard library, so it runs on the host as well as in
++the worker container, and decodes Ethernet, ARP, IPv4 (+TCP/UDP ports), IPv6 (+ICMPv6 type).
++Any problem reading the file raises FrameReadError: a read error is never "0 frames".
++
++Direction of a frame on tap0, by source MAC (the pcapng written by dumpcap carries no direction flag:
++0/97 and 0/125 EPB flags in the 06B-3G pcaps):
++    guest            src == GUEST_MAC
++    guest_spoof_mac  src in the CHOSEN spoof MACs (signatures.SPOOF_MACS)          -> l2_bad_mac
++    worker           src == TAP_MAC (the worker's own tap0)
++    unknown_src      anything else                                                  -> unmapped
++A guest that spoofs TAP_MAC is classified as "worker": that case is NOT covered and is never claimed.
++
++Class of a guest frame, in the order of guest.nft and the kernel receive path:
++    netdev ingress   ethertype not IPv4/ARP          -> l2_bad_ethertype (IPv6 recognised, detail kept)
++                     VLAN 0x8100/0x88a8               -> unmapped (nft `ether type` vs. VLAN untagging
++                                                         before the ingress hook: not verified)
++    ARP              arp_rcv drops BEFORE NF_ARP_IN: pkt_type OTHERHOST (dst MAC not TAP_MAC, not
++                     broadcast/multicast), header shorter than 28 bytes, hlen != 6, plen != 4
++                                                      -> arp_not_hooked   (no counter)
++                     exact allow rule                 -> arp_in_ok
++                     any other ARP                    -> arp_in_drop
++    IPv4             ip_rcv drops BEFORE PRE_ROUTING: OTHERHOST, bad version/IHL/total length/header
++                     checksum                          -> ip_not_hooked    (no counter)
++                     then the inet prerouting order    -> drop_spoof, allow_svc, drop_worker_other,
++                                                         drop_private, drop_bcast_mcast, drop_public
++Worker frames: ARP 10.200.0.1 -> 10.200.0.2 request/reply -> arp_out_ok; TCP 10.200.0.1:8011 ->
++10.200.0.2 -> allow_out_svc (ct state cannot be seen in a pcap); anything else -> worker_unexpected.
++arp_out_drop and drop_out can never be seen on tap0 (dropped before the capture point).
++
++[Kernel]: the arp_rcv / ip_rcv drop points and the capture point after the output hooks are read from
++upstream Linux v6.8 source; they are NOT verified on the host kernel 6.8.0-146.
++"""
++import ipaddress
++import struct
++
++import counter_window
++import signatures as S
++
++ETH_IPV4, ETH_ARP, ETH_IPV6 = 0x0800, 0x0806, 0x86DD
++ETH_VLAN = (0x8100, 0x88A8)
++BROADCAST = "ff:ff:ff:ff:ff:ff"
++ARP_HDR_LEN = 28          # arp_hdr_len(dev) for Ethernet/IPv4: 8 + 2 * (6 + 4)
++SVC_PORT = 8011
++
++# Classes that have an nft counter, and pseudo-classes that do not.
++COUNTER_CLASSES = ("allow_svc", "drop_spoof", "drop_non_ipv4", "drop_worker_other", "drop_private",
++                   "drop_bcast_mcast", "drop_public", "l2_bad_ethertype", "l2_bad_mac",
++                   "arp_in_ok", "arp_in_drop", "arp_out_ok", "allow_out_svc")
++NO_COUNTER = ("arp_not_hooked", "ip_not_hooked", "unmapped", "worker_unexpected")
++# Counters that exist in guest.nft but can never be matched by a frame on tap0.
++UNOBSERVABLE = {"arp_out_drop": "dropped at NF_ARP_OUT before the tap0 capture point [Kernel]",
++                "drop_out": "dropped at the inet output hook before the tap0 capture point [Kernel]",
++                "drop_input_backstop": "input hook after prerouting: no frame-level mapping",
++                "drop_forward": "forward hook after prerouting: no frame-level mapping"}
++PRIVATE = [ipaddress.ip_network(n) for n in ("0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8",
++                                             "169.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16")]
++MCAST = ipaddress.ip_network("224.0.0.0/4")
++
++
++class FrameReadError(Exception):
++    """The capture file cannot be read completely: never treated as an empty capture."""
++
++
++# ------------------------------------------------------------------ readers
++def _mac(b):
++    return ":".join(f"{x:02x}" for x in b)
++
++
++def read_frames(path):
++    """[(t, bytes)] for every packet of a pcap/pcapng file with Ethernet link type."""
++    try:
++        data = open(path, "rb").read()
++    except OSError as e:
++        raise FrameReadError(f"cannot read {path}: {e}") from e
++    if len(data) < 4:
++        raise FrameReadError(f"{path}: empty or not a capture file ({len(data)} bytes)")
++    magic = data[:4]
++    if magic == b"\x0a\x0d\x0d\x0a":
++        return _read_pcapng(data, path)
++    if magic in (b"\xd4\xc3\xb2\xa1", b"\xa1\xb2\xc3\xd4", b"\x4d\x3c\xb2\xa1", b"\xa1\xb2\x3c\x4d"):
++        return _read_pcap(data, path)
++    raise FrameReadError(f"{path}: unknown capture format (magic {magic.hex()})")
++
++
++def _read_pcap(data, path):
++    if data[:4] in (b"\xd4\xc3\xb2\xa1", b"\x4d\x3c\xb2\xa1"):
++        e = "<"
++    else:
++        e = ">"
++    nano = data[:4] in (b"\x4d\x3c\xb2\xa1", b"\xa1\xb2\x3c\x4d")
++    if len(data) < 24:
++        raise FrameReadError(f"{path}: truncated pcap header")
++    linktype = struct.unpack_from(e + "I", data, 20)[0] & 0x0FFFFFFF
++    if linktype != 1:
++        raise FrameReadError(f"{path}: link type {linktype} is not Ethernet")
++    out, i = [], 24
++    while i < len(data):
++        if i + 16 > len(data):
++            raise FrameReadError(f"{path}: truncated record header at offset {i}")
++        sec, frac, incl, _orig = struct.unpack_from(e + "IIII", data, i)
++        if i + 16 + incl > len(data):
++            raise FrameReadError(f"{path}: truncated packet at offset {i}")
++        out.append((sec + frac / (1e9 if nano else 1e6), data[i + 16:i + 16 + incl]))
++        i += 16 + incl
++    return out
++
++
++def _read_pcapng(data, path):
++    out, i, e, ifaces = [], 0, "<", []
++    while i < len(data):
++        if i + 12 > len(data):
++            raise FrameReadError(f"{path}: truncated block header at offset {i}")
++        if data[i:i + 4] == b"\x0a\x0d\x0d\x0a":
++            bom = data[i + 8:i + 12]
++            if bom == b"\x4d\x3c\x2b\x1a":
++                e = "<"
++            elif bom == b"\x1a\x2b\x3c\x4d":
++                e = ">"
++            else:
++                raise FrameReadError(f"{path}: bad byte-order magic at offset {i}")
++            ifaces = []   # interface ids are per section
++        btype, blen = struct.unpack_from(e + "II", data, i)
++        if blen < 12 or blen % 4 or i + blen > len(data):
++            raise FrameReadError(f"{path}: bad or truncated block (type {btype:#x}, length {blen}) at offset {i}")
++        if struct.unpack_from(e + "I", data, i + blen - 4)[0] != blen:
++            raise FrameReadError(f"{path}: block length trailer mismatch at offset {i}")
++        body = data[i + 8:i + blen - 4]
++        if btype == 1:                                   # interface description
++            linktype = struct.unpack_from(e + "H", body, 0)[0]
++            div = 10 ** 6                                # units per second (default microseconds)
++            o = 8
++            while o + 4 <= len(body):
++                code, ln = struct.unpack_from(e + "HH", body, o)
++                if code == 0:
++                    break
++                if code == 9 and ln >= 1:
++                    v = body[o + 4]
++                    div = 2 ** (v & 0x7F) if v & 0x80 else 10 ** v
++                o += 4 + ((ln + 3) // 4) * 4
++            ifaces.append((linktype, div))
++        elif btype == 6:                                 # enhanced packet
++            if len(body) < 20:
++                raise FrameReadError(f"{path}: truncated EPB at offset {i}")
++            ifid, hi, lo, cap, _orig = struct.unpack_from(e + "IIIII", body, 0)
++            if ifid >= len(ifaces):
++                raise FrameReadError(f"{path}: EPB for undefined interface {ifid} at offset {i}")
++            linktype, div = ifaces[ifid]
++            if linktype != 1:
++                raise FrameReadError(f"{path}: interface {ifid} link type {linktype} is not Ethernet")
++            if 20 + cap > len(body):
++                raise FrameReadError(f"{path}: EPB captured length beyond block at offset {i}")
++            units = (hi << 32) | lo
++            # integer split first: a float cannot hold 1.79e18 ns exactly (error would be ~0.2 us)
++            out.append((units // div + (units % div) / div, body[20:20 + cap]))
++        elif btype == 3:                                 # simple packet: no timestamp
++            raise FrameReadError(f"{path}: simple packet block without timestamp at offset {i}")
++        i += blen
++    return out
++
++
++# ------------------------------------------------------------------ decoder
++def _csum_ok(hdr):
++    if len(hdr) % 2:
++        return False
++    s = sum(struct.unpack(f"!{len(hdr) // 2}H", hdr))
++    while s >> 16:
++        s = (s & 0xFFFF) + (s >> 16)
++    return s == 0xFFFF
++
++
++def decode(t, raw):
++    """One frame -> dict. Never raises for malformed content: problems are recorded in `err`."""
++    f = {"t": t, "len": len(raw), "err": None}
++    if len(raw) < 14:
++        f.update(dst=None, src=None, etype=None, err="frame shorter than an Ethernet header")
++        return f
++    f["dst"], f["src"] = _mac(raw[0:6]), _mac(raw[6:12])
++    et = struct.unpack_from("!H", raw, 12)[0]
++    f["etype"] = et
++    p = raw[14:]
++    if et == ETH_ARP:
++        if len(p) < 8:
++            f["arp"] = {"short": True, "len": len(p)}
++            return f
++        htype, ptype, hlen, plen, op = struct.unpack_from("!HHBBH", p, 0)
++        a = {"htype": htype, "ptype": ptype, "hlen": hlen, "plen": plen, "op": op, "len": len(p), "short": False}
++        if hlen == 6 and plen == 4 and len(p) >= ARP_HDR_LEN:
++            a.update(sha=_mac(p[8:14]), spa=str(ipaddress.IPv4Address(p[14:18])),
++                     tha=_mac(p[18:24]), tpa=str(ipaddress.IPv4Address(p[24:28])))
++        f["arp"] = a
++    elif et == ETH_IPV4:
++        ip = {"valid": False}
++        f["ip"] = ip
++        if len(p) < 20:
++            ip["why"] = "shorter than an IPv4 header"
++            return f
++        ver, ihl = p[0] >> 4, (p[0] & 0x0F) * 4
++        tot = struct.unpack_from("!H", p, 2)[0]
++        if ver != 4 or ihl < 20 or len(p) < ihl:
++            ip["why"] = f"bad version/IHL ({ver}, {ihl})"
++            return f
++        if tot < ihl or tot > len(p):
++            ip["why"] = f"bad total length {tot} (payload {len(p)})"
++            return f
++        if not _csum_ok(p[:ihl]):
++            ip["why"] = "bad header checksum"
++            return f
++        fragoff = struct.unpack_from("!H", p, 6)[0] & 0x1FFF
++        ip.update(valid=True, src=str(ipaddress.IPv4Address(p[12:16])), dst=str(ipaddress.IPv4Address(p[16:20])),
++                  proto=p[9], tot_len=tot, frag_offset=fragoff, sport=None, dport=None)
++        l4 = p[ihl:tot]
++        if fragoff == 0 and p[9] in (6, 17) and len(l4) >= 4:
++            ip["sport"], ip["dport"] = struct.unpack_from("!HH", l4, 0)
++        ip["payload"] = bytes(l4)
++    elif et == ETH_IPV6:
++        v6 = {"valid": False}
++        f["ip6"] = v6
++        if len(p) < 40 or p[0] >> 4 != 6:
++            v6["why"] = "shorter than an IPv6 header or version != 6"
++            return f
++        plen, nh = struct.unpack_from("!HB", p, 4)
++        v6.update(valid=True, plen=plen, nh=nh, src=str(ipaddress.IPv6Address(p[8:24])),
++                  dst=str(ipaddress.IPv6Address(p[24:40])), icmp6_type=None)
++        if nh == 58 and len(p) >= 41:
++            v6["icmp6_type"] = p[40]
++    elif et in ETH_VLAN:
++        f["vlan"] = struct.unpack_from("!H", p, 0)[0] & 0x0FFF if len(p) >= 2 else None
++    return f
++
++
++# ------------------------------------------------------------------ classifier
++def _norm_mac(m):
++    if not isinstance(m, str):
++        raise ValueError(f"MAC expected, got {m!r}")
++    m = m.strip().lower()
++    b = bytes.fromhex(m.replace(":", ""))
++    if len(b) != 6:
++        raise ValueError(f"not a MAC address: {m!r}")
++    return _mac(b)
++
++
++def _hooked_l2_dst(dst, tap_mac):
++    """pkt_type != OTHERHOST: our MAC, broadcast or a multicast (group bit) address."""
++    return dst == tap_mac or dst == BROADCAST or int(dst[:2], 16) & 1 == 1
++
++
++def classify(f, tap_mac, spoof_macs=S.SPOOF_MACS):
++    """-> (direction, cls, reason). `tap_mac` is mandatory: without it the worker's frames cannot be
++    told apart from unexplained ones."""
++    tap_mac = _norm_mac(tap_mac)
++    guest = _norm_mac(S.GUEST_MAC)
++    spoof = {_norm_mac(m) for m in spoof_macs}
++    if tap_mac == guest or tap_mac in spoof:
++        raise ValueError("TAP_MAC must differ from the guest MAC and the chosen spoof MACs")
++    if f.get("src") is None:
++        return "unknown_src", "unmapped", f.get("err") or "no source MAC"
++    src = f["src"]
++    if src in spoof:
++        return "guest_spoof_mac", "l2_bad_mac", f"source MAC {src} is the chosen spoof MAC"
++    if src == tap_mac:
++        return ("worker",) + _classify_worker(f)
++    if src != guest:
++        return "unknown_src", "unmapped", f"source MAC {src} is neither the guest, a chosen spoof MAC nor TAP_MAC"
++    et = f["etype"]
++    if et in ETH_VLAN:
++        return "guest", "unmapped", "VLAN-tagged frame: nft ether type vs. VLAN untagging not verified"
++    if et not in (ETH_IPV4, ETH_ARP):
++        why = "IPv6" if et == ETH_IPV6 else f"ethertype {et:#06x}"
++        return "guest", "l2_bad_ethertype", why
++    if et == ETH_ARP:
++        return ("guest",) + _classify_arp_in(f, tap_mac)
++    return ("guest",) + _classify_ip_in(f, tap_mac)
++
++
++def _classify_arp_in(f, tap_mac):
++    a = f.get("arp") or {"short": True, "len": 0}
++    if not _hooked_l2_dst(f["dst"], tap_mac):
++        return "arp_not_hooked", f"destination MAC {f['dst']} is not TAP_MAC, broadcast or multicast (OTHERHOST)"
++    if a["short"] or a["len"] < ARP_HDR_LEN:
++        return "arp_not_hooked", f"ARP payload {a['len']} bytes < arp_hdr_len {ARP_HDR_LEN}"
++    if a["hlen"] != 6 or a["plen"] != 4:
++        return "arp_not_hooked", f"hlen {a['hlen']} / plen {a['plen']} (need 6 / 4)"
++    ok = (a["htype"] == 1 and a["ptype"] == ETH_IPV4 and a["sha"] == _norm_mac(S.GUEST_MAC)
++          and a["spa"] == S.GUEST_IP and a["tpa"] == S.WORKER_GUEST_IP and a["op"] in (1, 2))
++    if ok:
++        return "arp_in_ok", "request/reply guest -> 10.200.0.1"
++    return "arp_in_drop", (f"op {a['op']} htype {a['htype']} ptype {a['ptype']:#06x} sha {a['sha']} "
++                           f"spa {a['spa']} tpa {a['tpa']}")
++
++
++def _classify_ip_in(f, tap_mac):
++    ip = f.get("ip") or {"valid": False, "why": "no IPv4 header"}
++    if not _hooked_l2_dst(f["dst"], tap_mac):
++        return "ip_not_hooked", f"destination MAC {f['dst']} is OTHERHOST"
++    if not ip["valid"]:
++        return "ip_not_hooked", ip.get("why", "invalid IPv4 header")
++    src, dst = ip["src"], ipaddress.IPv4Address(ip["dst"])
++    if src != S.GUEST_IP:
++        return "drop_spoof", f"source {src}"
++    if str(dst) == S.WORKER_GUEST_IP:
++        if ip["proto"] == 6 and ip["dport"] == SVC_PORT:
++            return "allow_svc", "tcp 10.200.0.1:8011"
++        return "drop_worker_other", f"proto {ip['proto']} dport {ip['dport']}"
++    if any(dst in n for n in PRIVATE):
++        return "drop_private", str(dst)
++    if dst in MCAST or str(dst) == "255.255.255.255":
++        return "drop_bcast_mcast", str(dst)
++    return "drop_public", str(dst)
++
++
++def _classify_worker(f):
++    et = f["etype"]
++    if et == ETH_ARP:
++        a = f.get("arp") or {}
++        if (not a.get("short") and a.get("spa") == S.WORKER_GUEST_IP and a.get("tpa") == S.GUEST_IP
++                and a.get("op") in (1, 2)):
++            return "arp_out_ok", "ARP 10.200.0.1 -> 10.200.0.2"
++        return "worker_unexpected", "worker ARP outside the allow rule (should have been dropped)"
++    if et == ETH_IPV4:
++        ip = f.get("ip") or {}
++        if (ip.get("valid") and ip["src"] == S.WORKER_GUEST_IP and ip["dst"] == S.GUEST_IP and ip["proto"] == 6
++                and ip.get("sport") == SVC_PORT):
++            return "allow_out_svc", "tcp 10.200.0.1:8011 -> guest (ct state not visible in a pcap)"
++        return "worker_unexpected", "worker IPv4 outside the allow rule"
++    return "worker_unexpected", f"worker ethertype {et:#06x}" if et is not None else "worker frame without ethertype"
++
++
++def classified_frames(path, tap_mac, spoof_macs=S.SPOOF_MACS):
++    """Read + decode + classify a capture file. Raises FrameReadError on any read problem."""
++    out = []
++    for t, raw in read_frames(path):
++        f = decode(t, raw)
++        d, cls, why = classify(f, tap_mac, spoof_macs)
++        f.update(direction=d, cls=cls, reason=why)
++        out.append(f)
++    return out
++
++
++# ------------------------------------------------------------------ strict reconciliation
++def strict_delta(read_a, read_b, counters):
++    """Deltas of exactly `counters`. Returns (delta, None) or (None, reason). A counter missing in
++    either read, a non-integer value, or a counter that went DOWN is an error, never 0."""
++    va, vb = (read_a or {}).get("values"), (read_b or {}).get("values")
++    if not isinstance(va, dict) or not isinstance(vb, dict):
++        return None, "counter values missing in a read"
++    missing = sorted({k for k in counters if k not in va} | {k for k in counters if k not in vb})
++    if missing:
++        return None, f"counter(s) missing in a read: {missing} (a missing counter is not 0)"
++    delta = {}
++    for k in counters:
++        a, b = va[k], vb[k]
++        for v in (a, b):
++            if not isinstance(v, int) or isinstance(v, bool) or v < 0:
++                return None, f"counter {k} is not a non-negative integer: {v!r}"
++        if b < a:
++            return None, f"counter {k} decreased ({a} -> {b})"
++        delta[k] = b - a
++    return delta, None
++
++
++def reconcile_l2(frames, read_a, read_b, compared, guard=counter_window.GUARD_S):
++    """Counter/pcap reconciliation for the new measurements.
++    1. strict deltas (no default 0) -> ERROR on missing data;
++    2. counter_window.reconcile for the compared counter classes (zones, FAIL/UNVERIFIED/PASS);
++    3. any frame of a class WITHOUT a counter (not hooked, unmapped, unexpected worker frame) inside
++       the window makes the result at best UNVERIFIED, with every such frame listed."""
++    bad = [k for k in compared if k not in COUNTER_CLASSES]
++    if bad:
++        return {"verdict": "ERROR", "error": f"not a frame-mapped counter class: {bad}", "per_class": {},
++                "no_counter_frames": [], "guard_s": guard}
++    delta, err = strict_delta(read_a, read_b, compared)
++    if err:
++        return {"verdict": "ERROR", "error": err, "per_class": {}, "no_counter_frames": [], "guard_s": guard}
++    base = counter_window.reconcile(frames, read_a, read_b, delta, list(compared), guard)
++    if base["verdict"] == "ERROR":
++        base["no_counter_frames"] = []
++        return base
++    extra = []
++    for fr in frames:
++        if fr.get("cls") in NO_COUNTER:
++            z = counter_window.zone(fr["t"], read_a, read_b, guard)
++            if z != "outside":
++                extra.append({"t": fr["t"], "cls": fr["cls"], "zone": z, "reason": fr.get("reason")})
++    base["no_counter_frames"] = extra
++    if base["verdict"] == "PASS" and extra:
++        base["verdict"] = "UNVERIFIED"
++        base["unverified_reason"] = "frames without a counter mapping inside the window"
++    return base
++
++
++# ------------------------------------------------------------------ verdict label (D6)
++CONTROL_KINDS = ("live", "rule_check")
++
++
++def probe_verdict_l2(checks, recon, expected_class, control_kind, control_alive=None, tool_missing=False):
++    """counter_window.probe_verdict + the D6 label. control_kind:
++       live        a live control on the same IP/protocol/port exists; control_alive must be a bool
++       rule_check  no live control exists; control_alive must be None. A pass is reported as
++                   "ĐẠT (kiểm quy tắc)": the rule matched and dropped at the right place, nothing is
++                   claimed about reachability of a service.
++    The precedence FAIL > LỖI PHÉP ĐO > CHƯA KIỂM CHỨNG > ĐẠT is unchanged."""
++    if control_kind == "live":
++        if not isinstance(control_alive, bool):
++            raise ValueError("a live-control probe needs control_alive True/False")
++        text, ok = counter_window.probe_verdict(checks, recon, expected_class, tool_missing, control_alive)
++    elif control_kind == "rule_check":
++        if control_alive is not None:
++            raise ValueError("a rule-check probe has no live control")
++        text, ok = counter_window.probe_verdict(checks, recon, expected_class, tool_missing, True)
++        if ok:
++            return "ĐẠT (kiểm quy tắc)", True
++    else:
++        raise ValueError(f"control_kind must be one of {CONTROL_KINDS}")
++    # counter_window words every UNVERIFIED reconciliation as an edge effect; name the real cause.
++    if text == "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)" and recon.get("no_counter_frames"):
++        edges = any(v.get("status") == "UNVERIFIED" for v in recon.get("per_class", {}).values())
++        text = ("CHƯA KIỂM CHỨNG (khung không có bộ đếm trong cửa sổ"
++                + ("; gói ở biên cửa sổ bộ đếm" if edges else "") + ")")
++    return text, ok
+--- ct01-06b3c/guest_state.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/guest_state.py	2026-10-08 02:10:43.184786775 +0000
+@@ -0,0 +1,207 @@
++"""06B-4B — save / restore the guest network state around a probe that changes it (D2). Offline module.
++
++No probe uses it yet. It talks to the guest only through a `runner` with the interface of
++probe_matrix.Guest.run(cmd, timeout) -> (rc, text), so the offline tests drive it with a simulated
++guest. Only busybox tools that the static inventory found in both images are used (`cat`, `ip`,
++`arp`); that inventory is static evidence, the tools must still be confirmed in the running guest.
++
++State of one probe interface IF (ARM eth1, MIPS br-lan):
++    mac, operstate       /sys/class/net/IF/{address,operstate}
++    addrs                IPv4 "a.b.c.d/p" on IF                 (ip -4 addr show dev IF)
++    routes               every IPv4 route, whitespace-normalised (ip -4 route show)
++    neigh_static         {(ip, dev): mac} with ATF_PERM          (/proc/net/arp, flags & 0x4)
++    neigh_dynamic        {(ip, dev): (mac, flags)} the rest      (reported, not restored)
++    arp_notify           /proc/sys/net/ipv4/conf/IF/arp_notify
++
++Restore = return to the state recorded BEFORE the probe, in rounds (each step re-reads the state):
++link (MAC, up) -> addresses -> routes -> static neighbours -> arp_notify. Static neighbours follow
++the before-state exactly: an entry the probe added is deleted, an entry that existed before and was
++lost (e.g. flushed by a link down [Kernel]) is re-created with its old MAC. Dynamic entries are
++kernel-managed: they are reported, never forced, and do not make the restore fail.
++The result says `restored` only if the re-read state equals the before-state on every restored item.
++"""
++import re
++
++SECTIONS = ("mac", "operstate", "addr", "route", "arp", "arp_notify")
++
++
++class StateReadError(Exception):
++    """The guest state could not be read completely: never treated as an empty state."""
++
++
++def snapshot_cmd(iface):
++    _check_iface(iface)
++    parts = []
++    for name, cmd in (("mac", f"cat /sys/class/net/{iface}/address"),
++                      ("operstate", f"cat /sys/class/net/{iface}/operstate"),
++                      ("addr", f"ip -4 addr show dev {iface}"),
++                      ("route", "ip -4 route show"),
++                      ("arp", "cat /proc/net/arp"),
++                      ("arp_notify", f"cat /proc/sys/net/ipv4/conf/{iface}/arp_notify")):
++        parts.append(f"echo '@@S {name}'; {cmd}; echo \"@@RC $?\"")
++    return "; ".join(parts)
++
++
++def _check_iface(iface):
++    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,15}", iface or ""):
++        raise ValueError(f"bad interface name {iface!r}")
++
++
++def parse_snapshot(text):
++    sec, cur, rcs = {}, None, {}
++    for line in text.replace("\r", "").split("\n"):
++        m = re.fullmatch(r"@@S (\w+)", line.strip())
++        if m:
++            cur = m.group(1)
++            sec[cur] = []
++            continue
++        m = re.fullmatch(r"@@RC (\d+)", line.strip())
++        if m and cur is not None:
++            rcs[cur] = int(m.group(1))
++            cur = None
++            continue
++        if cur is not None:
++            sec[cur].append(line)
++    for name in SECTIONS:
++        if name not in sec or name not in rcs:
++            raise StateReadError(f"section {name} missing in the guest output")
++        if rcs[name] != 0:
++            raise StateReadError(f"reading {name} failed in the guest (rc {rcs[name]})")
++    mac = "".join(sec["mac"]).strip().lower()
++    if not re.fullmatch(r"([0-9a-f]{2}:){5}[0-9a-f]{2}", mac):
++        raise StateReadError(f"bad MAC {mac!r}")
++    oper = "".join(sec["operstate"]).strip()
++    if not oper:
++        raise StateReadError("empty operstate")
++    addrs = sorted(m.group(1) for l in sec["addr"] for m in [re.search(r"\binet (\d+\.\d+\.\d+\.\d+/\d+)", l)] if m)
++    routes = sorted(" ".join(l.split()) for l in sec["route"] if l.strip())
++    static, dynamic = {}, {}
++    rows = [l for l in sec["arp"] if l.strip()]
++    if not rows or not rows[0].startswith("IP address"):
++        raise StateReadError("/proc/net/arp header missing")
++    for l in rows[1:]:
++        f = l.split()
++        if len(f) != 6:
++            raise StateReadError(f"unexpected /proc/net/arp row {l!r}")
++        ip, flags, hw, dev = f[0], int(f[2], 16), f[3].lower(), f[5]
++        if flags & 0x4:
++            static[(ip, dev)] = hw
++        else:
++            dynamic[(ip, dev)] = (hw, flags)
++    notify = "".join(sec["arp_notify"]).strip()
++    if not notify.isdigit():
++        raise StateReadError(f"bad arp_notify {notify!r}")
++    return {"mac": mac, "operstate": oper, "addrs": addrs, "routes": routes, "neigh_static": static,
++            "neigh_dynamic": dynamic, "arp_notify": int(notify)}
++
++
++def read_state(runner, iface, timeout=30):
++    rc, out = runner.run(snapshot_cmd(iface), timeout=timeout)
++    if rc != 0:
++        raise StateReadError(f"snapshot command rc {rc}")
++    return parse_snapshot(out)
++
++
++def diff(before, after):
++    """Differences that a restore must remove. Dynamic neighbours are not part of it."""
++    d = []
++    for k in ("mac", "operstate", "arp_notify"):
++        if before[k] != after[k]:
++            d.append(f"{k}: {before[k]!r} -> {after[k]!r}")
++    for k in ("addrs", "routes"):
++        b, a = set(before[k]), set(after[k])
++        d += [f"{k}: missing {x!r}" for x in sorted(b - a)] + [f"{k}: extra {x!r}" for x in sorted(a - b)]
++    b, a = before["neigh_static"], after["neigh_static"]
++    for key in sorted(set(b) | set(a)):
++        if b.get(key) != a.get(key):
++            d.append(f"neigh_static {key[0]} dev {key[1]}: {b.get(key)!r} -> {a.get(key)!r}")
++    return d
++
++
++def dynamic_changes(before, after):
++    b, a = before["neigh_dynamic"], after["neigh_dynamic"]
++    return [f"neigh_dynamic {k[0]} dev {k[1]}: {b.get(k)!r} -> {a.get(k)!r}"
++            for k in sorted(set(b) | set(a)) if b.get(k) != a.get(k)]
++
++
++def _link_cmds(iface, before, now):
++    if now["mac"] != before["mac"]:
++        return [f"ip link set dev {iface} down", f"ip link set dev {iface} address {before['mac']}",
++                f"ip link set dev {iface} up"]
++    if now["operstate"] != before["operstate"] and before["operstate"] in ("up", "unknown"):
++        return [f"ip link set dev {iface} up"]
++    return []
++
++
++def _addr_cmds(iface, before, now):
++    b, a = set(before["addrs"]), set(now["addrs"])
++    return ([f"ip addr del {x} dev {iface}" for x in sorted(a - b)]
++            + [f"ip addr add {x} brd + dev {iface}" for x in sorted(b - a)])
++
++
++def _route_cmds(iface, before, now):
++    b, a = set(before["routes"]), set(now["routes"])
++    return [f"ip route del {x}" for x in sorted(a - b)] + [f"ip route add {x}" for x in sorted(b - a)]
++
++
++def _neigh_cmds(iface, before, now):
++    b, a = before["neigh_static"], now["neigh_static"]
++    out = []
++    for (ip, dev) in sorted(set(a) - set(b)):
++        out.append(f"arp -i {dev} -d {ip}")
++    for (ip, dev), mac in sorted(b.items()):
++        if a.get((ip, dev)) != mac:
++            if (ip, dev) in a:
++                out.append(f"arp -i {dev} -d {ip}")
++            out.append(f"arp -i {dev} -s {ip} {mac}")
++    return out
++
++
++def _sysctl_cmds(iface, before, now):
++    if now["arp_notify"] != before["arp_notify"]:
++        return [f"echo {before['arp_notify']} > /proc/sys/net/ipv4/conf/{iface}/arp_notify"]
++    return []
++
++
++STEPS = (("link", _link_cmds), ("addrs", _addr_cmds), ("routes", _route_cmds),
++         ("neigh_static", _neigh_cmds), ("arp_notify", _sysctl_cmds))
++
++
++def restore(runner, iface, before, timeout=30):
++    """Bring IF back to `before`. Never raises for a failed command: every command and its rc is
++    recorded, and only the final re-read decides `restored`. A state read error -> restored False."""
++    _check_iface(iface)
++    log = {"commands": [], "restored": False, "diffs": [], "dynamic_changes": [], "error": None}
++    try:
++        for name, fn in STEPS:
++            now = read_state(runner, iface, timeout)
++            for cmd in fn(iface, before, now):
++                rc, out = runner.run(cmd, timeout=timeout)
++                log["commands"].append({"step": name, "cmd": cmd, "rc": rc, "out": out.strip()[-300:]})
++        after = read_state(runner, iface, timeout)
++    except StateReadError as e:
++        log["error"] = f"state read failed: {e}"
++        return log
++    log["after"] = after
++    log["diffs"] = diff(before, after)
++    log["dynamic_changes"] = dynamic_changes(before, after)
++    log["restored"] = not log["diffs"]
++    return log
++
++
++class GuestChange:
++    """with GuestChange(runner, iface) as rec:  ...probe that changes the guest...
++    Records the before-state on entry and always restores on exit (also after an exception).
++    rec["restore"]["restored"] False means: the caller must not run further probes on this guest."""
++
++    def __init__(self, runner, iface, timeout=30):
++        self.runner, self.iface, self.timeout = runner, iface, timeout
++        self.rec = {"iface": iface, "before": None, "restore": None}
++
++    def __enter__(self):
++        self.rec["before"] = read_state(self.runner, self.iface, self.timeout)
++        return self.rec
++
++    def __exit__(self, *exc):
++        self.rec["restore"] = restore(self.runner, self.iface, self.rec["before"], self.timeout)
++        return False
+--- ct01-06b3c/sigscan_l2.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/sigscan_l2.py	2026-10-08 02:12:15.421548903 +0000
+@@ -0,0 +1,96 @@
++"""06B-4B — signature scanner for HOST-side Ethernet pcaps (veth, bridge, ens33), L2/ARP/IPv6/spoof
++signatures from signatures.py. Read-only, no root. Complements sigscan.sh (06B-3C, unchanged), which
++keeps the IPv4-matrix signatures.
++
++    python3 sigscan_l2.py <pcap> --manager-mac <mac>|--no-manager-mac
++
++Prints key=value (counts are FRAMES), exit 0; exit 2 on any read problem (never "0").
++    frames                 all frames
++    guest_mac              src or dst MAC = guest MAC
++    spoof_mac              src or dst MAC = a chosen spoof MAC
++    guest_net_ip           IPv4 src or dst in 10.200.0.0/30
++    arp_guest_sha          ARP sender MAC = guest MAC
++    arp_spoof_sha          ARP sender MAC = a chosen spoof MAC
++    arp_guest_net          ARP sender or target IP in 10.200.0.0/30
++    arp_spoof_spa_manager  ARP sender IP 192.168.60.10 with a sender MAC other than the manager's
++                           (needs --manager-mac; "skipped" with --no-manager-mac)
++    ipv6_guest             IPv6 with src/dst = guest link-local, or IPv6 frame from guest/spoof MAC
++    spoof_src_ip           IPv4 src 10.200.0.3 / 10.200.0.1; src 192.168.60.10 only with a probe
++                           SOURCE port or a probe ICMP size (it is a real host on sandboxnet)
++    probe_port             TCP/UDP src or dst port = one of the exact new probe ports (all below the
++                           ephemeral range, see signatures.py)
++    icmp_size              ICMPv4 total length / ICMPv6 payload length of a probe size
++    probe_qname            bytes "ct01-06b4-" anywhere in the frame
++"""
++import ipaddress
++import sys
++
++import l2frames as L
++import signatures as S
++
++KEYS = ("frames", "guest_mac", "spoof_mac", "guest_net_ip", "arp_guest_sha", "arp_spoof_sha", "arp_guest_net",
++        "arp_spoof_spa_manager", "ipv6_guest", "spoof_src_ip", "probe_port", "icmp_size", "probe_qname")
++
++
++def scan(path, manager_mac):
++    net = ipaddress.ip_network(S.GUEST_NET)
++    guest, spoof = S.GUEST_MAC, set(S.SPOOF_MACS)
++    ports = set(S.PROBE_PORTS.values())
++    lens4, lens6 = set(S.ip4_lens()), set(S.ip6_plens())
++    own_spoof = {ip for ip in S.SPOOF_SRC_IPS if ip not in S.SPOOF_SRC_SHARED}
++    qn = S.QNAME_PREFIX.encode()
++    c = {k: 0 for k in KEYS}
++    if manager_mac is None:
++        c["arp_spoof_spa_manager"] = "skipped"
++    for t, raw in L.read_frames(path):
++        f = L.decode(t, raw)
++        c["frames"] += 1
++        macs = {f.get("src"), f.get("dst")}
++        c["guest_mac"] += guest in macs
++        c["spoof_mac"] += bool(macs & spoof)
++        ip, a, v6 = f.get("ip"), f.get("arp"), f.get("ip6")
++        if ip and ip.get("valid"):
++            src, dst = ipaddress.IPv4Address(ip["src"]), ipaddress.IPv4Address(ip["dst"])
++            c["guest_net_ip"] += src in net or dst in net
++            probe_port = ip["sport"] in ports or ip["dport"] in ports
++            probe_icmp = ip["proto"] == 1 and ip["tot_len"] in lens4
++            c["probe_port"] += probe_port
++            c["icmp_size"] += probe_icmp
++            c["spoof_src_ip"] += (ip["src"] in own_spoof
++                                  or (ip["src"] in S.SPOOF_SRC_SHARED and (ip["sport"] in ports or probe_icmp)))
++        if a and "sha" in a:
++            c["arp_guest_sha"] += a["sha"] == guest
++            c["arp_spoof_sha"] += a["sha"] in spoof
++            c["arp_guest_net"] += ipaddress.IPv4Address(a["spa"]) in net or ipaddress.IPv4Address(a["tpa"]) in net
++            if manager_mac is not None:
++                c["arp_spoof_spa_manager"] += a["spa"] == "192.168.60.10" and a["sha"] != manager_mac
++        if f.get("etype") == L.ETH_IPV6:
++            hit = f.get("src") == guest or f.get("src") in spoof
++            if v6 and v6.get("valid"):
++                hit = hit or S.GUEST_LL6 in (v6["src"], v6["dst"])
++                c["icmp_size"] += v6["nh"] == 58 and v6["plen"] in lens6
++            c["ipv6_guest"] += hit
++        c["probe_qname"] += qn in raw
++    return c
++
++
++def main(argv):
++    if len(argv) == 3 and argv[1] == "--manager-mac":
++        mm = L._norm_mac(argv[2])
++    elif len(argv) == 2 and argv[1] == "--no-manager-mac":
++        mm = None
++    else:
++        print(__doc__.split("\n\n")[1], file=sys.stderr)
++        return 64
++    try:
++        c = scan(argv[0], mm)
++    except L.FrameReadError as e:
++        print(f"READ ERROR: {e}", file=sys.stderr)
++        return 2
++    for k in KEYS:
++        print(f"{k}={c[k]}")
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+--- ct01-06b3c/selftest_l2.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/selftest_l2.py	2026-10-08 02:19:32.280800822 +0000
+@@ -0,0 +1,806 @@
++#!/usr/bin/env python3
++"""06B-4B — offline self-test of signatures.py, l2frames.py, guest_state.py, sigscan_l2.py and the
++06B-4B changes in run-06b3b.sh. No packet is sent; tcpdump is only used to READ generated fixture
++files (filter compilation and matching). Every test has a unique name (mutation_l2.py targets them).
++
++    python3 selftest_l2.py --offline-only               sections A-I
++    python3 selftest_l2.py --regression <06B-3G run>    A-I + R (read-only replay of the 06B-3G pcaps)
++    add --json <file> to write {test name: true/false}
++
++Exit 0 only if every test passes. A crash inside a test is a FAIL of that test, never a pass.
++"""
++import contextlib
++import io
++import ipaddress
++import json
++import os
++import re
++import struct
++import subprocess
++import sys
++import tempfile
++import traceback
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import counter_window as CW     # noqa: E402
++import guest_state as GS        # noqa: E402
++import l2frames as L            # noqa: E402
++import signatures as S          # noqa: E402
++import sigscan_l2 as SL         # noqa: E402
++
++RESULTS = {}
++TAP = "7a:93:2a:f1:47:47"
++GUEST = S.GUEST_MAC
++SPOOF = S.SPOOF_MACS[0]
++MANAGER_MAC = "1a:1d:4c:ca:65:aa"
++OTHER = "02:42:00:00:bb:02"
++
++
++def t(name, fn):
++    if name in RESULTS:
++        raise SystemExit(f"duplicate test name {name}")
++    try:
++        ok = bool(fn())
++        why = "" if ok else "returned False"
++    except Exception:
++        ok, why = False, traceback.format_exc(limit=3).strip().splitlines()[-1]
++    RESULTS[name] = ok
++    print(f"[{'PASS' if ok else 'FAIL'}] {name}" + (f"  ({why})" if why else ""))
++
++
++def raises(exc, fn):
++    try:
++        fn()
++    except exc:
++        return True
++    return False
++
++
++# ------------------------------------------------------------------ frame builders
++def mac(m):
++    return bytes.fromhex(m.replace(":", ""))
++
++
++def ip4(a):
++    return ipaddress.IPv4Address(a).packed
++
++
++def csum(b):
++    if len(b) % 2:
++        b += b"\0"
++    s = sum(struct.unpack(f"!{len(b) // 2}H", b))
++    while s >> 16:
++        s = (s & 0xFFFF) + (s >> 16)
++    return ~s & 0xFFFF
++
++
++def eth(dst, src, etype, payload):
++    return mac(dst) + mac(src) + struct.pack("!H", etype) + payload
++
++
++def arp(op, sha, spa, tha, tpa, htype=1, ptype=0x0800, hlen=6, plen=4):
++    hw = lambda m: (mac(m) + b"\0" * hlen)[:hlen]           # noqa: E731
++    pr = lambda a: (ip4(a) + b"\0" * plen)[:plen]           # noqa: E731
++    return struct.pack("!HHBBH", htype, ptype, hlen, plen, op) + hw(sha) + pr(spa) + hw(tha) + pr(tpa)
++
++
++def ipv4(src, dst, proto, l4, frag=0, bad_csum=False, ihl=5, tot=None):
++    tot = 4 * ihl + len(l4) if tot is None else tot
++    h = struct.pack("!BBHHHBBH4s4s", 0x40 | ihl, 0, tot, 1, frag, 64, proto, 0, ip4(src), ip4(dst))
++    h += b"\0" * (4 * ihl - 20)
++    c = csum(h) ^ (0x1111 if bad_csum else 0)
++    h = h[:10] + struct.pack("!H", c) + h[12:]
++    return h + l4
++
++
++def tcp(sport, dport):
++    return struct.pack("!HHIIBBHHH", sport, dport, 1, 0, 0x50, 0x02, 64240, 0, 0)
++
++
++def udp(sport, dport, payload=b""):
++    return struct.pack("!HHHH", sport, dport, 8 + len(payload), 0) + payload
++
++
++def icmp(size):
++    return struct.pack("!BBHHH", 8, 0, 0, 1, 1) + b"\xab" * size
++
++
++def ipv6(src, dst, nh, payload):
++    return (struct.pack("!IHBB", 0x60000000, len(payload), nh, 255) + ipaddress.IPv6Address(src).packed
++            + ipaddress.IPv6Address(dst).packed + payload)
++
++
++def icmp6(size, typ=128):
++    return struct.pack("!BBHHH", typ, 0, 0, 1, 1) + b"\xcd" * size
++
++
++def sll2(frame):
++    """Ethernet frame -> LINUX_SLL2 record (protocol, ifindex, ARPHRD_ETHER, PACKET_HOST, src MAC)."""
++    return (frame[12:14] + b"\0\0" + struct.pack("!IHBB", 2, 1, 0, 6) + frame[6:12] + b"\0\0") + frame[14:]
++
++
++def write_pcap(path, frames, linktype=1, endian="<", nano=False):
++    magic = 0xA1B23C4D if nano else 0xA1B2C3D4
++    out = struct.pack(endian + "IHHiIII", magic, 2, 4, 0, 0, 262144, linktype)
++    for ts, fr in frames:
++        sec = int(ts)
++        frac = round((ts - sec) * (1e9 if nano else 1e6))
++        out += struct.pack(endian + "IIII", sec, frac, len(fr), len(fr)) + fr
++    open(path, "wb").write(out)
++
++
++def _blk(btype, body, e="<"):
++    body += b"\0" * ((-len(body)) % 4)
++    n = 12 + len(body)
++    return struct.pack(e + "II", btype, n) + body + struct.pack(e + "I", n)
++
++
++def shb(e="<"):
++    return _blk(0x0A0D0D0A, struct.pack(e + "IHHq", 0x1A2B3C4D, 1, 0, -1), e)
++
++
++def idb(linktype=1, tsresol=None, e="<"):
++    body = struct.pack(e + "HHI", linktype, 0, 262144)
++    if tsresol is not None:
++        body += struct.pack(e + "HH", 9, 1) + bytes([tsresol]) + b"\0\0\0" + struct.pack(e + "HH", 0, 0)
++    return _blk(1, body, e)
++
++
++def epb(ts_units, frame, ifid=0, e="<"):
++    return _blk(6, struct.pack(e + "IIIII", ifid, ts_units >> 32, ts_units & 0xFFFFFFFF, len(frame), len(frame))
++                + frame, e)
++
++
++# Canonical frames ----------------------------------------------------------
++def F_arp_ok(op=1, dst="ff:ff:ff:ff:ff:ff"):
++    return eth(dst, GUEST, 0x0806, arp(op, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1"))
++
++
++def F_ip(src="10.200.0.2", dst="1.1.1.1", proto=6, l4=None, dmac=TAP, smac=GUEST, **kw):
++    return eth(dmac, smac, 0x0800, ipv4(src, dst, proto, tcp(31000, 443) if l4 is None else l4, **kw))
++
++
++# ------------------------------------------------------------------ A. registry and filters
++def sec_A(tmp):
++    t("A1 registry check() reports no problem", lambda: S.check() == [])
++    t("A2 every new probe port is outside the Linux ephemeral range",
++      lambda: all(not 32768 <= p <= 60999 for p in S.PROBE_PORTS.values()))
++    t("A3 plan ports T17-P1..P4 present and unique",
++      lambda: [S.PROBE_PORTS[f"T17-P{i}"] for i in (1, 2, 3, 4)] == [31171, 31172, 31173, 31174])
++    t("A4 GUEST_LL6 is the EUI-64 address of the guest MAC", lambda: S.eui64_ll(GUEST) == S.GUEST_LL6)
++    t("A5 check() catches a probe port inside the ephemeral range",
++      lambda: _with(S.PROBE_PORTS, "X", 42172, lambda: any("ephemeral" in p for p in S.check())))
++    t("A6 check() catches a duplicate ICMP size",
++      lambda: _with(S.ICMP4_SIZES, "X", 1201, lambda: any("duplicate ICMP" in p for p in S.check())))
++    en, sl = os.path.join(tmp, "en.pcap"), os.path.join(tmp, "sll2.pcap")
++    write_pcap(en, [], 1)
++    write_pcap(sl, [], 276)
++
++    def comp(f, flt):
++        return subprocess.run(["tcpdump", "-r", f, "-d", flt], capture_output=True, text=True).returncode == 0
++    t("A7 alert_any filter compiles on LINUX_SLL2 (tcpdump -i any)", lambda: comp(sl, S.alert_any_filter()))
++    t("A8 alert_eth filter compiles on Ethernet (veth)", lambda: comp(en, S.alert_eth_filter()))
++    t("A9 alert_eth filter does NOT compile on LINUX_SLL2 (why there are two alerts)",
++      lambda: not comp(sl, S.alert_eth_filter()))
++    # matching: positives one per clause (MAC-only first: they carry no network-layer signature),
++    # negatives look-alikes
++    mac_only = [eth(OTHER, GUEST, 0x0800, ipv4("192.168.60.99", "192.168.60.1", 6, tcp(5000, 22))),
++                eth(OTHER, SPOOF, 0x0800, ipv4("192.168.60.99", "192.168.60.1", 6, tcp(5000, 22)))]
++    pos = mac_only + [
++           eth("ff:ff:ff:ff:ff:ff", OTHER, 0x0806, arp(1, OTHER, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.9")),
++           eth(OTHER, OTHER, 0x0806, arp(2, GUEST, "192.168.60.99", OTHER, "192.168.60.1")),  # ARP sha guest
++           eth(OTHER, OTHER, 0x86DD, ipv6(S.GUEST_LL6, "ff02::1", 58, icmp6(1))),              # guest LL6
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "10.200.0.1", 6, tcp(31172, 8011))),
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.177.128", "224.0.0.1", 1, icmp(1202))),     # ICMP size
++           eth(OTHER, OTHER, 0x86DD, ipv6("fe80::1", "ff02::1", 58, icmp6(1301)))]             # ICMPv6 size
++    neg = [eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.3", "192.168.60.10", 6, tcp(42172, 8011))),  # 06B-3G
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.3", 6, tcp(8011, 31172))),  # dst port only
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.1", 1, icmp(100))),
++           eth(OTHER, OTHER, 0x0806, arp(2, MANAGER_MAC, "192.168.60.10", OTHER, "192.168.60.2")),
++           eth(OTHER, OTHER, 0x86DD, ipv6("fe80::2", "ff02::1", 58, icmp6(10)))]
++    pe, ne = os.path.join(tmp, "pos-en.pcap"), os.path.join(tmp, "neg-en.pcap")
++    ps, ns = os.path.join(tmp, "pos-sll2.pcap"), os.path.join(tmp, "neg-sll2.pcap")
++    write_pcap(pe, [(1.0 + i, f) for i, f in enumerate(pos)])
++    write_pcap(ne, [(1.0 + i, f) for i, f in enumerate(neg)])
++    write_pcap(ps, [(1.0 + i, sll2(f)) for i, f in enumerate(pos[len(mac_only):])], 276)
++    write_pcap(ns, [(1.0 + i, sll2(f)) for i, f in enumerate(neg)], 276)
++
++    def nmatch(f, flt):
++        r = subprocess.run(["tcpdump", "-n", "-r", f, flt], capture_output=True, text=True)
++        if r.returncode != 0:
++            raise RuntimeError(r.stderr.strip())
++        return len([x for x in r.stdout.splitlines() if x.strip()])
++    t("A10 alert_eth matches every Ethernet positive fixture", lambda: nmatch(pe, S.alert_eth_filter()) == len(pos))
++    t("A11 alert_eth matches no negative fixture (incl. 06B-3G ctl port 42172)",
++      lambda: nmatch(ne, S.alert_eth_filter()) == 0)
++    t("A12 alert_any matches every network-layer positive on LINUX_SLL2",
++      lambda: nmatch(ps, S.alert_any_filter()) == len(pos) - len(mac_only))
++    t("A14 alert_any does not match the MAC-only positives (the reason for the veth alert)",
++      lambda: nmatch(pe, S.alert_any_filter()) == len(pos) - len(mac_only))
++    t("A13 alert_any matches no negative on LINUX_SLL2", lambda: nmatch(ns, S.alert_any_filter()) == 0)
++
++
++def _with(d, k, v, fn):
++    d[k] = v
++    try:
++        return fn()
++    finally:
++        del d[k]
++
++
++# ------------------------------------------------------------------ B. readers
++def sec_B(tmp):
++    fr = [F_arp_ok(), F_ip()]
++    p = os.path.join(tmp, "b")
++    write_pcap(p + "le.pcap", [(10.25, fr[0]), (11.5, fr[1])])
++    write_pcap(p + "be.pcap", [(10.25, fr[0])], endian=">")
++    write_pcap(p + "ns.pcap", [(10.000000123, fr[0])], nano=True)
++    t("B1 pcap little-endian: frames and times", lambda: [(round(a, 6), b) for a, b in L.read_frames(p + "le.pcap")]
++      == [(10.25, fr[0]), (11.5, fr[1])])
++    t("B2 pcap big-endian", lambda: L.read_frames(p + "be.pcap")[0][1] == fr[0])
++    t("B3 pcap nanosecond magic", lambda: abs(L.read_frames(p + "ns.pcap")[0][0] - 10.000000123) < 1e-8)
++    us = 1791389689323083
++    open(p + "a.pcapng", "wb").write(shb() + idb() + epb(us, fr[0]) + epb(us + 1, fr[1]))
++    t("B4 pcapng default microsecond resolution",
++      lambda: abs(L.read_frames(p + "a.pcapng")[0][0] - 1791389689.323083) < 2e-6)
++    open(p + "b.pcapng", "wb").write(shb() + idb(tsresol=9) + epb(us * 1000 + 7, fr[0]))
++    t("B5 pcapng if_tsresol 9 (nanoseconds)",
++      lambda: abs(L.read_frames(p + "b.pcapng")[0][0] - 1791389689.323083) < 2e-6)
++    open(p + "c.pcapng", "wb").write(shb(">") + idb(e=">") + epb(us, fr[0], e=">"))
++    t("B6 pcapng big-endian section", lambda: L.read_frames(p + "c.pcapng")[0][1] == fr[0])
++    open(p + "d.pcapng", "wb").write(shb() + idb() + epb(us, fr[0]) + shb() + idb() + epb(us, fr[1]))
++    t("B7 pcapng two sections", lambda: len(L.read_frames(p + "d.pcapng")) == 2)
++    cases = {
++        "B8 empty file is a read error": b"",
++        "B9 unknown magic is a read error": b"\x00\x01\x02\x03" * 8,
++        "B10 truncated pcap record is a read error": open(p + "le.pcap", "rb").read()[:-5],
++        "B11 truncated pcapng block is a read error": open(p + "a.pcapng", "rb").read()[:-6],
++        "B12 pcapng block trailer mismatch is a read error":
++            open(p + "a.pcapng", "rb").read()[:-4] + struct.pack("<I", 999),
++        "B13 EPB for an undefined interface is a read error": shb() + epb(us, fr[0]),
++        "B14 simple packet block (no timestamp) is a read error": shb() + idb() + _blk(3, struct.pack("<I", 3) + b"abc"),
++        "B15 pcapng non-Ethernet interface is a read error": shb() + idb(276) + epb(us, fr[0]),
++    }
++    for name, data in cases.items():
++        q = p + re.sub(r"\W", "", name)[:12]
++        open(q, "wb").write(data)
++        t(name, lambda q=q: raises(L.FrameReadError, lambda: L.read_frames(q)))
++    write_pcap(p + "sll.pcap", [(1.0, fr[0])], 276)
++    t("B16 pcap non-Ethernet link type is a read error", lambda: raises(L.FrameReadError, lambda: L.read_frames(p + "sll.pcap")))
++    t("B17 missing file is a read error", lambda: raises(L.FrameReadError, lambda: L.read_frames(p + "nope")))
++
++
++# ------------------------------------------------------------------ C/D. decoder and classifier
++def cls(frame, tap=TAP):
++    return L.classify(L.decode(1.0, frame), tap)
++
++
++def sec_D():
++    # direction
++    t("D1 guest frame -> guest", lambda: cls(F_ip())[0] == "guest")
++    t("D2 chosen spoof MAC -> l2_bad_mac (any ethertype)",
++      lambda: cls(eth(TAP, SPOOF, 0x86DD, ipv6("fe80::1", "ff02::1", 58, icmp6(1))))[:2] == ("guest_spoof_mac", "l2_bad_mac"))
++    t("D3 TAP_MAC source -> worker direction", lambda: cls(eth(GUEST, TAP, 0x0806, arp(2, TAP, "10.200.0.1", GUEST, "10.200.0.2")))[:2]
++      == ("worker", "arp_out_ok"))
++    t("D4 other source MAC -> unknown_src / unmapped (never l2_bad_mac)",
++      lambda: cls(F_ip(smac=OTHER))[:2] == ("unknown_src", "unmapped"))
++    t("D5 TAP_MAC equal to the guest MAC is refused", lambda: raises(ValueError, lambda: cls(F_ip(), tap=GUEST)))
++    t("D6 malformed TAP_MAC is refused", lambda: raises(ValueError, lambda: cls(F_ip(), tap="7a:93")))
++    t("D7 frame shorter than Ethernet header -> unmapped", lambda: cls(b"\x01\x02\x03")[1] == "unmapped")
++    # L2 ethertype
++    t("D8 IPv6 from guest -> l2_bad_ethertype (IPv6 recognised)",
++      lambda: cls(eth(TAP, GUEST, 0x86DD, ipv6(S.GUEST_LL6, "ff02::1", 58, icmp6(1301))))[1:] == ("l2_bad_ethertype", "IPv6"))
++    t("D9 LLDP from guest -> l2_bad_ethertype", lambda: cls(eth(TAP, GUEST, 0x88CC, b"\0" * 30))[1] == "l2_bad_ethertype")
++    t("D10 802.3 length field -> l2_bad_ethertype", lambda: cls(eth(TAP, GUEST, 0x0040, b"\0" * 64))[1] == "l2_bad_ethertype")
++    t("D11 VLAN-tagged -> unmapped (not claimed)", lambda: cls(eth(TAP, GUEST, 0x8100, b"\x00\x05\x08\x00" + b"\0" * 40))[1] == "unmapped")
++    f6 = L.decode(1.0, eth(TAP, GUEST, 0x86DD, ipv6(S.GUEST_LL6, "ff02::1", 58, icmp6(1301))))
++    t("D12 IPv6 decode: plen, next header, ICMPv6 type",
++      lambda: (f6["ip6"]["plen"], f6["ip6"]["nh"], f6["ip6"]["icmp6_type"], f6["ip6"]["src"]) == (1309, 58, 128, S.GUEST_LL6))
++    # ARP mapping
++    t("D13 ARP request guest -> 10.200.0.1, broadcast -> arp_in_ok", lambda: cls(F_arp_ok())[1] == "arp_in_ok")
++    t("D14 ARP reply to TAP_MAC -> arp_in_ok", lambda: cls(eth(TAP, GUEST, 0x0806, arp(2, GUEST, "10.200.0.2", TAP, "10.200.0.1")))[1]
++      == "arp_in_ok")
++    arp_drop = {
++        "D15 ARP target 192.168.60.2 -> arp_in_drop": arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "192.168.60.2"),
++        "D16 gratuitous (spa = tpa = 10.200.0.2) -> arp_in_drop": arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.2"),
++        "D17 spoofed sender IP 10.200.0.1 -> arp_in_drop": arp(1, GUEST, "10.200.0.1", "00:00:00:00:00:00", "10.200.0.1"),
++        "D18 sender MAC field differs from guest -> arp_in_drop": arp(2, SPOOF, "10.200.0.2", TAP, "10.200.0.1"),
++        "D19 opcode 3 -> arp_in_drop": arp(3, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1"),
++        "D20 htype 6 -> arp_in_drop": arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1", htype=6),
++        "D21 ptype 0x86dd -> arp_in_drop": arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1", ptype=0x86DD),
++    }
++    for name, payload in arp_drop.items():
++        t(name, lambda payload=payload: cls(eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0806, payload))[1] == "arp_in_drop")
++    t("D22 ARP to another unicast MAC (OTHERHOST) -> arp_not_hooked",
++      lambda: cls(F_arp_ok(op=2, dst=MANAGER_MAC))[1] == "arp_not_hooked")
++    t("D23 ARP to a multicast MAC is hooked", lambda: cls(F_arp_ok(dst="01:00:5e:00:00:01"))[1] == "arp_in_ok")
++    t("D24 ARP hlen 8 -> arp_not_hooked", lambda: cls(eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0806,
++      arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1", hlen=8)))[1] == "arp_not_hooked")
++    t("D25 ARP plen 16 -> arp_not_hooked", lambda: cls(eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0806,
++      arp(1, GUEST, "10.200.0.2", "00:00:00:00:00:00", "10.200.0.1", plen=16)))[1] == "arp_not_hooked")
++    t("D26 ARP payload shorter than 28 bytes -> arp_not_hooked",
++      lambda: cls(eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0806, arp(1, GUEST, "10.200.0.2", "0:0:0:0:0:0", "10.200.0.1")[:20]))[1]
++      == "arp_not_hooked")
++    t("D27 ARP payload shorter than 8 bytes -> arp_not_hooked", lambda: cls(eth("ff:ff:ff:ff:ff:ff", GUEST, 0x0806, b"\0\1"))[1]
++      == "arp_not_hooked")
++    # IPv4, same order as guest.nft prerouting
++    ipcases = [("D28 spoofed source wins over the allowed service -> drop_spoof",
++                F_ip(src="10.200.0.3", dst="10.200.0.1", l4=tcp(31171, 8011)), "drop_spoof"),
++               ("D29 tcp 10.200.0.1:8011 -> allow_svc", F_ip(dst="10.200.0.1", l4=tcp(40000, 8011)), "allow_svc"),
++               ("D30 udp 10.200.0.1:8011 -> drop_worker_other", F_ip(dst="10.200.0.1", proto=17, l4=udp(40000, 8011)),
++                "drop_worker_other"),
++               ("D31 non-first fragment to 8011 -> drop_worker_other (no ports)",
++                F_ip(dst="10.200.0.1", l4=tcp(40000, 8011), frag=100), "drop_worker_other"),
++               ("D32 subnet broadcast 10.200.0.3 -> drop_private", F_ip(dst="10.200.0.3", proto=1, l4=icmp(1204),
++                dmac="ff:ff:ff:ff:ff:ff"), "drop_private"),
++               ("D33 255.255.255.255 -> drop_bcast_mcast", F_ip(dst="255.255.255.255", proto=1, l4=icmp(1201),
++                dmac="ff:ff:ff:ff:ff:ff"), "drop_bcast_mcast"),
++               ("D34 224.0.0.1 -> drop_bcast_mcast", F_ip(dst="224.0.0.1", proto=1, l4=icmp(1202), dmac="01:00:5e:00:00:01"),
++                "drop_bcast_mcast"),
++               ("D35 DHCP 0.0.0.0 -> 255.255.255.255 -> drop_spoof", F_ip(src="0.0.0.0", dst="255.255.255.255", proto=17,
++                l4=udp(68, 67), dmac="ff:ff:ff:ff:ff:ff"), "drop_spoof"),
++               ("D36 192.168.60.10 -> drop_private", F_ip(dst="192.168.60.10"), "drop_private"),
++               ("D37 1.1.1.1 -> drop_public", F_ip(), "drop_public"),
++               ("D38 IPv4 to another unicast MAC (OTHERHOST) -> ip_not_hooked", F_ip(dmac=MANAGER_MAC), "ip_not_hooked"),
++               ("D39 IPv4 bad header checksum -> ip_not_hooked", F_ip(bad_csum=True), "ip_not_hooked"),
++               ("D40 IPv4 total length beyond frame -> ip_not_hooked", F_ip(tot=1500), "ip_not_hooked")]
++    for name, frame, want in ipcases:
++        t(name, lambda frame=frame, want=want: cls(frame)[1] == want)
++    t("D41 worker tcp sport 8011 -> allow_out_svc",
++      lambda: cls(eth(GUEST, TAP, 0x0800, ipv4("10.200.0.1", "10.200.0.2", 6, tcp(8011, 40000))))[1] == "allow_out_svc")
++    t("D42 worker ICMP to guest -> worker_unexpected",
++      lambda: cls(eth(GUEST, TAP, 0x0800, ipv4("10.200.0.1", "10.200.0.2", 1, icmp(8))))[1] == "worker_unexpected")
++    t("D43 worker ARP outside the allow rule -> worker_unexpected",
++      lambda: cls(eth(GUEST, TAP, 0x0806, arp(1, TAP, "10.200.0.1", GUEST, "192.168.60.2")))[1] == "worker_unexpected")
++    t("D44 every class produced is a counter class or a declared no-counter class",
++      lambda: all(c in L.COUNTER_CLASSES + L.NO_COUNTER for c in ("arp_not_hooked", "ip_not_hooked", "unmapped",
++                                                                  "worker_unexpected")))
++
++
++# ------------------------------------------------------------------ E. strict deltas and reconcile_l2
++def rd(t0, t1, **v):
++    return {"t_start": t0, "t_end": t1, "values": v}
++
++
++def sec_E():
++    A = rd(100.0, 100.01, arp_in_ok=5, arp_in_drop=0, l2_bad_mac=0)
++    B = rd(110.0, 110.01, arp_in_ok=7, arp_in_drop=3, l2_bad_mac=1)
++    fr = ([{"t": 105.0, "cls": "arp_in_ok"}] * 2 + [{"t": 105.1, "cls": "arp_in_drop"}] * 3
++          + [{"t": 106.0, "cls": "l2_bad_mac"}])
++    comp = ("arp_in_ok", "arp_in_drop", "l2_bad_mac")
++    t("E1 exact match -> PASS", lambda: L.reconcile_l2(fr, A, B, comp)["verdict"] == "PASS")
++    t("E2 missing counter in read A -> ERROR, not 0",
++      lambda: "missing" in L.reconcile_l2(fr, rd(100, 100.01, arp_in_ok=5, l2_bad_mac=0), B, comp).get("error", ""))
++    t("E3 missing counter in read B -> ERROR",
++      lambda: L.reconcile_l2(fr, A, rd(110, 110.01, arp_in_ok=7, arp_in_drop=3), comp)["verdict"] == "ERROR")
++    t("E4 bool counter value -> ERROR",
++      lambda: L.reconcile_l2(fr, A, rd(110, 110.01, arp_in_ok=7, arp_in_drop=True, l2_bad_mac=1), comp)["verdict"] == "ERROR")
++    t("E5 counter decreased -> ERROR",
++      lambda: "decreased" in L.reconcile_l2(fr, A, rd(110, 110.01, arp_in_ok=4, arp_in_drop=3, l2_bad_mac=1), comp)["error"])
++    t("E6 values missing entirely -> ERROR", lambda: L.reconcile_l2(fr, {"t_start": 1, "t_end": 2}, B, comp)["verdict"] == "ERROR")
++    t("E7 one frame too many -> FAIL", lambda: L.reconcile_l2(fr + [{"t": 107.0, "cls": "arp_in_drop"}], A, B, comp)["verdict"] == "FAIL")
++    t("E8 edge frame -> UNVERIFIED",
++      lambda: L.reconcile_l2(fr[:5] + [{"t": 109.99, "cls": "l2_bad_mac"}], A, B, comp)["verdict"] == "UNVERIFIED")
++    r = L.reconcile_l2(fr + [{"t": 105.5, "cls": "arp_not_hooked", "reason": "OTHERHOST"}], A, B, comp)
++    t("E9 not-hooked frame inside the window -> UNVERIFIED, listed",
++      lambda: r["verdict"] == "UNVERIFIED" and r["no_counter_frames"][0]["cls"] == "arp_not_hooked")
++    t("E10 unmapped frame inside the window -> UNVERIFIED",
++      lambda: L.reconcile_l2(fr + [{"t": 105.5, "cls": "unmapped"}], A, B, comp)["verdict"] == "UNVERIFIED")
++    t("E11 no-counter frame outside the window does not count",
++      lambda: L.reconcile_l2(fr + [{"t": 50.0, "cls": "unmapped"}], A, B, comp)["verdict"] == "PASS")
++    t("E12 a real mismatch stays FAIL even with no-counter frames",
++      lambda: L.reconcile_l2(fr[:-1] + [{"t": 105.5, "cls": "unmapped"}], A, B, comp)["verdict"] == "FAIL")
++    A2, B2 = dict(A, values=dict(A["values"], arp_out_drop=0)), dict(B, values=dict(B["values"], arp_out_drop=0))
++    t("E13 comparing an unobservable counter (arp_out_drop) -> ERROR even with the counter present",
++      lambda: "not a frame-mapped" in L.reconcile_l2(fr, A2, B2, comp + ("arp_out_drop",)).get("error", ""))
++    t("E14 invalid read times -> ERROR (counter_window.validate)",
++      lambda: L.reconcile_l2(fr, A, rd(90.0, 90.01, arp_in_ok=7, arp_in_drop=3, l2_bad_mac=1), comp)["verdict"] == "ERROR")
++    t("E15 worker_unexpected frame inside the window -> UNVERIFIED",
++      lambda: L.reconcile_l2(fr + [{"t": 105.5, "cls": "worker_unexpected"}], A, B, comp)["verdict"] == "UNVERIFIED")
++
++
++# ------------------------------------------------------------------ F. verdict labels (D6)
++def sec_F():
++    ok_checks = {"guest_connection_failed": True, "probe_packets_in_tap0_pcap": True,
++                 "probe_packets_hit_expected_counter": True}
++    rec = {"verdict": "PASS", "per_class": {"arp_in_drop": {"status": "PASS", "delta": 3}}}
++    t("F1 live control alive + PASS -> ĐẠT", lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "live", True) == ("ĐẠT", True))
++    t("F2 live control dead -> CHƯA KIỂM CHỨNG",
++      lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "live", False)[0].startswith("CHƯA KIỂM CHỨNG"))
++    t("F3 rule check + PASS -> ĐẠT (kiểm quy tắc)",
++      lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "rule_check") == ("ĐẠT (kiểm quy tắc)", True))
++    t("F4 rule check with a control value is refused",
++      lambda: raises(ValueError, lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "rule_check", True)))
++    t("F5 live control without a bool is refused",
++      lambda: raises(ValueError, lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "live")))
++    t("F6 unknown control kind is refused",
++      lambda: raises(ValueError, lambda: L.probe_verdict_l2(ok_checks, rec, "arp_in_drop", "none")))
++    t("F7 rule check never hides a FAIL",
++      lambda: L.probe_verdict_l2(dict(ok_checks, guest_connection_failed=False), rec, "arp_in_drop", "rule_check")
++      == ("FAIL", False))
++    unv = {"verdict": "UNVERIFIED", "per_class": {"arp_in_drop": {"status": "PASS", "delta": 3}},
++           "no_counter_frames": [{"t": 1.0, "cls": "arp_not_hooked"}]}
++    t("F8 no-counter frames are named as the cause, not as an edge",
++      lambda: L.probe_verdict_l2(ok_checks, unv, "arp_in_drop", "rule_check")[0]
++      == "CHƯA KIỂM CHỨNG (khung không có bộ đếm trong cửa sổ)")
++    t("F9 run_outcome counts ĐẠT (kiểm quy tắc) as passed",
++      lambda: CW.run_outcome([{"test": "probe x -> ĐẠT (kiểm quy tắc)", "ok": True}]) == "PASS")
++
++
++# ------------------------------------------------------------------ G. guest state save / restore
++ARP_HDR = "IP address       HW type     Flags       HW address            Mask     Device"
++
++
++class FakeGuest:
++    """Minimal simulation of the commands guest_state emits. [Kernel] behaviour simulated, NOT verified:
++    link down removes every route through the device and flushes ALL its neighbours (permanent too);
++    link up re-adds the connected routes; a /32 address has no connected route."""
++
++    def __init__(self, iface="eth1", netifd_extra=None, fail=(), bad_section=None):
++        self.iface, self.netifd_extra, self.fail, self.bad_section = iface, netifd_extra, set(fail), bad_section
++        self.mac, self.oper, self.notify = GUEST, "up", 0
++        self.addrs = {"10.200.0.2/30"}
++        self.routes = {f"default via 10.200.0.1 dev {iface}", f"10.200.0.0/30 dev {iface} scope link src 10.200.0.2",
++                       "192.168.1.0/24 dev br-lan scope link src 192.168.1.1"}
++        self.neigh = {("10.200.0.1", iface): (TAP, 0x2), ("192.168.1.5", "br-lan"): ("00:11:22:33:44:55", 0x2)}
++        self.log = []
++
++    def _conn(self, a):
++        n = ipaddress.ip_interface(a)
++        return None if n.network.prefixlen == 32 else f"{n.network} dev {self.iface} scope link src {n.ip}"
++
++    def run(self, cmd, timeout=60):
++        self.log.append(cmd)
++        if cmd == GS.snapshot_cmd(self.iface):
++            return 0, self._snap()
++        if cmd in self.fail:
++            return 2, "RTNETLINK answers: Operation not supported"
++        i = self.iface
++        m = re.fullmatch(rf"ip link set dev {i} (down|up|address (\S+))", cmd)
++        if m:
++            if m.group(1) == "down":
++                self.oper = "down"
++                self.routes = {r for r in self.routes if f" dev {i}" not in r}
++                self.neigh = {k: v for k, v in self.neigh.items() if k[1] != i}
++            elif m.group(1) == "up":
++                self.oper = "up"
++                self.routes |= {c for c in map(self._conn, self.addrs) if c}
++                if self.netifd_extra:
++                    self.addrs.add(self.netifd_extra)
++            else:
++                self.mac = m.group(2)
++            return 0, ""
++        m = re.fullmatch(rf"ip addr (add|del) (\S+)(?: brd \+)? dev {i}", cmd)
++        if m:
++            a, c = m.group(2), self._conn(m.group(2))
++            if m.group(1) == "add":
++                if a in self.addrs:
++                    return 2, "RTNETLINK answers: File exists"
++                self.addrs.add(a)
++                if c and self.oper == "up":
++                    self.routes.add(c)
++            else:
++                if a not in self.addrs:
++                    return 2, "RTNETLINK answers: Cannot assign"
++                self.addrs.discard(a)
++                self.routes.discard(c)
++            return 0, ""
++        m = re.fullmatch(r"ip route (add|del) (.+)", cmd)
++        if m:
++            r = " ".join(m.group(2).split())
++            if m.group(1) == "add":
++                if r in self.routes:
++                    return 2, "RTNETLINK answers: File exists"
++                self.routes.add(r)
++            else:
++                if r not in self.routes:
++                    return 2, "RTNETLINK answers: No such process"
++                self.routes.discard(r)
++            return 0, ""
++        m = re.fullmatch(r"arp -i (\S+) (-d (\S+)|-s (\S+) (\S+))", cmd)
++        if m:
++            if m.group(3):
++                return (0, "") if self.neigh.pop((m.group(3), m.group(1)), None) else (1, "No ARP entry")
++            self.neigh[(m.group(4), m.group(1))] = (m.group(5), 0x6)
++            return 0, ""
++        m = re.fullmatch(rf"echo (\d+) > /proc/sys/net/ipv4/conf/{i}/arp_notify", cmd)
++        if m:
++            self.notify = int(m.group(1))
++            return 0, ""
++        return 127, f"sh: unknown command in simulation: {cmd}"
++
++    def _snap(self):
++        def sec(name, body, rc=0):
++            if self.bad_section == name:
++                rc = 1
++            if self.bad_section == name + "-missing":
++                return ""
++            return f"@@S {name}\n{body}\n@@RC {rc}\n"
++        addr = "\n".join(f"    inet {a} brd x scope global {self.iface}" for a in sorted(self.addrs))
++        arpt = "\n".join([ARP_HDR] + [f"{ip:<16} 0x1         {fl:#x}         {mc}     *        {dev}"
++                                      for (ip, dev), (mc, fl) in sorted(self.neigh.items())])
++        return (sec("mac", self.mac) + sec("operstate", self.oper)
++                + sec("addr", f"3: {self.iface}: <BROADCAST,UP>\n{addr}") + sec("route", "\n".join(sorted(self.routes)))
++                + sec("arp", arpt) + sec("arp_notify", str(self.notify)))
++
++
++def sec_G():
++    # parser on the real busybox text recorded in 06B-3G topology.json (ARM)
++    real_addr = ("3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\n"
++                 "    link/ether 52:54:00:c7:00:02 brd ff:ff:ff:ff:ff:ff\n"
++                 "    inet 10.200.0.2/30 brd 10.200.0.3 scope global eth1\n       valid_lft forever preferred_lft forever")
++    real_route = "default via 10.200.0.1 dev eth1 \n10.200.0.0/30 dev eth1 scope link  src 10.200.0.2 \n"
++    text = (f"@@S mac\n52:54:00:c7:00:02\n@@RC 0\n@@S operstate\nup\n@@RC 0\n@@S addr\n{real_addr}\n@@RC 0\n"
++            f"@@S route\n{real_route}@@RC 0\n@@S arp\n{ARP_HDR}\n10.200.0.1       0x1         0x2         "
++            f"{TAP}     *        eth1\n@@RC 0\n@@S arp_notify\n0\n@@RC 0\n")
++    st = GS.parse_snapshot(text)
++    t("G1 parse real busybox ip addr / ip route text",
++      lambda: st["addrs"] == ["10.200.0.2/30"] and "10.200.0.0/30 dev eth1 scope link src 10.200.0.2" in st["routes"])
++    t("G2 /proc/net/arp: complete entry is dynamic, not static",
++      lambda: st["neigh_static"] == {} and st["neigh_dynamic"][("10.200.0.1", "eth1")] == (TAP, 2))
++    # valid-looking content but a failed command: the rc alone must make it an error
++    t("G3 section with rc != 0 -> StateReadError",
++      lambda: raises(GS.StateReadError, lambda: GS.parse_snapshot(text.replace("@@S arp_notify\n0\n@@RC 0", "@@S arp_notify\n0\n@@RC 1"))))
++    t("G4 missing section -> StateReadError",
++      lambda: raises(GS.StateReadError, lambda: GS.parse_snapshot(text.split("@@S arp_notify")[0])))
++    t("G5 bad interface name refused", lambda: raises(ValueError, lambda: GS.snapshot_cmd("eth1; reboot")))
++
++    def scenario(change, **kw):
++        g = FakeGuest(**kw)
++        before = GS.read_state(g, "eth1")
++        change(g)
++        return g, before, GS.restore(g, "eth1", before)
++    # 1 MAC change through down/address/up: default route lost, neighbours flushed
++    g, b, r = scenario(lambda g: [g.run(c) for c in ("ip link set dev eth1 down", f"ip link set dev eth1 address {SPOOF}",
++                                                       "ip link set dev eth1 up")])
++    t("G6 MAC change: restored, MAC back, default route re-added",
++      lambda: r["restored"] and g.mac == GUEST and "default via 10.200.0.1 dev eth1" in g.routes)
++    t("G7 MAC change: lost dynamic neighbour is reported, not forced",
++      lambda: any("10.200.0.1" in d for d in r["dynamic_changes"]) and not any("arp -i eth1 -s" in c["cmd"] for c in r["commands"]))
++    # 2 extra /32 addresses and an on-link route
++    g, b, r = scenario(lambda g: [g.run("ip addr add 10.200.0.3/32 brd + dev eth1"),
++                                  g.run("ip route add 192.168.60.2 dev eth1 scope link")])
++    t("G8 extra /32 address and on-link route removed", lambda: r["restored"] and g.addrs == {"10.200.0.2/30"}
++      and "192.168.60.2 dev eth1 scope link" not in g.routes)
++    # 3 static neighbour added by the probe -> deleted
++    g, b, r = scenario(lambda g: g.run(f"arp -i eth1 -s 10.200.0.1 {TAP}"))
++    t("G9 static neighbour added by the probe is deleted", lambda: r["restored"] and ("10.200.0.1", "eth1") not in g.neigh)
++    # 4/5 static neighbour that existed BEFORE: lost by a link down / changed -> re-created with its old MAC
++
++    def pre_static(g):
++        g.neigh[("10.200.0.1", "eth1")] = (TAP, 0x6)
++    g = FakeGuest()
++    pre_static(g)
++    b = GS.read_state(g, "eth1")
++    g.run("ip link set dev eth1 down")
++    g.run("ip link set dev eth1 up")
++    r = GS.restore(g, "eth1", b)
++    t("G10 pre-existing static neighbour flushed by link down is re-created",
++      lambda: r["restored"] and g.neigh[("10.200.0.1", "eth1")] == (TAP, 0x6))
++    g = FakeGuest()
++    pre_static(g)
++    b = GS.read_state(g, "eth1")
++    g.run("arp -i eth1 -s 10.200.0.1 00:00:00:00:00:99")
++    r = GS.restore(g, "eth1", b)
++    t("G11 pre-existing static neighbour with a changed MAC is set back",
++      lambda: r["restored"] and g.neigh[("10.200.0.1", "eth1")][0] == TAP)
++    # 6 arp_notify
++    g, b, r = scenario(lambda g: g.run("echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify"))
++    t("G12 arp_notify restored", lambda: r["restored"] and g.notify == 0)
++    # 7 netifd adds an address on link up
++    g, b, r = scenario(lambda g: [g.run("ip link set dev eth1 down"), g.run("ip link set dev eth1 up")],
++                       netifd_extra="192.168.99.7/24")
++    t("G13 address added by netifd on link up is removed", lambda: r["restored"] and "192.168.99.7/24" not in g.addrs)
++    # 8 a restore command fails -> not restored, diffs listed
++    g, b, r = scenario(lambda g: [g.run("ip link set dev eth1 down"), g.run(f"ip link set dev eth1 address {SPOOF}"),
++                                  g.run("ip link set dev eth1 up")], fail=(f"ip link set dev eth1 address {GUEST}",))
++    t("G14 failed restore command -> restored False, MAC diff listed",
++      lambda: not r["restored"] and any(d.startswith("mac:") for d in r["diffs"]))
++    # 9 state cannot be read during restore -> restored False with the error
++    g = FakeGuest()
++    b = GS.read_state(g, "eth1")
++    g.bad_section = "route"
++    r = GS.restore(g, "eth1", b)
++    t("G15 unreadable state during restore -> restored False, error kept", lambda: not r["restored"] and "route" in r["error"])
++    # 10 GuestChange restores after an exception
++    g = FakeGuest()
++    rec = {}
++    with contextlib.suppress(RuntimeError):
++        with GS.GuestChange(g, "eth1") as rec:
++            g.run("ip addr add 10.200.0.3/32 brd + dev eth1")
++            raise RuntimeError("probe crashed")
++    t("G16 GuestChange restores even when the probe raises", lambda: rec["restore"]["restored"] and g.addrs == {"10.200.0.2/30"})
++    g, b, r = scenario(lambda g: None)
++    t("G17 nothing changed -> no command, restored", lambda: r["restored"] and r["commands"] == [])
++
++
++# ------------------------------------------------------------------ H. sigscan_l2
++def sec_H(tmp):
++    pos = [F_arp_ok(),                                                                         # guest_mac, arp_guest_sha, arp_guest_net
++           eth(TAP, SPOOF, 0x0806, arp(1, SPOOF, "10.200.0.2", "0:0:0:0:0:0", "10.200.0.1")),   # spoof_mac, arp_spoof_sha, arp_guest_net
++           eth(OTHER, OTHER, 0x0806, arp(2, OTHER, "192.168.60.10", OTHER, "192.168.60.2")),    # arp_spoof_spa_manager
++           eth(OTHER, OTHER, 0x86DD, ipv6(S.GUEST_LL6, "ff02::1", 58, icmp6(1301))),            # ipv6_guest, icmp_size
++           eth(OTHER, OTHER, 0x0800, ipv4("10.200.0.3", "1.1.1.1", 6, tcp(31174, 443))),       # guest_net_ip, spoof_src_ip, probe_port
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "10.200.0.1", 6, tcp(31172, 8011))),  # spoof (shared+sport), probe_port, guest_net_ip
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.177.128", "8.8.8.8", 17, udp(5353, 53, b"\x07ct01-06b4-t12-arm-3"))),
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.177.128", "224.0.0.1", 1, icmp(1202)))]     # icmp_size
++    want = {"frames": 8, "guest_mac": 1, "spoof_mac": 1, "guest_net_ip": 2, "arp_guest_sha": 1, "arp_spoof_sha": 1,
++            "arp_guest_net": 2, "arp_spoof_spa_manager": 1, "ipv6_guest": 1, "spoof_src_ip": 2, "probe_port": 2,
++            "icmp_size": 2, "probe_qname": 1}
++    neg = [eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.3", "192.168.60.10", 6, tcp(42172, 8011))),
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.3", 6, tcp(8011, 40000))),
++           eth(OTHER, OTHER, 0x0806, arp(2, MANAGER_MAC, "192.168.60.10", OTHER, "192.168.60.2")),
++           eth(OTHER, OTHER, 0x86DD, ipv6("fe80::2", "ff02::1", 58, icmp6(10))),
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.1", 1, icmp(56))),
++           eth(OTHER, OTHER, 0x0800, ipv4("192.168.177.128", "8.8.8.8", 17, udp(5353, 53, b"\x0bct01-06b3b-ctl-arm")))]
++    pp, nn = os.path.join(tmp, "h-pos.pcap"), os.path.join(tmp, "h-neg.pcap")
++    write_pcap(pp, [(1.0 + i, f) for i, f in enumerate(pos)])
++    write_pcap(nn, [(1.0 + i, f) for i, f in enumerate(neg)])
++    got = SL.scan(pp, MANAGER_MAC)
++    for k in SL.KEYS:
++        t(f"H-pos {k} = {want[k]}", lambda k=k: got[k] == want[k])
++    gn = SL.scan(nn, MANAGER_MAC)
++    t("H-neg every signature key = 0 on look-alikes (06B-3G ctl port 42172, manager traffic, real manager ARP)",
++      lambda: all(gn[k] == 0 for k in SL.KEYS if k != "frames") and gn["frames"] == len(neg))
++    # the real manager answering on a probe port as DESTINATION: a probe-port hit, but not a spoofed source
++    pm = os.path.join(tmp, "h-mgr.pcap")
++    write_pcap(pm, [(1.0, eth(OTHER, OTHER, 0x0800, ipv4("192.168.60.10", "192.168.60.3", 6, tcp(8011, 31172))))])
++    t("H6 shared spoofed source (192.168.60.10) is matched only with a probe SOURCE port",
++      lambda: (lambda c: c["spoof_src_ip"] == 0 and c["probe_port"] == 1)(SL.scan(pm, MANAGER_MAC)))
++    t("H1 --no-manager-mac reports the manager check as skipped, not 0",
++      lambda: SL.scan(nn, None)["arp_spoof_spa_manager"] == "skipped")
++
++    def cli(*args):
++        out, err = io.StringIO(), io.StringIO()
++        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
++            rc = SL.main(list(args))
++        return rc, out.getvalue()
++    open(os.path.join(tmp, "h-empty.pcap"), "wb").close()
++    t("H2 empty file -> exit 2, nothing printed", lambda: cli(os.path.join(tmp, "h-empty.pcap"), "--no-manager-mac") == (2, ""))
++    t("H3 truncated file -> exit 2", lambda: _trunc(pp, tmp) and cli(os.path.join(tmp, "h-trunc.pcap"), "--no-manager-mac")[0] == 2)
++    t("H4 missing manager option -> usage error", lambda: cli(pp)[0] == 64)
++    t("H5 normal run -> exit 0 and one line per key",
++      lambda: (lambda r: r[0] == 0 and len(r[1].splitlines()) == len(SL.KEYS))(cli(pp, "--manager-mac", MANAGER_MAC)))
++
++
++def _trunc(src, tmp):
++    open(os.path.join(tmp, "h-trunc.pcap"), "wb").write(open(src, "rb").read()[:-7])
++    return True
++
++
++# ------------------------------------------------------------------ I. run-06b3b.sh (06B-4B changes, static)
++def sec_I():
++    s = open(os.path.join(HERE, "run-06b3b.sh")).read()
++    ens = [l for l in s.splitlines() if re.search(r"tcpdump .*-i ens33", l)]
++    t("I1 exactly one ens33 capture", lambda: len(ens) == 1)
++    t("I2 ens33 capture: snaplen and packet limit from the registry, no filter expression",
++      lambda: '-s "$SIG_ENS33_SNAPLEN"' in ens[0] and '-c "$SIG_ENS33_MAX_PACKETS"' in ens[0]
++      and re.search(r"-w - \\$", ens[0]) is not None)
++    t("I3 alert on any uses the registry filter", lambda: re.search(r'tcpdump -Z root -l -n -i any "\$SIG_ALERT_ANY"', s) is not None)
++    t("I4 Ethernet alert on the worker veth uses the registry filter",
++      lambda: re.search(r'tcpdump -Z root -l -n -e -i "\$VETH" "\$SIG_ALERT_ETH"', s) is not None)
++    t("I5 no hard-coded alert filter left", lambda: '-i any "net 10.200.0.0/30"' not in s)
++    m = re.search(r"for k in (guest_mac[^;]*); do", s.replace("\\\n", " "))
++    t("I6 run script checks every sigscan_l2 key except frames",
++      lambda: m is not None and m.group(1).split() == [k for k in SL.KEYS if k != "frames"])
++    t("I7 harness path is the 06B-4B copy", lambda: "\nH=/home/dathq/projects/ct01-06b4b\n" in s)
++    t("I8 new modules are copied into the run evidence",
++      lambda: all(f'"$H/{f}"' in s for f in ("signatures.py", "l2frames.py", "guest_state.py", "sigscan_l2.py")))
++    t("I9 L2 self-test runs before anything touches a container",
++      lambda: s.index("selftest_l2.py\" --offline-only") < s.index('log "1. preparation"'))
++    t("I10 ens33 packet limit reached is a failed check",
++      lambda: "ens33 capture did not reach its packet limit" in s)
++    t("I11 both alerts are listed as captures that must exit 0",
++      lambda: "for f in veth bridge ens33 alert alert_eth; do\n    check \"tcpdump $f: exit 0 on stop\"" in s)
++
++
++# ------------------------------------------------------------------ R. regression on 06B-3G (read-only)
++def tap_mac_of(run):
++    txt = open(os.path.join(run, "container", "netns-before.txt")).read()
++    m = re.search(r"\d+: tap0: .*?\n\s+link/ether ([0-9a-f:]{17})", txt)
++    if not m:
++        raise RuntimeError("tap0 MAC not found in netns-before.txt")
++    return m.group(1)
++
++
++def sec_R(run):
++    tap = tap_mac_of(run)
++    t("R0 TAP_MAC read from the 06B-3G netns record", lambda: tap == "7a:93:2a:f1:47:47")
++    for arch, n in (("ARM", 97), ("MIPS", 125)):
++        p = os.path.join(run, "container", "probe", arch)
++        fr = L.classified_frames(os.path.join(p, "tap0.pcapng"), tap)
++        t(f"R1 {arch}: all {n} frames decoded", lambda fr=fr, n=n: len(fr) == n)
++        td = subprocess.run(["tcpdump", "-n", "-e", "-tt", "-r", os.path.join(p, "tap0.pcapng")], capture_output=True, text=True)
++        rows = [(float(l.split()[0]), l.split()[1]) for l in td.stdout.splitlines() if l.strip()]
++        # tcpdump prints microseconds TRUNCATED; the pcapng holds nanoseconds. A float near 1.79e9 has a
++        # spacing of 2.4e-7 s, so the comparison allows that much on both sides of [0, 1 us).
++        t(f"R2 {arch}: time (within 1 us) and source MAC of every frame equal tcpdump's",
++          lambda fr=fr, rows=rows, td=td: td.returncode == 0 and len(rows) == len(fr)
++          and all(-2.5e-7 <= f["t"] - r[0] < 1e-6 + 2.5e-7 and f["src"] == r[1] for f, r in zip(fr, rows)))
++        sess = json.load(open(os.path.join(p, "session.json")))
++        a, f1 = sess["reads"]["before"], sess["reads"]["finals"][0]
++        old9 = sess["classes_compared"]
++        r9 = L.reconcile_l2(fr, a, f1, old9)
++        t(f"R3 {arch}: session window, 9 legacy classes: certain counts equal session.json",
++          lambda r9=r9, sess=sess: all(r9["per_class"][k]["certain"] == sess["reconciliation"]["per_class"][k]["certain"]
++                                       for k in sess["classes_compared"]))
++        r13 = L.reconcile_l2(fr, a, f1, L.COUNTER_CLASSES)
++        t(f"R4 {arch}: session window, 13 frame-mapped classes (ARP and allow_out_svc added) -> PASS",
++          lambda r13=r13: r13["verdict"] == "PASS" and r13["no_counter_frames"] == [])
++        t(f"R5 {arch}: ARP frames equal the ARP counter deltas (arp_in_ok, arp_out_ok, arp_in_drop 0)",
++          lambda r13=r13: (r13["per_class"]["arp_in_ok"]["certain"], r13["per_class"]["arp_out_ok"]["certain"],
++                           r13["per_class"]["arp_in_drop"]["delta"]) == (2, 2, 0))
++        mx = json.load(open(os.path.join(p, "matrix.json")))
++        raw = [json.loads(l) for l in open(os.path.join(p, "counters-raw.jsonl"))]
++        reads = {x["label"]: x for x in raw}
++
++        def vals(x):
++            return {"t_start": x["t_start"], "t_end": x["t_end"],
++                    "values": {o["counter"]["name"]: o["counter"]["packets"] for o in json.loads(x["raw"])["nftables"]
++                               if "counter" in o}}
++        same, verd, ext = True, [], []
++        for pr in mx:
++            ra, rb = vals(reads[pr["probe"] + " before"]), vals(reads[pr["probe"] + " after"])
++            r = L.reconcile_l2(fr, ra, rb, old9)
++            old = pr["counter_reconciliation"]["per_class"]
++            for k in old9:
++                # edge times: tshark text (matrix.json) vs. nanosecond integers here -> within 1 us
++                if r["per_class"][k]["certain"] != old[k]["certain"] or any(
++                        len(r["per_class"][k][z]) != len(old[k][z])
++                        or any(abs(x - y) > 1e-6 for x, y in zip(r["per_class"][k][z], old[k][z]))
++                        for z in ("edge_start", "edge_end")):
++                    same = False
++            verd.append((pr["probe"], r["verdict"], pr["counter_reconciliation"]["verdict"]))
++            ext.append((pr["probe"], L.reconcile_l2(fr, ra, rb, L.COUNTER_CLASSES)["verdict"]))
++        t(f"R6 {arch}: per probe, 9 legacy classes: certain and edge frames equal matrix.json", lambda same=same: same)
++        t(f"R7 {arch}: per probe verdicts equal matrix.json", lambda verd=verd: all(v[1] == v[2] for v in verd))
++        print(f"      {arch} per-probe verdict with 13 classes (observation): {ext}")
++    for f in ("veth", "bridge", "ens33"):
++        c = SL.scan(os.path.join(run, "hostcap", f + ".pcap"), _manager_mac(run))
++        t(f"R8 {f}.pcap (06B-3G): every sigscan_l2 signature = 0", lambda c=c: all(c[k] == 0 for k in SL.KEYS if k != "frames"))
++    for arch in ("ARM", "MIPS"):
++        c = SL.scan(os.path.join(run, "container", "probe", arch, "tap0.pcapng"), _manager_mac(run))
++        t(f"R9 {arch} tap0 (positive on real data): guest MAC, guest ARP and guest IPv6 found",
++          lambda c=c: c["guest_mac"] > 0 and c["arp_guest_sha"] > 0 and c["ipv6_guest"] > 0)
++
++
++def _manager_mac(run):
++    m = re.search(r"192\.168\.60\.10 dev eth0 lladdr ([0-9a-f:]{17})", open(os.path.join(run, "container", "netns-after.txt")).read())
++    if not m:
++        raise RuntimeError("manager MAC not found")
++    return m.group(1)
++
++
++def main(argv):
++    jpath = None
++    if "--json" in argv:
++        jpath = argv[argv.index("--json") + 1]
++        del argv[argv.index("--json"):argv.index("--json") + 2]
++    reg = None
++    if argv == ["--offline-only"]:
++        pass
++    elif len(argv) == 2 and argv[0] == "--regression":
++        reg = argv[1]
++    else:
++        print(__doc__)
++        return 64
++    with tempfile.TemporaryDirectory(prefix="selftest-l2.") as tmp:
++        for name, fn in (("A", lambda: sec_A(tmp)), ("B", lambda: sec_B(tmp)), ("D", sec_D), ("E", sec_E),
++                         ("F", sec_F), ("G", sec_G), ("H", lambda: sec_H(tmp)), ("I", sec_I)) + \
++                ((("R", lambda: sec_R(reg)),) if reg else ()):
++            print(f"== section {name}")
++            try:
++                fn()
++            except Exception:
++                t(f"{name}-INFRA section crashed", lambda: False)
++                traceback.print_exc()
++    if jpath:
++        json.dump(RESULTS, open(jpath, "w"), indent=0, sort_keys=True)
++    bad = [k for k, v in RESULTS.items() if not v]
++    print(f"SELFTEST-L2: {len(RESULTS) - len(bad)}/{len(RESULTS)} passed" + ("" if not bad else f"; FAILED: {bad}"))
++    return 0 if not bad else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+--- ct01-06b3c/mutation_l2.py	1970-01-01 00:00:00.000000000 +0000
++++ ct01-06b4b/mutation_l2.py	2026-10-08 02:19:32.280800822 +0000
+@@ -0,0 +1,237 @@
++#!/usr/bin/env python3
++"""06B-4B — mutation test of the NEW parts (signatures.py, l2frames.py, guest_state.py, sigscan_l2.py,
++the 06B-4B lines of run-06b3b.sh). Offline; each mutant runs in its own mktemp copy.
++
++    python3 mutation_l2.py [--only ID,...]
++
++Each mutation changes one behaviour (one or more exact text replacements; every `old` must occur
++exactly once) and names the self-test that must catch it. Classification:
++    DETECTED            the targeted test failed
++    DETECTED-ELSEWHERE  only other tests failed (the targeted test did not isolate the change)
++    MISSED              every test still passed
++    INVALID             a replacement text was not found exactly once (mutant not built)
++    ERROR               the self-test did not produce a result (crash/import error/timeout)
++Baseline (no mutation) must pass every test first. Expected: every behavioural mutation DETECTED;
++the two controls INVALID and ERROR. The harness files are hashed before and after the run.
++"""
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++FILES = ("signatures.py", "l2frames.py", "guest_state.py", "sigscan_l2.py", "counter_window.py",
++         "selftest_l2.py", "run-06b3b.sh")
++
++M = [
++    # ---- signatures.py
++    ("SG1", "signatures.py", [('_src_ports_expr(PROBE_PORTS.values())})) or "', '_ports_expr(PROBE_PORTS.values())})) or "')],
++     "A11 alert_eth matches no negative fixture (incl. 06B-3G ctl port 42172)"),
++    ("SG2", "signatures.py", [('    parts += [f"(ip6 and host {GUEST_LL6})"]\n', '')],
++     "A12 alert_any matches every network-layer positive on LINUX_SLL2"),
++    ("SG3", "signatures.py", [('        if EPHEMERAL_RANGE[0] <= v <= EPHEMERAL_RANGE[1]:', '        if False:')],
++     "A5 check() catches a probe port inside the ephemeral range"),
++    ("SG4", "signatures.py", [('    "T17-P2": 31172,', '    "T17-P2": 42172,')],
++     "A2 every new probe port is outside the Linux ephemeral range"),
++    ("SG5", "signatures.py", [('    macs = " or ".join(f"ether host {m}" for m in (GUEST_MAC,) + SPOOF_MACS)',
++                               '    macs = " or ".join(f"ether host {m}" for m in (GUEST_MAC,))')],
++     "A10 alert_eth matches every Ethernet positive fixture"),
++    # ---- l2frames.py: direction
++    ("LD1", "l2frames.py", [('return "guest_spoof_mac", "l2_bad_mac", f"source MAC {src} is the chosen',
++                             'return "unknown_src", "unmapped", f"source MAC {src} is the chosen')],
++     "D2 chosen spoof MAC -> l2_bad_mac (any ethertype)"),
++    ("LD2", "l2frames.py", [('return "unknown_src", "unmapped", f"source MAC {src} is neither',
++                             'return "guest_spoof_mac", "l2_bad_mac", f"source MAC {src} is neither')],
++     "D4 other source MAC -> unknown_src / unmapped (never l2_bad_mac)"),
++    # ---- l2frames.py: ARP mapping
++    ("LA1", "l2frames.py", [('    if not _hooked_l2_dst(f["dst"], tap_mac):\n        return "arp_not_hooked"',
++                             '    if False:\n        return "arp_not_hooked"')],
++     "D22 ARP to another unicast MAC (OTHERHOST) -> arp_not_hooked"),
++    ("LA2", "l2frames.py", [(' or int(dst[:2], 16) & 1 == 1', '')], "D23 ARP to a multicast MAC is hooked"),
++    ("LA3", "l2frames.py", [('    if a["hlen"] != 6 or a["plen"] != 4:', '    if a["plen"] != 4:')],
++     "D24 ARP hlen 8 -> arp_not_hooked"),
++    ("LA4", "l2frames.py", [('    if a["short"] or a["len"] < ARP_HDR_LEN:', '    if a["short"]:')],
++     "D26 ARP payload shorter than 28 bytes -> arp_not_hooked"),
++    ("LA5", "l2frames.py", [('\n          and a["spa"] == S.GUEST_IP and a["tpa"] == S.WORKER_GUEST_IP',
++                             '\n          and a["spa"] == S.GUEST_IP')],
++     "D15 ARP target 192.168.60.2 -> arp_in_drop"),
++    ("LA6", "l2frames.py", [('and a["sha"] == _norm_mac(S.GUEST_MAC)\n', '\n')],
++     "D18 sender MAC field differs from guest -> arp_in_drop"),
++    ("LA7", "l2frames.py", [('return "arp_not_hooked", f"hlen', 'return "arp_in_drop", f"hlen')],
++     "D25 ARP plen 16 -> arp_not_hooked"),
++    ("LA8", "l2frames.py", [('and a["op"] in (1, 2))\n    if ok:', ')\n    if ok:')], "D19 opcode 3 -> arp_in_drop"),
++    ("LA9", "l2frames.py", [('and a.get("tpa") == S.GUEST_IP\n', '\n')],
++     "D43 worker ARP outside the allow rule -> worker_unexpected"),
++    # ---- l2frames.py: ethertypes / IPv4
++    ("LE1", "l2frames.py", [('ETH_VLAN = (0x8100, 0x88A8)', 'ETH_VLAN = (0x8100, 0x88A8, 0x86DD)')],
++     "D8 IPv6 from guest -> l2_bad_ethertype (IPv6 recognised)"),
++    ("LE2", "l2frames.py", [('ETH_VLAN = (0x8100, 0x88A8)', 'ETH_VLAN = ()')], "D11 VLAN-tagged -> unmapped (not claimed)"),
++    ("LI1", "l2frames.py", [('        if not _csum_ok(p[:ihl]):', '        if False:')],
++     "D39 IPv4 bad header checksum -> ip_not_hooked"),
++    ("LI2", "l2frames.py", [('    if not _hooked_l2_dst(f["dst"], tap_mac):\n        return "ip_not_hooked"',
++                             '    if False:\n        return "ip_not_hooked"')],
++     "D38 IPv4 to another unicast MAC (OTHERHOST) -> ip_not_hooked"),
++    ("LI3", "l2frames.py", [('        if fragoff == 0 and p[9] in (6, 17)', '        if p[9] in (6, 17)')],
++     "D31 non-first fragment to 8011 -> drop_worker_other (no ports)"),
++    ("LI4", "l2frames.py", [('    if src != S.GUEST_IP:\n        return "drop_spoof"', '    if False:\n        return "drop_spoof"')],
++     "D28 spoofed source wins over the allowed service -> drop_spoof"),
++    # ---- l2frames.py: readers
++    ("LR1", "l2frames.py", [('                    div = 2 ** (v & 0x7F) if v & 0x80 else 10 ** v', '                    div = 10 ** 6')],
++     "B5 pcapng if_tsresol 9 (nanoseconds)"),
++    ("LR2", "l2frames.py", [('        elif btype == 3:', '        elif btype == -3:')],
++     "B14 simple packet block (no timestamp) is a read error"),
++    ("LR3", "l2frames.py", [('            raise FrameReadError(f"{path}: truncated packet at offset {i}")', '            break')],
++     "B10 truncated pcap record is a read error"),
++    ("LR4", "l2frames.py", [('        if struct.unpack_from(e + "I", data, i + blen - 4)[0] != blen:', '        if False:')],
++     "B12 pcapng block trailer mismatch is a read error"),
++    # ---- l2frames.py: strict reconciliation and labels
++    ("LS1", "l2frames.py", [('    if missing:\n        return None, f"counter(s) missing', '    if False:\n        return None, f"counter(s) missing'),
++                            ('        a, b = va[k], vb[k]', '        a, b = va.get(k, 0), vb.get(k, 0)')],
++     "E2 missing counter in read A -> ERROR, not 0"),
++    ("LS2", "l2frames.py", [('        if b < a:', '        if False:')], "E5 counter decreased -> ERROR"),
++    ("LS3", "l2frames.py", [('            if not isinstance(v, int) or isinstance(v, bool) or v < 0:',
++                             '            if not isinstance(v, int) or v < 0:')], "E4 bool counter value -> ERROR"),
++    ("LS4", "l2frames.py", [('    if base["verdict"] == "PASS" and extra:', '    if False:')],
++     "E9 not-hooked frame inside the window -> UNVERIFIED, listed"),
++    ("LS5", "l2frames.py", [('            if z != "outside":', '            if True:')],
++     "E11 no-counter frame outside the window does not count"),
++    ("LS6", "l2frames.py", [('    bad = [k for k in compared if k not in COUNTER_CLASSES]', '    bad = []')],
++     "E13 comparing an unobservable counter (arp_out_drop) -> ERROR even with the counter present"),
++    ("LV1", "l2frames.py", [('            return "ĐẠT (kiểm quy tắc)", True', '            return "ĐẠT", True')],
++     "F3 rule check + PASS -> ĐẠT (kiểm quy tắc)"),
++    ("LV2", "l2frames.py", [('        if control_alive is not None:\n            raise ValueError("a rule-check probe has no live control")',
++                             '        if False:\n            raise ValueError("a rule-check probe has no live control")')],
++     "F4 rule check with a control value is refused"),
++    ("LV3", "l2frames.py", [('    if text == "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)" and recon.get("no_counter_frames"):',
++                             '    if False:')],
++     "F8 no-counter frames are named as the cause, not as an edge"),
++    # ---- guest_state.py
++    ("GS1", "guest_state.py", [('    if now["mac"] != before["mac"]:', '    if False:')],
++     "G6 MAC change: restored, MAC back, default route re-added"),
++    ("GS2", "guest_state.py", [('    return [f"ip route del {x}" for x in sorted(a - b)] + [f"ip route add {x}" for x in sorted(b - a)]',
++                                '    return []')], "G8 extra /32 address and on-link route removed"),
++    ("GS3", "guest_state.py", [('            out.append(f"arp -i {dev} -s {ip} {mac}")', '            pass')],
++     "G10 pre-existing static neighbour flushed by link down is re-created"),
++    ("GS4", "guest_state.py", [('    for (ip, dev) in sorted(set(a) - set(b)):', '    for (ip, dev) in []:')],
++     "G9 static neighbour added by the probe is deleted"),
++    ("GS5", "guest_state.py", [('        if flags & 0x4:', '        if flags & 0x2:')],
++     "G2 /proc/net/arp: complete entry is dynamic, not static"),
++    ("GS6", "guest_state.py", [('    if now["arp_notify"] != before["arp_notify"]:', '    if False:')], "G12 arp_notify restored"),
++    ("GS7", "guest_state.py", [('    log["restored"] = not log["diffs"]', '    log["restored"] = True')],
++     "G14 failed restore command -> restored False, MAC diff listed"),
++    ("GS8", "guest_state.py", [('    for k in ("mac", "operstate", "arp_notify"):', '    for k in ("operstate", "arp_notify"):')],
++     "G14 failed restore command -> restored False, MAC diff listed"),
++    ("GS9", "guest_state.py", [('        if rcs[name] != 0:', '        if False:')], "G3 section with rc != 0 -> StateReadError"),
++    ("GS10", "guest_state.py", [('        self.rec["restore"] = restore(self.runner, self.iface, self.rec["before"], self.timeout)\n',
++                                 '        self.rec["restore"] = {"restored": True}\n')],
++     "G16 GuestChange restores even when the probe raises"),
++    ("GS11", "guest_state.py", [('    return ([f"ip addr del {x} dev {iface}" for x in sorted(a - b)]', '    return ([]')],
++     "G13 address added by netifd on link up is removed"),
++    # ---- sigscan_l2.py
++    ("SS1", "sigscan_l2.py", [('(ip["src"] in S.SPOOF_SRC_SHARED and (ip["sport"] in ports or probe_icmp))',
++                               '(ip["src"] in S.SPOOF_SRC_SHARED and (probe_port or probe_icmp))')],
++     "H6 shared spoofed source (192.168.60.10) is matched only with a probe SOURCE port"),
++    ("SS2", "sigscan_l2.py", [('a["spa"] == "192.168.60.10" and a["sha"] != manager_mac', 'a["spa"] == "192.168.60.10"')],
++     "H-neg every signature key = 0 on look-alikes (06B-3G ctl port 42172, manager traffic, real manager ARP)"),
++    ("SS3", "sigscan_l2.py", [('        print(f"READ ERROR: {e}", file=sys.stderr)\n        return 2',
++                               '        print(f"READ ERROR: {e}", file=sys.stderr)\n        return 0')],
++     "H2 empty file -> exit 2, nothing printed"),
++    ("SS4", "sigscan_l2.py", [('        c["arp_spoof_spa_manager"] = "skipped"', '        c["arp_spoof_spa_manager"] = 0')],
++     "H1 --no-manager-mac reports the manager check as skipped, not 0"),
++    ("SS5", "sigscan_l2.py", [('                hit = hit or S.GUEST_LL6 in (v6["src"], v6["dst"])', '                hit = hit')],
++     "H-pos ipv6_guest = 1"),
++    ("SS6", "sigscan_l2.py", [('        c["probe_qname"] += qn in raw', '        c["probe_qname"] += 0')], "H-pos probe_qname = 1"),
++    # ---- run-06b3b.sh (06B-4B lines)
++    ("RS1", "run-06b3b.sh", [('-c "$SIG_ENS33_MAX_PACKETS" -w - \\', '-c "$SIG_ENS33_MAX_PACKETS" -w - "net 10.200.0.0/30" \\')],
++     "I2 ens33 capture: snaplen and packet limit from the registry, no filter expression"),
++    ("RS2", "run-06b3b.sh", [('-i any "$SIG_ALERT_ANY"', '-i any "net 10.200.0.0/30"')],
++     "I3 alert on any uses the registry filter"),
++    ("RS3", "run-06b3b.sh", [('             ipv6_guest spoof_src_ip', '             spoof_src_ip')],
++     "I6 run script checks every sigscan_l2 key except frames"),
++    ("RS4", "run-06b3b.sh", [('for f in veth bridge ens33 alert alert_eth; do\n    check "tcpdump $f: exit 0 on stop"',
++                              'for f in veth bridge ens33 alert; do\n    check "tcpdump $f: exit 0 on stop"')],
++     "I11 both alerts are listed as captures that must exit 0"),
++    # ---- controls
++    ("X1", "l2frames.py", [("THIS TEXT DOES NOT EXIST IN THE FILE", "x")], None),
++    ("X2", "l2frames.py", [("import struct\n", "import struct(\n")], None),
++]
++CONTROL_EXPECT = {"X1": "INVALID", "X2": "ERROR"}
++
++
++def sha(d):
++    return {f: hashlib.sha256(open(os.path.join(d, f), "rb").read()).hexdigest() for f in FILES}
++
++
++def run_suite(d):
++    j = os.path.join(d, "result.json")
++    try:
++        p = subprocess.run([sys.executable, os.path.join(d, "selftest_l2.py"), "--offline-only", "--json", j],
++                           capture_output=True, text=True, timeout=600, cwd=d)
++    except subprocess.TimeoutExpired:
++        return None, "timeout"
++    if p.returncode not in (0, 1) or not os.path.exists(j):
++        return None, f"rc {p.returncode}: {(p.stderr or p.stdout).strip().splitlines()[-1:]}"
++    return json.load(open(j)), None
++
++
++def copy_tree(tmp):
++    d = tempfile.mkdtemp(prefix="mut.", dir=tmp)
++    for f in FILES:
++        shutil.copy2(os.path.join(HERE, f), d)
++    return d
++
++
++def main(argv):
++    only = set(argv[1].split(",")) if len(argv) == 2 and argv[0] == "--only" else None
++    h0 = sha(HERE)
++    print("harness sha256 before:", json.dumps(h0, sort_keys=True))
++    ok_lines, bad = 0, 0
++    with tempfile.TemporaryDirectory(prefix="mutation-l2.") as tmp:
++        base, err = run_suite(copy_tree(tmp))
++        if base is None or not all(base.values()):
++            print(f"BASELINE FAILED ({err or [k for k, v in base.items() if not v]}): no mutation is meaningful")
++            return 2
++        print(f"baseline: {len(base)}/{len(base)} tests pass")
++        names = set(base)
++        for mid, fname, reps, target in M:
++            if only and mid not in only:
++                continue
++            if target is not None and target not in names:
++                print(f"BAD-TARGET {mid}: no test named {target!r}")
++                bad += 1
++                continue
++            d = copy_tree(tmp)
++            path = os.path.join(d, fname)
++            src = open(path).read()
++            klass, failed = None, []
++            for old, new in reps:
++                if src.count(old) != 1:
++                    klass = "INVALID"
++                    break
++                src = src.replace(old, new)
++            if klass is None:
++                open(path, "w").write(src)
++                res, err = run_suite(d)
++                if res is None:
++                    klass = "ERROR"
++                else:
++                    failed = sorted(k for k, v in res.items() if not v)
++                    klass = ("DETECTED" if target in failed else "DETECTED-ELSEWHERE" if failed else "MISSED")
++            expect = CONTROL_EXPECT.get(mid, "DETECTED")
++            good = klass == expect
++            ok_lines += good
++            bad += not good
++            print(f"{'OK ' if good else 'BAD'} {mid:5s} {klass:18s} target={target!r}"
++                  + ("" if klass in ("DETECTED", "INVALID") else f" failed={failed[:6]}" + (f" ({err})" if klass == "ERROR" else "")))
++    h1 = sha(HERE)
++    same = h0 == h1
++    print("harness sha256 after: ", "unchanged" if same else json.dumps(h1, sort_keys=True))
++    print(f"MUTATION-L2: {ok_lines} OK, {bad} not as expected; harness {'unchanged' if same else 'CHANGED'}")
++    return 0 if bad == 0 and same else 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))

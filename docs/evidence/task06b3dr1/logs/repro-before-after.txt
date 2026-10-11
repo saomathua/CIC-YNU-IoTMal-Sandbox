@@ -1,0 +1,11 @@
+== probe_verdict: 06B-3DR (before) vs 06B-3DR1 (after)
+reconciliation FAIL + control missing: before='CHƯA KIỂM CHỨNG (không có đối chứng sống)'  after='FAIL'
+reconciliation FAIL + tool missing: before='CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)'  after='FAIL'
+no_host_alert=False + control missing: before='CHƯA KIỂM CHỨNG (không có đối chứng sống)'  after='FAIL'
+no_host_alert=False + tool missing: before='CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)'  after='FAIL'
+== reconcile on invalid measurement data: before vs after
+read B end = Infinity: before='PASS'  after='ERROR'
+reads reversed: before='PASS'  after='ERROR'
+reads overlap: before='UNVERIFIED'  after='ERROR'
+guard negative: before='PASS'  after='ERROR'
+guard NaN: before='UNVERIFIED'  after='ERROR'

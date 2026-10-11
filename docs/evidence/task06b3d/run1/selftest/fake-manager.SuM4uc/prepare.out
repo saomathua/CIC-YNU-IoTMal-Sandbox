@@ -1,0 +1,2 @@
+manager before: state=created id=cid1 startedAt=T0
+manager is 'created': refused before any change (start+stop cannot restore 'created')

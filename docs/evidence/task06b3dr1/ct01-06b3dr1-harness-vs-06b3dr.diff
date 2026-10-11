@@ -1,0 +1,353 @@
+--- 06b3dr/probe_matrix.py
++++ 06b3dr1/probe_matrix.py
+@@ -609,13 +609,16 @@
+                "probe_packets": len(mine), "expected_class": p["expected_class"],
+                "counter_delta": dl, "pcap_certain": cls, "mismatch": mismatch, "checks": checks,
+                "counter_reconciliation": recon,
++               "determined_failures": counter_window.determined_failures(
++                   checks, recon, p["expected_class"], tool_missing=p["guest_output"].startswith("TOOL_MISSING")),
+                "guest_rc": p["guest_rc"], "control_before": p["control_before"], "control_after": p["control_after"],
+                "remote_control": p["remote_control"]}
+         table.append(row)
+         record(f"probe {p['probe']} ({row['dst']}) -> {verdict}", ok,
+                probe_packets=len(mine), expected=p["expected_class"], counter=dl.get(p["expected_class"], 0),
+                pcap_certain=cls.get(p["expected_class"], 0), reconciliation=recon["verdict"], mismatch=mismatch,
+-               failed_checks=[k for k, v in checks.items() if not v])
++               failed_checks=[k for k, v in checks.items() if not v],
++               determined_failures=row["determined_failures"], measurement_error=recon.get("error"))
+     json.dump(table, open(os.path.join(OUT, "matrix.json"), "w"), indent=1, default=str)
+     with open(os.path.join(OUT, "matrix.md"), "w") as f:
+         f.write("| probe | dst | probe pkts | expected counter = delta | pcap certain (same class) | "
+--- 06b3dr/counter_window.py
++++ 06b3dr1/counter_window.py
+@@ -10,17 +10,26 @@
+     edge_end     B.t_start - GUARD <= t <= B.t_end                  -> may or may not be in the delta
+ 
+ GUARD covers the delay between the capture timestamp of a frame and the moment the same frame
+-reaches the nft counter (the timestamp can be earlier, never later). Its value is an ASSUMPTION
+-(not measured) and only widens the ambiguous zones; it never widens the certain zone.
++reaches the nft counter (assumed: the timestamp is earlier, by at most GUARD). Its value (20 ms) is
++an ASSUMPTION that has NOT been measured. It only widens the ambiguous zones, never the certain zone.
++Every PASS below depends on that assumption: a frame whose counter hit lags its capture timestamp by
++more than GUARD can be placed in the wrong zone, and the reconciliation can then be wrong in either
++direction (including a wrong PASS).
+ 
+ Per counter class:  lo = certain frames,  hi = certain + edge frames,  d = counter delta
+     FAIL        d < lo or d > hi           a real mismatch, whatever the edge frames did
+     UNVERIFIED  lo <= d <= hi and hi > lo  edge frames make the comparison undecidable
+     PASS        d == lo == hi              no ambiguity and the counter equals the pcap
+ Overall: FAIL if any class fails, else UNVERIFIED if any class is undecidable, else PASS.
+-Nothing is offset or compensated: two errors of opposite sign at the two edges cannot cancel,
+-because any edge frame makes the class UNVERIFIED.
++Nothing is offset or compensated: within the GUARD assumption, two errors of opposite sign at the two
++edges cannot cancel, because any edge frame makes the class UNVERIFIED.
++
++06B-3DR1: the inputs are validated first. Read times must be finite numbers with
++A.t_start <= A.t_end <= B.t_start <= B.t_end, GUARD finite and >= 0, every frame time finite, every
++counter delta a non-negative integer. Anything else returns verdict "ERROR" (a measurement error,
++never a PASS) with the reason; no zone is computed.
+ """
++import math
+ 
+ GUARD_S = 0.020
+ ZONES = ("outside", "edge_start", "certain", "edge_end")
+@@ -36,9 +45,40 @@
+     return "edge_end"
+ 
+ 
++def _finite(x):
++    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
++
++
++def validate(frames, read_a, read_b, delta, guard):
++    """Returns None if the measurement data is usable, else the reason (str)."""
++    try:
++        ts = [read_a["t_start"], read_a["t_end"], read_b["t_start"], read_b["t_end"]]
++    except (KeyError, TypeError) as e:
++        return f"read times missing: {e!r}"
++    if not all(_finite(x) for x in ts):
++        return f"read times not finite numbers: {ts}"
++    if not ts[0] <= ts[1] <= ts[2] <= ts[3]:
++        return f"read times out of order (need A.start <= A.end <= B.start <= B.end): {ts}"
++    if not _finite(guard) or guard < 0:
++        return f"guard not a finite non-negative number: {guard!r}"
++    for fr in frames:
++        if not _finite(fr.get("t")):
++            return f"frame time not a finite number: {fr.get('t')!r}"
++    for k, d in delta.items():
++        if not isinstance(d, int) or isinstance(d, bool) or d < 0:
++            return f"counter delta of {k} is not a non-negative integer: {d!r}"
++    return None
++
++
+ def reconcile(frames, read_a, read_b, delta, classes, guard=GUARD_S):
+     """frames: [{"t": float, "cls": str|None}]; delta: {counter: packets}; classes: counters compared.
+-    Returns {"verdict", "per_class": {cls: {...}}, "not_compared": {...}, "guard_s", "reads"}."""
++    Returns {"verdict", "per_class": {cls: {...}}, "not_compared": {...}, "guard_s", "reads"}; with
++    invalid inputs {"verdict": "ERROR", "error": reason, "per_class": {}, ...}."""
++    err = validate(frames, read_a, read_b, delta, guard)
++    if err:
++        return {"verdict": "ERROR", "error": err, "per_class": {}, "guard_s": guard, "not_compared": {},
++                "reads": {"before": dict(read_a) if isinstance(read_a, dict) else read_a,
++                          "after": dict(read_b) if isinstance(read_b, dict) else read_b}}
+     per = {k: {"certain": 0, "edge_start": [], "edge_end": [], "delta": delta.get(k, 0)} for k in classes}
+     for fr in frames:
+         k = fr.get("cls")
+@@ -69,20 +109,51 @@
+                       "after": {x: read_b[x] for x in ("t_start", "t_end")}}}
+ 
+ 
++# Checks whose failure is a determined fact only when the guest really ran the probe (tool present).
++GUEST_SIDE_CHECKS = ("guest_connection_failed", "probe_packets_in_tap0_pcap", "probe_packets_hit_expected_counter")
++# Checks that only say whether the probe CAN be judged; their failure is never a FAIL by itself.
++PRECONDITION_CHECKS = ("control_alive_same_dst_proto_port",)
++# Checks computed from the pcap inside the counter-read window: meaningless when the read times are invalid.
++WINDOW_DERIVED_CHECKS = ("probe_packets_in_tap0_pcap", "probe_packets_hit_expected_counter")
++
++
++def determined_failures(checks, recon, expected_class, tool_missing=False):
++    """06B-3DR1: failures that are established facts, independent of a missing tool or control."""
++    out = []
++    exp = recon.get("per_class", {}).get(expected_class, {})
++    if recon.get("verdict") == "FAIL" or exp.get("status") == "FAIL":
++        out.append("counter_reconciliation")
++    for k, v in checks.items():
++        if v or k in PRECONDITION_CHECKS:
++            continue
++        if k in GUEST_SIDE_CHECKS and tool_missing:
++            continue   # the guest never sent the probe: this check could not be performed
++        if k in WINDOW_DERIVED_CHECKS and recon.get("verdict") == "ERROR":
++            continue   # computed from an invalid window: a measurement error, not a determined failure
++        out.append(k)
++    if not tool_missing and exp.get("status") == "PASS" and exp.get("delta", 0) == 0:
++        out.append("expected_counter_not_increased")
++    return out
++
++
+ def probe_verdict(checks, recon, expected_class, tool_missing=False, control_alive=True):
+     """checks: boolean checks other than the counter reconciliation.
+-    Returns (verdict text, ok). ok is True only for ĐẠT; UNVERIFIED never counts as passed."""
+-    exp = recon["per_class"].get(expected_class, {})
+-    expected_ok = exp.get("status") == "PASS" and exp.get("delta", 0) > 0
++    Returns (verdict text, ok). ok is True only for ĐẠT.
++    Order (06B-3DR1): determined failures -> FAIL, always, even with a missing tool or control;
++    then a measurement error -> LỖI PHÉP ĐO; then conditions that prevent judging (missing tool,
++    no live control, counter-window edges) -> CHƯA KIỂM CHỨNG; only then ĐẠT."""
++    if determined_failures(checks, recon, expected_class, tool_missing):
++        return "FAIL", False
++    if recon.get("verdict") == "ERROR":
++        return f"LỖI PHÉP ĐO ({recon.get('error', 'invalid measurement data')})", False
+     if tool_missing:
+         return "CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False
+     if not control_alive:
+         return "CHƯA KIỂM CHỨNG (không có đối chứng sống)", False
+-    if not all(checks.values()) or recon["verdict"] == "FAIL" or exp.get("status") == "FAIL":
+-        return "FAIL", False
+-    if recon["verdict"] == "UNVERIFIED":
++    if recon.get("verdict") == "UNVERIFIED":
+         return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False
+-    if not expected_ok:
++    exp = recon["per_class"].get(expected_class, {})
++    if recon.get("verdict") != "PASS" or exp.get("status") != "PASS" or exp.get("delta", 0) <= 0:
+         return "FAIL", False
+     return "ĐẠT", True
+ 
+--- 06b3dr/selftest.sh
++++ 06b3dr1/selftest.sh
+@@ -313,11 +313,12 @@
+     return "PASS" if all(c["delta"].get(k, 0) == cnt.get(k, 0) for k in F["classes"]) else "FAIL"
+ fails = 0
+ for c in F["cases"]:
+-    r = cw.reconcile(c["frames"], F["read_before"], F["read_after"], c["delta"], F["classes"])
++    ra, rb = c.get("read_before", F["read_before"]), c.get("read_after", F["read_after"])
++    r = cw.reconcile(c["frames"], ra, rb, c["delta"], F["classes"], guard=c.get("guard", cw.GUARD_S))
+     good = r["verdict"] == c["expected"]
+     fails += not good
+-    print(f"[{'PASS' if good else 'FAIL'}] counter window {c['name']}: expected {c['expected']}, got {r['verdict']} "
+-          f"(old method would say {old(c)})")
++    extra = f"old method would say {old(c)}" if c["old_method"] else f"error: {r.get('error')}"
++    print(f"[{'PASS' if good else 'FAIL'}] counter window {c['name']}: expected {c['expected']}, got {r['verdict']} ({extra})")
+     if c["name"] == "two-errors-cancel":
+         g2 = old(c) == "PASS" and r["verdict"] == "UNVERIFIED"
+         fails += not g2
+@@ -335,7 +336,11 @@
+     import counter_window as cw
+ except Exception as e:
+     print(f"SELFTEST-ERROR: import counter_window: {e}"); sys.exit(3)
+-ok_checks = {"guest_connection_failed": True, "control_alive_same_dst_proto_port": True}
++ok_checks = {"guest_connection_failed": True, "control_alive_same_dst_proto_port": True,
++             "probe_packets_in_tap0_pcap": True, "probe_packets_hit_expected_counter": True, "no_host_alert": True}
++# what probe_matrix records when the guest lacks the tool: the guest-side checks are False (not performed)
++G_TOOL_MISSING = {**ok_checks, "guest_connection_failed": False, "probe_packets_in_tap0_pcap": False,
++                  "probe_packets_hit_expected_counter": False}
+ def rc(verdict, exp_status="PASS", exp_delta=3):
+     return {"verdict": verdict, "per_class": {"drop_public": {"status": exp_status, "delta": exp_delta}}}
+ cases = [
+@@ -350,6 +355,29 @@
+     ("expected counter did not move -> FAIL", (ok_checks, rc("PASS", "PASS", 0)), {}, ("FAIL", False)),
+     ("tool missing -> CHƯA KIỂM CHỨNG", (ok_checks, rc("PASS")), {"tool_missing": True},
+      ("CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False)),
++    # 06B-3DR1: determined failures are kept before missing tool / missing control
++    ("reconciliation FAIL + control missing -> FAIL", ({**ok_checks, "control_alive_same_dst_proto_port": False},
++     rc("FAIL", "FAIL")), {"control_alive": False}, ("FAIL", False)),
++    ("reconciliation FAIL + tool missing -> FAIL", (G_TOOL_MISSING, rc("FAIL", "FAIL")), {"tool_missing": True}, ("FAIL", False)),
++    ("host alert + tool missing -> FAIL", ({**G_TOOL_MISSING, "no_host_alert": False}, rc("PASS", "PASS", 0)),
++     {"tool_missing": True}, ("FAIL", False)),
++    ("host alert + control missing -> FAIL", ({**ok_checks, "control_alive_same_dst_proto_port": False, "no_host_alert": False},
++     rc("PASS")), {"control_alive": False}, ("FAIL", False)),
++    ("guest reached the target (tool present) + control missing -> FAIL",
++     ({**ok_checks, "guest_connection_failed": False, "control_alive_same_dst_proto_port": False}, rc("PASS")),
++     {"control_alive": False}, ("FAIL", False)),
++    ("only control missing (nothing failed) -> CHƯA KIỂM CHỨNG (đối chứng)",
++     ({**ok_checks, "control_alive_same_dst_proto_port": False}, rc("PASS")), {"control_alive": False},
++     ("CHƯA KIỂM CHỨNG (không có đối chứng sống)", False)),
++    ("only tool missing (guest-side checks not performed) -> CHƯA KIỂM CHỨNG (công cụ)",
++     (G_TOOL_MISSING, rc("PASS", "PASS", 0)), {"tool_missing": True}, ("CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False)),
++    ("tool missing + counter-window edges -> CHƯA KIỂM CHỨNG (công cụ)",
++     (G_TOOL_MISSING, rc("UNVERIFIED", "UNVERIFIED", 0)), {"tool_missing": True}, ("CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False)),
++    ("measurement error -> LỖI PHÉP ĐO (not PASS, not CHƯA KIỂM CHỨNG)",
++     (ok_checks, {"verdict": "ERROR", "error": "read times out of order", "per_class": {}}), {},
++     ("LỖI PHÉP ĐO (read times out of order)", False)),
++    ("measurement error + host alert -> FAIL",
++     ({**ok_checks, "no_host_alert": False}, {"verdict": "ERROR", "error": "x", "per_class": {}}), {}, ("FAIL", False)),
+ ]
+ fails = 0
+ for name, (checks, recon), kw, want in cases:
+@@ -361,6 +389,7 @@
+     ("all ok -> PASS", [P("x", True), P("probe a (tcp) -> ĐẠT", True)], "PASS"),
+     ("one undecided probe -> UNVERIFIED", [P("x", True), P("probe a (tcp) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)], "UNVERIFIED"),
+     ("one failed probe -> FAIL", [P("probe a (tcp) -> FAIL", False)], "FAIL"),
++    ("probe with a measurement error -> FAIL", [P("probe a (tcp) -> LỖI PHÉP ĐO (read times out of order)", False)], "FAIL"),
+     ("failed non-probe check + undecided probe -> FAIL",
+      [P("tap0 capture stopped cleanly", False), P("probe a (tcp) -> CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False)], "FAIL"),
+ ]
+@@ -495,6 +524,22 @@
+ check("record of the undecided probe is not ok", [x["ok"] for x in pm.results if x["test"].startswith("probe ipv6")] == [False])
+ check("run outcome with a real mismatch -> FAIL", cw.run_outcome(pm.results).startswith("FAIL"))
+ pm.results.clear()
++bad_reads = probe("reads-reversed", 41003, 400.0, {"drop_public": 3})
++bad_reads["read_before"], bad_reads["read_after"] = bad_reads["read_after"], bad_reads["read_before"]
++alert_noctl = probe("host-alert-no-control", 41004, 500.0, {"drop_public": 3})
++alert_noctl["host_alert_lines"] = 2
++alert_noctl["control_before"] = alert_noctl["control_after"] = {"ok": False}
++rows += [syn(401, 41003), syn(402, 41003), syn(404, 41003), syn(501, 41004), syn(502, 41004), syn(504, 41004)]
++pm.probes[:] = [bad_reads, alert_noctl]
++pm.evaluate()
++m = json.load(open(os.path.join(pm.OUT, "matrix.json")))
++v = {r["probe"]: r["verdict"] for r in m}
++print("verdicts:", v)
++check("reversed read times -> LỖI PHÉP ĐO", v.get("reads-reversed", "").startswith("LỖI PHÉP ĐO (read times out of order"))
++check("host alert with no live control -> FAIL (not CHƯA KIỂM CHỨNG)", v.get("host-alert-no-control") == "FAIL")
++check("determined failure recorded", [r["determined_failures"] for r in m if r["probe"] == "host-alert-no-control"] == [["no_host_alert"]])
++check("run outcome with a measurement error -> FAIL", cw.run_outcome(pm.results).startswith("FAIL"))
++pm.results.clear()
+ pm.probes[:] = [probe("clean", 41000, 100.0, {"drop_public": 3}),
+                 probe("ipv6-during-read-a", 41001, 200.0, {"drop_public": 3, "l2_bad_ethertype": 2}, 0.030)]
+ pm.evaluate()
+--- 06b3dr/mutation_test.sh
++++ 06b3dr1/mutation_test.sh
+@@ -154,7 +154,9 @@
+ mut V1-unverified-counted-as-ok DETECTED "reconciliation UNVERIFIED -> CHƯA KIỂM CHỨNG, not ok" counter_window.py \
+     'return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", False' 'return "CHƯA KIỂM CHỨNG (gói ở biên cửa sổ bộ đếm)", True'
+ mut V2-failed-check-hidden-by-unverified DETECTED "a real failure wins" counter_window.py \
+-    'if not all(checks.values()) or recon["verdict"] == "FAIL"' 'if recon["verdict"] == "FAIL"'
++    '        if v or k in PRECONDITION_CHECKS:
++            continue' '        if True:
++            continue'
+ mut V3-run-outcome-softens-failures DETECTED "failed non-probe check + undecided probe -> FAIL" counter_window.py \
+     'hard = [r["test"] for r in bad if not (r["test"].startswith("probe ") and "-> CHƯA KIỂM CHỨNG" in r["test"])]' \
+     'hard = [r["test"] for r in bad if r["test"].endswith("-> FAIL")]'
+@@ -172,6 +174,43 @@
+     'record(f"probe {p['"'"'probe'"'"']} ({row['"'"'dst'"'"']}) -> {verdict}", ok,' \
+     'record(f"probe {p['"'"'probe'"'"']} ({row['"'"'dst'"'"']}) -> {verdict}", True,'
+ 
++echo "== 06B-3DR1 mutations (verdict precedence, measurement-data validation)"
++mut PV1-old-precedence DETECTED "reconciliation FAIL + control missing -> FAIL" counter_window.py \
++    '    if determined_failures(checks, recon, expected_class, tool_missing):
++        return "FAIL", False
++' '    if tool_missing:
++        return "CHƯA KIỂM CHỨNG (guest thiếu công cụ probe)", False
++    if not control_alive:
++        return "CHƯA KIỂM CHỨNG (không có đối chứng sống)", False
++    if determined_failures(checks, recon, expected_class, tool_missing):
++        return "FAIL", False
++'
++mut PV2-host-alert-as-precondition DETECTED "host alert + tool missing -> FAIL" counter_window.py \
++    'PRECONDITION_CHECKS = ("control_alive_same_dst_proto_port",)' \
++    'PRECONDITION_CHECKS = ("control_alive_same_dst_proto_port", "no_host_alert")'
++mut PV3-guest-checks-skipped-with-tool DETECTED "guest reached the target (tool present) + control missing" counter_window.py \
++    'if k in GUEST_SIDE_CHECKS and tool_missing:' 'if k in GUEST_SIDE_CHECKS:'
++mut PV4-tool-missing-excuses-counter-fail DETECTED "reconciliation FAIL + tool missing -> FAIL" counter_window.py \
++    'if recon.get("verdict") == "FAIL" or exp.get("status") == "FAIL":' \
++    'if not tool_missing and (recon.get("verdict") == "FAIL" or exp.get("status") == "FAIL"):'
++mut PV5-window-checks-on-invalid-data DETECTED "reversed read times -> LỖI PHÉP ĐO" counter_window.py \
++    'if k in WINDOW_DERIVED_CHECKS and recon.get("verdict") == "ERROR":' 'if False:'
++mut PV6-no-measurement-error-verdict DETECTED "measurement error -> LỖI PHÉP ĐO" counter_window.py \
++    '    if recon.get("verdict") == "ERROR":
++        return f"LỖI PHÉP ĐO' '    if False:
++        return f"LỖI PHÉP ĐO'
++mut VAL1-order-not-checked DETECTED "counter window reads-overlap" counter_window.py \
++    'if not ts[0] <= ts[1] <= ts[2] <= ts[3]:' 'if False:'
++mut VAL2-finiteness-not-checked DETECTED "counter window read-time-infinity" counter_window.py \
++    'return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)' \
++    'return isinstance(x, (int, float)) and not isinstance(x, bool)'
++mut VAL3-negative-guard-accepted DETECTED "counter window guard-negative" counter_window.py \
++    'if not _finite(guard) or guard < 0:' 'if not _finite(guard):'
++mut VAL4-negative-delta-accepted DETECTED "counter window delta-negative" counter_window.py \
++    'if not isinstance(d, int) or isinstance(d, bool) or d < 0:' 'if not isinstance(d, int) or isinstance(d, bool):'
++mut VAL5-frame-time-not-checked DETECTED "counter window frame-time-nan" counter_window.py \
++    'if not _finite(fr.get("t")):' 'if False:'
++
+ echo "== control mutations (must NOT be counted as caught)"
+ mut X1-syntax-error INVALID "-" pcapng_stats.py 'def drop_verdict(st):' 'def drop_verdict(st:'
+ mut X2-missing-dependency ERROR "-" selftest.sh 'import pcapng_stats as P' 'import pcapng_stats_missing as P'
+--- 06b3dr/make_fixtures.py
++++ 06b3dr1/make_fixtures.py
+@@ -9,7 +9,8 @@
+ empty.pcap      0 bytes (what a crashed tcpdump left in 06B-3B run 1) -> reader must report an error
+ ng-*.pcapng     pcapng drop-statistics cases for pcapng_stats.py (drop=0, drop>0, osdrop>0,
+                 ifrecv mismatch, no statistics, statistics without ifdrop, truncated, not pcapng)
+-counter-window-cases.json  counter/pcap reconciliation cases for counter_window.py (06B-3DR)
++counter-window-cases.json  counter/pcap reconciliation cases for counter_window.py (06B-3DR; invalid
++                measurement data added in 06B-3DR1 -> ERROR). Contains NaN/Infinity: Python json only.
+ expected.json   exact counts sigscan.sh must print for positive.pcap and negative.pcap, and the
+                 expected pcapng_stats verdict of every ng-*.pcapng
+ """
+@@ -178,9 +179,36 @@
+     ("class-not-compared-at-edge", CLEAN + [(100.010, "arp")], {**D0, "arp_in_ok": 1}, "PASS", "PASS"),
+     ("counter-without-frames", CLEAN, {**D0, "drop_spoof": 1}, "FAIL", "FAIL"),
+ ]
++NAN, INF = float("nan"), float("inf")
++# 06B-3DR1: invalid measurement data -> "ERROR" (never PASS). name, overrides, expected
++CW_INVALID = [
++    ("read-a-reversed", {"read_before": {"t_start": 100.020, "t_end": 100.000}}),
++    ("reads-reversed", {"read_before": RB, "read_after": RA}),
++    ("reads-overlap", {"read_after": {"t_start": 100.010, "t_end": 105.020}}),
++    ("read-time-nan", {"read_before": {"t_start": NAN, "t_end": 100.020}}),
++    ("read-time-infinity", {"read_after": {"t_start": 105.000, "t_end": INF}}),
++    ("read-time-missing", {"read_after": {"t_start": 105.000}}),
++    ("frame-time-nan", {"extra_frames": [(NAN, "drop_public")]}),
++    ("guard-negative", {"guard": -0.001}),
++    ("guard-nan", {"guard": NAN}),
++    ("guard-infinity", {"guard": INF}),
++    ("delta-negative", {"delta": {**D0, "drop_spoof": -1}}),
++]
++# boundary that IS valid input: reads touching (A.end == B.start) and guard 0. The certain zone is then
++# empty, so the case has no frames and no delta; it only shows that the validation accepts equality.
++CW_VALID_EDGE = [("reads-touching-guard-zero",
++                  {"read_before": {"t_start": 100.000, "t_end": 100.020},
++                   "read_after": {"t_start": 100.020, "t_end": 100.040}, "guard": 0.0})]
+ json.dump({"read_before": RA, "read_after": RB, "classes": ["drop_public", "l2_bad_ethertype", "drop_spoof"],
+            "cases": [{"name": n, "frames": [{"t": t, "cls": c} for t, c in fr], "delta": d,
+-                      "expected": e, "old_method": o} for n, fr, d, e, o in CW]},
++                      "expected": e, "old_method": o} for n, fr, d, e, o in CW]
++                    + [{"name": n, "frames": [{"t": t, "cls": c} for t, c in CLEAN + ov.get("extra_frames", [])],
++                        "delta": ov.get("delta", D0), "expected": "ERROR", "old_method": None,
++                        **{k: v for k, v in ov.items() if k in ("read_before", "read_after", "guard")}}
++                       for n, ov in CW_INVALID]
++                    + [{"name": n, "frames": [], "delta": {}, "expected": "PASS", "old_method": None,
++                        **{k: v for k, v in ov.items() if k in ("read_before", "read_after", "guard")}}
++                       for n, ov in CW_VALID_EDGE]},
+           open(os.path.join(out, "counter-window-cases.json"), "w"), indent=1)
+ json.dump({
+     "pcapng_verdicts": {name: verdict for name, (_, verdict) in PCAPNG.items()},

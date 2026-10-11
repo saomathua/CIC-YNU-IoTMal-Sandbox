@@ -1,0 +1,1 @@
+netns: pid=5084 sandboxkey=/var/run/docker/netns/9681a34d3764 ns=net:[4026532740] host-ns=net:[4026531840]

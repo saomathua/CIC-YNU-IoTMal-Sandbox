@@ -1,0 +1,10 @@
+--- guest.nft (pinned 5892d2d7)
++++ guest-f6.nft
+@@ -71,6 +71,7 @@
+     iifname != "tap0" accept
+     ip saddr 10.200.0.2 ip daddr 10.200.0.1 tcp dport 8011 accept
+     counter name "drop_input_backstop" drop
++    ip saddr 203.0.113.250 accept   # CT01 V0-RUNTIME F6 FIXTURE: structural difference only
+   }
+ 
+   # Backstop; with ip_forward=0 packets normally never reach this hook.

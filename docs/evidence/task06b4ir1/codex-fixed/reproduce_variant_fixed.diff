@@ -1,0 +1,13 @@
+16a17,20
+> VARIANT = sys.argv[1] if len(sys.argv) > 1 else None   # 06B-4IR1 (Claude): captured at import; scenario_main()
+>                                                        # rewrites sys.argv before this thread starts
+> 
+> 
+18c22
+<     variant = sys.argv[1]
+---
+>     variant = VARIANT
+72c76
+<     if variant in ('a1-wrong-interface','a1-missing-interface','duplicate-control','http-missing-detail'):
+---
+>     if variant in ('a1-wrong-interface','a1-missing-interface','duplicate-control','http-missing-detail','codex-thread-unmodified'):

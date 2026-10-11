@@ -1,0 +1,93 @@
+== section D
+[PASS] D1 five cases, ids as planned
+[PASS] D2 every size comes from signatures.py
+[PASS] D3 a registry change changes the command (single source)
+[PASS] D4 expected classes: broadcast/multicast -> drop_bcast_mcast, subnet broadcast -> drop_private, IPv6 -> l2_bad_ethertype
+[PASS] D5 T13-I2 target is the EUI-64 link-local of TAP_MAC, NS group derived from it
+[PASS] D6 commands are plain busybox ping/ping6 with count, size and deadline
+[PASS] D7 bad interface name refused
+[PASS] D8 bad TAP MAC refused
+== section P
+[PASS] P T12-B1: 3 probe frames = drop_bcast_mcast delta 3 -> ĐẠT (kiểm quy tắc), rule_check only
+[PASS] P T12-B2: 3 probe frames = drop_bcast_mcast delta 3 -> ĐẠT (kiểm quy tắc), rule_check only
+[PASS] P T12-B4: 3 probe frames = drop_private delta 3 -> ĐẠT (kiểm quy tắc), rule_check only
+[PASS] P T13-I1: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only
+[PASS] P T13-I2: 3 probe frames = l2_bad_ethertype delta 3 -> ĐẠT (kiểm quy tắc), rule_check only
+[PASS] P6 background frame (DHCP -> drop_spoof) reconciled separately, still ĐẠT (kiểm quy tắc)
+== section F
+[PASS] F1 counter delta 2 for 3 probe frames -> FAIL (counter_reconciliation)
+[PASS] F2 an ICMP frame towards the guest in the window -> FAIL (no_reply_to_guest)
+[PASS] F3 a probe frame that does not reach the expected counter (OTHERHOST) -> FAIL
+[PASS] F4 a determined failure is reported even when execution also failed
+== section U
+[PASS] U1 a probe frame at the window edge -> CHƯA KIỂM CHỨNG (edge)
+[PASS] U2 a frame without a counter mapping in the window -> CHƯA KIỂM CHỨNG (named as such)
+[PASS] U3 service link after the group not intact -> CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] U4 service link before the group failed -> every case CHƯA KIỂM CHỨNG, none judged
+== section K
+[PASS] K1 no probe frame (broadcast refused locally), counters unchanged -> KHÔNG TẠO ĐƯỢC GÓI, not ĐẠT
+[PASS] K2 ping timed out with no frame on tap0 -> KHÔNG TẠO ĐƯỢC GÓI (timeout is not evidence)
+[PASS] K3 only background traffic in the window -> KHÔNG TẠO ĐƯỢC GÓI (background never replaces a probe)
+== section K2
+[PASS] K4 an ICMP echo to the same destination with another size is NOT a probe frame -> KHÔNG TẠO ĐƯỢC GÓI
+== section N
+[PASS] N0 the 'other' target shares the solicited-node group of the case target
+[PASS] N1 decode: ns_target of a well-formed NS is the target address
+[PASS] N2 decode: NS without the target bytes -> ns_target None
+[PASS] N10 decode: NS whose IPv6 payload ends before the target, followed by trailing bytes -> ns_target None
+[PASS] N3 NS with the right target -> probe frames counted, ĐẠT (kiểm quy tắc)
+[PASS] N4 NS to the same group but another target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI
+[PASS] N5 NS without a target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI
+[PASS] N6 the 06B-4E fixture (target bytes cdcd...) is NOT a probe
+[PASS] N7 background IPv6 (MLD report) only -> KHÔNG TẠO ĐƯỢC GÓI, never a probe
+[PASS] N8 right-target NS sent to the wrong multicast group is NOT a probe
+[PASS] N9 mixed: 3 real probe NS + other-target NS + MLD -> only the 3 counted, ĐẠT (kiểm quy tắc)
+== section B
+[PASS] B1 ok=False, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B2 state missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B3 state null, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B4 ok is the string 'true', cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B5 ok is 1, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B6 state is a list, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B7 ok key missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT
+[PASS] B8 link before ok=True -> ĐẠT (kiểm quy tắc) still possible
+[PASS] B9 link before failed but the counters prove a mismatch -> FAIL is still reported
+[PASS] B10 link before failed and a reply reaches the guest -> FAIL
+[PASS] B11 CLI: link before ok=False -> exit 4, case CHƯA KIỂM CHỨNG
+[PASS] B12 CLI: link before state missing -> exit 4
+[PASS] B13 evaluate_group: 'cases' not a list -> ValueError (CLI exit 2)
+== section E
+[PASS] E1 console error during the ping -> LỖI THỰC THI (not ĐẠT even if counters match)
+[PASS] E2 tool missing -> LỖI THỰC THI
+[PASS] E3 no execution record -> LỖI THỰC THI
+== section M
+[PASS] M1 capture missing -> every case LỖI PHÉP ĐO
+[PASS] M2 counter file missing -> LỖI PHÉP ĐO
+[PASS] M3 counter read 'after' missing -> LỖI PHÉP ĐO (never 0)
+[PASS] M4 compared counter missing in read B -> LỖI PHÉP ĐO
+[PASS] M5 malformed counter file -> LỖI PHÉP ĐO
+[PASS] M6 a counter read that failed during execution -> LỖI PHÉP ĐO
+[PASS] M7 malformed TAP MAC -> ValueError raised to the caller (CLI turns it into exit 2)
+== section L
+[PASS] L1 a full group passes as ĐẠT (kiểm quy tắc) x5
+[PASS] L2 no result is ever plain 'ĐẠT' or a live-control kind
+[PASS] L3 guard 20 ms recorded with the unmeasured assumption
+[PASS] L4 group exit 0 for a full pass
+[PASS] L5 group exit: FAIL 1, measurement error 2, not judged 4
+[PASS] L6 group exit: FAIL wins over a measurement error in the same group (FAIL > LỖI PHÉP ĐO)
+== section R
+[PASS] R1 order: link before, then per case read A / ping / read B, link after
+[PASS] R2 commands recorded exactly as built
+[PASS] R3 link before fails -> no ping is run, group skipped
+[PASS] R4 a console error is recorded for that case, the group continues
+[PASS] R5 a failed counter read is recorded as read_error
+[PASS] R6 rc 127 -> 'tool missing' execution error
+[PASS] R7 an exception in the service link check counts as failed
+[PASS] R8 end to end (fake guest -> counters file -> evaluate_group) -> ĐẠT (kiểm quy tắc) x5
+== section C
+[PASS] C1 CLI: pass -> exit 0
+[PASS] C2 CLI: fail -> exit 1
+[PASS] C3 CLI: no probe frame -> exit 4
+[PASS] C4 CLI: invalid group record -> exit 2, JSON written with the error
+[PASS] C5 CLI: missing arguments -> exit 2
+SELFTEST-ICMP: 79/79 passed

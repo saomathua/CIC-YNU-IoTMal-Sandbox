@@ -1,0 +1,1 @@
+name=cic-ynu-iotmal-sandbox_sandboxnet id=1d86fe3e8bbe2bbf2d46b4d2d767c59a4b90ab2f6e87c20269137a241816e5d5 driver=bridge internal=false ipv6=false subnet=192.168.60.0/24 gw=192.168.60.1 containers=[]

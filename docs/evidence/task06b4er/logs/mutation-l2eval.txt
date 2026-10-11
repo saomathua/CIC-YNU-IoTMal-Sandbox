@@ -1,0 +1,30 @@
+baseline: 65/65 tests pass
+OK  V1   DETECTED           target='M2 duplicate label -> ERROR from the measurement-data check'
+OK  V2   DETECTED           target="M1 read label 'B' missing -> ERROR from the measurement-data check"
+OK  V3   DETECTED           target='M6 counter packets is a bool -> ERROR from the measurement-data check'
+OK  V4   DETECTED           target='M5 read time not finite -> ERROR from the measurement-data check'
+OK  V5   DETECTED           target='M8 read without any counter -> ERROR from the measurement-data check'
+OK  V6   DETECTED           target='M13 a NOT compared counter missing in one read is reported missing (delta null), never 0'
+OK  V7   DETECTED           target='X1 missing capture -> ERROR (capture read error), not 0 frames'
+OK  V8   DETECTED           target='C4 UNVERIFIED -> exit 4'
+OK  V9   DETECTED           target='S3 frames counted by direction/class inside the window; the outside frame is counted apart'
+OK  V10  DETECTED           target='S10 UNVERIFIED: a frame without a counter mapping inside the window, listed'
+OK  V11  DETECTED           target='C3 ERROR -> exit 2, JSON still written with the error'
+OK  V12  DETECTED           target='X5 malformed TAP MAC -> ERROR (invalid argument)'
+OK  V13  DETECTED           target='M16 a counter listed twice in one read -> ERROR'
+OK  W1   DETECTED           target='N1 classes=[] -> ERROR (nothing compared is never PASS)'
+OK  W2   DETECTED           target='N2 duplicate class name -> ERROR'
+OK  W3   DETECTED           target='N4 unobservable class (arp_out_drop) -> ERROR before reading anything'
+OK  W4   DETECTED           target='N5 classes given as a string -> ERROR'
+OK  W5   DETECTED           target='C7 --classes "a,,b" (empty name) -> exit 2, not filtered'
+OK  W6   DETECTED           target='J1 nftables=[{counter: null}] -> ERROR with reason (evaluate)'
+OK  W7   DETECTED           target='J2 nftables=null -> ERROR with reason (evaluate)'
+OK  W8   DETECTED           target='J6 a non-object element among valid counters (not skipped) -> ERROR with reason (evaluate)'
+OK  W9   DETECTED           target='J7 counter without packets -> ERROR with reason (evaluate)'
+OK  W10  DETECTED           target='J11 raw is an object, not text -> ERROR with reason (evaluate)'
+OK  W11  DETECTED           target='J4 nft output is a list -> ERROR with reason (evaluate)'
+OK  W12  DETECTED           target='J9 record line is a JSON list -> ERROR with reason (evaluate)'
+OK  W13  DETECTED           target='J12 counter name empty -> ERROR with reason (evaluate)'
+OK  X1   INVALID            target=None
+OK  X2   ERROR              target=None failed=[] ['SyntaxError: invalid syntax']
+MUTATION-L2EVAL: 28 OK, 0 not as expected; harness unchanged

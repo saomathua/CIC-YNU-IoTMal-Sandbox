@@ -1,0 +1,28 @@
+== reviewer's two cases: 06B-4E (before) vs 06B-4ER (after)
+-- before
+case 1 link_before.ok=False, cases present, no skipped -> ĐẠT (kiểm quy tắc)
+case 2 NS with target cdcd:cdcd:cdcd:cdcd:cdcd:cdcd:cdcd:cdcd (case target fe80::7893:2aff:fef1:4747) -> probe_frames=3 verdict=ĐẠT (kiểm quy tắc)
+-- after
+case 1 link_before.ok=False, cases present, no skipped -> CHƯA KIỂM CHỨNG (liên kết dịch vụ trước nhóm thử thiếu, không đạt hoặc không hợp lệ)
+case 2 NS with target cdcd:cdcd:cdcd:cdcd:cdcd:cdcd:cdcd:cdcd (case target fe80::7893:2aff:fef1:4747) -> probe_frames=0 verdict=CHƯA KIỂM CHỨNG (không tạo được gói probe; ping rc 1 không phải bằng chứng chặn)
+
+== new tests (sections N, B) run against the 06B-4E icmp_cases.py + l2frames.py (before)
+before: [FAIL] N1 decode: ns_target of a well-formed NS is the target address  (KeyError: 'ns_target')
+before: [FAIL] N2 decode: NS without the target bytes -> ns_target None  (KeyError: 'ns_target')
+before: [FAIL] N10 decode: NS whose IPv6 payload ends before the target, followed by trailing bytes -> ns_target None  (KeyError: 'ns_target')
+before: [FAIL] N4 NS to the same group but another target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI  (returned False)
+before: [FAIL] N5 NS without a target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI  (returned False)
+before: [FAIL] N6 the 06B-4E fixture (target bytes cdcd...) is NOT a probe  (returned False)
+before: [FAIL] N9 mixed: 3 real probe NS + other-target NS + MLD -> only the 3 counted, ĐẠT (kiểm quy tắc)  (returned False)
+before: [FAIL] B1 ok=False, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B2 state missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B3 state null, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B4 ok is the string 'true', cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B5 ok is 1, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B6 state is a list, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B7 ok key missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT  (returned False)
+before: [FAIL] B11 CLI: link before ok=False -> exit 4, case CHƯA KIỂM CHỨNG  (returned False)
+before: [FAIL] B12 CLI: link before state missing -> exit 4  (returned False)
+before: [FAIL] B13 evaluate_group: 'cases' not a list -> ValueError (CLI exit 2)  (TypeError: string indices must be integers, not 'str')
+before: SELFTEST-ICMP: 62/79 passed; FAILED: ['N1 decode: ns_target of a well-formed NS is the target address', 'N2 decode: NS without the target bytes -> ns_target None', 'N10 decode: NS whose IPv6 payload ends before the target, followed by trailing bytes -> ns_target None', 'N4 NS to the same group but another target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI', 'N5 NS without a target is NOT a probe -> KHÔNG TẠO ĐƯỢC GÓI', 'N6 the 06B-4E fixture (target bytes cdcd...) is NOT a probe', 'N9 mixed: 3 real probe NS + other-target NS + MLD -> only the 3 counted, ĐẠT (kiểm quy tắc)', "B1 ok=False, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B2 state missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B3 state null, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B4 ok is the string 'true', cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B5 ok is 1, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B6 state is a list, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", "B7 ok key missing, cases present, no 'skipped' -> evaluate_group gives CHƯA KIỂM CHỨNG, never ĐẠT", 'B11 CLI: link before ok=False -> exit 4, case CHƯA KIỂM CHỨNG', 'B12 CLI: link before state missing -> exit 4', "B13 evaluate_group: 'cases' not a list -> ValueError (CLI exit 2)"]
+after: SELFTEST-ICMP: 79/79 passed

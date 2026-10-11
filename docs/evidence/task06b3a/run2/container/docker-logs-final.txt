@@ -1,0 +1,57 @@
+2026-10-06T14:39:39.318836701Z SYSCTL REPORT (before run.sh): net.ipv4.ip_forward=1
+2026-10-06T14:39:39.318877239Z SYSCTL REPORT (before run.sh): rp_filter [max] configured: all=2 default=2 tap0=None eth0=2 | effective: tap0=None eth0=2
+2026-10-06T14:39:39.318880007Z SYSCTL REPORT (before run.sh): arp_ignore [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:39:39.318881663Z SYSCTL REPORT (before run.sh): arp_announce [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:39:39.318883223Z SYSCTL REPORT (before run.sh): arp_accept [max] configured: all=0 default=0 tap0=None eth0=0 | effective: tap0=None eth0=0
+2026-10-06T14:39:39.318884783Z SYSCTL REPORT (before run.sh): forwarding [dev] configured: all=1 default=1 tap0=None eth0=1 | effective: tap0=None eth0=1
+2026-10-06T14:39:39.379563414Z SYSCTL REPORT (after run.sh): net.ipv4.ip_forward=0
+2026-10-06T14:39:39.379588755Z SYSCTL REPORT (after run.sh): rp_filter [max] configured: all=1 default=2 tap0=1 eth0=2 | effective: tap0=1 eth0=2
+2026-10-06T14:39:39.379590909Z SYSCTL REPORT (after run.sh): arp_ignore [max] configured: all=0 default=0 tap0=1 eth0=0 | effective: tap0=1 eth0=0
+2026-10-06T14:39:39.379592447Z SYSCTL REPORT (after run.sh): arp_announce [max] configured: all=0 default=0 tap0=2 eth0=0 | effective: tap0=2 eth0=0
+2026-10-06T14:39:39.379593950Z SYSCTL REPORT (after run.sh): arp_accept [max] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:39:39.379595461Z SYSCTL REPORT (after run.sh): forwarding [dev] configured: all=0 default=0 tap0=0 eth0=0 | effective: tap0=0 eth0=0
+2026-10-06T14:39:39.441017582Z ISOLATION OK (V0 startup): ruleset,sysctl,link,neighbor,route
+2026-10-06T14:39:39.457307393Z SENTINEL poller.py called (no real poller started)
+2026-10-06T14:39:39.791842912Z INFO:     Started server process [36]
+2026-10-06T14:39:39.791865332Z INFO:     Waiting for application startup.
+2026-10-06T14:39:39.792037703Z INFO:     Application startup complete.
+2026-10-06T14:39:39.792245905Z INFO:     Uvicorn running on http://0.0.0.0:8011 (Press CTRL+C to quit)
+2026-10-06T14:39:40.449965099Z INFO:     127.0.0.1:38872 - "GET /healthcheck HTTP/1.1" 200 OK
+2026-10-06T14:39:57.672439732Z guest request denied: client=('10.200.0.2', 44888) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-arm-task/file
+2026-10-06T14:39:57.672493784Z INFO:     10.200.0.2:44888 - "GET /api/v1/sandbox-worker/get-task/06b3a-arm-task/file HTTP/1.1" 403 Forbidden
+2026-10-06T14:39:57.900542298Z INFO:     10.200.0.2:44890 - "POST /api/v1/sandbox-worker/update-task/06b3a-arm-task/strace HTTP/1.1" 403 Forbidden
+2026-10-06T14:39:57.900575057Z guest request denied: client=('10.200.0.2', 44890) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-arm-task/strace
+2026-10-06T14:39:58.088995996Z guest request denied: client=('10.200.0.2', 44892) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-arm-task/sar
+2026-10-06T14:39:58.089034446Z INFO:     10.200.0.2:44892 - "POST /api/v1/sandbox-worker/update-task/06b3a-arm-task/sar HTTP/1.1" 403 Forbidden
+2026-10-06T14:39:58.786837975Z INFO:     10.200.0.2:44894 - "GET /api/v1/sandbox-worker/get-task/06b3a-arm-task/file HTTP/1.1" 200 OK
+2026-10-06T14:39:59.662391091Z INFO:     10.200.0.2:44896 - "POST /api/v1/sandbox-worker/update-task/06b3a-arm-task/strace HTTP/1.1" 200 OK
+2026-10-06T14:39:59.971025886Z INFO:     10.200.0.2:44898 - "POST /api/v1/sandbox-worker/update-task/06b3a-arm-task/sar HTTP/1.1" 200 OK
+2026-10-06T14:40:00.662493805Z INFO:     10.200.0.2:44900 - "GET /healthcheck HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:00.662539290Z guest request denied: client=('10.200.0.2', 44900) method=GET path=/healthcheck
+2026-10-06T14:40:00.923726674Z INFO:     10.200.0.2:44902 - "POST /api/v1/sandbox-worker/stop HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:00.923758588Z guest request denied: client=('10.200.0.2', 44902) method=POST path=/api/v1/sandbox-worker/stop
+2026-10-06T14:40:01.087316882Z INFO:     10.200.0.2:44904 - "GET /api/v1/sandbox-worker/get-task/06b3a-arm-other/file HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:01.087344555Z guest request denied: client=('10.200.0.2', 44904) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-arm-other/file
+2026-10-06T14:40:01.211027136Z INFO:     10.200.0.2:44906 - "POST /api/v1/sandbox-worker/update-task/06b3a-arm-other/strace HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:01.211063983Z guest request denied: client=('10.200.0.2', 44906) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-arm-other/strace
+2026-10-06T14:40:01.854047939Z INFO:     10.200.0.2:44908 - "GET /api/v1/sandbox-worker/get-task/06b3a-arm-task/file HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:01.854087209Z guest request denied: client=('10.200.0.2', 44908) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-arm-task/file
+2026-10-06T14:40:31.588024723Z guest request denied: client=('10.200.0.2', 47860) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-mips-task/file
+2026-10-06T14:40:31.588065033Z INFO:     10.200.0.2:47860 - "GET /api/v1/sandbox-worker/get-task/06b3a-mips-task/file HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:31.826251605Z guest request denied: client=('10.200.0.2', 47868) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-mips-task/strace
+2026-10-06T14:40:31.826309573Z INFO:     10.200.0.2:47868 - "POST /api/v1/sandbox-worker/update-task/06b3a-mips-task/strace HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:32.050815902Z INFO:     10.200.0.2:47876 - "POST /api/v1/sandbox-worker/update-task/06b3a-mips-task/sar HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:32.050856990Z guest request denied: client=('10.200.0.2', 47876) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-mips-task/sar
+2026-10-06T14:40:32.734362881Z INFO:     10.200.0.2:47884 - "GET /api/v1/sandbox-worker/get-task/06b3a-mips-task/file HTTP/1.1" 200 OK
+2026-10-06T14:40:33.531088583Z INFO:     10.200.0.2:47888 - "POST /api/v1/sandbox-worker/update-task/06b3a-mips-task/strace HTTP/1.1" 200 OK
+2026-10-06T14:40:33.736237849Z INFO:     10.200.0.2:47900 - "POST /api/v1/sandbox-worker/update-task/06b3a-mips-task/sar HTTP/1.1" 200 OK
+2026-10-06T14:40:34.384965769Z guest request denied: client=('10.200.0.2', 49442) method=GET path=/healthcheck
+2026-10-06T14:40:34.385112358Z INFO:     10.200.0.2:49442 - "GET /healthcheck HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:34.516557091Z INFO:     10.200.0.2:49458 - "POST /api/v1/sandbox-worker/stop HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:34.516606819Z guest request denied: client=('10.200.0.2', 49458) method=POST path=/api/v1/sandbox-worker/stop
+2026-10-06T14:40:34.645694377Z guest request denied: client=('10.200.0.2', 49468) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-mips-other/file
+2026-10-06T14:40:34.645729768Z INFO:     10.200.0.2:49468 - "GET /api/v1/sandbox-worker/get-task/06b3a-mips-other/file HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:34.788869287Z guest request denied: client=('10.200.0.2', 49480) method=POST path=/api/v1/sandbox-worker/update-task/06b3a-mips-other/strace
+2026-10-06T14:40:34.788906231Z INFO:     10.200.0.2:49480 - "POST /api/v1/sandbox-worker/update-task/06b3a-mips-other/strace HTTP/1.1" 403 Forbidden
+2026-10-06T14:40:35.431364193Z guest request denied: client=('10.200.0.2', 49484) method=GET path=/api/v1/sandbox-worker/get-task/06b3a-mips-task/file
+2026-10-06T14:40:35.431592674Z INFO:     10.200.0.2:49484 - "GET /api/v1/sandbox-worker/get-task/06b3a-mips-task/file HTTP/1.1" 403 Forbidden

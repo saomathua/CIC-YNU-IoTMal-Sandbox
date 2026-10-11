@@ -1,0 +1,718 @@
+{
+ "arch": "ARM",
+ "assumption": "guard covers the delay from capture timestamp to nft counter hit; NOT measured",
+ "case_record_problems": [],
+ "case_requirements": [
+  "guest configuration restored after T14-A1 (re-read state equals the baseline)",
+  "allowed service link after T14-A1 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+  "guest configuration restored after T14-A2 (re-read state equals the baseline)",
+  "allowed service link after T14-A2 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+  "guest configuration restored after T14-A3 (re-read state equals the baseline)",
+  "allowed service link after T14-A3 (guest restored): GET get-task/T/file HTTP 200 + fixture hash",
+  "guest configuration restored after T15-S1 (re-read state equals the baseline)",
+  "allowed service link after T15-S1 (guest restored): GET get-task/T/file HTTP 200 + fixture hash"
+ ],
+ "cases": [
+  {
+   "arp_out_drop_delta": 0,
+   "category": "CHUA_KIEM_CHUNG",
+   "evidence_kind": "live_control",
+   "execution_problems": [],
+   "failure_evidence": [],
+   "id": "T14-A1",
+   "measurement_errors": [],
+   "neighbour_inconclusive": [],
+   "not_run": false,
+   "not_started": false,
+   "ok": false,
+   "probe_frame_classes": [
+    "arp_in_drop"
+   ],
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 3,
+      "delta": 3,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 3,
+      "lo": 3,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "restore": true,
+   "steps": [
+    {
+     "cmd": "ip route add 192.168.60.2/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ping -c 1 -W 2 -s 1401 192.168.60.2",
+     "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+     "phase": "trigger",
+     "rc": 1
+    },
+    {
+     "cmd": "sleep 3",
+     "out": "",
+     "phase": "settle",
+     "rc": 0
+    }
+   ],
+   "verdict": "CHƯA KIỂM CHỨNG (không có đối chứng sống)"
+  },
+  {
+   "arp_out_drop_delta": 0,
+   "category": "DAT",
+   "evidence_kind": "live_control",
+   "execution_problems": [],
+   "failure_evidence": [],
+   "id": "T14-A2",
+   "measurement_errors": [],
+   "neighbour_inconclusive": [],
+   "not_run": false,
+   "not_started": false,
+   "ok": true,
+   "probe_frame_classes": [
+    "arp_in_drop"
+   ],
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 3,
+      "delta": 3,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 3,
+      "lo": 3,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "restore": true,
+   "steps": [
+    {
+     "cmd": "ip route add 192.168.60.10/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ping -c 1 -W 2 -s 1402 192.168.60.10",
+     "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+     "phase": "trigger",
+     "rc": 1
+    },
+    {
+     "cmd": "sleep 3",
+     "out": "",
+     "phase": "settle",
+     "rc": 0
+    }
+   ],
+   "verdict": "ĐẠT"
+  },
+  {
+   "arp_out_drop_delta": 0,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "execution_problems": [],
+   "failure_evidence": [],
+   "id": "T14-A3",
+   "measurement_errors": [],
+   "neighbour_inconclusive": [],
+   "not_run": false,
+   "not_started": false,
+   "ok": true,
+   "probe_frame_classes": [
+    "arp_in_drop"
+   ],
+   "probe_frames": 3,
+   "probe_frames_certain": 3,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 3,
+      "delta": 3,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 3,
+      "lo": 3,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "restore": true,
+   "steps": [
+    {
+     "cmd": "ip route add 10.200.0.6/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ping -c 1 -W 2 -s 1403 10.200.0.6",
+     "out": "1 packets transmitted, 0 packets received, 100% packet loss",
+     "phase": "trigger",
+     "rc": 1
+    },
+    {
+     "cmd": "sleep 3",
+     "out": "",
+     "phase": "settle",
+     "rc": 0
+    }
+   ],
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  },
+  {
+   "arp_out_drop_delta": 0,
+   "category": "DAT_KIEM_QUY_TAC",
+   "evidence_kind": "rule_check",
+   "execution_problems": [],
+   "failure_evidence": [],
+   "id": "T15-S1",
+   "measurement_errors": [],
+   "neighbour_inconclusive": [],
+   "not_run": false,
+   "not_started": false,
+   "ok": true,
+   "probe_frame_classes": [
+    "arp_in_drop"
+   ],
+   "probe_frames": 4,
+   "probe_frames_certain": 4,
+   "reconciliation": {
+    "guard_s": 0.02,
+    "no_counter_frames": [],
+    "per_class": {
+     "allow_out_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "allow_svc": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_in_drop": {
+      "certain": 4,
+      "delta": 4,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 4,
+      "lo": 4,
+      "status": "PASS"
+     },
+     "arp_in_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "arp_out_ok": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_bcast_mcast": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_non_ipv4": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_private": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_public": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_spoof": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "drop_worker_other": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_ethertype": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     },
+     "l2_bad_mac": {
+      "certain": 0,
+      "delta": 0,
+      "edge_end": [],
+      "edge_start": [],
+      "hi": 0,
+      "lo": 0,
+      "status": "PASS"
+     }
+    },
+    "verdict": "PASS"
+   },
+   "restore": true,
+   "steps": [
+    {
+     "cmd": "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ip addr add 10.200.0.1/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ip addr add 192.168.60.10/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ip addr add 192.168.60.1/32 dev eth1",
+     "out": "",
+     "phase": "setup",
+     "rc": 0
+    },
+    {
+     "cmd": "ip link set dev eth1 down",
+     "out": "",
+     "phase": "trigger",
+     "rc": 0
+    },
+    {
+     "cmd": "ip link set dev eth1 up",
+     "out": "",
+     "phase": "trigger",
+     "rc": 0
+    },
+    {
+     "cmd": "sleep 3",
+     "out": "",
+     "phase": "settle",
+     "rc": 0
+    }
+   ],
+   "verdict": "ĐẠT (kiểm quy tắc)"
+  }
+ ],
+ "group_complete": true,
+ "group_exit": 4,
+ "guard_s": 0.02,
+ "inputs": {
+  "counters": "/home/dathq/projects/ct01-06b4i-work/fixtures-run/ctl-no-arp/out/ARM/counters-raw.jsonl",
+  "iface": "eth1",
+  "pcap": "/home/dathq/projects/ct01-06b4i-work/fixtures-run/ctl-no-arp/out/ARM/tap0.pcapng",
+  "tap_mac": "7a:93:2a:f1:47:47"
+ },
+ "record_problems": [],
+ "service_link_before": {
+  "detail": {
+   "expected_sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+   "http_code": "200",
+   "output_tail": "HTTP=200\n602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f  /tmp/r.out",
+   "rc": 0,
+   "sha256": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f"
+  },
+  "ok": true
+ },
+ "service_link_role": "guest-worker service link: precondition before the group and after every restored case, NOT a live control for the ARP targets"
+}

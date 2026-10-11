@@ -1,0 +1,23 @@
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+@@SEND_ARCH ARM
+probe_matrix ARM exit=0
+ARM: probe_matrix outcome: PASS
+[PASS] ARM: probe_matrix exit 0 (all checks and probes passed)
+[SESSION] ARM: PASS
+[PASS] ARM: no qemu-system/tshark left in container
+[FAIL] ARM: full verify after guest shutdown
+[PASS] MIPS: no QEMU running before start (sequential)
+[PASS] MIPS: all host captures alive before start
+[PASS] MIPS: capture watcher alive with a fresh heartbeat before start
+@@SEND_ARCH MIPS
+probe_matrix MIPS exit=0
+MIPS: probe_matrix outcome: PASS
+[PASS] MIPS: probe_matrix exit 0 (all checks and probes passed)
+[SESSION] MIPS: PASS
+[PASS] MIPS: no qemu-system/tshark left in container
+[PASS] MIPS: full verify after guest shutdown
+@@FAIL_COUNT=1
+grep: /home/dathq/projects/ct01-06b4ir3-work/before/bash-after-arm-verify-fail/hostcap/alert.txt: No such file or directory
+grep: /home/dathq/projects/ct01-06b4ir3-work/before/bash-after-arm-verify-fail/hostcap/alert.txt: No such file or directory

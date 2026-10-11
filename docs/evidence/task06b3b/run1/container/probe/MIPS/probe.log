@@ -1,0 +1,41 @@
+15:02:25 [PASS] MIPS: host leak monitor running and empty before boot {}
+15:02:25 [PASS] MIPS: temporary listener 10.200.0.1:18080 answers locally {}
+15:02:25 [PASS] MIPS: full isolation verify right before QEMU spawn (harness pre-boot, not V1) {}
+15:02:25 [PASS] MIPS: tshark capturing on tap0 {}
+15:02:52 [PASS] MIPS: guest booted and network configured {"qemu_pid": 198}
+15:02:53 [PASS] MIPS: topology gate: only nic/tap, one tap0 backend, pinned MAC on tap NIC and probe interface {"entries": [["pcnet.0", "nic", ["tap"]]], "probe_iface": "br-lan", "probe_iface_mac": "52:54:00:c7:00:02", "problems": []}
+15:02:54 [PASS] MIPS: allowed service link before probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0}
+15:02:54 --- probe internet-tcp: tcp 1.1.1.1:443 (expected block point: drop_public)
+15:02:59     guest rc=28 failed=True; control before=True after=True remote=None; counters={'l2_bad_ethertype': 2, 'drop_spoof': 2, 'drop_public': 8}; host alerts=0
+15:02:59 --- probe lan-dns-udp: udp 192.168.177.2:53 (expected block point: drop_private)
+15:03:00     guest rc=None failed=False; control before=True after=True remote=None; counters={'drop_public': 2}; host alerts=0
+15:03:00 --- probe ssh-host-192.168.60.1: tcp 192.168.60.1:22 (expected block point: drop_private)
+15:03:05     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+15:03:05 --- probe ssh-host-192.168.177.128: tcp 192.168.177.128:22 (expected block point: drop_private)
+15:03:10     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 1, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+15:03:10 --- probe ssh-host-172.18.0.1: tcp 172.18.0.1:22 (expected block point: drop_private)
+15:03:15     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 2}; host alerts=0
+15:03:15 --- probe manager: tcp 192.168.60.10:8011 (expected block point: drop_private)
+15:03:21     guest rc=28 failed=True; control before=True after=True remote={'ok_before': True, 'ok_after': False, 'fails_in_window': 0, 'ok': False}; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+15:03:21 --- probe mongodb: tcp 172.18.0.2:27017 (expected block point: drop_private)
+15:03:26     guest rc=28 failed=True; control before=None after=None remote={'ok_before': True, 'ok_after': False, 'fails_in_window': 0, 'ok': False}; counters={'arp_in_ok': 1, 'arp_out_ok': 1, 'drop_spoof': 1, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+15:03:26 --- probe worker-eth0: tcp 192.168.60.2:8011 (expected block point: drop_private)
+15:03:31     guest rc=28 failed=True; control before=None after=None remote={'ok_before': True, 'ok_after': False, 'fails_in_window': 0, 'ok': False}; counters={'drop_spoof': 2, 'drop_private': 4, 'drop_public': 4}; host alerts=0
+15:03:31 --- probe tap0-other-port-listener: tcp 10.200.0.1:18080 (expected block point: drop_worker_other)
+15:03:36     guest rc=28 failed=True; control before=True after=True remote=None; counters={'drop_spoof': 2, 'drop_worker_other': 4, 'drop_public': 2}; host alerts=0
+15:03:36 [PASS] MIPS: allowed service link after probes: GET get-task/T/file 200 + hash {"output": "HTTP=200\nb13ee44005f76a509bfec7b8d1decd7384ace9e198d954352d57330f4d8f5e5a  /tmp/r.out", "rc": 0}
+15:03:36 [PASS] MIPS: QEMU exit confirmed {"exitstatus": 0}
+15:03:36 [PASS] MIPS: tap0 capture stopped cleanly {"returncode": 0}
+15:03:37 [PASS] MIPS: temporary listener stopped {}
+15:03:37 [PASS] MIPS: fixture, marker and temporary guest disk removed {}
+15:03:37 [PASS] MIPS: tap0 pcap readable by tshark (exit 0) {"frames": 102}
+15:03:37 [PASS] MIPS: probe internet-tcp (tcp 1.1.1.1:443) -> ĐẠT {"counter": 8, "expected": "drop_public", "failed_checks": [], "mismatch": {}, "pcap": 8, "probe_packets": 4}
+15:03:37 [FAIL] MIPS: probe lan-dns-udp (udp 192.168.177.2:53) -> FAIL {"counter": 0, "expected": "drop_private", "failed_checks": ["guest_connection_failed", "probe_packets_in_tap0_pcap", "probe_packets_hit_expected_counter", "expected_counter_delta_eq_pcap"], "mismatch": {}, "pcap": 0, "probe_packets": 0}
+15:03:37 [PASS] MIPS: probe ssh-host-192.168.60.1 (tcp 192.168.60.1:22) -> ĐẠT {"counter": 4, "expected": "drop_private", "failed_checks": [], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [PASS] MIPS: probe ssh-host-192.168.177.128 (tcp 192.168.177.128:22) -> ĐẠT {"counter": 4, "expected": "drop_private", "failed_checks": [], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [PASS] MIPS: probe ssh-host-172.18.0.1 (tcp 172.18.0.1:22) -> ĐẠT {"counter": 4, "expected": "drop_private", "failed_checks": [], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [FAIL] MIPS: probe manager (tcp 192.168.60.10:8011) -> CHƯA KIỂM CHỨNG (không có đối chứng sống) {"counter": 4, "expected": "drop_private", "failed_checks": ["control_alive_same_dst_proto_port"], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [FAIL] MIPS: probe mongodb (tcp 172.18.0.2:27017) -> CHƯA KIỂM CHỨNG (không có đối chứng sống) {"counter": 4, "expected": "drop_private", "failed_checks": ["control_alive_same_dst_proto_port"], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [FAIL] MIPS: probe worker-eth0 (tcp 192.168.60.2:8011) -> CHƯA KIỂM CHỨNG (không có đối chứng sống) {"counter": 4, "expected": "drop_private", "failed_checks": ["control_alive_same_dst_proto_port"], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 [PASS] MIPS: probe tap0-other-port-listener (tcp 10.200.0.1:18080) -> ĐẠT {"counter": 4, "expected": "drop_worker_other", "failed_checks": [], "mismatch": {}, "pcap": 4, "probe_packets": 4}
+15:03:37 == MIPS: status=COMPLETED; 18/22 checks passed

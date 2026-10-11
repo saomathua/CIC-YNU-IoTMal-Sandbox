@@ -1,0 +1,21 @@
+--- /home/dathq/projects/ct01-06b3c/out/container/netns-before.txt	2026-10-06 16:42:08.787159512 +0000
++++ /home/dathq/projects/ct01-06b3c/out/container/netns-after.txt	2026-10-06 16:44:55.654983228 +0000
+@@ -6,7 +6,7 @@
+     veth addrgenmode eui64 numtxqueues 128 numrxqueues 128 gso_max_size 65536 gso_max_segs 65535 
+ 3: tap0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN mode DEFAULT group default qlen 1000
+     link/ether 8e:f8:70:e8:15:a4 brd ff:ff:ff:ff:ff:ff promiscuity 0 minmtu 68 maxmtu 65521 
+-    tun type tap pi off vnet_hdr off persist on addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 
++    tun type tap pi off vnet_hdr on persist on addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 
+ 
+ ## ip addr show
+ 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+@@ -41,6 +41,9 @@
+ local ::1 dev lo table local proto kernel metric 0 pref medium
+ 
+ ## ip neigh show
++192.168.60.3 dev eth0 lladdr 06:d4:d4:0d:05:4d REACHABLE
++192.168.60.10 dev eth0 lladdr d6:35:10:9c:0f:f6 REACHABLE
++192.168.60.1 dev eth0 lladdr 86:b7:ae:84:b0:a2 REACHABLE
+ 10.200.0.2 dev tap0 lladdr 52:54:00:c7:00:02 PERMANENT
+ 
+ ## ip rule show

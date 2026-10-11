@@ -1,0 +1,259 @@
+{
+  "schema": "ct01-nft-reference-provenance/1",
+  "policy_version": "ct01-nft-exact-channels/1",
+  "reference_set_version": "ct01-nft-historical-4G-3G-MGR-MGR2-MGR3/4",
+  "source": "Pinned saved historical 4G/3G, explicitly authorized manager-running collection 6685285a (MGR), and the user-approved exact-byte addition from historical-only collection 6215094f (MGR2); no live collection or semantic normalization; and the user-approved exact-byte addition from the REJECTED collection caf80efb (MGR3, manager at 172.18.0.2 on dbnet); no live collection or semantic normalization",
+  "references": {
+    "4G": {
+      "source_path_raw": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/host-after/nft-ruleset-stateless.txt",
+      "source_path_resolved": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/run1/host-after/nft-ruleset-stateless.txt",
+      "source_sha256": "a51d1c413ef6e5c62918778cba827f55c9ab3e558aaf36b982e77b2a38df636d",
+      "source_manifest": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b4g/SHA256SUMS",
+      "source_manifest_sha256": "4bec69a1474d8ea8b4190f5411b51de493b24891ce02603c41496f2a20d2cbf3",
+      "source_manifest_entry": "./run1/host-after/nft-ruleset-stateless.txt",
+      "artifacts": {
+        "source": {
+          "artifact": "4G.source.txt",
+          "sha256": "a51d1c413ef6e5c62918778cba827f55c9ab3e558aaf36b982e77b2a38df636d",
+          "size": 2709
+        },
+        "stdout": {
+          "artifact": "4G.stdout.txt",
+          "sha256": "828ee67984253965b9aad35482dc0f5a3eca2fd18f19b7360a0e96b95de6ef94",
+          "size": 2507
+        },
+        "stderr": {
+          "artifact": "4G.stderr.txt",
+          "sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "size": 202
+        }
+      },
+      "transformation": {
+        "algorithm": "split-only-three-exact-full-warning-lines/1",
+        "removed_line_numbers": [
+          1,
+          23,
+          64
+        ],
+        "diagnostic_order": "original warning order",
+        "all_other_bytes": "retained verbatim including other comments/whitespace/rule/table/chain order"
+      },
+      "operational_approval": "pending independent review; hashes do not constitute approval"
+    },
+    "3G": {
+      "source_path_raw": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/host-after/nft-ruleset-stateless.txt",
+      "source_path_resolved": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/run1/host-after/nft-ruleset-stateless.txt",
+      "source_sha256": "dc51b3bec870e0b2685fa4eb9904c9d547ce0d7dc581d2935bf56143c1730db1",
+      "source_manifest": "/home/dathq/projects/CIC-YNU-IoTMal-Sandbox/docs/evidence/task06b3g/SHA256SUMS",
+      "source_manifest_sha256": "f92445bdeabf207f126199272dace3dd2a2724ecf807f4bb8893506938801680",
+      "source_manifest_entry": "./run1/host-after/nft-ruleset-stateless.txt",
+      "artifacts": {
+        "source": {
+          "artifact": "3G.source.txt",
+          "sha256": "dc51b3bec870e0b2685fa4eb9904c9d547ce0d7dc581d2935bf56143c1730db1",
+          "size": 2709
+        },
+        "stdout": {
+          "artifact": "3G.stdout.txt",
+          "sha256": "8aa127a290bf59fe2f334ea353111b68d7258b67df57d3c58d7de607518f59bd",
+          "size": 2507
+        },
+        "stderr": {
+          "artifact": "3G.stderr.txt",
+          "sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "size": 202
+        }
+      },
+      "transformation": {
+        "algorithm": "split-only-three-exact-full-warning-lines/1",
+        "removed_line_numbers": [
+          1,
+          23,
+          64
+        ],
+        "diagnostic_order": "original warning order",
+        "all_other_bytes": "retained verbatim including other comments/whitespace/rule/table/chain order"
+      },
+      "operational_approval": "pending independent review; hashes do not constitute approval"
+    },
+    "MGR": {
+      "source_kind": "saved historical evaluator raw_input channel; original separate root raw files not independently re-exported",
+      "source_result_path_raw": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/historical-discovery.saved.json",
+      "source_result_path_resolved": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/historical-discovery.saved.json",
+      "source_result_sha256": "06cc6942b26ab1060f932c2ab66bb058a73c214089673251cc343564b8b5cceb",
+      "source_archive": {
+        "path": "/home/dathq/projects/ct01-first-arp.pTsB8KgG/ct01-arp-diagnostic.JCqvpByC/runtime-output.tar",
+        "sha256": "f1301e9fb2ca14faae8e5a34b7a118cd2fea100039032b588021c4ff5d0c6629",
+        "member": "historical-discovery.json"
+      },
+      "collection": {
+        "run_id": "12dab5722c994025afb8afb5096c2bf3",
+        "root_source": "/var/tmp/ct01-precheck.2d0289a0/out",
+        "collector_sha256": "8300562e055e9f900c1cd0e3cc46ae774e914fd132529ccdf75c318a1c6ab85e",
+        "host": "hq",
+        "t_start": 1791555791.9264457,
+        "t_end": 1791555792.8557444
+      },
+      "original_reads_sha256_as_reported": "7851656d75f46f924bb2d0e0894cca453b05d9a3d368ea65d187b41dc5d663ce",
+      "original_verdict": "FAIL",
+      "original_reference_set_version": "ct01-nft-historical-4G-3G/1",
+      "approval_decision": {
+        "path": "/home/dathq/projects/ct01-arp-b1b2r2-mgr-out/BASELINE-DECISION.md",
+        "sha256": "ab9528b08ecb76a772a4cec24ddfaf536a15db335977d667b30e60d6e597e2e2",
+        "authority": "user instruction 2026-10-09; baseline addition for independent review only",
+        "scope": "this exact MGR snapshot; not current context/window or root/guest authorization"
+      },
+      "analysis": {
+        "path": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/REPORT.md",
+        "sha256": "f71f1d8f30e5aacc7288b644c00c5d3cfb82aa438ced9a8e39796af59bca88bb"
+      },
+      "artifacts": {
+        "stdout": {
+          "artifact": "MGR.stdout.txt",
+          "sha256": "5fe6fd7f232e22e2b503348ec3e50c606f473ba124fecf84ec30b067f3de5d69",
+          "size": 2907,
+          "source_path_raw": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/nft.stdout.from-result.txt",
+          "source_path_resolved": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/nft.stdout.from-result.txt",
+          "source_sha256": "5fe6fd7f232e22e2b503348ec3e50c606f473ba124fecf84ec30b067f3de5d69",
+          "json_selection": "raw_input -> reads[name=nft-ruleset].stdout"
+        },
+        "stderr": {
+          "artifact": "MGR.stderr.txt",
+          "sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "size": 202,
+          "source_path_raw": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/nft.stderr.from-result.txt",
+          "source_path_resolved": "/home/dathq/projects/ct01-first-arp-6685285a-analysis/from-runtime-export/nft.stderr.from-result.txt",
+          "source_sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "json_selection": "raw_input -> reads[name=nft-ruleset].stderr"
+        }
+      },
+      "transformation": {
+        "algorithm": "verbatim-utf8-channel-from-saved-raw_input/1",
+        "selection": "JSON-decode source result raw_input; unique reads[name=nft-ruleset]; UTF-8 encode stdout/stderr unchanged",
+        "filter_sort_normalize": "none",
+        "diagnostic": "existing exact three warning lines; no stripping or merging",
+        "provenance_limit": "Original separate reads.json/17-nft-ruleset.stdout/stderr not independently re-exported; embedded channels match policy trace hashes and the user-authorized pin"
+      },
+      "operational_approval": "candidate pending Claude review; no operation or current approval"
+    },
+    "MGR2": {
+      "source_kind": "saved historical evaluator raw_input channel of a historical-only collection that ended FAIL against set /2; the root collector output directory was not readable and was not re-exported",
+      "source_result_path_raw": "/home/dathq/projects/ct01-arp-b1b2r9-histcheck/out/ct01-arp-evidence-export.fr9bck_s/stage/historical-discovery.json",
+      "source_result_path_resolved": "/home/dathq/projects/ct01-arp-b1b2r9-histcheck/out/ct01-arp-evidence-export.fr9bck_s/stage/historical-discovery.json",
+      "source_result_sha256": "c2f1e9986bc74a0e3edb7f5baec4bf34cae384f5d58b6df3c304661464505f48",
+      "source_export": {
+        "path": "/home/dathq/projects/ct01-arp-b1b2r9-histcheck/out/ct01-arp-evidence-export.fr9bck_s",
+        "export_result_sha256": "0b414c7af3fb4605f40c78d423a602641de919f7c142ab077822520a43c912c0",
+        "member": "stage/historical-discovery.json"
+      },
+      "collection": {
+        "run_id": "273968d3c9a94d5eaf83a88da5f1a1fc",
+        "root_source": "/var/tmp/ct01-precheck.9a7fb4e0/out",
+        "collector_sha256": "8300562e055e9f900c1cd0e3cc46ae774e914fd132529ccdf75c318a1c6ab85e",
+        "host": "hq",
+        "t_start": 1791596515.9563317,
+        "t_end": 1791596516.846023,
+        "stage": "/var/tmp/ct01-arp-runtime.6215094f",
+        "manifest_sha256_at_collection": "584c9aa9c7770cbad36c1c3adb364d92d0934cfb452d0833b9c276f7bc654547"
+      },
+      "original_reads_sha256_as_reported": "300e40a63b0a89dd0e2587d7c14d91da76fcd89f3b1f380b669825a609b7db73",
+      "original_verdict": "FAIL",
+      "original_reference_set_version": "ct01-nft-historical-4G-3G-MGR/2",
+      "manager_at_collection": {
+        "id": "494ae3d2e2eb1b7da1d4473b862de75269c21a345b4e05090e8de0da8a27f14b",
+        "started_at": "2026-10-10T01:28:47.037228775Z",
+        "restarts": 0
+      },
+      "approval_decision": {
+        "authority": "user instruction in this session, 2026-10-10: approved ONE additional exact-byte reference from collection 6215094f with the stdout and stderr SHA-256 pinned below; comparator stays exact-bytes and all earlier references stay",
+        "scope": "this exact snapshot only; not collection, context, window or guest authorization",
+        "quoted": "T\u00f4i duy\u1ec7t b\u1ed5 sung m\u1ed9t reference exact-byte t\u1eeb collection 6215094f, stdout SHA-256 de001830bc0e770ba345c8714c96ac34098f54ca1a0e5c5ad3ae50d30d140cb7, stderr SHA-256 7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61. Gi\u1eef comparator exact-bytes v\u00e0 m\u1ecdi reference c\u0169. Ph\u00ea duy\u1ec7t n\u00e0y kh\u00f4ng c\u1ea5p quy\u1ec1n collection ho\u1eb7c guest."
+      },
+      "analysis": {
+        "path": "/home/dathq/projects/ct01-arp-b1b2r9-histcheck/HIST-FAIL-ANALYSIS.md",
+        "sha256": "bfa049ff198687dd86cd5549bfddc7582b4678a4eb6ba53d43a0ffa37037e81f",
+        "relation_to_MGR": "same 114 lines (multiset equal), same table/chain order; only the order of the per-bridge rules in ip nat POSTROUTING and ip filter DOCKER, DOCKER-FORWARD, DOCKER-BRIDGE, DOCKER-CT differs (sandboxnet bridge rules before dbnet bridge rules)",
+        "not_established": "cause of the order; semantic equivalence was a judgement, not independently reviewed"
+      },
+      "artifacts": {
+        "stdout": {
+          "artifact": "MGR2.stdout.txt",
+          "sha256": "de001830bc0e770ba345c8714c96ac34098f54ca1a0e5c5ad3ae50d30d140cb7",
+          "size": 2907,
+          "json_selection": "raw_input -> reads[name=nft-ruleset].stdout"
+        },
+        "stderr": {
+          "artifact": "MGR2.stderr.txt",
+          "sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "size": 202,
+          "json_selection": "raw_input -> reads[name=nft-ruleset].stderr"
+        }
+      },
+      "transformation": {
+        "algorithm": "verbatim-utf8-channel-from-saved-raw_input/1",
+        "selection": "JSON-decode historical-discovery.json raw_input; unique reads[name=nft-ruleset]; UTF-8 encode stdout/stderr unchanged",
+        "filter_sort_normalize": "none",
+        "diagnostic": "existing exact three warning lines; no stripping or merging"
+      },
+      "operational_approval": "user-approved reference addition only; pending independent review; no operation, collection, current or guest approval"
+    },
+    "MGR3": {
+      "source_kind": "the two saved raw channels (stdout, stderr) of read 17-nft-ruleset of a collection that was REJECTED (historical FAIL against set /3); the bytes are used unchanged, the REJECTED verdict is not rewritten",
+      "source_root_path": "/var/tmp/ct01-precheck.443922f8/out/17-nft-ruleset.{stdout,stderr} (root-owned, kept)",
+      "source_user_copy": "ct01-b1-r13n9-collect-evidence/run-prep2/run/forensic/precheck-out/out/17-nft-ruleset.{stdout,stderr} (SHA256 in run/FORENSIC-SHA256SUMS of that package)",
+      "source_result_path": "ct01-b1-r13n9-collect-evidence/run-prep2/run/forensic/stage/historical-discovery.json",
+      "source_result_sha256": "de9fe5f0280a428420caa547c1cb0376a781d85230559d2f498a4d397d943cf0",
+      "collection": {
+        "run_id": "bb941385b897480d9faf5cb251801d02",
+        "root_source": "/var/tmp/ct01-precheck.443922f8/out",
+        "collector_sha256": "8300562e055e9f900c1cd0e3cc46ae774e914fd132529ccdf75c318a1c6ab85e",
+        "host": "hq",
+        "t_start": 1791652115.6797109,
+        "t_end": 1791652116.5920994,
+        "stage": "/var/tmp/ct01-arp-runtime.caf80efb",
+        "manifest_sha256_at_collection": "bdf47fc58599e35aeca018cba52ad95449a2bb7ba84d353a2292d7acd030e0a2"
+      },
+      "original_reads_sha256_as_reported": "2a71ca7e160e0e2016eb2624bd36c71edc2225da74f6d437ef69db2a0587c644",
+      "original_verdict": "FAIL",
+      "original_reference_set_version": "ct01-nft-historical-4G-3G-MGR-MGR2/3",
+      "manager_at_collection": {
+        "id": "494ae3d2e2eb1b7da1d4473b862de75269c21a345b4e05090e8de0da8a27f14b",
+        "started_at": "2026-10-10T15:47:04.921774663Z",
+        "restarts": 0,
+        "dbnet_ipv4": "172.18.0.2",
+        "mongo_dbnet_ipv4": "172.18.0.3",
+        "source": "09-inspect-manager.stdout / 08-network-inspect-dbnet.stdout / 10-inspect-mongo.stdout of that collection"
+      },
+      "approval_decision": {
+        "authority": "user instruction in this session, 2026-10-10 (option a): add ONE exact-bytes variant from the two saved streams of this collection, pin source/hash/provenance; keep every older reference; no wildcard IP, no stderr relaxation, no gate relaxation",
+        "scope": "this exact snapshot only; not collection, context, window or guest authorization; the R13N9 approval is not reused",
+        "stdout_sha256": "4723a9b074a2afcbd2299b4e6c3c9b143f7f79eac12e86bf0ed6e83f152543bf",
+        "stderr_sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61"
+      },
+      "analysis": {
+        "relation_to_MGR": "same table/chain/rule order and bytes as MGR except the manager address on dbnet: 172.18.0.2 instead of 172.18.0.3 in exactly two lines (nat DOCKER dnat to :8011 and filter DOCKER accept tcp dport 8011); every other line identical",
+        "not_established": "cause of the address change beyond the container restart at 2026-10-10T15:47:04Z (the manager/mongo start order); semantic equivalence is not claimed by this file"
+      },
+      "artifacts": {
+        "stdout": {
+          "artifact": "MGR3.stdout.txt",
+          "sha256": "4723a9b074a2afcbd2299b4e6c3c9b143f7f79eac12e86bf0ed6e83f152543bf",
+          "size": 2907,
+          "json_selection": "17-nft-ruleset.stdout (== reads[name=nft-ruleset].stdout)"
+        },
+        "stderr": {
+          "artifact": "MGR3.stderr.txt",
+          "sha256": "7d41d9d93f1ef141dbc8f901a3f98f37d1bc8f5cf72d4c4ce8d17cc6e90cfa61",
+          "size": 202,
+          "json_selection": "17-nft-ruleset.stderr (== reads[name=nft-ruleset].stderr)"
+        }
+      },
+      "transformation": {
+        "algorithm": "verbatim-bytes-of-saved-channel/1",
+        "filter_sort_normalize": "none",
+        "diagnostic": "existing exact three warning lines; no stripping or merging"
+      },
+      "operational_approval": "user-approved reference addition only; pending independent review; no operation, collection, current or guest approval"
+    }
+  }
+}

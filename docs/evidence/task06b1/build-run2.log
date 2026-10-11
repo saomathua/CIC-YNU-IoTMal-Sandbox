@@ -1,0 +1,84 @@
+ Image sandbox-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 613B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 871B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/ubuntu:22.04
+#3 DONE 2.3s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 438B done
+#4 DONE 0.0s
+
+#5 [ 1/16] FROM docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401
+#5 resolve docker.io/library/ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 35.55kB done
+#6 DONE 0.0s
+
+#7 [ 8/16] COPY ./service ./service
+#7 CACHED
+
+#8 [ 5/16] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [ 6/16] COPY ./config ./config
+#9 CACHED
+
+#10 [ 4/16] COPY requirements.txt .
+#10 CACHED
+
+#11 [ 7/16] COPY ./router ./router
+#11 CACHED
+
+#12 [ 3/16] WORKDIR /app
+#12 CACHED
+
+#13 [ 2/16] RUN apt-get update &&     apt-get --no-install-recommends -y install         qemu-system-arm qemu-system-mips qemu-system-x86         python3-dev python3-pip         net-tools iproute2 uml-utilities iptables nftables         procps sysstat         file         ca-certificates &&     DEBIAN_FRONTEND=noninteractive apt-get install -y tshark &&     apt-get clean && rm -rf /var/lib/apt/lists/*
+#13 CACHED
+
+#14 [ 9/16] COPY ./util ./util
+#14 CACHED
+
+#15 [10/16] COPY ./isolation ./isolation
+#15 DONE 0.0s
+
+#16 [11/16] COPY ./ARM ./ARM
+#16 DONE 0.0s
+
+#17 [12/16] COPY ./MIPS ./MIPS
+#17 DONE 0.0s
+
+#18 [13/16] COPY ./MIPSEL ./MIPSEL
+#18 DONE 0.1s
+
+#19 [14/16] COPY ./x86 ./x86
+#19 DONE 0.0s
+
+#20 [15/16] COPY server.py ./poller.py ./run.sh ./
+#20 DONE 0.0s
+
+#21 [16/16] RUN mkdir data
+#21 DONE 0.2s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 0.6s done
+#22 exporting manifest sha256:1ed145996d31f41d3fc62f0594f6bca461844ed613dc2a168c14bf096ffa5b09 done
+#22 exporting config sha256:f41af6d7431394c19cd44454a8542a6ea6d226b2178037033a6eb2de6f0c6f61 done
+#22 exporting attestation manifest sha256:4b019f82931956dbf5a65c0de21829be16f83a97b508987ca54e70afc0a7356e done
+#22 exporting manifest list sha256:6a15d4ed6ad6698da007d334666a92ab6da7ef89114667bcacded58bb69f50b6 done
+#22 naming to docker.io/library/sandbox-worker:latest done
+#22 unpacking to docker.io/library/sandbox-worker:latest
+#22 unpacking to docker.io/library/sandbox-worker:latest 0.3s done
+#22 DONE 0.9s
+
+#23 resolving provenance for metadata file
+#23 DONE 0.0s
+ Image sandbox-worker Built 

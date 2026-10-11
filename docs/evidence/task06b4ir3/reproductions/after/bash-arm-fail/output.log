@@ -1,0 +1,12 @@
+[PASS] ARM: no QEMU running before start (sequential)
+[PASS] ARM: all host captures alive before start
+[PASS] ARM: capture watcher alive with a fresh heartbeat before start
+@@SEND_ARCH ARM
+probe_matrix ARM exit=1
+ARM: probe_matrix outcome: FAIL: fail
+[FAIL] ARM: probe_matrix exit 1, outcome: FAIL: fail
+[SESSION] ARM: PASS
+[PASS] ARM: no qemu-system/tshark left in container
+[PASS] ARM: full verify after guest shutdown
+@@FAIL_COUNT=1
+grep: /home/dathq/projects/ct01-06b4ir3-work/after/bash-arm-fail/hostcap/alert.txt: No such file or directory

@@ -1,0 +1,359 @@
+{
+ "rc": 1,
+ "commands": [
+  [
+   "run",
+   "ip addr"
+  ],
+  [
+   "run",
+   "ip route"
+  ],
+  [
+   "run",
+   "for i in /sys/class/net/*; do echo $(basename $i) $(cat $i/address); done"
+  ],
+  [
+   "run",
+   "for c in nslookup nc wget ping arping; do command -v $c || echo missing:$c; done"
+  ],
+  [
+   "run",
+   "curl --version | head -1"
+  ],
+  [
+   "monitor",
+   "info network"
+  ],
+  [
+   "run",
+   "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route add 192.168.60.2/32 dev eth1"
+  ],
+  [
+   "run",
+   "ping -c 1 -W 2 -s 1401 192.168.60.2"
+  ],
+  [
+   "run",
+   "sleep 3"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route del 192.168.60.2/32 dev eth1"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route add 192.168.60.10/32 dev eth1"
+  ],
+  [
+   "run",
+   "ping -c 1 -W 2 -s 1402 192.168.60.10"
+  ],
+  [
+   "run",
+   "sleep 3"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route del 192.168.60.10/32 dev eth1"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route add 10.200.0.6/32 dev eth1"
+  ],
+  [
+   "run",
+   "ping -c 1 -W 2 -s 1403 10.200.0.6"
+  ],
+  [
+   "run",
+   "sleep 3"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route del 10.200.0.6/32 dev eth1"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo 1 > /proc/sys/net/ipv4/conf/eth1/arp_notify"
+  ],
+  [
+   "run",
+   "ip addr add 10.200.0.1/32 dev eth1"
+  ],
+  [
+   "run",
+   "ip addr add 192.168.60.10/32 dev eth1"
+  ],
+  [
+   "run",
+   "ip addr add 192.168.60.1/32 dev eth1"
+  ],
+  [
+   "run",
+   "ip link set dev eth1 down"
+  ],
+  [
+   "run",
+   "ip link set dev eth1 up"
+  ],
+  [
+   "run",
+   "sleep 3"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip addr del 10.200.0.1/32 dev eth1"
+  ],
+  [
+   "run",
+   "ip addr del 192.168.60.1/32 dev eth1"
+  ],
+  [
+   "run",
+   "ip addr del 192.168.60.10/32 dev eth1"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "ip route add default via 10.200.0.1 dev eth1"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "echo 0 > /proc/sys/net/ipv4/conf/eth1/arp_notify"
+  ],
+  [
+   "run",
+   "echo '@@S mac'; cat /sys/class/net/eth1/address; echo \"@@RC $?\"; echo '@@S operstate'; cat /sys/class/net/eth1/operstate; echo \"@@RC $?\"; echo '@@S addr'; ip -4 addr show dev eth1; echo \"@@RC $?\"; echo '@@S route'; ip -4 route show; echo \"@@RC $?\"; echo '@@S arp'; cat /proc/net/arp; echo \"@@RC $?\"; echo '@@S arp_notify'; cat /proc/sys/net/ipv4/conf/eth1/arp_notify; echo \"@@RC $?\""
+  ],
+  [
+   "run",
+   "rm -f /tmp/r.out; curl -s -m 10 -o /tmp/r.out -w 'HTTP=%{http_code}\\n' http://10.200.0.1:8011/api/v1/sandbox-worker/get-task/06b3b-arm-task/file; sha256sum /tmp/r.out"
+  ]
+ ],
+ "worker_cmds": [
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ],
+  [
+   "ip",
+   "-j",
+   "neigh",
+   "show"
+  ]
+ ],
+ "http_calls": [
+  [
+   "192.168.60.10",
+   8011,
+   "session before boot"
+  ],
+  [
+   "192.168.60.10",
+   8011,
+   "T14-A2 after"
+  ],
+  [
+   "192.168.60.10",
+   8011,
+   "T15-S1 after"
+  ]
+ ],
+ "boot_console": [],
+ "analysis_sha": null,
+ "mounted": [
+  "arp_cases.py",
+  "arp_harness.py",
+  "counter_window.py",
+  "guest_state.py",
+  "icmp_cases.py",
+  "icmp_harness.py",
+  "l2eval.py",
+  "l2frames.py",
+  "pcapng_stats.py",
+  "probe_matrix.py",
+  "signatures.py"
+ ],
+ "modules": {
+  "arp_harness": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/arp_harness.py",
+  "arp_cases": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/arp_cases.py",
+  "guest_state": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/guest_state.py",
+  "icmp_harness": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/icmp_harness.py",
+  "icmp_cases": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/icmp_cases.py",
+  "l2frames": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/l2frames.py",
+  "l2eval": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/l2eval.py",
+  "signatures": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/signatures.py",
+  "counter_window": "/home/dathq/projects/ct01-06b4ir1-work/after/review/harness/counter_window.py",
+  "pcapng_stats": "/home/dathq/projects/ct01-06b4ir1-work/after/fixtures-fixed/codex-thread-unmodified/harness/pcapng_stats.py"
+ },
+ "fixture_sha": "602ec43c119ad5b8a6b29745c8bd68b1c1ed79df40c614941c4f6f5c9143d78f",
+ "out": "/home/dathq/projects/ct01-06b4ir1-work/after/fixtures-fixed/codex-thread-unmodified/out/ARM"
+}
