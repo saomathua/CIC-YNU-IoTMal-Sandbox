@@ -1,0 +1,175 @@
+{
+ "schema": 1,
+ "date": "2026-10-11",
+ "scope": "CT-02 ARM/MIPS và CT-03 — phạm vi runtime đã đo, theo chấp nhận của reviewer",
+ "image": {
+  "id": "sha256:24569c9f1a1d058101997864c6cb4897cdb71d4357d89f4ab050e97ca61ef943",
+  "tag": "sandbox-worker:ct0203-r4-96db2b433725",
+  "ct01_accepted_image": "sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153",
+  "latest_unchanged": "sha256:1ab784c76aa235cae41c2d1beaa4a96c41e13a25d54488211923e542bf419153",
+  "build_context_manifest_sha256": "96db2b433725397a1ea30ab8c6115319440050aaed482e883fb62e3dfbc0c094",
+  "base": "ubuntu:22.04@sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401",
+  "dependency_drift": "NO-DRIFT (chỉ đúng cho image đã build; lớp apt/pip dùng cache)"
+ },
+ "product_files": {
+  "sandbox-worker/poller.py": "56b06cea7397734ae9b048fcd39454a7585ef465239f8a91541c43ccd7cd2ee4",
+  "sandbox-worker/service/analysis.py": "0bf856259b21cdb0a2e63767eec82d643c06fd96206d095e7c4b1edf1b0f0000"
+ },
+ "manifests": {
+  "flow_r6": "67429cef77e2717509d10feb53811683de806a730885380a718dc368c19ab65e",
+  "runtime_bundle": "28b2990f44c76329f692be73331ebce3e99611961036ddcf390abd96394e53ea"
+ },
+ "approval_verbatim_sha256": "83f74633b378ebc6022139a315d3ab400ceb21a1b59d3a05da87bcc48eba52a2",
+ "package": {
+  "name": "ct01-r6-run2-package.zip",
+  "sha256": "36dfb0e3c58db4207d1a691ddfccbad3c8b2b858ee77314eb4a9078ed35c0701",
+  "entries": 835,
+  "bytes": 2603112,
+  "reviewer_verified": "834/834 hash khớp, stage/export giống nhau, replay 5 evaluator rc 0",
+  "report_sha256": "f77cfa381e5f2cfec97da3dd3f6bd10c92b17915a21424a879564dd413d6d599"
+ },
+ "lanes": [
+  {
+   "n": 1,
+   "lane": "flow-success",
+   "run_id": "20261011T134429Z",
+   "export_dir": "ct01-flow-r6-success-run-20261011T134429Z",
+   "export_manifest_sha256": "1dbd7d2beb121a832a32d9f1ac4d99d35a57763e28d501f7f480c34fa3c77e6c",
+   "rc": {
+    "lane_rc": 0,
+    "evaluator_rc": 0,
+    "signal": 0
+   },
+   "evaluator": {
+    "pass": 63,
+    "fail": 0,
+    "fails": [],
+    "last": "FLOW-LANE: ALL CRITERIA HELD | success"
+   },
+   "decision_record": "run2-lane-1-decision.md",
+   "decision_sha256": "e913dd4d68fea5dd99568142a44abb607b97da4c19b680974167fe2ae8798def",
+   "postcheck_sha256": "d00fd3be6451896f26219516fbbb7212047ef4e5e1b1775c858f5d1004d1728f",
+   "evidence_files_sha256": {
+    "evaluate.log": "6ca509487a9261044d4adb437cd21c106413d8ebb17176e9b78988a0d57d27d2",
+    "verdicts.json": "9d63ea5c695a7e20865a026d8fc2e53d7d93ed7d5b8172400790fd36ae12b7e1",
+    "identity.json": "9a5377d4ecd25ba2587cdbd1a2d5bd6884b88b872bb23cb8ae9dcf136f363b18",
+    "lane-status.json": "36260d31a292172049cb76c762cad30c97fef06fbec652129d756022fa67dc80",
+    "rc.txt": "415ef5018dda42ea1f063d32ccc54526e6afe8714d1294bd6bbb5f04c5b25872",
+    "MANIFEST-SHA256": "1dbd7d2beb121a832a32d9f1ac4d99d35a57763e28d501f7f480c34fa3c77e6c"
+   }
+  },
+  {
+   "n": 2,
+   "lane": "flow-f4",
+   "run_id": "20261011T134834Z",
+   "export_dir": "ct01-flow-r6-f4-run-20261011T134834Z",
+   "export_manifest_sha256": "1f6ee491a1e63ba645bde58fc76e8b47822aa950abe5a4df6af180a06c1353d6",
+   "rc": {
+    "lane_rc": 0,
+    "evaluator_rc": 0,
+    "signal": 0
+   },
+   "evaluator": {
+    "pass": 41,
+    "fail": 0,
+    "fails": [],
+    "last": "FLOW-LANE: ALL CRITERIA HELD | f4"
+   },
+   "decision_record": "run2-lane-2-decision.md",
+   "decision_sha256": "1a11bd258d20409dd029b5a385af154b375197b3b9327b657fd1bb1f00fcedec",
+   "postcheck_sha256": "b50dfb3f09929c671b8090328b5531552c455a731b335a9ae6c6e276da9cee8c",
+   "evidence_files_sha256": {
+    "evaluate.log": "f60a963a9a6ac1993cda6b8b7356eb53cd0802e58a76a4bdbfd716777ab5dcb4",
+    "verdicts.json": "15d0de3cb40738f07ff434f70f873c87f07236af3d665549d9d66d480ef8f7dc",
+    "identity.json": "e528f5af7af298e37617680a61ffb915c1dd779117f8b8de587ca2e63d6b97c4",
+    "lane-status.json": "4b58dd2f2ae6f07141f9ffc88e6701e0f1c1c4ef4b7374280083e9803c8ccfd3",
+    "rc.txt": "415ef5018dda42ea1f063d32ccc54526e6afe8714d1294bd6bbb5f04c5b25872",
+    "MANIFEST-SHA256": "1f6ee491a1e63ba645bde58fc76e8b47822aa950abe5a4df6af180a06c1353d6"
+   }
+  },
+  {
+   "n": 3,
+   "lane": "ct03",
+   "run_id": "20261011T135015Z",
+   "export_dir": "ct01-rt-ct03-run-20261011T135015Z",
+   "export_manifest_sha256": "22d89f7f94d20a9318c7add082497023b510ab6259eb754d6cee72a196dd11a4",
+   "rc": {
+    "lane_rc": 0,
+    "evaluator_rc": 0,
+    "signal": 0
+   },
+   "evaluator": {
+    "verdict": "HELD",
+    "reason": null,
+    "failed_checks": []
+   },
+   "decision_record": "run2-lane-3-decision.md",
+   "decision_sha256": "99844e40b010a0d3ede4ba4276cf368d0cb11e263fd7c720c1602a4066718bbd",
+   "postcheck_sha256": "64cc74d113d1214e897d6cd9d9723568cddda07995277cc9a0644b63fb9db239",
+   "evidence_files_sha256": {
+    "evaluate.log": "767ba39e24b4410ad1bdebc826647900893a1e4cf4bfee9c26b2860914da3036",
+    "verdicts.json": "0a8ebcae142e9d4898e97d20a7193a91d141ec00bc065041b7865e5de94218c5",
+    "identity.json": "d49fd4b425568f675504eab0c214a4cd2e75e3612265828654e1327cdbc53178",
+    "lane-status.json": "b58a4c13130c5aa0f4edbd4bf3eececbae05a26b4bae280a9099102c88cbb045",
+    "rc.txt": "415ef5018dda42ea1f063d32ccc54526e6afe8714d1294bd6bbb5f04c5b25872",
+    "MANIFEST-SHA256": "22d89f7f94d20a9318c7add082497023b510ab6259eb754d6cee72a196dd11a4"
+   }
+  },
+  {
+   "n": 4,
+   "lane": "ct02-arm",
+   "run_id": "20261011T135717Z",
+   "export_dir": "ct01-rt-ct02-arm-run-20261011T135717Z",
+   "export_manifest_sha256": "e7452f0080c823399f82f3e9cc1cbe4445cd18596e4da9a970fddba744fa8c51",
+   "rc": {
+    "lane_rc": 0,
+    "evaluator_rc": 0,
+    "signal": 0
+   },
+   "evaluator": {
+    "verdict": "CLEAN",
+    "reason": null,
+    "failed_checks": []
+   },
+   "decision_record": "run2-lane-4-decision.md",
+   "decision_sha256": "f0cbfd1fd760b99c3d21940abaacdb3728b81b0399ab319f0cc88b19afb2d7c0",
+   "postcheck_sha256": "6b3882b926ca639d50d09c1ad389f145aaa15ef5c5b452d959cf78c5d81f22e0",
+   "evidence_files_sha256": {
+    "evaluate.log": "e0ffea9a4e0c0114bd8fe56bc45d7a0f0b3f042fa2cdea04672dce19c07f8e6f",
+    "verdicts.json": "77e820d38f1bcaf7d931d6caf21ea6349463b957882b8d0450b24b73d6501f9e",
+    "identity.json": "5e3ad32a1abb2250d7b3002a6c326271d42fc6b107414228b83f3db3bb831624",
+    "lane-status.json": "af2281d3d6f49c6a6ad36ba9bda3c567bc2e694a611fa1b12bff46ca1ca4444f",
+    "rc.txt": "415ef5018dda42ea1f063d32ccc54526e6afe8714d1294bd6bbb5f04c5b25872",
+    "MANIFEST-SHA256": "e7452f0080c823399f82f3e9cc1cbe4445cd18596e4da9a970fddba744fa8c51"
+   }
+  },
+  {
+   "n": 5,
+   "lane": "ct02-mips",
+   "run_id": "20261011T140045Z",
+   "export_dir": "ct01-rt-ct02-mips-run-20261011T140045Z",
+   "export_manifest_sha256": "6ef3710a545828158fff05ab4f2a28f2140dea781b82c127ecf2dd56ee988b65",
+   "rc": {
+    "lane_rc": 0,
+    "evaluator_rc": 0,
+    "signal": 0
+   },
+   "evaluator": {
+    "verdict": "CLEAN",
+    "reason": null,
+    "failed_checks": []
+   },
+   "decision_record": "run2-lane-5-decision.md",
+   "decision_sha256": "e6b850b4fe4b0735039bb50109ce86c008c45f441ead1c1247f6250acb6fc564",
+   "postcheck_sha256": "2ddf9ff0c8152e1855ab51942311291ee5f0947b350d0e797e113dbcc8751d06",
+   "evidence_files_sha256": {
+    "evaluate.log": "100fcd119d6c0a56ba08c5c7a9890a2623c5a2975bf13bb90408cd4b1ee28535",
+    "verdicts.json": "dd8c2d29dffd49719f262bce43a1c90bb958e54083b3fa874273e63f6990f8b9",
+    "identity.json": "06da7f823748910ac70d654fa78ff7ddc37a526edc13f843b953259d9c5a31ba",
+    "lane-status.json": "011c523c5c75bd3647f8fe6155f957109744c62345a2dedbff93f915b2a66a40",
+    "rc.txt": "415ef5018dda42ea1f063d32ccc54526e6afe8714d1294bd6bbb5f04c5b25872",
+    "MANIFEST-SHA256": "6ef3710a545828158fff05ab4f2a28f2140dea781b82c127ecf2dd56ee988b65"
+   }
+  }
+ ]
+}

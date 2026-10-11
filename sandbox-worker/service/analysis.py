@@ -18,50 +18,137 @@ logger = logging.getLogger(__name__)
 # is confirmed to have exited. Module-level so tests can shorten them.
 QEMU_SIGINT_GRACE = 10.0
 QEMU_SIGKILL_GRACE = 5.0
+CAPTURE_SIGINT_GRACE = 5.0
+CAPTURE_SIGKILL_GRACE = 3.0
 
 
-class QemuShutdownError(RuntimeError):
-    """The QEMU process could not be confirmed to have exited."""
+class UnsafeWorkerState(RuntimeError):
+    """A child process (QEMU, capture) could not be confirmed to have exited and been reaped/closed: the worker must not take another task
+    (the poller exits with status 3; whether the container then restarts depends on the restart policy in force).
+    `errors` lists EVERY top-level fault that led here (analysis error first, then each unsafe finalizer error, this one included);
+    `details` holds the low-level signal/liveness faults the finalizer recorded while trying."""
+
+    def __init__(self, message="", errors=(), details=()):
+        super().__init__(message)
+        self.errors = list(errors) or [self]
+        self.details = list(details)
 
 
-def _wait_exit(proc, timeout: float) -> bool:
-    deadline = time.monotonic() + timeout
-    while proc.isalive():          # isalive() reaps the child via waitpid()
-        if time.monotonic() >= deadline:
-            return False
-        time.sleep(0.05)
-    return True
+class QemuShutdownError(UnsafeWorkerState):
+    """The QEMU process could not be confirmed to have exited (or its pty could not be closed)."""
 
 
-def _signal(proc, sig):
+class CaptureShutdownError(UnsafeWorkerState):
+    """The network capture (tshark) could not be confirmed to have exited and been reaped/closed."""
+
+
+class ShutdownFaults(UnsafeWorkerState):
+    """Several unsafe cleanup faults (e.g. capture AND QEMU) in one task: nothing is hidden behind the last one."""
+
+
+def with_primary(primary, unsafe):
+    """The exception to raise when a finalizer failed (`unsafe`, an UnsafeWorkerState) while `primary` (any exception or None) was already propagating.
+    The result is always an UnsafeWorkerState that lists every fault; the primary is its __cause__ (never lost, never replaces the unsafe classification)."""
+    if primary is None:
+        return unsafe
+    faults, seen = [], set()
+    for e in (primary, unsafe):
+        for f in (getattr(e, "errors", None) or [e]):
+            key = (type(f).__name__, str(f))
+            if key not in seen:                                       # the same fault reported by two finalizer passes is listed once
+                seen.add(key)
+                faults.append(f)
+    text = "; ".join(f"{type(e).__name__}: {e}" for e in faults)
+    details = [d for e in (primary, unsafe) for d in getattr(e, "details", [])]
+    if isinstance(primary, UnsafeWorkerState):
+        out = ShutdownFaults(text, faults, details)
+    else:
+        out = type(unsafe)(text, faults, details)
+    out.__cause__ = primary
+    return out
+
+
+def finalize_child(proc, label, what, error_cls, sigint_grace, sigkill_grace):
+    """The ONLY owner of a child's end of life (idempotent): wait 0 -> SIGINT -> bounded monotonic wait -> SIGKILL -> bounded wait, then reap (isalive) and
+    close. Any signal / liveness error is recorded and never ends the escalation. An exit that cannot be confirmed (or a close error) raises `error_cls`
+    carrying every recorded fault; when exit AND close ARE confirmed (e.g. SIGINT denied, SIGKILL delivered) the call returns normally and the recorded faults are
+    only logged (bounded) — a signal error alone is not "unsafe". ProcessLookupError (already gone) is not a fault: the next liveness check decides."""
+    errors = []                                                       # low-level faults (text), de-duplicated with a count
+
+    def note(text):
+        errors.append(text)
+
+    def alive():
+        try:
+            return proc.isalive()
+        except Exception as e:                                        # noqa: BLE001
+            t = f"isalive: {e!r}"
+            if t not in errors:                                       # a persistently failing check is listed once
+                note(t)
+            return True                                               # cannot confirm => treat as alive
+
+    def send(sig):
+        try:
+            proc.kill(sig)
+        except ProcessLookupError:
+            pass
+        except Exception as e:                                        # noqa: BLE001
+            note(f"signal {int(sig)}: {e!r}")
+
+    def waited(grace):
+        deadline = time.monotonic() + grace
+        while alive():
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.05)
+        return True
+
+    pid = getattr(proc, "pid", "?")
+    if not waited(0):
+        send(signal.SIGINT)
+        if not waited(sigint_grace):
+            logger.warning(f"{what} pid {pid} still running {sigint_grace}s after SIGINT ({label}); sending SIGKILL")
+            send(signal.SIGKILL)
+            if not waited(sigkill_grace):
+                raise error_cls(f"{what} pid {pid} did not exit after SIGKILL ({label}): exit not confirmed; faults: {errors}", details=errors)
     try:
-        proc.kill(sig)
-    except ProcessLookupError:
-        pass
+        proc.close()
+    except Exception as e:                                            # noqa: BLE001
+        raise error_cls(f"{what} pid {pid} exited but close failed ({label}): {e!r}", details=errors + [repr(e)]) from e
+    if errors:
+        # exit/reap/close were CONFIRMED, so the worker is safe; the transient signal/liveness faults seen on the way are kept as a bounded diagnostic
+        logger.warning(f"{what} pid {pid} ({label}) ended and was reaped/closed after {len(errors)} recoverable fault(s): {errors[:5]}")
+
+
+def stop_capture(proc, label: str) -> None:
+    """Idempotent end of the tshark child. Raises CaptureShutdownError when exit/close cannot be confirmed (never silent)."""
+    if proc is None:
+        return
+    finalize_child(proc, label, "capture", CaptureShutdownError, CAPTURE_SIGINT_GRACE, CAPTURE_SIGKILL_GRACE)
 
 
 def shutdown_qemu(proc, phase: str) -> None:
-    """Stop a QEMU child and confirm it exited: SIGINT, bounded wait, SIGKILL,
-    bounded wait. Raises QemuShutdownError if exit cannot be confirmed."""
+    """Stop a QEMU child and confirm it exited and was reaped/closed (same finalizer as the capture). Raises QemuShutdownError otherwise, so
+    phase 2 / V2 / the next task never run on an unconfirmed QEMU. A failing log-file close is logged only (it says nothing about the process)."""
     logger.info(f"Shutting down QEMU ({phase}, pid {proc.pid})...")
-    if not _wait_exit(proc, 0):
-        _signal(proc, signal.SIGINT)
-        if not _wait_exit(proc, QEMU_SIGINT_GRACE):
-            logger.warning(f"QEMU pid {proc.pid} still running {QEMU_SIGINT_GRACE}s after SIGINT; sending SIGKILL")
-            _signal(proc, signal.SIGKILL)
-            if not _wait_exit(proc, QEMU_SIGKILL_GRACE):
-                raise QemuShutdownError(f"QEMU pid {proc.pid} did not exit after SIGKILL ({phase})")
-    try:
-        proc.close()
-    except Exception:
-        logger.exception("closing QEMU pty failed")
-    if proc.logfile is not None:
+    finalize_child(proc, phase, "QEMU", QemuShutdownError, QEMU_SIGINT_GRACE, QEMU_SIGKILL_GRACE)
+    if getattr(proc, "logfile", None) is not None:
         try:
             proc.logfile.close()
-        except Exception:
+        except Exception:                                             # noqa: BLE001
             logger.exception("closing QEMU log failed")
     logger.info(f"QEMU shutdown complete ({phase}, pid {proc.pid}, "
-                f"exitstatus={proc.exitstatus}, signalstatus={proc.signalstatus})")
+                f"exitstatus={getattr(proc, 'exitstatus', None)}, signalstatus={getattr(proc, 'signalstatus', None)})")
+
+
+def shutdown_qemu_after(proc, phase: str, primary) -> None:
+    """Finalizer used inside `finally`/`except`: shutdown_qemu, but an unsafe result keeps `primary` as its cause and in `errors`."""
+    try:
+        shutdown_qemu(proc, phase)
+    except UnsafeWorkerState as q:
+        if primary is None:
+            raise
+        raise with_primary(primary, q) from primary
 
 
 @dataclass
@@ -209,9 +296,9 @@ class Analysis:
             idx = proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
             if idx == 0:
                 raise RuntimeError("QEMU timed out waiting for shell prompt after boot")
-        except BaseException:
+        except BaseException as e:
             # Never leave a spawned QEMU behind when boot fails.
-            shutdown_qemu(proc, "boot failure")
+            shutdown_qemu_after(proc, "boot failure", e)
             raise
         logger.info("Started QEMU")
         return proc
@@ -225,8 +312,8 @@ class Analysis:
             try:
                 proc.sendline("")
                 proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
-            except BaseException:
-                shutdown_qemu(proc, "phase 2 boot failure")
+            except BaseException as e:
+                shutdown_qemu_after(proc, "phase 2 boot failure", e)
                 raise
         return proc
 
@@ -281,48 +368,60 @@ class Analysis:
             f"tshark -i tap0 -w {self.task_dir}/network.pcap", encoding='utf-8', timeout=100
         )
         logger.info("Started network capture")
+        primary = None
+        try:
 
-        # Start system resource monitor inside the VM
-        proc.sendline("sar -o sar.out 1 >/dev/null 2>&1 & echo $! > sar_pid")
-        proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
-        logger.info(f"Started sar (PID: {proc.before.strip()})")
+            # Start system resource monitor inside the VM
+            proc.sendline("sar -o sar.out 1 >/dev/null 2>&1 & echo $! > sar_pid")
+            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            logger.info(f"Started sar (PID: {proc.before.strip()})")
 
-        # Start syscall trace and execute the malware
-        proc.sendline("strace -f -tt -T -y -yy -s 2048 -o /strace.log ./exec & echo $! > strace_pid")
-        proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
-        logger.info(f"Started strace (PID: {proc.before.strip()})")
+            # Start syscall trace and execute the malware
+            proc.sendline("strace -f -tt -T -y -yy -s 2048 -o /strace.log ./exec & echo $! > strace_pid")
+            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            logger.info(f"Started strace (PID: {proc.before.strip()})")
 
-        # Let the malware run for the configured duration, checking for stop requests
-        deadline = time.time() + app_settings.analysis_duration
-        while time.time() < deadline:
-            time.sleep(1)
-            if os.path.exists(_STOP_FILE):
-                net_proc.kill(signal.SIGINT)
-                proc.kill(signal.SIGINT)
-                raise AnalysisCancelled("Stop requested by user")
+            # Let the malware run for the configured duration, checking for stop requests
+            deadline = time.time() + app_settings.analysis_duration
+            while time.time() < deadline:
+                time.sleep(1)
+                if os.path.exists(_STOP_FILE):
+                    proc.kill(signal.SIGINT)
+                    raise AnalysisCancelled("Stop requested by user")
 
-        proc.sendline("")
-        proc.sendline("")
-        proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
-        proc.sendline("ls")
-        proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
-        logger.debug(proc.before)
+            proc.sendline("")
+            proc.sendline("")
+            proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            proc.sendline("ls")
+            proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            logger.debug(proc.before)
 
-        net_proc.kill(signal.SIGINT)
-        logger.info("Stopped network capture")
+            stop_capture(net_proc, "after the analysis window")
+            logger.info("Stopped network capture")
 
-        proc.sendline("kill -9 $(cat strace_pid)")
-        proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
-        logger.debug(proc.before)
-        logger.info("Killed strace")
+            proc.sendline("kill -9 $(cat strace_pid)")
+            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            logger.debug(proc.before)
+            logger.info("Killed strace")
 
-        proc.sendline("kill -9 $(cat sar_pid)")
-        proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
-        logger.debug(proc.before)
-        logger.info("Killed sar")
+            proc.sendline("kill -9 $(cat sar_pid)")
+            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            logger.debug(proc.before)
+            logger.info("Killed sar")
 
-        # Wait for the VM filesystem to flush captured files before shutdown
-        time.sleep(app_settings.post_analysis_wait)
+            # Wait for the VM filesystem to flush captured files before shutdown
+            time.sleep(app_settings.post_analysis_wait)
+        except BaseException as e:                                    # noqa: BLE001
+            primary = e
+            raise
+        finally:
+            try:
+                stop_capture(net_proc, "finalizer")
+            except UnsafeWorkerState as ce:
+                if primary is not None:
+                    # keep BOTH: the analysis error and the cleanup failure
+                    raise with_primary(primary, ce) from primary
+                raise
 
     def _exfiltrate(self, proc: pexpect.spawn, arch: ArchConfig):
         # Wait for the rebooted filesystem to fully settle before reading captured files
@@ -355,23 +454,32 @@ class Analysis:
         _check_stop()
         verify_isolation("V1 before phase 1")
         proc = self._start_qemu(arch)
+        primary = None
         try:
             self._configure_network(proc, arch)
             self._run_analysis(proc, arch)
+        except BaseException as e:                                    # noqa: BLE001
+            primary = e
+            raise
         finally:
-            # Raises QemuShutdownError if exit cannot be confirmed: V2/phase 2 never run then.
-            shutdown_qemu(proc, "phase 1")
+            # Raises an UnsafeWorkerState (QEMU, or capture + QEMU) if exit cannot be confirmed: V2/phase 2 never run then, and the
+            # analysis/capture error stays attached (a generic cleanup error can no longer replace the unsafe classification).
+            shutdown_qemu_after(proc, "phase 1", primary)
 
         # Phase 2: Reboot VM to exfiltrate captured log files.
         # Files are read from the same virtual disk written in phase 1.
         _check_stop()
         verify_isolation("V2 before phase 2")
         proc = self._start_qemu_phase2(arch)
+        primary = None
         try:
             self._configure_network(proc, arch)
             self._exfiltrate(proc, arch)
+        except BaseException as e:                                    # noqa: BLE001
+            primary = e
+            raise
         finally:
-            shutdown_qemu(proc, "phase 2")
+            shutdown_qemu_after(proc, "phase 2", primary)
 
 
 _LOCK_FILE = "/tmp/sandbox_worker.lock"
