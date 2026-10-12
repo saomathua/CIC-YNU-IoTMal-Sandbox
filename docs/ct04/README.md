@@ -1,6 +1,6 @@
 # CT-04 — Xác minh thực thi và log
 
-**Trạng thái (theo `KQCaiTien.md`):** evidence worker A1–A11 và evidence manager trên stack cô lập đã được reviewer chấp nhận **theo phạm vi đã đo**. CT-04 **còn mở**: nghiệm thu theo phạm vi và triển khai (Compose). Đây không phải tuyên bố đạt.
+**Trạng thái (theo `KQCaiTien.md`):** evidence worker A1–A12, evidence manager trên stack cô lập và một lượt thử Compose r3 có rollback đã được reviewer chấp nhận **theo phạm vi đã đo**. CT-04 **chưa được ghi ĐẠT toàn bộ**: nghiệm thu theo phạm vi do reviewer chốt; **chưa triển khai thường trực** (manager/worker mới chưa là mặc định); malware thật chưa đo. Hồ sơ: [CLOSURE.md](CLOSURE.md), [EVIDENCE-INDEX.md](EVIDENCE-INDEX.md), [ACCEPTANCE-DRAFT.md](ACCEPTANCE-DRAFT.md). PR `saomathua/CIC-YNU-IoTMal-Sandbox#3`.
 
 ## Thiết kế (tóm tắt)
 - **Worker phân loại, manager lưu.** `sandbox-worker/service/execution_class.py` (mới) đọc `strace.log` + metadata `trace-meta.json` (`ct04-trace-meta/2`) và sinh `execution-class.json` (`ct04-execution-class/1`). `execution_class` **tách khỏi** `COMPLETED`.
@@ -31,6 +31,7 @@ Các `check_*.py` là script thuần (không pytest; đặt tên `check_*` để
 | A9 (ARM, MIPS) | `kill(getpid(), SIGTERM)` | worker `68f7150f…` | evaluator HELD; KILLED_BY_SIGNAL + `SELF_SENT` (`si_code=SI_USER`, `si_pid` = pid chính) — bằng chứng lớp ĐẠT |
 | A10 (ARM, MIPS) | PT_INTERP thiếu | worker `68f7150f…` | evaluator HELD; EXEC_NOT_FOUND (`execve = -1 ENOENT` có trong log) — bằng chứng lớp ĐẠT; chỉ nói ENOENT, không phân biệt interpreter hay tệp |
 | A11 (ARM, MIPS) | thiếu thư viện qua loader musl | worker `68f7150f…` (lịch sử), `8418cf66…` (bản sửa) | `68f7150f`: evaluator HELD, lớp EXITED_NONZERO, bằng chứng loader **chưa đạt** (classifier không ghép `writev`); giữ nguyên. `8418cf66` (2026-10-12): evaluator HELD, lớp EXITED_NONZERO, `LOADER_ERROR_REPORTED` + `LIB_LOOKUP_FAILED_SAME_NAME` — bằng chứng lớp ĐẠT: 3 `open` ENOENT cùng tên thư viện, 3 `writev` thành công (85+7+1 = 93 byte, return = tổng `iov_len`), thông điệp `Error loading shared library libct04missing.so: No such file or directory (needed by ./exec)\n`, `exit_group(127)`. **Là claim của tiến trình, không phải MISSING_LIBRARY.** |
+| A12 (ARM, MIPS) | PT_INTERP trỏ tới tệp thường không thực thi (`/etc/passwd`, mode 0644) | worker `8418cf66…` (2026-10-12, mỗi kiến trúc một lượt, không retry) | evaluator HELD (25 kiểm, không kiểm nào hỏng); lớp thực tế EXEC_PERMISSION_DENIED; raw `execve("./exec", …) = -1 EACCES (Permission denied)` (ARM main_pid 971, MIPS 1850); không cờ; export verified; **reviewer đã chấp nhận theo phạm vi đã đo** — một fixture mỗi kiến trúc, EACCES do interpreter không thực thi, không phải mọi nguyên nhân quyền |
 Lưu ý đọc: với lane `observe`, evaluator HELD KHÔNG có nghĩa lớp kỳ vọng đã đo; báo cáo luôn tách verdict của evaluator và bằng chứng lớp.
 Lịch sử giữ nguyên: lượt A1-ARM trên image `2b310137…` thất bại (console CR CR LF); A3-ARM trên `62199ff7…` NOT-HELD (đuôi cụt chặn SAMPLE_TIMEOUT). Evidence nằm ở các gói bàn giao của nhóm, không đưa vào repo.
 
@@ -43,11 +44,15 @@ Image ứng viên `sandbox-manager:ct04-e317797a9f97` (`sha256:c93fba47…`) đ�
 ## Quyết định kỹ thuật đã chốt (reviewer, 2026-10-12)
 - **`STOPPED_BY_SANDBOX` chỉ offline.** Không sửa luồng huỷ CT-03 để tạo lớp này; worker không gửi tín hiệu tới mẫu. Lớp được định nghĩa và kiểm bằng metadata dựng tay, không được báo là đã đo.
 - **`MISSING_LIBRARY` vẫn dự phòng, không phát.** Thiếu thư viện chỉ được báo qua cờ claim `LOADER_ERROR_REPORTED` (+ `LIB_LOOKUP_FAILED_SAME_NAME`); không thêm cờ mới.
-- **Chưa chứng minh:** `EXEC_PERMISSION_DENIED` (fixture chuẩn bị, chưa chạy), triển khai Compose, và nghiệm thu toàn CT-04.
+- **Đã đo (A12):** `EXEC_PERMISSION_DENIED` cho ARM và MIPS trên fixture `permdenied`; reviewer chấp nhận theo phạm vi đã đo.
+- **Đã đo (Compose trial r3):** một lượt thử Compose r3 đã chạy (2026-10-12 16:14:48Z–16:18:45Z, wrapper `0dc1afb6…`, mặc định 1800 s/reserve 480 s, không retry): rc 0, 2 task fixture lành tính EXITED_0, ZIP/Mongo/binding đạt, 422 đạt, rollback verified (worker vắng, manager về `13f02b81…`, Mongo không restart, host khớp). Giới hạn: hai task cùng một fixture ARM lành tính, manager production bị recreate rồi khôi phục; không phải triển khai thường trực.
+- **Chưa chứng minh:** triển khai thường trực Compose (manager/worker mới là mặc định) và nghiệm thu toàn CT-04.
 
 ## Phần CÒN THIẾU (không tính là hoàn thành)
-- `MISSING_LIBRARY` (dự phòng; chưa có đường chứng thực loader), `STOPPED_BY_SANDBOX` (cần đường hủy task của manager), `EXEC_PERMISSION_DENIED`; `MISSING_LIBRARY` không được phát (loader provenance không chứng thực được từ log); `STOPPED_BY_SANDBOX` (worker hiện không gửi tín hiệu tới mẫu: nhánh chỉ tới được bằng metadata offline); `EXEC_PERMISSION_DENIED` (worker `chmod +x`; fixture `permdenied` đã chuẩn bị, chưa chạy); triển khai Compose chưa làm. `CRASHED`, `KILLED_BY_SIGNAL`, `EXEC_NOT_FOUND` đã đo trên fixture lành tính (A8–A10).
-- `/tasks` phơi `execution_class`, triển khai manager/worker mới vào Compose, mã độc thật, nghiệm thu toàn CT-04 của reviewer.
+- `STOPPED_BY_SANDBOX`: chỉ offline (worker không gửi tín hiệu tới mẫu; không sửa luồng huỷ CT-03). `MISSING_LIBRARY`: dự phòng, không phát (nguồn gốc thông điệp loader không chứng thực được từ log; chỉ có cờ claim `LOADER_ERROR_REPORTED`).
+- `SAMPLE_TIMEOUT` là kết luận **có điều kiện** (đuôi log "tương thích với syscall đang mở", không phải bằng chứng đã chứng minh).
+- Triển khai thường trực Compose, `/tasks` phơi `execution_class`, K3 trên hàng đợi thật, mã độc thật, nghiệm thu toàn CT-04 của reviewer.
+- Đã đo (không còn trong danh sách thiếu): `CRASHED`, `KILLED_BY_SIGNAL`, `EXEC_NOT_FOUND` (A8–A10), `EXEC_PERMISSION_DENIED` (A12), một lượt Compose r3 có rollback.
 
 ## Fixture (generator, không commit ELF)
-`docs/ct04/fixtures/build_ct04_elf.py` (A1–A7), `build_ct04_extra.py` (segv, selfkill, noloader, missinglib), `verify_elf.py`. Đầu ra là tệp ELF lành tính tất định; không commit kết quả (AGENTS.md).
+`docs/ct04/fixtures/build_ct04_elf.py` (A1–A7), `build_ct04_extra.py` (segv, selfkill, noloader, missinglib, permdenied), `verify_elf.py`. Đầu ra là tệp ELF lành tính tất định; không commit kết quả (AGENTS.md).

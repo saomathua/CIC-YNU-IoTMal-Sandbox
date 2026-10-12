@@ -1,0 +1,59 @@
+# CT-04 — index evidence (path + hash)
+
+Evidence nằm **ngoài repo** (AGENTS.md: không commit kết quả chạy), trên máy `dathq@192.168.177.128` dưới `/home/dathq/projects/`. Bảng này sinh tự động từ các thư mục evidence (`make_index.py`, chỉ đọc); mỗi hàng giữ **evaluator verdict** và **lớp thực tế** thành hai cột riêng. `MANIFEST-SHA256` là hash của tệp manifest trong thư mục chạy; `receipt` là hash của biên lai export. Mọi lượt đều `export_status = verified`.
+
+## 1. Lượt lane worker (guest thật; fixture lành tính; một lượt = một task)
+Image worker: `2b310137…` (A1-ARM lần đầu, lịch sử THẤT BẠI), `62199ff7…` (A1–A2, A3-ARM lần đầu NOT-HELD), `68f7150f…` (A3–A11 lượt đầu), `8418cf66…` (A11 bản sửa, A12). Tag/ID đầy đủ trong `lane.json` của từng lượt.
+
+| Run (dir under /home/dathq/projects/ct04-lane-run) | Lane/Arch | Fixture sha256 | Image | Evaluator verdict | Expected | ACTUAL class | Flags | Export | MANIFEST-SHA256 (file) | receipt sha256 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `ct04-lane-A1-ARM-run-20261012T040215Z` | A1/ARM | `d27b860ad19c…` | `2b310137…` | NOT-HELD | EXITED_0 | - | - | verified | `834e0afcab1397fef94f1d1283a25531c1f6409b1e0ea3e6a6581c4e85a70b51` | `8dd24f31a376da366ee5f074e414942bdfbde47d278675669bdab548df6496fe` |
+| `ct04-lane-A1-ARM-run-20261012T052457Z` | A1/ARM | `d27b860ad19c…` | `62199ff7…` | HELD | EXITED_0 | EXITED_0 | - | verified | `a05a1e50ec0b2becba77db98e7414d181ab944f1e0cbec44c4d7836c8189d498` | `0fcf05a2cdbc0e01cb7fccd9fa57db7f4be1f43f68cbb0a2630fe5f7ff2350ef` |
+| `ct04-lane-A1-MIPS-run-20261012T052639Z` | A1/MIPS | `6a45ac1166fd…` | `62199ff7…` | HELD | EXITED_0 | EXITED_0 | - | verified | `194de9945dea01ad4c724c89e81f2b9e5e5454cea78b2e00f6bff903e52e5028` | `d38e67876d9062f88766e59c24a96570f993ea912078a0e38d435085895fa8ac` |
+| `ct04-lane-A2-ARM-run-20261012T052851Z` | A2/ARM | `307f7b4c1bef…` | `62199ff7…` | HELD | EXITED_NONZERO | EXITED_NONZERO | - | verified | `3f300122fff6ed0f0d1d3add02fde6113d0f065064e286c1e52635bd54d66363` | `e97c6084a3a2a214deb7c40b1a2e95c3d97393422ee83384d027c2ce07663956` |
+| `ct04-lane-A2-MIPS-run-20261012T053033Z` | A2/MIPS | `f41d5890f6fe…` | `62199ff7…` | HELD | EXITED_NONZERO | EXITED_NONZERO | - | verified | `f0e7a5c843316bfcc65fb6ecdab6c3d36ba5fc5571f99fc9d31322a06aa48596` | `b9d849171c92206f05b584d4374970c901a65594c2b175b0a7e10c389503a7c1` |
+| `ct04-lane-A3-ARM-run-20261012T053245Z` | A3/ARM | `b1861a3f480f…` | `62199ff7…` | NOT-HELD | SAMPLE_TIMEOUT | UNKNOWN_INCOMPLETE | TRUNCATED_TAIL | verified | `611ca907e50b8e3c32ec02033a5c17a39e475114a75f00d71d5805d07d6f5be8` | `0cfd3593f60252a404b6e286c135d7c12679ad82b1ab1873dc095a97c8187d37` |
+| `ct04-lane-A3-ARM-run-20261012T073101Z` | A3/ARM | `b1861a3f480f…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `a36aa2be390bcbbdb5628ae695952a8454f7d805219582281350a0a0a91da7cc` | `aa10278765d6fea04038fe94ec7a7343a8b2b41ad92269c44589f1179c3cbdfd` |
+| `ct04-lane-A3-MIPS-run-20261012T073258Z` | A3/MIPS | `63a23e6640db…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `4dfd26a7756c97279363644a674cda85de3977e452fd0d4cae0f817322e466d5` | `3cfbd44b7ed0db86f42355c88ed0facf33e276cfba103ef6270ab5f7dcc0ed22` |
+| `ct04-lane-A4-ARM-run-20261012T073532Z` | A4/ARM | `b1861a3f480f…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `bd69754d9f6290c05a8ccfb1214e4ccb5c0672c9788c82706b636a1c6c1a72be` | `e19b3d111103e7ef911e4f7bde6d11589c906fbe179e57896544bd1a33139cbf` |
+| `ct04-lane-A4-MIPS-run-20261012T073656Z` | A4/MIPS | `63a23e6640db…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `25636e6b2610dc7d65e1103c8e73ec017d7015e8d3873d88808a93d9865b122b` | `9629d448fd39ae692a232480f17a2401ef737df9f403a5d2106ca2064d17b418` |
+| `ct04-lane-A5-ARM-run-20261012T073856Z` | A5/ARM | `fea0ffd62732…` | `68f7150f…` | HELD | EXEC_FORMAT_ERROR | EXEC_FORMAT_ERROR | - | verified | `1e5cad146f91707041ed253987486e5a33365c3892a3530c3b9db6b06babde9f` | `e56f2d49a29c80681aea715d1f0e3c7550ea496f1c60e6c13d656d1275c4f26c` |
+| `ct04-lane-A6-ARM-run-20261012T074044Z` | A6/ARM | `9140ac1b1133…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `8db8249777b8db5a57a60a1e3cdcb537fc91fb4e2f229f3b80b3db481bd84081` | `799a3aabf7eca8b5013326c21ae8351f35a30289dfea9ccf7acc42b413037687` |
+| `ct04-lane-A6-MIPS-run-20261012T074235Z` | A6/MIPS | `4b6ae2bcf78b…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `fa48ca4ea69224aae53fe67a7324107a6a95d349f9c28509d21e4d6ef4c69e38` | `06323a54f58c2dee93fd1da3d2997b25894def813b5e9defb7bd3a9784161ad2` |
+| `ct04-lane-A7-ARM-run-20261012T074447Z` | A7/ARM | `cdf7361d3509…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `af22de6ba6f84cbb01f0d626da9785536c55cb7b70f750046070576b48f2e139` | `599e77c3fbab96233e60ec9259281f3dc5c2a5289fb1d4e1c8ec750be5abd300` |
+| `ct04-lane-A7-MIPS-run-20261012T074629Z` | A7/MIPS | `26947d3855db…` | `68f7150f…` | HELD | SAMPLE_TIMEOUT | SAMPLE_TIMEOUT | TRUNCATED_TAIL,TAIL_OPEN_SYSCALL | verified | `f6ba0ab0e0140e9a4ab3705d098bdb2b65152b61be2fc16dd5e5a9c209ce5cbf` | `99970d8c0d35304da46742516021d0053673fb18b9f087e925e5914740897693` |
+| `ct04-lane-A8-ARM-run-20261012T095850Z` | A8/ARM | `0106a8ea9adb…` | `68f7150f…` | HELD | CRASHED | CRASHED | SIGNAL_DELIVERY_SEEN | verified | `2e527fd3a58cc8572cfed902ef92fc0ef9cefa76614b9652d3865600af7c754c` | `2907eda1a7e872afbdd02b1fb6f5ffd08efdc1adb4745053ef6df58826860c8c` |
+| `ct04-lane-A8-MIPS-run-20261012T100032Z` | A8/MIPS | `882adafa16ce…` | `68f7150f…` | HELD | CRASHED | CRASHED | SIGNAL_DELIVERY_SEEN | verified | `71e9360b8bb8dd78da68fcfaeff929e0839f2e92c6f785915e1bc38c113d1f41` | `21d4587c739f4798b5df3c2d3d7aadaab53feea366596af6c05a79ed654895a0` |
+| `ct04-lane-A9-ARM-run-20261012T100244Z` | A9/ARM | `90d88fd042ad…` | `68f7150f…` | HELD | KILLED_BY_SIGNAL | KILLED_BY_SIGNAL | SIGNAL_DELIVERY_SEEN,SELF_SENT | verified | `c51c76ca628a96516a1750e98007edd7cfba53ecedc5b875381cedeb530ba3ad` | `8776542c5943d4ba1750fd6687a279ec140881b79b5fd9d488a35137e7bcbe6f` |
+| `ct04-lane-A9-MIPS-run-20261012T100426Z` | A9/MIPS | `c8c186ae993b…` | `68f7150f…` | HELD | KILLED_BY_SIGNAL | KILLED_BY_SIGNAL | SIGNAL_DELIVERY_SEEN,SELF_SENT | verified | `fbbbc9830ed4f02e68b9282ea16c73d6cd8712ea83156cd75d73dea94c108f54` | `5dbd9ac07b12107e041c0c71859275c65e9294bff3ee90c24c0b23ddb00a0f99` |
+| `ct04-lane-A10-ARM-run-20261012T100638Z` | A10/ARM | `89a7766d705a…` | `68f7150f…` | HELD | EXEC_NOT_FOUND | EXEC_NOT_FOUND | - | verified | `4df25f8930f418b93a44ca0d5c0d91b518dbcc9145da2de1e449992a28b8065a` | `7e05a8e5e17c1df3be818fef7ef0f115004a8ea004703b9b12319e32691072ad` |
+| `ct04-lane-A10-MIPS-run-20261012T100820Z` | A10/MIPS | `5e02036aec8b…` | `68f7150f…` | HELD | EXEC_NOT_FOUND | EXEC_NOT_FOUND | - | verified | `8c0a5f70a09f605017e884774b9d79e84867ae3ce8b83f4ba9d2ed5cbe53504f` | `94a3c78606d969297e2d0f99cf23729a9e86f7799e1e093029197cec712c4ebe` |
+| `ct04-lane-A11-ARM-run-20261012T101031Z` | A11/ARM | `25e30ebe1901…` | `68f7150f…` | HELD | EXITED_NONZERO | EXITED_NONZERO | LIB_LOOKUP_ENOENT_SEEN | verified | `2189274f06d5a21e465bbf06a85f28cc86a3169f6e4480c30e76f51166f4db37` | `575beac0bdd54df32bbe8ffdb7fae033370bf958b018d3a756e9caaafa5e7e8a` |
+| `ct04-lane-A11-ARM-run-20261012T131237Z` | A11/ARM | `25e30ebe1901…` | `8418cf66…` | HELD | EXITED_NONZERO | EXITED_NONZERO | LOADER_ERROR_REPORTED,LIB_LOOKUP_FAILED_SAME_NAME | verified | `c6475d2f620a53aa358d78ace03660ed74caccf4210976e8d61d9312d0d18798` | `30f23b0f2ac570d3c7ca473ff1306c9c7bb0ddeabc4abf3eb8e8b5a1363dfa86` |
+| `ct04-lane-A11-MIPS-run-20261012T101213Z` | A11/MIPS | `d7f18393dc66…` | `68f7150f…` | HELD | EXITED_NONZERO | EXITED_NONZERO | LIB_LOOKUP_ENOENT_SEEN | verified | `7324bbd2e77d55bd9779a39eb7015664c6f837794795cf054e98407af008c51c` | `19354a725a9b8596c2f27ef283301b6f691167a65be6c72cd67759fb5ae76ffd` |
+| `ct04-lane-A11-MIPS-run-20261012T131419Z` | A11/MIPS | `d7f18393dc66…` | `8418cf66…` | HELD | EXITED_NONZERO | EXITED_NONZERO | LOADER_ERROR_REPORTED,LIB_LOOKUP_FAILED_SAME_NAME | verified | `7e68763df39d6b3065003a815b791b9754498cf9608489208af89eb23e8e9f94` | `f61a02f4f6c9c22233794c739d3c37ace3549817db5db509d4c936afbcc3a7f8` |
+| `ct04-lane-A12-ARM-run-20261012T140620Z` | A12/ARM | `5e57fae2b2d6…` | `8418cf66…` | HELD | EXEC_PERMISSION_DENIED | EXEC_PERMISSION_DENIED | - | verified | `8831a8be51252d5b526cf7a0058af9f45891108794daab9eac6f35bdbd380d4c` | `bc5a2eaf0d321df92a711b7ce823ef2c62b419f5417499a3afe600c654ad0d31` |
+| `ct04-lane-A12-MIPS-run-20261012T140802Z` | A12/MIPS | `f13564f47b65…` | `8418cf66…` | HELD | EXEC_PERMISSION_DENIED | EXEC_PERMISSION_DENIED | - | verified | `2608ffc9f3123849c2bbf4b8027eb8c0b798f3fa10be8548418405e2ba6b040b` | `86fb63183b625f9384923728938cfe90ac765d20b24b15ef303b5a40e1e62d9f` |
+
+Đọc bảng: A1-ARM `…T040215Z` (image `2b310137…`) NOT-HELD, không có class — `ConsoleLost`, giữ làm lịch sử. A3-ARM `…T053245Z` (image `62199ff7…`) NOT-HELD, class UNKNOWN_INCOMPLETE — đuôi cụt chặn SAMPLE_TIMEOUT, giữ làm lịch sử. A11 ở `68f7150f…` evaluator HELD nhưng bằng chứng loader **chưa đạt** (không có `LOADER_ERROR_REPORTED`); bản sửa trên `8418cf66…` có cờ. A5 chỉ ARM (MIPS bị launcher từ chối theo thiết kế). Với lane `observe`, HELD KHÔNG có nghĩa lớp kỳ vọng đã đo — dùng cột "ACTUAL class".
+
+## 2. Manager: tương thích + rollback trên stack cô lập (không worker/guest, ZIP fixture giả)
+| Lượt | Thư mục | Kết quả | Hash manifest gốc (`.original.sha256`) |
+|---|---|---|---|
+| runner r2 | `ct04-compat-run-20261012T085842Z` (+`-readable`) | 28/39 — 11 hỏng do lỗi kịch bản runner (K3), giữ làm lịch sử | `c7647b3ec4f814aef4073ee9d218ba58c7aa7cc3e76137c27bc28f85cbdd6928` |
+| runner r3 | `ct04-compat-run-20261012T092829Z` (+`-readable`) | **72/72**, cleanup sạch, export verified | `28a07c40ab9e988fb659878c0f5060cb85efdfd23d4ed622217563339d9fd121` |
+Image: manager cũ `13f02b81…`, ứng viên `c93fba47…` (tag `sandbox-manager:ct04-e317797a9f97`), Mongo `mongo:8.0.32` theo digest.
+
+## 3. Compose trial r3 (production, một lượt, không retry)
+| Mục | Giá trị |
+|---|---|
+| Thư mục | `/home/dathq/projects/ct04-compose-trial-20261012T161448Z` (gốc root-owned) và `…-readable` (EXPORT-VERIFIED, 38 tệp) |
+| Hash manifest 38 tệp gốc | `14c5abe428e2f28222d83736bfdfdaeba7b2b68323ecd2a5416c427964d11170` (`ct04-compose-trial-20261012T161448Z.original.sha256`) |
+| Wrapper | `ct04-compose-trial-r3/run_compose_trial.sh` `0dc1afb68bab7e7771ff73a5bb110fc2447680c64b3965fb17fa092e061f6acb` |
+| Kết quả | rc 0, 237 s; hai task ARM EXITED_0 (`6437debe-38aa-4e44-bfc9-d408c92a611f`, `14aa5716-96b7-49ad-bec1-004fb6436cac`); ZIP/Mongo/binding chấm lại 34/34 mỗi task; báo cáo sai HTTP 422 và không có ZIP; rollback 19/19; ZIP task 1 tải lại giống từng byte; `/tasks` 46 → 48 (46 task cũ không đổi) |
+| Image | manager ứng viên `c93fba47…`, worker ứng viên `8418cf66…`; sau rollback manager `13f02b81…` |
+| "Host khớp" nghĩa là | chỉ các khoá đã đo: containers (tên), Mongo (id + StartedAt + Running), image manager + Running, `latest` manager/worker, volumes, networks, image ids, sha `docker-compose.yml`, qemu. **Không** gồm manager container ID (đã đổi do recreate) |
+| Hash tệp chính (trong gói R25) | `result.json` `86fe1af1…`, `rollback.json` `4d90e2e0…`, `s3.zip` `ec27c6a4…`, `s4.zip` `196a44ff…`, `trial.log` `6c5c989a…` |
+
+## 4. Bản sao evidence của gói bàn giao
+Các gói `ct04-r22…`, `ct04-r23-a12-results-compose-r2-package.zip`, `ct04-r24…`, `ct04-r25-compose-trial-result-package.zip` (SHA-256 trong HANDOVER của từng gói) mang bản sao các tệp trên.
