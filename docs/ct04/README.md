@@ -1,6 +1,6 @@
 # CT-04 — Xác minh thực thi và log
 
-**Trạng thái (theo `KQCaiTien.md`):** worker có evidence runtime được reviewer chấp nhận theo phạm vi đã đo; manager và nghiệm thu toàn CT-04 **còn mở**. Đây không phải tuyên bố đạt.
+**Trạng thái (theo `KQCaiTien.md`):** evidence worker A1–A11 và evidence manager trên stack cô lập đã được reviewer chấp nhận **theo phạm vi đã đo**. CT-04 **còn mở**: nghiệm thu theo phạm vi và triển khai (Compose). Đây không phải tuyên bố đạt.
 
 ## Thiết kế (tóm tắt)
 - **Worker phân loại, manager lưu.** `sandbox-worker/service/execution_class.py` (mới) đọc `strace.log` + metadata `trace-meta.json` (`ct04-trace-meta/2`) và sinh `execution-class.json` (`ct04-execution-class/1`). `execution_class` **tách khỏi** `COMPLETED`.
@@ -39,6 +39,11 @@ Image ứng viên `sandbox-manager:ct04-e317797a9f97` (`sha256:c93fba47…`) đ�
 - Lượt 1 (runner r2): 28/39 đạt; 11 không đạt do **lỗi kịch bản runner** (manager khởi động đưa lại QUEUED/PROCESSING vào hàng đợi — K3 — nên runner cấp phát nhầm task). Giữ nguyên là kết quả FAIL.
 - Lượt 2 (runner r3, đã sửa): **72/72 đạt**, cleanup sạch, export verified. Đạt trên hệ thật: K1 (manager cũ bỏ qua trường lạ), lưu class/evidence/flags trong Mongo, `NOT_CLASSIFIED` khi vắng trường, 8 báo cáo sai bị 422 **không ghi ZIP/DB và task không đổi**, ZIP tải đồng nhất, rollback về manager cũ (trường mới còn trong Mongo, báo cáo mới vẫn được nhận), K3 đo được cả hai chiều.
 **Reviewer đã chấp nhận evidence này theo phạm vi đã đo** (stack cô lập, ZIP fixture giả, không có worker/guest). Không suy thành triển khai production: manager mới chưa được đưa vào Compose, chưa đo trên hàng đợi production thật.
+
+## Quyết định kỹ thuật đã chốt (reviewer, 2026-10-12)
+- **`STOPPED_BY_SANDBOX` chỉ offline.** Không sửa luồng huỷ CT-03 để tạo lớp này; worker không gửi tín hiệu tới mẫu. Lớp được định nghĩa và kiểm bằng metadata dựng tay, không được báo là đã đo.
+- **`MISSING_LIBRARY` vẫn dự phòng, không phát.** Thiếu thư viện chỉ được báo qua cờ claim `LOADER_ERROR_REPORTED` (+ `LIB_LOOKUP_FAILED_SAME_NAME`); không thêm cờ mới.
+- **Chưa chứng minh:** `EXEC_PERMISSION_DENIED` (fixture chuẩn bị, chưa chạy), triển khai Compose, và nghiệm thu toàn CT-04.
 
 ## Phần CÒN THIẾU (không tính là hoàn thành)
 - `MISSING_LIBRARY` (dự phòng; chưa có đường chứng thực loader), `STOPPED_BY_SANDBOX` (cần đường hủy task của manager), `EXEC_PERMISSION_DENIED`; `MISSING_LIBRARY` không được phát (loader provenance không chứng thực được từ log); `STOPPED_BY_SANDBOX` (worker hiện không gửi tín hiệu tới mẫu: nhánh chỉ tới được bằng metadata offline); `EXEC_PERMISSION_DENIED` (worker `chmod +x`; fixture `permdenied` đã chuẩn bị, chưa chạy); triển khai Compose chưa làm. `CRASHED`, `KILLED_BY_SIGNAL`, `EXEC_NOT_FOUND` đã đo trên fixture lành tính (A8–A10).
