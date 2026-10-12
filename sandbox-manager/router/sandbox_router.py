@@ -1,11 +1,14 @@
+import json
 import logging
 import os
+import re
+from typing import Optional
 import queue
 import shutil
 import urllib.request
 import uuid
 
-from fastapi import APIRouter, Request, UploadFile, HTTPException
+from fastapi import APIRouter, Form, Request, UploadFile, HTTPException
 from starlette.responses import FileResponse
 
 from config.settings import app_settings
@@ -16,6 +19,61 @@ router = APIRouter(prefix=app_settings.app_base_url)
 
 file_queue = queue.Queue()
 queued_ids: set = set()  # in-memory duplicate guard — mirrors what is currently in file_queue
+
+# CT-04: execution classes a worker may report. `status` stays COMPLETED ("analysis finished"); the class says what happened to the sample and does NOT mean it
+# exited successfully. A worker that sends the field must send a valid one: a present-but-wrong value is REJECTED (422) before the ZIP or the database is touched, so a
+# defective report never becomes a silent COMPLETED-without-class. Only a field that is truly ABSENT (an older worker) is accepted and stored as NOT_CLASSIFIED; an empty value is a
+# present-but-invalid report.
+EXECUTION_CLASSES = frozenset((
+    "EXITED_0", "EXITED_NONZERO", "CRASHED", "KILLED_BY_SIGNAL", "STOPPED_BY_SANDBOX", "SAMPLE_TIMEOUT", "EXEC_FORMAT_ERROR", "EXEC_NOT_FOUND",
+    "EXEC_PERMISSION_DENIED", "EXEC_FAILED", "LOG_MISSING", "LOG_INVALID", "UNKNOWN_INCOMPLETE", "INCONSISTENT_EVIDENCE", "INFRA_TIMEOUT", "INFRA_FAILURE"))
+EXECUTION_CLASS_SCHEMA = "ct04-execution-class/1"
+EXECUTION_CLASS_MAX_BYTES = 8192
+_FLAG_RE = re.compile(r"^[A-Z0-9_]{1,48}$")
+_EXEC_KEYS = frozenset(("schema", "task_id", "execution_class", "evidence", "flags", "main_pid"))
+NOT_CLASSIFIED = {"execution_class": "NOT_CLASSIFIED", "execution_evidence": ["the worker did not report an execution class"], "execution_flags": ["NO_WORKER_REPORT"]}
+
+
+def validate_execution_class(raw, task_id: str):
+    """-> (fields to store, None) or (None, reason). Strict: type of the field, schema, task binding, types, sizes and the class allowlist are all checked; nothing is repaired.
+    NEVER raises (a hostile report must produce a 422, not a 500): any internal error is reported as a rejection."""
+    try:
+        return _validate_execution_class(raw, task_id)
+    except Exception as e:                                           # noqa: BLE001  (RecursionError, MemoryError-like conditions of json, ...)
+        return None, "report could not be validated (%s)" % type(e).__name__
+
+
+def _validate_execution_class(raw, task_id: str):
+    if not isinstance(raw, str):
+        return None, "execution_class is not text"
+    if len(raw.encode("utf-8")) > EXECUTION_CLASS_MAX_BYTES:
+        return None, "execution_class larger than %d bytes" % EXECUTION_CLASS_MAX_BYTES
+    try:
+        d = json.loads(raw)
+    except (ValueError, RecursionError):
+        return None, "execution_class is not JSON (or nested too deeply)"
+    if not isinstance(d, dict):
+        return None, "execution_class is not an object"
+    if set(d) - _EXEC_KEYS:
+        return None, "unknown keys: %s" % sorted(str(k) for k in set(d) - _EXEC_KEYS)[:5]
+    if not isinstance(d.get("schema"), str) or d["schema"] != EXECUTION_CLASS_SCHEMA:
+        return None, "schema is not %s" % EXECUTION_CLASS_SCHEMA
+    if not isinstance(d.get("task_id"), str) or d["task_id"] != task_id:
+        return None, "task_id in the report does not match the task of the endpoint"
+    klass = d.get("execution_class")
+    if not isinstance(klass, str):                                  # a list/dict is unhashable: the allowlist lookup must never see it
+        return None, "execution_class must be a string"
+    if klass not in EXECUTION_CLASSES:
+        return None, "unknown execution_class"
+    ev, fl = d.get("evidence", []), d.get("flags", [])
+    if not isinstance(ev, list) or len(ev) > 10 or not all(isinstance(x, str) and len(x) <= 200 for x in ev):
+        return None, "evidence must be at most 10 strings of at most 200 characters"
+    if not isinstance(fl, list) or len(fl) > 20 or not all(isinstance(x, str) and _FLAG_RE.match(x) for x in fl):
+        return None, "flags must be at most 20 strings matching [A-Z0-9_]{1,48}"
+    mp = d.get("main_pid")
+    if mp is not None and (not isinstance(mp, int) or isinstance(mp, bool) or mp <= 0):
+        return None, "main_pid must be a positive integer or null"
+    return {"execution_class": klass, "execution_evidence": list(ev), "execution_flags": list(fl)}, None
 
 
 def _enqueue(db, task_id: str, file_path: str, filename: str):
@@ -118,15 +176,26 @@ async def get_file(request: Request, worker_id: str, worker_uri: str = ""):
 
 
 @router.post("/submit-result/{task_id}")
-async def submit_result(request: Request, task_id: str, file: UploadFile):
-    """Receive the completed analysis result zip from a worker."""
+async def submit_result(request: Request, task_id: str, file: UploadFile, execution_class: Optional[str] = Form(default=None)):
+    """Receive the completed analysis result zip from a worker (+ its execution class, CT-04)."""
+    if execution_class is None:
+        exec_fields = dict(NOT_CLASSIFIED)                 # the field is ABSENT (older worker): compatible, and said so explicitly. An empty value is NOT absence.
+    else:
+        exec_fields, why = validate_execution_class(execution_class, task_id)
+        if why is not None:
+            # rejected BEFORE the ZIP is written or the task is touched: the worker's upload fails and its existing failure path reports it
+            logger.warning(f"Result for task {task_id} rejected: invalid execution_class report ({why})")
+            file.file.close()
+            raise HTTPException(status_code=422, detail="invalid execution_class report: " + why)
     result_path = os.path.join(app_settings.output_dir, task_id + ".zip")
     try:
         with open(result_path, 'wb') as f:
             shutil.copyfileobj(file.file, f)
+        fields = {"status": "COMPLETED", "result_path": result_path}
+        fields.update(exec_fields)
         request.app.database["malware_queue"].update_one(
             {"_id": task_id},
-            {"$set": {"status": "COMPLETED", "result_path": result_path}}
+            {"$set": fields}
         )
     except Exception:
         raise HTTPException(status_code=500, detail='Something went wrong')

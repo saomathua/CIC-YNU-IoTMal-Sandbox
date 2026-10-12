@@ -1,0 +1,54 @@
+{
+ "busybox-127": {
+  "schema": "ct04-execution-class/1",
+  "task_id": "dump-busybox-127",
+  "execution_class": "EXITED_NONZERO",
+  "evidence": [
+   "exit 127",
+   "metadata: no trace-meta.json"
+  ],
+  "flags": [
+   "META_UNAVAILABLE"
+  ],
+  "main_pid": 1
+ },
+ "garbage": {
+  "schema": "ct04-execution-class/1",
+  "task_id": "dump-garbage",
+  "execution_class": "LOG_INVALID",
+  "evidence": [
+   "line 1: not '<pid> <hh:mm:ss.ffffff> <event>': 'not strace'",
+   "metadata: no trace-meta.json"
+  ],
+  "flags": [
+   "META_UNAVAILABLE"
+  ],
+  "main_pid": null
+ },
+ "empty": {
+  "schema": "ct04-execution-class/1",
+  "task_id": "dump-empty",
+  "execution_class": "LOG_MISSING",
+  "evidence": [
+   "strace.log empty",
+   "metadata: no trace-meta.json"
+  ],
+  "flags": [
+   "META_UNAVAILABLE"
+  ],
+  "main_pid": null
+ },
+ "long-id": {
+  "schema": "ct04-execution-class/1",
+  "task_id": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+  "execution_class": "LOG_INVALID",
+  "evidence": [
+   "NUL byte in log",
+   "metadata: no trace-meta.json"
+  ],
+  "flags": [
+   "META_UNAVAILABLE"
+  ],
+  "main_pid": null
+ }
+}

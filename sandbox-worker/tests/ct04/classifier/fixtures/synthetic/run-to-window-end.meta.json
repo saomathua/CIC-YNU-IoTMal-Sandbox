@@ -1,0 +1,47 @@
+{
+ "schema": "ct04-trace-meta/2",
+ "task_id": "task-0001",
+ "trace_id": "trace-0001",
+ "analysis_duration_s": 30,
+ "trace_started_mono_s": 1000.0,
+ "trace_stopped_mono_s": 1030.4,
+ "stop_reason": "window_elapsed",
+ "strace_log_sha256": "787412db270babdf5b173e847d1d7b9fed74b762fe1e1f9003058cedf6120391",
+ "probes": {
+  "start": {
+   "mono_s": 1001.0,
+   "pid": 300,
+   "starttime_ticks": 12345,
+   "state": "S",
+   "raw": "300 (exec) S 41 300 300 0 -1 4194304 100 0 0 0 1 1 0 0 20 0 1 0 12345 4096 10 4294967295",
+   "strace_pid": 41,
+   "strace_starttime_ticks": 700
+  },
+  "final": {
+   "mono_s": 1029.9,
+   "pid": 300,
+   "starttime_ticks": 12345,
+   "state": "S",
+   "raw": "300 (exec) S 41 300 300 0 -1 4194304 100 0 0 0 1 1 0 0 20 0 1 0 12345 4096 10 4294967295",
+   "strace_pid": 41,
+   "strace_starttime_ticks": 700
+  }
+ },
+ "sample_signal_sent": null,
+ "stop_check": {
+  "mono_s": 1030.6,
+  "verdict": "gone",
+  "reason": "pid file ok; stat unreadable rc 1 with empty output; /proc/41 absent; kill -0 failed",
+  "raw": "CT04-PIDFILE rc=0 pid=[41]\nCT04-STAT rc=1\nCT04-STATRAW []\nCT04-DIR rc=1\nCT04-KILL0 rc=1\n",
+  "rcs": {
+   "pidfile": 0,
+   "stat": 1,
+   "dir": 1,
+   "kill0": 1
+  },
+  "target_pid": 41,
+  "expected_pid": 41,
+  "baseline_starttime": 700
+ },
+ "collected_mono_s": 1031.0
+}

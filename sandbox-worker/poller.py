@@ -1,4 +1,5 @@
 import logging
+import json
 import os
 import re
 import shutil
@@ -11,12 +12,39 @@ import requests
 from config.settings import app_settings
 from isolation import current_task
 from service.analysis import dynamic_analysis, clear_stop, AnalysisCancelled, UnsafeWorkerState
+from service import execution_class
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+RAW_CONSOLE_LOG_MAX = 1024 * 1024
+
+
+def _log_raw_console(fname, task_dir):
+    """Failure evidence: the raw console bytes (no newline normalisation) as base64 lines in the worker log, with length and sha256 so that the bytes can be
+    rebuilt and verified from `docker logs`. Never raises."""
+    try:
+        import base64
+        import hashlib
+        with open(task_dir + "/console.raw", "rb") as f:
+            data = f.read(RAW_CONSOLE_LOG_MAX + 1)
+        truncated = len(data) > RAW_CONSOLE_LOG_MAX
+        data = data[:RAW_CONSOLE_LOG_MAX]
+        b = base64.b64encode(data).decode("ascii")
+        lines = [b[i:i + 76] for i in range(0, len(b), 76)]
+        logger.error(f"RAW-CONSOLE-BEGIN task={fname} bytes={len(data)} truncated={truncated} sha256={hashlib.sha256(data).hexdigest()}")
+        for l in lines:
+            logger.error(f"RAW-CONSOLE {l}")
+        logger.error(f"RAW-CONSOLE-END task={fname}")
+    except FileNotFoundError:
+        logger.warning(f"No raw console log for task {fname}")
+    except Exception:                                                 # noqa: BLE001
+        logger.exception(f"raw console log not written for task {fname}")
+
 
 
 def startup_cleanup():
@@ -150,6 +178,7 @@ def run_analysis(fname, task_dir, worker, outcome=None):
                 logger.error(f"QEMU log for task {fname}:\n{_lf.read()}")
         except FileNotFoundError:
             logger.warning(f"No QEMU log found for task {fname}")
+        _log_raw_console(fname, task_dir)
         _fail_task(fname, task_dir, str(e), cause=e)
         outcome["state"] = "failed"
         return False
@@ -168,7 +197,17 @@ def submit_result(fname, task_dir):
         reason = "task image directory missing before result upload"
     except OSError as e:
         reason = f"cannot remove the task image directory: {e!r}"
+    exec_class = None
     if reason is None:
+        # CT-04: classify from the files of THIS task (writes trace-meta.json bound to strace.log and execution-class.json into the task directory, so both are
+        # inside the ZIP). Never raises; a classifier fault is reported as UNKNOWN_INCOMPLETE, it does not fail the task.
+        try:
+            exec_class = execution_class.classify_task(task_dir, fname)
+        except Exception as e:                                       # noqa: BLE001  (classify_task is written not to raise; this is the belt for the braces)
+            logger.exception(f"Task {fname}: execution classification failed")
+            exec_class = {"schema": execution_class.EXEC_CLASS_SCHEMA, "task_id": fname, "execution_class": "UNKNOWN_INCOMPLETE",
+                          "evidence": [f"classifier error: {e!r}"], "flags": ["CLASSIFIER_ERROR"], "main_pid": None}
+        logger.info(f"Task {fname} execution class: {exec_class['execution_class']} flags={exec_class['flags']}")
         try:
             shutil.make_archive(task_dir, 'zip', task_dir)
         except OSError as e:
@@ -177,7 +216,7 @@ def submit_result(fname, task_dir):
         upload_url = app_settings.sandbox_manager_uri + "/submit-result/" + fname
         try:
             with open(task_dir + ".zip", 'rb') as f:
-                ok, detail = _post(upload_url, files={"file": f}, timeout=UPLOAD_TIMEOUT)
+                ok, detail = _post(upload_url, files={"file": f}, data={"execution_class": json.dumps(exec_class)}, timeout=UPLOAD_TIMEOUT)
         except OSError as e:
             ok, detail = False, f"cannot read the result zip: {e!r}"
         logger.info(f"Upload response: {detail}")

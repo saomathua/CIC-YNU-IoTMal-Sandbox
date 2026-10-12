@@ -1,0 +1,2 @@
+1848  10:08:50.807269 execve("./exec", ["./exec"], 0x7f918284 /* 12 vars */) = -1 ENOENT (No such file or directory) <0.016520>
+1848  10:08:50.855795 +++ exited with 1 +++

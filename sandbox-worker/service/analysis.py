@@ -1,4 +1,5 @@
 import fcntl
+import hashlib
 import logging
 import os
 import signal
@@ -11,6 +12,7 @@ from zipfile import ZipFile
 from config.settings import app_settings
 from isolation import constants as guestnet
 from isolation.verify import verify_isolation
+from service import execution_class as xc
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ QEMU_SIGINT_GRACE = 10.0
 QEMU_SIGKILL_GRACE = 5.0
 CAPTURE_SIGINT_GRACE = 5.0
 CAPTURE_SIGKILL_GRACE = 3.0
+TRACE_START_PROBE_DELAY = 0.5   # CT-04: seconds between starting the trace and the start probe
 
 
 class UnsafeWorkerState(RuntimeError):
@@ -127,6 +130,94 @@ def stop_capture(proc, label: str) -> None:
     finalize_child(proc, label, "capture", CaptureShutdownError, CAPTURE_SIGINT_GRACE, CAPTURE_SIGKILL_GRACE)
 
 
+RAW_CONSOLE_FILE = "/console.raw"          # in the task dir; appended by every QEMU phase: the bytes os.read() returned, BEFORE any decoding or newline handling
+RAW_CONSOLE_MAX = 4 * 1024 * 1024
+
+
+class RawConsoleLog:
+    """Byte sink for the received console stream (evidence only). It is fed by RawTeeDecoder with exactly what pexpect read from the pty, before the
+    UTF-8 decoder runs: CR/LF, invalid UTF-8 and multi-byte characters split between reads are kept as they came. It never raises into the analysis
+    (a write error disables the sink and is logged once), it is capped, and it keeps a running sha256 of what it wrote."""
+
+    def __init__(self, path):
+        self.path = path
+        self.f = open(path, "ab")
+        self.start_offset = self.f.tell()
+        self.written = 0
+        self.dropped = 0
+        self.failed = False
+        self.closed = False
+        self.sha = hashlib.sha256()
+
+    def write_bytes(self, b):
+        if self.failed or self.closed:
+            return
+        try:
+            b = bytes(b)
+            room = max(RAW_CONSOLE_MAX - self.start_offset - self.written, 0)
+            if len(b) > room:
+                self.dropped += len(b) - room
+                b = b[:room]
+            if b:
+                self.f.write(b)
+                self.f.flush()
+                self.written += len(b)
+                self.sha.update(b)
+        except Exception:                                             # noqa: BLE001
+            self.failed = True
+            logger.exception("raw console log write failed (evidence only; analysis continues)")
+
+    def close(self):
+        if self.closed:
+            return
+        self.closed = True
+        try:
+            self.f.close()
+        except Exception:                                             # noqa: BLE001
+            logger.exception("closing the raw console log failed")
+        logger.info(f"raw console log {self.path}: phase started at offset {self.start_offset}, {self.written} bytes, {self.dropped} dropped"
+                    f"{', WRITE FAILED' if self.failed else ''}, phase sha256 {self.sha.hexdigest()}")
+
+
+class RawTeeDecoder:
+    """Stands in for pexpect's incremental decoder (`proc._decoder`): records the input bytes, then delegates unchanged. The delegate's result AND its
+    exceptions (e.g. UnicodeDecodeError on invalid UTF-8) are returned/raised exactly as before; recording happens first, so the bytes that triggered the
+    error are in the evidence."""
+
+    def __init__(self, inner, sink):
+        self._inner = inner
+        self._sink = sink
+
+    def decode(self, data, final=False):
+        try:
+            if data:
+                self._sink.write_bytes(data)
+        except Exception:                                             # noqa: BLE001
+            pass
+        return self._inner.decode(data, final)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+def attach_raw_console(proc, path):
+    """Install the raw byte tap on a spawned pexpect child. Returns the sink, or None when it cannot be installed (evidence only: logged, never raised).
+    Depends on pexpect's private `_decoder` (pinned pexpect 4.9.0 in the image); the guard below refuses anything that is not a text-mode child
+    with a decode() method."""
+    try:
+        dec = getattr(proc, "_decoder", None)
+        if getattr(proc, "encoding", None) is None or dec is None or not callable(getattr(dec, "decode", None)):
+            logger.warning("raw console log not installed: this pexpect child has no incremental decoder to tap")
+            return None
+        sink = RawConsoleLog(path)
+        proc._decoder = RawTeeDecoder(dec, sink)
+        proc.ct04_raw_console = sink
+        return sink
+    except Exception:                                                 # noqa: BLE001
+        logger.exception("raw console log not installed (evidence only; analysis continues)")
+        return None
+
+
 def shutdown_qemu(proc, phase: str) -> None:
     """Stop a QEMU child and confirm it exited and was reaped/closed (same finalizer as the capture). Raises QemuShutdownError otherwise, so
     phase 2 / V2 / the next task never run on an unconfirmed QEMU. A failing log-file close is logged only (it says nothing about the process)."""
@@ -137,6 +228,11 @@ def shutdown_qemu(proc, phase: str) -> None:
             proc.logfile.close()
         except Exception:                                             # noqa: BLE001
             logger.exception("closing QEMU log failed")
+    if getattr(proc, "ct04_raw_console", None) is not None:
+        try:
+            proc.ct04_raw_console.close()
+        except Exception:                                             # noqa: BLE001
+            logger.exception("closing the raw console log failed")
     logger.info(f"QEMU shutdown complete ({phase}, pid {proc.pid}, "
                 f"exitstatus={getattr(proc, 'exitstatus', None)}, signalstatus={getattr(proc, 'signalstatus', None)})")
 
@@ -289,6 +385,7 @@ class Analysis:
         proc = pexpect.spawn(qemu_cmd, encoding='utf-8', timeout=arch.qemu_timeout)
         try:
             proc.logfile = open(self.task_dir + app_settings.qemu_log_path, 'w', encoding='utf-8')
+            attach_raw_console(proc, self.task_dir + RAW_CONSOLE_FILE)
             idx = proc.expect([pexpect.TIMEOUT, 'Please press Enter to activate this console.', pexpect.EOF])
             if idx == 0:
                 raise RuntimeError("QEMU timed out waiting for boot prompt")
@@ -369,17 +466,22 @@ class Analysis:
         )
         logger.info("Started network capture")
         primary = None
+        rec = xc.TraceRecorder(self.task_id, app_settings.analysis_duration)
+        stop_reason = "error"
         try:
 
             # Start system resource monitor inside the VM
-            proc.sendline("sar -o sar.out 1 >/dev/null 2>&1 & echo $! > sar_pid")
-            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            self._send(proc, "sar -o sar.out 1 >/dev/null 2>&1 & echo $! > sar_pid", "the sar start")
+            self._expect_prompt(proc, 'root@OpenWrt:/# ', "the prompt after the sar start")
             logger.info(f"Started sar (PID: {proc.before.strip()})")
 
             # Start syscall trace and execute the malware
-            proc.sendline("strace -f -tt -T -y -yy -s 2048 -o /strace.log ./exec & echo $! > strace_pid")
-            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            self._send(proc, "strace -f -tt -T -y -yy -s 2048 -o /strace.log ./exec & echo $! > strace_pid", "the strace start")
+            self._expect_prompt(proc, 'root@OpenWrt:/# ', "the prompt after the strace start")
             logger.info(f"Started strace (PID: {proc.before.strip()})")
+            rec.started()
+            time.sleep(TRACE_START_PROBE_DELAY)
+            self._probe(proc, rec, "start")
 
             # Let the malware run for the configured duration, checking for stop requests
             deadline = time.time() + app_settings.analysis_duration
@@ -389,32 +491,44 @@ class Analysis:
                     proc.kill(signal.SIGINT)
                     raise AnalysisCancelled("Stop requested by user")
 
-            proc.sendline("")
-            proc.sendline("")
-            proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
-            proc.sendline("ls")
-            proc.expect([pexpect.TIMEOUT, '# ', pexpect.EOF])
+            self._send(proc, "", "the first prompt refresh")
+            self._send(proc, "", "the second prompt refresh")
+            self._expect_prompt(proc, '# ', "the prompt after the window")
+            self._send(proc, "ls", "ls")
+            self._expect_prompt(proc, '# ', "the prompt after ls")
             logger.debug(proc.before)
 
             stop_capture(net_proc, "after the analysis window")
             logger.info("Stopped network capture")
 
-            proc.sendline("kill -9 $(cat strace_pid)")
-            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            self._probe(proc, rec, "final")
+            rec.stopping()
+            self._send(proc, "kill -9 $(cat strace_pid)", "the strace kill")
+            self._expect_prompt(proc, 'root@OpenWrt:/# ', "the prompt after the strace kill")
             logger.debug(proc.before)
-            logger.info("Killed strace")
+            self._confirm_trace_stopped(proc, rec)
+            logger.info("Killed strace (stop confirmed)")
+            stop_reason = "window_elapsed"         # only now: the trace-stop path is confirmed
 
-            proc.sendline("kill -9 $(cat sar_pid)")
-            proc.expect([pexpect.TIMEOUT, 'root@OpenWrt:/# ', pexpect.EOF])
+            self._send(proc, "kill -9 $(cat sar_pid)", "the sar kill")
+            self._expect_prompt(proc, 'root@OpenWrt:/# ', "the prompt after the sar kill")
             logger.debug(proc.before)
             logger.info("Killed sar")
 
             # Wait for the VM filesystem to flush captured files before shutdown
             time.sleep(app_settings.post_analysis_wait)
+        except AnalysisCancelled as e:
+            primary = e
+            stop_reason = "cancelled"
+            raise
         except BaseException as e:                                    # noqa: BLE001
             primary = e
             raise
         finally:
+            # the metadata is evidence about THIS trace: written on every exit path, never allowed to change the outcome of the analysis
+            err = xc.write_meta(self.task_dir, rec.meta(stop_reason))
+            if err:
+                logger.warning(f"trace metadata not written: {err}")
             try:
                 stop_capture(net_proc, "finalizer")
             except UnsafeWorkerState as ce:
@@ -422,6 +536,47 @@ class Analysis:
                     # keep BOTH: the analysis error and the cleanup failure
                     raise with_primary(primary, ce) from primary
                 raise
+
+    def _send(self, proc, line, what):
+        """Send one console line. A pty-level error (OSError) propagates UNCHANGED: it is the original error and the reviewed host cleanup handles it."""
+        proc.sendline(line)
+
+    def _expect_prompt(self, proc, prompt, what, timeout=None):
+        """Wait for `prompt`. TIMEOUT and EOF are NOT 'continue': the console is no longer synchronised with the commands, so nothing more is sent on it.
+        Errors raised by pexpect itself propagate unchanged."""
+        kw = {} if timeout is None else {"timeout": timeout}
+        idx = proc.expect([pexpect.TIMEOUT, prompt, pexpect.EOF], **kw)
+        if idx != 1:
+            raise ConsoleLost(f"guest console lost while waiting for {what}: {'timeout' if idx == 0 else 'EOF'}")
+
+    def _probe(self, proc, rec, which):
+        """One state probe of the traced sample through the guest console.
+        Two different outcomes are kept apart:
+          * the console answered (end marker and prompt arrived) but no sample could be identified -> a probe error is recorded and the analysis goes on;
+          * the console did not answer in sync (timeout, EOF, missing end marker or prompt) -> ConsoleLost, nothing more is sent, the cleanup path runs."""
+        self._send(proc, rec.probe_command(), f"the {which} probe")
+        idx = proc.expect([pexpect.TIMEOUT, xc.probe_end_pattern(rec.trace_id), pexpect.EOF], timeout=xc.PROBE_WAIT_S)
+        if idx != 1:
+            raise ConsoleLost(f"guest console lost during the {which} probe: {'timeout' if idx == 0 else 'EOF'} before the end marker")
+        rec.add_probe(which, (proc.before or "") + (proc.after if isinstance(proc.after, str) else ""))      # never raises
+        self._expect_prompt(proc, '# ', f"the prompt after the {which} probe", timeout=2)
+
+    def _confirm_trace_stopped(self, proc, rec):
+        """After `kill -9 strace`: ask the guest, with the exit status of every read, whether the strace process is gone (see xc.stop_check_command).
+        The whole answer (raw text, rc of each read, target pid, verdict) is stored in the metadata. The trace counts as stopped only when the verdict is `gone`
+        (positive evidence of absence) or `zombie` (the same pid AND start time as the strace baseline, state Z). Silence, read errors, tool errors, a wrong/missing pid
+        file, a truncated answer and a live process all leave the stop UNCONFIRMED: stop_reason must not become window_elapsed."""
+        self._send(proc, xc.stop_check_command(rec.trace_id), "the trace-stop check")
+        idx = proc.expect([pexpect.TIMEOUT, xc.stop_check_end_pattern(rec.trace_id), pexpect.EOF], timeout=xc.PROBE_WAIT_S)
+        if idx != 1:
+            rec.stop_check = xc.judge_stop_check("", rec.trace_id, rec.strace_pid, rec.strace_starttime, rec.clock())
+            rec.stop_check["reason"] = "no answer: " + ("timeout" if idx == 0 else "EOF")
+            raise ConsoleLost(f"guest console lost during the trace-stop check: {'timeout' if idx == 0 else 'EOF'}")
+        text = (proc.before or "") + (proc.after if isinstance(proc.after, str) else "")
+        rec.stop_check = xc.judge_stop_check(text, rec.trace_id, rec.strace_pid, rec.strace_starttime, rec.clock())
+        self._expect_prompt(proc, '# ', "the prompt after the trace-stop check", timeout=2)
+        if rec.stop_check["verdict"] not in xc.STOPPED_VERDICTS:
+            raise TraceStopNotConfirmed(f"trace stop not confirmed: {rec.stop_check['verdict']} ({rec.stop_check['reason']})")
 
     def _exfiltrate(self, proc: pexpect.spawn, arch: ArchConfig):
         # Wait for the rebooted filesystem to fully settle before reading captured files
@@ -484,6 +639,14 @@ class Analysis:
 
 _LOCK_FILE = "/tmp/sandbox_worker.lock"
 _STOP_FILE = "/tmp/sandbox_stop_requested"
+
+
+class ConsoleLost(RuntimeError):
+    """The guest console is not usable any more (timeout, EOF, a prompt or marker that never arrived). No further command is sent on it; the host cleanup runs."""
+
+
+class TraceStopNotConfirmed(RuntimeError):
+    """`kill -9 strace` was sent but the strace process was not observed gone; the trace metadata must not claim window_elapsed."""
 
 
 class AnalysisCancelled(RuntimeError):

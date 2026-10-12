@@ -1,0 +1,2 @@
+300  10:00:00.000000 execve("./exec", ["./exec"], 0xbe855e94 /* 6 vars */) = 0 <0.001000>
+300  10:00:00.020000 nanosleep({tv_sec=3600, tv_nsec=0},  <unfinished ...>

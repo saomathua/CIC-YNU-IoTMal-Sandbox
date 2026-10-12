@@ -1,0 +1,1 @@
+300  10:00:00.000000 execve("./exec", ["./exec"], 0x1 /* 6 vars */) = -1 ENOENT (No such file or directory) <0.000500>

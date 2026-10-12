@@ -1,0 +1,5 @@
+972   10:07:00.163026 execve("./exec", ["./exec"], 0xbee4ae94 /* 6 vars */) = -1 ENOENT (No such file or directory) <0.007716>
+972   10:07:00.225842 writev(2</dev/ttyAMA0<char 204:64>>, [{iov_base="strace: exec: No such file or directory\n", iov_len=40}, {iov_base=NULL, iov_len=0}], 2) = 40 <0.005035>
+972   10:07:00.235572 getpid()          = 972 <0.008435>
+972   10:07:00.245056 exit_group(1)     = ?
+972   10:07:00.265855 +++ exited with 1 +++

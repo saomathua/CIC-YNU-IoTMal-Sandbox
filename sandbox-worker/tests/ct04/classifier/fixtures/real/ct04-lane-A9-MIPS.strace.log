@@ -1,0 +1,5 @@
+1861  10:04:57.113820 execve("./exec", ["./exec"], 0x7fc2b6f4 /* 12 vars */) = 0 <0.015717>
+1861  10:04:57.176662 getpid()          = 1861 <0.003591>
+1861  10:04:57.183850 kill(1861, SIGTERM) = 0 <0.002027>
+1861  10:04:57.190978 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=1861, si_uid=0} ---
+1861  10:04:57.204253 +++ killed by SIGTERM +++
