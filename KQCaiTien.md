@@ -645,7 +645,7 @@ Không thuộc CT-01–14; là nền để triển khai và kiểm thử.
 ### CT-04 — Xác minh thực thi và log · ĐẠT theo phạm vi nghiệm thu (reviewer, 2026-10-13; không phải triển khai thường trực)
 
 - **CIC đã có [Mã]:** `COMPLETED` đặt ngay khi nhận ZIP (`sandbox-manager/router/sandbox_router.py:120-136`); kiến trúc không hỗ trợ → `FAILED` (`analysis.py:130`).
-- **Hướng đã chọn:** worker phân loại (`execution_class`, tách khỏi `COMPLETED`), manager lưu; `SAMPLE_TIMEOUT` là kết luận **có điều kiện** (probe đầu/cuối cùng pid/starttime, ppid = strace pid, xác nhận dừng trace, thứ tự thời gian).
+- **Hướng đã chọn:** worker phân loại (`execution_class`, tách khỏi `COMPLETED`), manager lưu; `SAMPLE_TIMEOUT` là kết luận **có điều kiện** — không chứng minh mẫu bị treo hay sống liên tục suốt cửa sổ (probe đầu/cuối cùng pid/starttime, ppid = strace pid, xác nhận dừng trace, thứ tự thời gian).
 - **Đã áp vào nhánh** `feat/ct04-execution-classification` (commit mã `4df8ada`, tài liệu `7a6586c` và các commit tài liệu sau); PR `saomathua/CIC-YNU-IoTMal-Sandbox#3` đã mở, chưa merge. Mã: worker `service/execution_class.py` (mới), `service/analysis.py`, `poller.py`; manager `router/sandbox_router.py`.
 
 | Tiêu chí con | Trạng thái | Bằng chứng / phạm vi |

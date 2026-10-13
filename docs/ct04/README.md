@@ -50,7 +50,7 @@ Image ứng viên `sandbox-manager:ct04-e317797a9f97` (`sha256:c93fba47…`) đ�
 
 ## Phần CÒN THIẾU (không tính là hoàn thành)
 - `STOPPED_BY_SANDBOX`: chỉ offline (worker không gửi tín hiệu tới mẫu; không sửa luồng huỷ CT-03). `MISSING_LIBRARY`: dự phòng, không phát (nguồn gốc thông điệp loader không chứng thực được từ log; chỉ có cờ claim `LOADER_ERROR_REPORTED`).
-- `SAMPLE_TIMEOUT` là kết luận **có điều kiện** (đuôi log "tương thích với syscall đang mở", không phải bằng chứng đã chứng minh).
+- `SAMPLE_TIMEOUT` là kết luận **có điều kiện** (đuôi log "tương thích với syscall đang mở"): **Diễn đạt chính xác:** nó nghĩa là, tại thời điểm dừng trace, tiến trình chính vẫn còn (cùng pid/starttime ở hai probe) và log không có dòng kết thúc, đuôi log tương thích với một syscall còn mở. Nó **không** chứng minh mẫu bị treo, không chứng minh mẫu sống liên tục suốt cửa sổ, và không phải bằng chứng đã chứng minh; phạm vi nghiệm thu không đổi.
 - Triển khai thường trực Compose, `/tasks` phơi `execution_class`, K3 trên hàng đợi thật, mã độc thật, nghiệm thu toàn CT-04 của reviewer.
 - Đã đo (không còn trong danh sách thiếu): `CRASHED`, `KILLED_BY_SIGNAL`, `EXEC_NOT_FOUND` (A8–A10), `EXEC_PERMISSION_DENIED` (A12), một lượt Compose r3 có rollback.
 

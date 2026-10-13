@@ -12,7 +12,7 @@
 ## 2. Loại trừ và giới hạn (giữ nguyên)
 - `MISSING_LIBRARY`: dự phòng, không bao giờ phát; thông điệp loader chỉ là claim của tiến trình, không chứng minh thư viện thiếu.
 - `STOPPED_BY_SANDBOX`: chỉ offline; không sửa luồng huỷ CT-03; không báo là đã đo.
-- `SAMPLE_TIMEOUT`: kết luận có điều kiện (đuôi log "tương thích với syscall đang mở"), không phải bằng chứng đã chứng minh.
+- `SAMPLE_TIMEOUT`: kết luận **có điều kiện** (đuôi log "tương thích với syscall đang mở"). Nó không chứng minh mẫu bị treo hay sống liên tục suốt cửa sổ; chỉ nói rằng khi dừng trace tiến trình chính còn tồn tại (cùng pid/starttime ở hai probe) và log chưa kết thúc.
 - Malware thật: chưa đo. Mỗi lớp chỉ có một fixture mỗi kiến trúc.
 - **Không** là nghiệm thu triển khai thường trực: manager/worker mới chưa là mặc định; một lượt Compose có rollback, hai task cùng fixture ARM; K3 trên hàng đợi thật chưa đo; `/tasks` chưa phơi `execution_class`.
 - Kết luận gắn với các image/kiến trúc đã đo; **không** chuyển sang image mới (ví dụ các image của CT-06/CT-09) mà không đo lại.
