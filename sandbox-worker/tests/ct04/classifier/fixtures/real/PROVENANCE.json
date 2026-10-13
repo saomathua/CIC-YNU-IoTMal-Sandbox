@@ -1,0 +1,62 @@
+{
+ "flow-success-arm-busybox": {
+  "source": "lane-run2-1-evidence/export-copy/result-ARM.zip",
+  "zip_sha256": "60f69dc5dc644e07b1be3a1a6200adf94ef463a0b1d6333b0ed715f3d134bc8e",
+  "strace_sha256": "78a61c35cff1c78abefc3aa86bdd33b1306ac98f3b9c18bab7d17eb665dd72f6"
+ },
+ "flow-success-mips-busybox": {
+  "source": "lane-run2-1-evidence/export-copy/result-MIPS.zip",
+  "zip_sha256": "a0729f3446d7178dea487bb0fa9829221713b2f51f8d37cd24d350a843c2a7c8",
+  "strace_sha256": "22dd6c33c7c6891881f1fb899e1970c047e620e77991ac3eeef7a6a444c1fb8c"
+ },
+ "ct02-arm-a": {
+  "source": "lane-run2-4-evidence/export-copy/result-a.zip",
+  "zip_sha256": "d87a373f0b403d086661725cf0bfc96178c809639198d0a32ec38d9e49fe41de",
+  "strace_sha256": "ed563d0f9a03192656d5ad574ed1ba8fcc0ff8c64eb928a3601817018d6529be"
+ },
+ "ct02-mips-b": {
+  "source": "lane-run2-5-evidence/export-copy/result-b.zip",
+  "zip_sha256": "4317b0737c91877cbde9dd31b008d0e1f600b0e1f61ebfaba37fe3f63a3ef9d5",
+  "strace_sha256": "a751902a98bef3556594d3abe2b18cc48e3465b5786583651f4b7b933ad0c9cf"
+ },
+ "ct04-lane-A8-ARM": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A8-ARM-run-20261012T095850Z",
+  "sha256": "aeef69a2344f00e272e8265224c10b025fdb1810265ab2dd63a1a2a3bb8d1e90",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A8-MIPS": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A8-MIPS-run-20261012T100032Z",
+  "sha256": "71db3b53d05aaa4617f06544fb3cdbd0f1595f86da406a22a68c21c2c3ecabec",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A9-ARM": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A9-ARM-run-20261012T100244Z",
+  "sha256": "0f262f8f9fa24b4a493c4fa7da8f031fbb598f6f1bf37c64c2d48960116412ce",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A9-MIPS": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A9-MIPS-run-20261012T100426Z",
+  "sha256": "5ecadd12554075a580d1a056c7ba376a7f41c28e31669de13b54e3660b12e0e4",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A10-ARM": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A10-ARM-run-20261012T100638Z",
+  "sha256": "c530e7c120ae34f632b68aaa39d42b98393f2e3bd756d69d3ef49896dfed782f",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A10-MIPS": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A10-MIPS-run-20261012T100820Z",
+  "sha256": "b8e055bd911b0e66099c0b3721fb583a5e7447bc22a3937d1e32b2a1189941a8",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A11-ARM": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A11-ARM-run-20261012T101031Z",
+  "sha256": "a2e0c163a00caaa7a178b8b7475033fc9ad34517a1512a12efe76ebaa29967f1",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ },
+ "ct04-lane-A11-MIPS": {
+  "source": "real guest capture, image 68f7150f93c7\u2026, lane run directory ct04-lane-A11-MIPS-run-20261012T101213Z",
+  "sha256": "9414bc852d5dca7a547291ec5ad5967cb4eff9583bbd85e1084c1ae0b301d2a9",
+  "note": "benign fixture lane A8-A11 (2026-10-12); strace.log only, no trace-meta used"
+ }
+}

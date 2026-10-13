@@ -1,0 +1,5 @@
+962   10:03:04.816378 execve("./exec", ["./exec"], 0xbe9b2e94 /* 6 vars */) = 0 <0.011417>
+962   10:03:04.858226 getpid()          = 962 <0.000119>
+962   10:03:04.859038 kill(962, SIGTERM) = 0 <0.000135>
+962   10:03:04.868007 --- SIGTERM {si_signo=SIGTERM, si_code=SI_USER, si_pid=962, si_uid=0} ---
+962   10:03:04.871825 +++ killed by SIGTERM +++

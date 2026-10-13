@@ -1,0 +1,7 @@
+1843  14:03:25.880984 execve("./exec", ["./exec"], 0x7fb04ea4 /* 12 vars */) = 0 <0.026216>
+1843  14:03:25.936432 open("/ct02-marker", O_RDONLY) = -1 ENOENT (No such file or directory) <0.008549>
+1843  14:03:25.952566 open("/ct02-marker", O_WRONLY|O_CREAT|O_TRUNC, 0644) = 3</ct02-marker> <0.025935>
+1843  14:03:25.993238 write(3</ct02-marker>, "CT02-MARKER\n", 12) = 12 <0.002055>
+1843  14:03:25.998027 close(3</ct02-marker>) = 0 <0.000118>
+1843  14:03:25.998979 exit(0)           = ?
+1843  14:03:25.999855 +++ exited with 0 +++

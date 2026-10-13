@@ -1,0 +1,14 @@
+{
+ "synthetic": true,
+ "task_id": "task-0001",
+ "expected": {
+  "exit0": "EXITED_0",
+  "exit7": "EXITED_NONZERO",
+  "run-to-window-end": "SAMPLE_TIMEOUT",
+  "run-to-window-end-no-meta": "UNKNOWN_INCOMPLETE",
+  "exec-enoexec": "EXEC_FORMAT_ERROR",
+  "exec-enoent-interp": "EXEC_NOT_FOUND",
+  "log-garbage": "LOG_INVALID",
+  "log-empty": "LOG_MISSING"
+ }
+}

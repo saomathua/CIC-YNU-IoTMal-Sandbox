@@ -1,0 +1,3 @@
+970   09:59:12.556866 execve("./exec", ["./exec"], 0xbe923e94 /* 6 vars */) = 0 <0.027616>
+970   09:59:12.597430 --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=NULL} ---
+970   09:59:12.603991 +++ killed by SIGSEGV +++

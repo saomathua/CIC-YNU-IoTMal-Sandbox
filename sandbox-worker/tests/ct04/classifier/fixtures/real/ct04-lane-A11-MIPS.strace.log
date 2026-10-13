@@ -1,0 +1,15 @@
+1862  10:12:45.300340 execve("./exec", ["./exec"], 0x7f8810d4 /* 12 vars */) = 0 <0.034808>
+1862  10:12:45.346797 set_thread_area(0x77e69dfc) = 0 <0.002016>
+1862  10:12:45.349667 set_tid_address(0x77e6169c) = 1862 <0.003451>
+1862  10:12:45.354006 brk(NULL)         = 0xf84000 <0.014577>
+1862  10:12:45.371645 brk(0xf86000)     = 0xf86000 <0.000114>
+1862  10:12:45.373383 mmap2(0xf84000, 4096, PROT_NONE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xf84000 <0.004580>
+1862  10:12:45.379506 open("/etc/ld-musl-mips-sf.path", O_RDONLY|O_LARGEFILE|O_CLOEXEC) = -1 ENOENT (No such file or directory) <0.001718>
+1862  10:12:45.394172 open("/lib/libct04missing.so", O_RDONLY|O_LARGEFILE|O_CLOEXEC) = -1 ENOENT (No such file or directory) <0.016729>
+1862  10:12:45.421379 open("/usr/local/lib/libct04missing.so", O_RDONLY|O_LARGEFILE|O_CLOEXEC) = -1 ENOENT (No such file or directory) <0.009094>
+1862  10:12:45.441005 open("/usr/lib/libct04missing.so", O_RDONLY|O_LARGEFILE|O_CLOEXEC) = -1 ENOENT (No such file or directory) <0.007305>
+1862  10:12:45.480441 writev(2</dev/ttyS0<char 4:64>>, [{iov_base="Error loading shared library libct04missing.so: No such file or directory", iov_len=73}, {iov_base=" (needed by ", iov_len=12}], 2) = 85 <0.009492>
+1862  10:12:45.494793 writev(2</dev/ttyS0<char 4:64>>, [{iov_base="./exec)", iov_len=7}, {iov_base=NULL, iov_len=0}], 2) = 7 <0.006141>
+1862  10:12:45.504228 writev(2</dev/ttyS0<char 4:64>>, [{iov_base="\n", iov_len=1}, {iov_base=NULL, iov_len=0}], 2) = 1 <0.024195>
+1862  10:12:45.533798 exit_group(127)   = ?
+1862  10:12:45.539730 +++ exited with 127 +++
