@@ -1,6 +1,6 @@
 # CT-04 — Xác minh thực thi và log
 
-**Trạng thái (theo `KQCaiTien.md`):** evidence worker A1–A12, evidence manager trên stack cô lập và một lượt thử Compose r3 có rollback đã được reviewer chấp nhận **theo phạm vi đã đo**. CT-04 **chưa được ghi ĐẠT toàn bộ**: nghiệm thu theo phạm vi do reviewer chốt; **chưa triển khai thường trực** (manager/worker mới chưa là mặc định); malware thật chưa đo. Hồ sơ: [CLOSURE.md](CLOSURE.md), [EVIDENCE-INDEX.md](EVIDENCE-INDEX.md), [ACCEPTANCE-DRAFT.md](ACCEPTANCE-DRAFT.md). PR `saomathua/CIC-YNU-IoTMal-Sandbox#3`.
+**Trạng thái (theo `KQCaiTien.md`):** **CT-04 ĐẠT theo phạm vi nghiệm thu** do reviewer kết luận ngày 2026-10-13 ([ACCEPTANCE.md](ACCEPTANCE.md); phạm vi, loại trừ và ánh xạ evidence → image/kiến trúc trong [CLOSURE.md](CLOSURE.md), [EVIDENCE-INDEX.md](EVIDENCE-INDEX.md)). Đây **không** phải nghiệm thu triển khai thường trực và không chuyển kết luận sang image mới; malware thật chưa đo; `MISSING_LIBRARY` không phát; `STOPPED_BY_SANDBOX` chỉ offline; `SAMPLE_TIMEOUT` có điều kiện. PR `saomathua/CIC-YNU-IoTMal-Sandbox#3`.
 
 ## Thiết kế (tóm tắt)
 - **Worker phân loại, manager lưu.** `sandbox-worker/service/execution_class.py` (mới) đọc `strace.log` + metadata `trace-meta.json` (`ct04-trace-meta/2`) và sinh `execution-class.json` (`ct04-execution-class/1`). `execution_class` **tách khỏi** `COMPLETED`.

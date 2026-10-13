@@ -1,6 +1,6 @@
-# CT-04 — hồ sơ closure (để reviewer chốt trạng thái; KHÔNG tự ghi ĐẠT)
+# CT-04 — hồ sơ closure (reviewer kết luận ĐẠT theo phạm vi, 2026-10-13)
 
-Ngày soạn: 2026-10-12. Nhánh `feat/ct04-execution-classification`; PR `saomathua/CIC-YNU-IoTMal-Sandbox#3`. Yêu cầu (`docs/requirements.md`): xác minh thực thi và log. Đường dẫn/hash evidence: [EVIDENCE-INDEX.md](EVIDENCE-INDEX.md).
+Ngày soạn: 2026-10-12; kết luận reviewer: 2026-10-13 (ĐẠT theo phạm vi nghiệm thu, xem [ACCEPTANCE.md](ACCEPTANCE.md); không phải nghiệm thu triển khai thường trực). Nhánh `feat/ct04-execution-classification`; PR `saomathua/CIC-YNU-IoTMal-Sandbox#3`. Yêu cầu (`docs/requirements.md`): xác minh thực thi và log. Đường dẫn/hash evidence: [EVIDENCE-INDEX.md](EVIDENCE-INDEX.md).
 
 ## 1. Ánh xạ nhóm evidence → image, kiến trúc, phạm vi
 | Nhóm | Evidence | Image | Kiến trúc | Phạm vi đã đo | Giới hạn |
@@ -26,12 +26,10 @@ Ngày soạn: 2026-10-12. Nhánh `feat/ct04-execution-classification`; PR `saoma
 | Malware thật | **Chưa đo** (ngoài phạm vi; chỉ fixture lành tính) |
 | `/tasks` phơi `execution_class` | Chưa làm (đọc qua ZIP/Mongo) |
 | K3 trên hàng đợi production thật | Chưa đo |
-| Nghiệm thu toàn CT-04 | **Do reviewer chốt**; tài liệu này không ghi ĐẠT |
+| Nghiệm thu CT-04 theo phạm vi | **ĐẠT theo phạm vi** (reviewer, 2026-10-13); loại trừ giữ nguyên; không phải triển khai thường trực |
 
 ## 3. Giữ nguyên lịch sử
 A1-ARM `2b310137…` thất bại (console `\r\r\n`), A3-ARM `62199ff7…` NOT-HELD (đuôi cụt), A11 `68f7150f…` bằng chứng loader chưa đạt, compat runner r2 28/39 — tất cả còn nguyên trong evidence và index. Không dọn stage `/var/lib/ct04-rt`, tag `ct04-*`, task fixture trong Mongo.
 
-## 4. Bước tiếp theo để đóng
-1. Reviewer chốt trạng thái CT-04 theo phạm vi đã đo (biên bản dự thảo: [ACCEPTANCE-DRAFT.md](ACCEPTANCE-DRAFT.md)).
-2. Nếu muốn dùng thường trực: quyết định riêng về triển khai (đổi `docker-compose.yml`/tag `latest`), kèm kế hoạch rollback đã chứng minh ở Compose r3 — **chưa làm, chưa được duyệt**.
-3. Mở: `/tasks` phơi `execution_class`; malware thật (cần cách ly đã chứng minh ở CT-01 và quyết định riêng).
+## 4. Sau kết luận
+CT-04 ĐẠT theo phạm vi §1–§2 và [ACCEPTANCE.md](ACCEPTANCE.md). Còn ngoài phạm vi (quyết định và đo riêng, chưa duyệt): triển khai thường trực (đổi `docker-compose.yml`/tag `latest`, có kế hoạch rollback đã chứng minh ở Compose r3); `/tasks` phơi `execution_class`; malware thật (cần cách ly đã chứng minh ở CT-01). Kết luận không chuyển sang image mới (CT-06/CT-09 dùng image khác ⇒ đo lại).
